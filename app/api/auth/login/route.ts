@@ -19,7 +19,7 @@ export async function POST(request: NextRequest) {
 
     if (!user) {
       return NextResponse.json(
-        { error: 'อีเมลหรือรหัสผ่านไม่ถูกต้อง' },
+        { error: 'ชื่อผู้ใช้หรือรหัสผ่านไม่ถูกต้อง' },
         { status: 401 }
       );
     }
