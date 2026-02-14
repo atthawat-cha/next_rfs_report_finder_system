@@ -2,6 +2,7 @@ import { SignJWT, jwtVerify } from 'jose';
 import { cookies } from 'next/headers';
 import { NextRequest } from 'next/server';
 import bcrypt from 'bcryptjs';
+import prisma from './prisma';
 
 const JWT_SECRET = new TextEncoder().encode(
   process.env.JWT_SECRET || 'fQVKfqft6HVMDAKgTA5QAOSem746Lv7fhbdE6ep8GsPM4BTWXrdBQkZz0rydYhWJ'
@@ -33,6 +34,7 @@ const DEMO_USERS = [
     name: 'Demo User',
   },
 ];
+
 
 // สร้าง JWT token
 export async function createToken(user: User): Promise<string> {
@@ -75,12 +77,21 @@ export async function getCurrentUser(): Promise<User | null> {
 
 // ตรวจสอบ credentials และ login
 export async function authenticate(username: string, password: string): Promise<User | null> {
-  const user = DEMO_USERS.find((u) => u.username === username);
-  if (!user) {
+  const users = DEMO_USERS.find((u) => u.username === username);
+
+  // const users = await prisma.users.findMany({
+  //   where: {
+  //     username: username
+  //   }
+  // });
+
+  console.log('Authenticated users:', users);
+  
+  if (!users) {
     return null;
   }
 
-    
+  const user = users;
   const isValidPassword = await bcrypt.compare(password, user.password);
 
   if (!isValidPassword) {
