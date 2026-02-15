@@ -2,16 +2,21 @@ import { SignJWT, jwtVerify } from 'jose';
 import { cookies } from 'next/headers';
 import { NextRequest } from 'next/server';
 import bcrypt from 'bcryptjs';
-import prisma from './prisma';
 
 const JWT_SECRET = new TextEncoder().encode(
-  process.env.JWT_SECRET || 'fQVKfqft6HVMDAKgTA5QAOSem746Lv7fhbdE6ep8GsPM4BTWXrdBQkZz0rydYhWJ'
+  process.env.JWT_SECRET
 );
 
 export interface User {
   id: string;
   username: string;
-  name: string;
+  first_name: string | null;
+  password: string;
+}
+
+export interface LoginRequest {
+  username: string;
+  password: string;
 }
 
 export interface JWTPayload {
@@ -76,23 +81,13 @@ export async function getCurrentUser(): Promise<User | null> {
 }
 
 // ตรวจสอบ credentials และ login
-export async function authenticate(username: string, password: string): Promise<User | null> {
-  const users = DEMO_USERS.find((u) => u.username === username);
-
-  // const users = await prisma.users.findMany({
-  //   where: {
-  //     username: username
-  //   }
-  // });
-
-  console.log('Authenticated users:', users);
-  
-  if (!users) {
+export async function authenticate(loginUser: LoginRequest, user: User): Promise<User | null> {
+  // const users = DEMO_USERS.find((u) => u.username === username);  
+  if (!loginUser.username || !loginUser.password) {
     return null;
   }
 
-  const user = users;
-  const isValidPassword = await bcrypt.compare(password, user.password);
+  const isValidPassword = await bcrypt.compare(loginUser.password, user.password);
 
   if (!isValidPassword) {
     return null;
@@ -101,7 +96,8 @@ export async function authenticate(username: string, password: string): Promise<
   return {
     id: user.id,
     username: user.username,
-    name: user.name,
+    first_name: user.first_name,
+    password: user.password
   };
 }
 

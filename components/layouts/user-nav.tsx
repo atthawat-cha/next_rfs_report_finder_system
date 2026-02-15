@@ -24,7 +24,7 @@ DropdownMenuTrigger
 import { getInitials } from "@/lib/utils";
 
 interface UserNavProps {
-    name: string;
+    first_name: string;
     username: string;
 }
 
@@ -58,7 +58,7 @@ return (
             >
             <Avatar className="h-8 w-8">
                 <AvatarImage src="#" alt="Avatar" />
-                <AvatarFallback className="bg-transparent">{getInitials(user?.name || '')}</AvatarFallback>
+                <AvatarFallback className="bg-transparent">{getInitials(user?.first_name || '')}</AvatarFallback>
             </Avatar>
             </Button>
         </DropdownMenuTrigger>
@@ -70,7 +70,7 @@ return (
     <DropdownMenuContent className="w-56" align="end" forceMount>
     <DropdownMenuLabel className="font-normal">
         <div className="flex flex-col space-y-1">
-        <p className="text-sm font-medium leading-none">{user?.name}</p>
+        <p className="text-sm font-medium leading-none">{user?.first_name}</p>
         <p className="text-xs leading-none text-muted-foreground">
             {user?.username}
         </p>

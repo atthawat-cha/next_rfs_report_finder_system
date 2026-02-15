@@ -109,6 +109,7 @@ model permissions {
   created_at       DateTime           @default(now())
   updated_at       DateTime
   role_permissions role_permissions[]
+  menu_permissions menus_permissions[]
 }
 
 model report_shares {
@@ -197,6 +198,10 @@ model role_permissions {
   role_id       String
   permission_id String
   created_at    DateTime    @default(now())
+  can_view      Boolean     @default(true)
+  can_create    Boolean     @default(true)
+  can_update    Boolean     @default(true)
+  can_delete    Boolean     @default(true)
   permissions   permissions @relation(fields: [permission_id], references: [id], onDelete: Cascade)
   roles         roles       @relation(fields: [role_id], references: [id], onDelete: Cascade)
 
@@ -311,10 +316,47 @@ model users {
   departments         departments?      @relation(fields: [department_id], references: [id])
 }
 
+model menus {
+  id                String              @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  group_label       String?             @db.VarChar(100)
+  catagory_label    String?             @db.VarChar(150)
+  menu_label        String?             @db.VarChar(150)
+  sub_menu_label    String?             @db.VarChar(150)
+  href              String?             @db.VarChar(255)
+  icon              String?             @db.VarChar(100)
+  sort_order        Int?                @default(0)
+  created_at        DateTime?           @default(now()) @db.Timestamp(6)
+  updated_at        DateTime?           @default(now()) @db.Timestamp(6)
+  menus_permissions menus_permissions[]
+}
+
+model menus_permissions {
+  id            String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  menu_id       String    @db.Uuid
+  permission_id String    @db.VarChar(100)
+  created_at    DateTime? @default(now()) @db.Timestamp(6)
+  menus         menus     @relation(fields: [menu_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
+  permissions   permissions @relation(fields: [permission_id], references: [id], onDelete: Cascade)
+
+  @@unique([menu_id, permission_id])
+}
+
 enum AccessLevel {
   PUBLIC
   RESTRICTED
   PRIVATE
+}
+
+enum ReportStatus {
+  DRAFT
+  PUBLISHED
+  ARCHIVED
+}
+
+enum UserStatus {
+  ACTIVE
+  INACTIVE
+  SUSPENDED
 }
 
 enum NotificationType {
@@ -330,12 +372,6 @@ enum NotificationType {
   SYSTEM_MAINTENANCE
   SYSTEM_UPDATE
   SYSTEM_ERROR
-}
-
-enum ReportStatus {
-  DRAFT
-  PUBLISHED
-  ARCHIVED
 }
 
 enum ShareType {
@@ -356,10 +392,4 @@ enum TicketStatus {
   IN_PROGRESS
   RESOLVED
   CLOSED
-}
-
-enum UserStatus {
-  ACTIVE
-  INACTIVE
-  SUSPENDED
 }

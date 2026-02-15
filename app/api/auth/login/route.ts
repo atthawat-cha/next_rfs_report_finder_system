@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { authenticate, createToken, setAuthCookie } from '@/lib/auth';
 import { z } from 'zod';
+import prisma from '@/lib/prisma';
 
 const loginSchema = z.object({
   username: z.string().min(3, 'กรุณากรอกชื่อผู้ใช้'),
@@ -14,8 +15,29 @@ export async function POST(request: NextRequest) {
     // Validate input
     const validatedData = loginSchema.parse(body);
 
+    const getUser = await prisma.users.findUnique({
+      select: {
+        id: true,
+        username: true,
+        first_name: true,
+        password: true,
+      },
+      where: {
+        username: validatedData.username,
+      },
+    });
+
+    if (!getUser) {
+      return NextResponse.json(
+        { error: 'ชื่อผู้ใช้หรือรหัสผ่านไม่ถูกต้อง' },
+        { status: 401 }
+      );
+    }
+
     // Authenticate user
-    const user = await authenticate(validatedData.username, validatedData.password);
+    const user = await authenticate(validatedData, getUser);
+
+    console.log('Authenticated user:', user);
 
     if (!user) {
       return NextResponse.json(
@@ -36,7 +58,7 @@ export async function POST(request: NextRequest) {
         user: {
           id: user.id,
           username: user.username,
-          name: user.name,
+          name: user.first_name,
         }
       },
       { status: 200 }
