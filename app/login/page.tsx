@@ -7,6 +7,8 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
+// notifcation
+import toast, { Toaster } from 'react-hot-toast';
 
 export default function LoginPage() {
   const router = useRouter();
@@ -35,14 +37,18 @@ export default function LoginPage() {
       const data = await response.json();
 
       if (!response.ok) {
+        toast.error(data.error || 'เกิดข้อผิดพลาดในการเข้าสู่ระบบ');
         setError(data.error || 'เกิดข้อผิดพลาดในการเข้าสู่ระบบ');
         setIsLoading(false);
         return;
       }
 
+      toast.success('เข้าสู่ระบบสําเร็จ');
+      setIsLoading(false);
       router.push(redirect);
       router.refresh();
     } catch (error) {
+      toast.error('เกิดข้อผิดพลาดในการเชื่อมต่อ');
       setError('เกิดข้อผิดพลาดในการเชื่อมต่อ');
       setIsLoading(false);
     }

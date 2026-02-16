@@ -3,6 +3,7 @@ import { Inter } from "next/font/google";
 import "./globals.css";
 import { ThemeProvider } from "@/components/provider/themeProvider";
 import { getCurrentUser } from "@/lib/auth";
+import { Toaster } from "react-hot-toast";
 
 const inter = Inter({ subsets: ["latin"] });
 
@@ -20,6 +21,7 @@ export default async function RootLayout({
     <html lang="th" suppressHydrationWarning>
       <body className={inter.className}>
         <ThemeProvider attribute="class" defaultTheme="dark" enableSystem>
+          <Toaster position="top-right"reverseOrder={true}/>
           {children}
         </ThemeProvider>
       </body>

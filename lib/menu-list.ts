@@ -124,18 +124,18 @@
     groupLabel: "User Management",
     menus: [
       {
-        href: "/users",
+        href: "/user-management",
         label: "User Management",
         icon: Users,
         submenus: [
-          { href: "/users/list", label: "User List" },
-          { href: "/users/groups", label: "User Groups / Departments" },
-          { href: "/users/activity", label: "User Activity Log" },
-          { href: "/users/import", label: "Bulk User Import" }
+          { href: "/user-management/user-list", label: "User List" },
+          { href: "/user-management/groups", label: "User Groups / Departments" },
+          { href: "/user-management/activity", label: "User Activity Log" },
+          { href: "/user-management/import", label: "Bulk User Import" }
         ]
       },
       {
-        href: "/roles",
+        href: "/role-management",
         label: "Role Management",
         icon: Settings,
         submenus: []
