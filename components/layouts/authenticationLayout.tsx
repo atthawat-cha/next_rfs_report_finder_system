@@ -1,5 +1,4 @@
-"use client";
-import { Navbar } from "./navbar";
+'use client';
 import Sidebar from "./sidebar";
 import { useSidebar } from "@/hook/useSidebars";
 import { useStore } from "@/hook/useStore";

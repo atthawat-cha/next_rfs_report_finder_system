@@ -37,8 +37,6 @@ export async function POST(request: NextRequest) {
     // Authenticate user
     const user = await authenticate(validatedData, getUser);
 
-    console.log('Authenticated user:', user);
-
     if (!user) {
       return NextResponse.json(
         { error: 'ชื่อผู้ใช้หรือรหัสผ่านไม่ถูกต้อง' },

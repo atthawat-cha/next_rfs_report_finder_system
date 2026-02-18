@@ -54,16 +54,22 @@
         submenus: []
       },
       {
-        href: "/analytics",
-        label: "Reports & Analytics",
-        icon: SquarePen,
-        submenus: [
-          { href: "/analytics/usage", label: "Usage Report" },
-          { href: "/analytics/storage", label: "Storage Report" },
-          { href: "/analytics/popular", label: "Popular Reports" },
-          { href: "/analytics/user", label: "User Analytics" }
-        ]
+        href: "/blank",
+        label: "Blank Page",
+        icon: Lock,
+        submenus: []
       }
+      // {
+      //   href: "/analytics",
+      //   label: "Reports & Analytics",
+      //   icon: SquarePen,
+      //   submenus: [
+      //     { href: "/analytics/usage", label: "Usage Report" },
+      //     { href: "/analytics/storage", label: "Storage Report" },
+      //     { href: "/analytics/popular", label: "Popular Reports" },
+      //     { href: "/analytics/user", label: "User Analytics" }
+      //   ]
+      // }
     ]
   },
 
@@ -75,15 +81,15 @@
         label: "Report Finder",
         icon: Bookmark,
         submenus: [
-          { href: "/reports/all", label: "All Reports" },
+          { href: "/reports/report-list", label: "All Reports" },
           { href: "/reports/favorites", label: "Favorite Reports" },
-          { href: "/reports/recent", label: "Recently Viewed" },
-          { href: "/reports/most-downloaded", label: "Most Downloaded" }
+          // { href: "/reports/recent", label: "Recently Viewed" },
+          // { href: "/reports/most-downloaded", label: "Most Downloaded" }
         ]
       },
       {
-        href: "/reports/upload",
-        label: "Upload Report",
+        href: "/reports/report-create",
+        label: "Create Report",
         icon: Tag,
         submenus: []
       },
@@ -99,24 +105,24 @@
         icon: Tag,
         submenus: []
       },
-      {
-        href: "/reports/version-control",
-        label: "Version Control",
-        icon: Tag,
-        submenus: []
-      },
-      {
-        href: "/reports/sharing",
-        label: "Report Sharing",
-        icon:   Tag,
-        submenus: []
-      },
-      {
-        href: "/reports/statistics",
-        label: "Download Statistics",
-        icon: Tag,
-        submenus: []
-      }
+      // {
+      //   href: "/reports/version-control",
+      //   label: "Version Control",
+      //   icon: Tag,
+      //   submenus: []
+      // },
+      // {
+      //   href: "/reports/sharing",
+      //   label: "Report Sharing",
+      //   icon:   Tag,
+      //   submenus: []
+      // },
+      // {
+      //   href: "/reports/statistics",
+      //   label: "Download Statistics",
+      //   icon: Tag,
+      //   submenus: []
+      // }
     ]
   },
 
@@ -129,9 +135,9 @@
         icon: Users,
         submenus: [
           { href: "/user-management/user-list", label: "User List" },
-          { href: "/user-management/groups", label: "User Groups / Departments" },
-          { href: "/user-management/activity", label: "User Activity Log" },
-          { href: "/user-management/import", label: "Bulk User Import" }
+          { href: "/user-management/user-department", label: "Departments" },
+          { href: "/user-management/activity", label: "Activity Log" },
+          // { href: "/user-management/import", label: "Bulk User Import" }
         ]
       },
       {
@@ -159,16 +165,16 @@
         submenus: [
           { href: "/security/login-history", label: "Login History" },
           { href: "/security/session", label: "Session Management" },
-          { href: "/security/password-policy", label: "Password Policy" },
-          { href: "/security/2fa", label: "Two-Factor Authentication" }
+          // { href: "/security/password-policy", label: "Password Policy" },
+          // { href: "/security/2fa", label: "Two-Factor Authentication" }
         ]
       },
-      {
-        href: "/security/audit",
-        label: "Audit Trail",
-        icon: Lock,
-        submenus: []
-      }
+      // {
+      //   href: "/security/audit",
+      //   label: "Audit Trail",
+      //   icon: Lock,
+      //   submenus: []
+      // }
     ]
   },
 
@@ -226,12 +232,12 @@
         icon: HardDrive,
         submenus: []
       },
-      {
-        href: "/settings/email",
-        label: "Email Settings",
-        icon: Mail,
-        submenus: []
-      },
+      // {
+      //   href: "/settings/email",
+      //   label: "Email Settings",
+      //   icon: Mail,
+      //   submenus: []
+      // },
       {
         href: "/settings/api",
         label: "API Settings",
@@ -244,12 +250,12 @@
         icon: Palette,
         submenus: []
       },
-      {
-        href: "/settings/performance",
-        label: "Performance Settings",
-        icon: Gauge,
-        submenus: []
-      }
+      // {
+      //   href: "/settings/performance",
+      //   label: "Performance Settings",
+      //   icon: Gauge,
+      //   submenus: []
+      // }
     ]
   },
 
