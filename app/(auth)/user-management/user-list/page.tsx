@@ -4,17 +4,18 @@ import { Breadcrumb, BreadcrumbItem, BreadcrumbLink, BreadcrumbList, BreadcrumbP
 import { User } from '@/lib/auth';
 import Link from 'next/link'
 import React from 'react';
+import { UsersDataTable } from './users-data-table';
+import { users_columns } from './columns';
+import { UserTableType } from '@/lib/types';
+import { Separator } from "@/components/ui/separator"
+import { Button } from '@/components/ui/button';
 
-interface UsersTablbe {
-  id: string;
-  username: string;
-  first_name: string;
-}
+
 
 export default function UserLists() {
 
   // State
-  const [users, setUsers] = React.useState<UsersTablbe[]>([]);
+  const [users, setUsers] = React.useState<UserTableType[]>([]);
 
 
   // Functions
@@ -38,7 +39,6 @@ export default function UserLists() {
       if (!data?.success) {
         return;
       }
-      console.log(data);
       setUsers(data?.data);
     } catch (error) {
       console.error('Error fetching users:', error);
@@ -71,11 +71,18 @@ export default function UserLists() {
             </BreadcrumbItem>
             </BreadcrumbList>
         </Breadcrumb>
-      {users?.map((user) => (
-        <div key={user?.id}>
-          <h2>{user?.username}</h2>
+
+      <div className="container mx-auto py-10 gap-6">
+        <div className='flex items-center justify-between'>
+          <h3 className="text-3xl md:text-4xl font-bold">User Lists</h3>
+          {/* <Link href="/user-management/user-department" className='btn btn-primary'>Add User</Link> */}
+          <Button >
+            New User
+          </Button>
         </div>
-      ))}
+        <Separator className='my-5'/>
+        <UsersDataTable columns={users_columns} data={users} />
+      </div>
     </ContentLayout>
   )
 }

@@ -1,21 +1,18 @@
-import { PrismaClient } from '@/app/generated/prisma/client';
 import prisma from '@/lib/prisma';
 import { NextRequest, NextResponse } from 'next/server';
-import bcrypt from 'bcryptjs';
 import { z } from 'zod';
-import { UserCreateType } from '@/lib/types';
-import {UserStatus} from "@/app/generated/prisma/client";
-import { faker } from '@faker-js/faker';
-
-
 
 export async function GET(req:NextRequest){
   try {
-    const body = await req.json();
-    
     const users = await prisma.users.findMany({});
+
+    if(!users){
+      return NextResponse.json({success: false, error: "User not found"}, { status: 404 });
+    }
+    // console.log(users);
     return NextResponse.json({success: true, data: users}, { status: 200 });
   } catch (error) {
+    console.error(error);
     return NextResponse.json(
       { error: console.error()},
       { status: 400 }
@@ -32,42 +29,42 @@ export async function GET(req:NextRequest){
     status: z.string().min(1, 'กรุณาเลือกสถานะ')
   })
 
-export async function POST(req:NextRequest){
-  try {
+// export async function POST(req:NextRequest){
+//   try {
 
-    const body = await req.json();
-    const validatedData = userZod.parse(body);
-    const user = await prisma.users.create({
-      data: {
-        id: faker.string.uuid(),
-        username: validatedData.username,
-        email: validatedData.username,
-        password: await bcrypt.hash(validatedData.password, 10),
-        first_name: validatedData.first_name,
-        last_name: validatedData.last_name,
-        department_id: validatedData.department_id,
-        status: UserStatus.ACTIVE,
-        created_at: new Date(),
-        updated_at: new Date()
-      },
-    });
+//     const body = await req.json();
+//     const validatedData = userZod.parse(body);
+//     const user = await prisma.users.create({
+//       data: {
+//         id: faker.string.uuid(),
+//         username: validatedData.username,
+//         email: validatedData.username,
+//         password: await bcrypt.hash(validatedData.password, 10),
+//         first_name: validatedData.first_name,
+//         last_name: validatedData.last_name,
+//         department_id: validatedData.department_id,
+//         status: UserStatus.ACTIVE,
+//         created_at: new Date(),
+//         updated_at: new Date()
+//       },
+//     });
 
-    if (!user) {
-      return NextResponse.json(
-        { error: "Invalid input" },
-        { status: 400 }
-      );
-    }
-    return NextResponse.json({success: true, data: user.id}, { status: 200 });
-  } catch (error) {
-    console.error(error);
-  return NextResponse.json(
-    { error: "Invalid input", details: String(error) },
-    { status: 400 }
-  );
-  }
+//     if (!user) {
+//       return NextResponse.json(
+//         { error: "Invalid input" },
+//         { status: 400 }
+//       );
+//     }
+//     return NextResponse.json({success: true, data: user.id}, { status: 200 });
+//   } catch (error) {
+//     console.error(error);
+//   return NextResponse.json(
+//     { error: "Invalid input", details: String(error) },
+//     { status: 400 }
+//   );
+//   }
   
-}
+// }
 
 
 // export async function GET(req: NextRequest, res: NextResponse) {

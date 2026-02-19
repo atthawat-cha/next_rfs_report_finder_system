@@ -1,5 +1,6 @@
 import { clsx, type ClassValue } from "clsx"
 import { twMerge } from "tailwind-merge"
+import dayjs from 'dayjs';
 
 
 export function cn(...inputs: ClassValue[]) {
@@ -15,3 +16,11 @@ export function getInitials(name: string){
       .toUpperCase()
       .slice(0, 2);
   };
+
+
+export function formatDateTime(dateString: string,format:string='DD-MM-YYYY HH:mm:ss'): string {
+
+  const date = new Date(dateString);
+
+  return dayjs(date).format(format);
+}

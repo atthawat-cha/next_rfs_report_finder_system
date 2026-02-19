@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { prisma } from "@/lib/prisma";
+import prisma from "@/lib/prisma";
 import { z } from "zod";
 import bcrypt from "bcryptjs";
 
@@ -21,6 +21,20 @@ export async function POST(req: NextRequest) {
     const body = await req.json();
 
     const data = schema.parse(body);
+
+    if (!data) {
+      return NextResponse.json(
+        { success: false, error: "Invalid input" },
+        { status: 400 }
+      );
+    }
+
+    if (!data.id) {
+      return NextResponse.json(
+        { success: false, error: "Invalid input user id not found" },
+        { status: 400 }
+      );
+    }
 
     // build update object dynamically
     const updateData: any = {
@@ -54,7 +68,7 @@ export async function POST(req: NextRequest) {
     });
 
   } catch (error) {
-    console.error(error);
+    console.log(error);
 
     return NextResponse.json(
       { success: false, error: "Update failed" },
