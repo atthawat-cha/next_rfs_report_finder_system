@@ -8,161 +8,179 @@ import bcrypt from 'bcryptjs';
 
 export async function initSeed(prisma:PrismaClient) {
   
-  console.log("Initailizetion Seeding database...");
+  console.log("🌱 Start seeding...")
 
-    /* =========================
-      1. ROLES
-  ==========================*/
-  const superAdminRole = await prisma.roles.create({
+  /* -------------------- DEPARTMENTS -------------------- */
+  const headDept = await prisma.departments.create({
     data: {
       id: faker.string.uuid(),
-      name: "SUPER_ADMIN",
-      display_name: "Super Admin",
-      is_system: true,
+      name: "Head Office",
+      code: "HO",
       updated_at: new Date()
     }
-  });
+  })
 
-  
-  const userRole = await prisma.roles.create({
-    data: {
-      id: faker.string.uuid(),
-      name: "USER",
-      display_name: "User",
-      updated_at: new Date()
-    }
-  });
-
-  /* =========================
-    2. PERMISSIONS
-  ==========================*/
-  const permissionsData = [
-    { name: "user.create", display_name: "Create User", category: "User Management" },
-    { name: "user.read", display_name: "View User", category: "User Management" },
-    { name: "report.create", display_name: "Create Report", category: "Report Management" },
-    { name: "report.read", display_name: "View Report", category: "Report Management" },
-    { name: "report.download", display_name: "Download Report", category: "Report Management" },
-    { name: "settings.manage", display_name: "Manage Settings", category: "System" }
-  ];
-
-  for (const perm of permissionsData) {
-    const created = await prisma.permissions.create({
-      data: {
-        id: faker.string.uuid(),
-        ...perm,
-        updated_at: new Date()
-      }
-    });
-
-    await prisma.role_permissions.create({
-      data: {
-        id: faker.string.uuid(),
-        role_id: superAdminRole.id,
-        permission_id: created.id
-      }
-    });
-  }
-
-  /* =========================
-     3. DEPARTMENT
-  ==========================*/
   const itDept = await prisma.departments.create({
     data: {
       id: faker.string.uuid(),
       name: "IT Department",
       code: "IT",
+      parent_id: headDept.id,
       updated_at: new Date()
     }
-  });
-
-  /* =========================
-     4. USERS
-  ==========================*/
-  const passHash = await bcrypt.hashSync("123456", 10);
-
-  const adminUser = await prisma.users.create({
-    data:  {
-      id: faker.string.uuid(),
-      username: "admin",
-      email: "admin@example.com",
-      password: passHash, // "admin123",
-      first_name: "System",
-      last_name: "Admin",
-      status: UserStatus.ACTIVE,
-      department_id: itDept.id,
-      updated_at: new Date()
-    },
-  });
-
-
-  const normalUser = await prisma.users.create({
-    data:  {
-        id: faker.string.uuid(),
-        username: "user",
-        email: "user@example.com",
-        password: passHash,
-        first_name: "Demo",
-        last_name: "User",
-        status: UserStatus.ACTIVE,
-        department_id: itDept.id,
-        updated_at: new Date()
-      }
   })
 
-  await prisma.user_roles.createMany({
+  /* -------------------- ROLES -------------------- */
+  const adminRole = await prisma.roles.create({
+    data: {
+      id: faker.string.uuid(),
+      name: "ADMIN",
+      display_name: "Administrator",
+      is_system: true,
+      updated_at: new Date()
+    }
+  })
+
+  const userRole = await prisma.roles.create({
+    data: {
+      id: faker.string.uuid(),
+      name: "USER",
+      display_name: "General User",
+      updated_at: new Date()
+    }
+  })
+
+  /* -------------------- PERMISSIONS -------------------- */
+  const manageReports = await prisma.permissions.create({
+    data: {
+      id: "MANAGE_REPORTS",
+      name: "MANAGE_REPORTS",
+      display_name: "Manage Reports",
+      category: "REPORT",
+      updated_at: new Date()
+    }
+  })
+
+  const viewReports = await prisma.permissions.create({
+    data: {
+      id: "VIEW_REPORTS",
+      name: "VIEW_REPORTS",
+      display_name: "View Reports",
+      category: "REPORT",
+      updated_at: new Date()
+    }
+  })
+
+  /* -------------------- ROLE PERMISSIONS -------------------- */
+  await prisma.role_permissions.createMany({
     data: [
       {
-      id: faker.string.uuid(),
-      user_id: adminUser.id,
-      role_id: superAdminRole.id
+        id: faker.string.uuid(),
+        role_id: adminRole.id,
+        permission_id: manageReports.id,
       },
       {
         id: faker.string.uuid(),
-        user_id: normalUser.id,
-        role_id: userRole.id
+        role_id: adminRole.id,
+        permission_id: viewReports.id,
+      },
+      {
+        id: faker.string.uuid(),
+        role_id: userRole.id,
+        permission_id: viewReports.id,
       }
     ]
-  });
+  })
 
-  /* =========================
-     5. CATEGORY
-  ==========================*/
-  const financeCategory = await prisma.categories.create({
+  /* -------------------- USERS -------------------- */
+  const password = await bcrypt.hash("123456", 10)
+
+  const adminUser = await prisma.users.create({
+    data: {
+      id: faker.string.uuid(),
+      username: "admin",
+      email: "admin@example.com",
+      password,
+      first_name: "System",
+      last_name: "Admin",
+      department_id: itDept.id,
+      status: UserStatus.ACTIVE,
+      updated_at: new Date()
+    }
+  })
+
+  const normalUser = await prisma.users.create({
+    data: {
+      id: faker.string.uuid(),
+      username: "user1",
+      email: "user1@example.com",
+      password,
+      first_name: "John",
+      last_name: "Doe",
+      department_id: itDept.id,
+      updated_at: new Date()
+    }
+  })
+
+  /* -------------------- USER ROLES -------------------- */
+  await prisma.user_roles.createMany({
+    data: [
+      { id: faker.string.uuid(), user_id: adminUser.id, role_id: adminRole.id },
+      { id: faker.string.uuid(), user_id: normalUser.id, role_id: userRole.id }
+    ]
+  })
+
+  /* -------------------- CATEGORIES -------------------- */
+  const financeCat = await prisma.categories.create({
     data: {
       id: faker.string.uuid(),
       name: "Finance",
       code: "FIN",
       updated_at: new Date()
     }
-  });
+  })
 
-  /* =========================
-     6. TAG
-  ==========================*/
-  const monthlyTag = await prisma.tags.create({
+  const monthlyCat = await prisma.categories.create({
     data: {
       id: faker.string.uuid(),
-      name: "Monthly",
-      slug: "monthly",
+      name: "Monthly Report",
+      code: "FIN-MONTH",
+      parent_id: financeCat.id,
       updated_at: new Date()
     }
-  });
+  })
 
-  /* =========================
-     7. REPORT
-  ==========================*/
+  /* -------------------- TAGS -------------------- */
+  const tag1 = await prisma.tags.create({
+    data: {
+      id: faker.string.uuid(),
+      name: "2026",
+      slug: "2026",
+      updated_at: new Date()
+    }
+  })
+
+  const tag2 = await prisma.tags.create({
+    data: {
+      id: faker.string.uuid(),
+      name: "Revenue",
+      slug: "revenue",
+      updated_at: new Date()
+    }
+  })
+
+  /* -------------------- REPORT -------------------- */
   const report = await prisma.reports.create({
     data: {
       id: faker.string.uuid(),
       code: "RPT-001",
-      name_th: "รายงานการเงินประจำเดือน",
-      name_en: "Monthly Financial Report",
-      description: "Sample report for testing",
-      file_path: "/uploads/rpt1.pdf",
-      file_name: "rpt1.pdf",
-      file_type: "pdf",
+      name_th: "รายงานรายได้ประจำเดือน",
+      name_en: "Monthly Revenue Report",
+      file_path: "/reports/monthly.pdf",
+      file_name: "monthly.pdf",
+      file_type: "application/pdf",
       file_size: BigInt(204800),
-      category_id: financeCategory.id,
+      category_id: monthlyCat.id,
       department_id: itDept.id,
       created_by_id: adminUser.id,
       status: ReportStatus.PUBLISHED,
@@ -170,90 +188,103 @@ export async function initSeed(prisma:PrismaClient) {
       published_at: new Date(),
       updated_at: new Date()
     }
-  });
+  })
 
-  /* =========================
-     8. REPORT TAG
-  ==========================*/
-  await prisma.report_tags.create({
+  /* -------------------- REPORT VERSION -------------------- */
+  await prisma.report_versions.create({
     data: {
       id: faker.string.uuid(),
       report_id: report.id,
-      tag_id: monthlyTag.id
+      version: "1.0",
+      file_path: "/reports/monthly_v1.pdf",
+      file_name: "monthly_v1.pdf",
+      file_size: BigInt(204800),
+      created_by: adminUser.id
     }
-  });
+  })
 
-  /* =========================
-     9. DOWNLOAD
-  ==========================*/
-  await prisma.downloads.create({
-    data: {
-      id: faker.string.uuid(),
-      user_id: adminUser.id,
-      report_id: report.id,
-      ip_address: "127.0.0.1",
-      user_agent: "Seed Script"
-    }
-  });
+  /* -------------------- REPORT TAG -------------------- */
+  await prisma.report_tags.createMany({
+    data: [
+      { id: faker.string.uuid(), report_id: report.id, tag_id: tag1.id },
+      { id: faker.string.uuid(), report_id: report.id, tag_id: tag2.id }
+    ]
+  })
 
-  /* =========================
-     10. FAVORITE
-  ==========================*/
+  /* -------------------- FAVORITE -------------------- */
   await prisma.favorites.create({
     data: {
       id: faker.string.uuid(),
-      user_id: adminUser.id,
+      user_id: normalUser.id,
       report_id: report.id
     }
-  });
+  })
 
-  /* =========================
-     11. NOTIFICATION
-  ==========================*/
+  /* -------------------- DOWNLOAD -------------------- */
+  await prisma.downloads.create({
+    data: {
+      id: faker.string.uuid(),
+      user_id: normalUser.id,
+      report_id: report.id,
+      ip_address: "127.0.0.1",
+      user_agent: "Mozilla/5.0"
+    }
+  })
+
+  /* -------------------- NOTIFICATION -------------------- */
   await prisma.notifications.create({
     data: {
       id: faker.string.uuid(),
-      user_id: adminUser.id,
+      user_id: normalUser.id,
       type: NotificationType.REPORT_NEW,
-      title: "New Report Available",
-      message: "A new financial report has been published."
+      title: "New Report Published",
+      message: "Monthly Revenue Report is available."
     }
-  });
+  })
 
-  /* =========================
-     12. ACTIVITY LOG
-  ==========================*/
+  /* -------------------- ACTIVITY LOG -------------------- */
   await prisma.activity_logs.create({
     data: {
       id: faker.string.uuid(),
-      user_id: adminUser.id,
-      action: "CREATE",
+      user_id: normalUser.id,
+      action: "DOWNLOAD",
       entity: "REPORT",
       entity_id: report.id,
-      description: "Created Monthly Financial Report",
+      description: "Downloaded monthly report",
       ip_address: "127.0.0.1",
-      user_agent: "Seed Script"
+      user_agent: "Mozilla/5.0"
     }
-  });
+  })
 
-  /* =========================
-     13. SUPPORT TICKET
-  ==========================*/
+  /* -------------------- SUPPORT TICKET -------------------- */
   await prisma.support_tickets.create({
     data: {
       id: faker.string.uuid(),
       ticket_number: "TCK-0001",
-      user_id: adminUser.id,
+      user_id: normalUser.id,
       subject: "Cannot download report",
-      description: "Download button not working.",
-      category: "Technical",
+      description: "File download fails",
+      category: "REPORT",
       priority: TicketPriority.HIGH,
       status: TicketStatus.OPEN,
       updated_at: new Date()
     }
-  });
+  })
 
-  console.log("✅ Seeding completed successfully!");
+  /* -------------------- SETTINGS -------------------- */
+  await prisma.settings.create({
+    data: {
+      id: faker.string.uuid(),
+      key: "SYSTEM_NAME",
+      value: "Report Management System",
+      type: "STRING",
+      category: "SYSTEM",
+      is_public: true,
+      updated_at: new Date()
+    }
+  })
+
+  console.log("✅ Seeding completed.")
 }
 
 
