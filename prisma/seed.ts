@@ -18,8 +18,8 @@ const prisma = new PrismaClient({
 });
 
 async function main() {
-  await initSeed(prisma);
-  // await seedUsers(prisma);
+  // await initSeed(prisma);
+  await seedUsers(prisma);
   // await seedReports(prisma);
 }
 

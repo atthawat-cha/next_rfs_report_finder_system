@@ -18,7 +18,7 @@ export function getInitials(name: string){
   };
 
 
-export function formatDateTime(dateString: string,format:string='DD-MM-YYYY HH:mm:ss'): string {
+export function formatDateTime(dateString: string | Date | number,format:string='DD-MM-YYYY HH:mm:ss'): string {
 
   const date = new Date(dateString);
 

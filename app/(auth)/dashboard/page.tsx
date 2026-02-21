@@ -7,7 +7,6 @@ import Link from "next/link";
 
 export default async function DashboardPage() {
   const user = await getCurrentUser();
-
   if (!user) {
     redirect('/login');
   }
@@ -37,7 +36,7 @@ export default async function DashboardPage() {
           <div>
             <h1 className="text-3xl md:text-4xl font-bold">Dashboard</h1>
             <p className="text-muted-foreground mt-2">
-              ยินดีต้อนรับกลับมา, {user.name}!
+              ยินดีต้อนรับกลับมา, {user.first_name}!
             </p>
           </div>
 
@@ -62,7 +61,7 @@ export default async function DashboardPage() {
               <CardContent className="space-y-2">
                 <div>
                   <p className="text-sm font-medium">ชื่อ</p>
-                  <p className="text-sm text-muted-foreground">{user.name}</p>
+                  <p className="text-sm text-muted-foreground">{user.first_name}</p>
                 </div>
                 <div>
                   <p className="text-sm font-medium">อีเมล</p>

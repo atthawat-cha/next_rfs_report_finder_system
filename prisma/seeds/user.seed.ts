@@ -31,24 +31,24 @@ export async function seedUsers(prisma: PrismaClient) {
       data: [
         {
         id: faker.string.uuid(),
-        username: "admin",
-        email: "admin@example.com",
+        username: "admin2",
+        email: "admin2@example.com",
         password: "admin123",
         first_name: "System",
         last_name: "Admin",
         status: UserStatus.ACTIVE,
-        department_id: itDept.id,
+        department_id: itDept?.id,
         updated_at: new Date()
       },
       {
         id: faker.string.uuid(),
-        username: "user",
-        email: "user@example.com",
+        username: "user2",
+        email: "user2@example.com",
         password: "user123",
         first_name: "System",
         last_name: "User",
         status: UserStatus.ACTIVE,
-        department_id: itDept.id,
+        department_id: itDept?.id,
         updated_at: new Date()
       }
       ]
@@ -58,13 +58,13 @@ export async function seedUsers(prisma: PrismaClient) {
       data: [
         {
         id: faker.string.uuid(),
-        user_id: adminUser.id,
-        role_id: superAdminRole.id
+        user_id: adminUser?.id,
+        role_id: superAdminRole?.id
       },
       {
         id: faker.string.uuid(),
-        user_id: adminUser.id,
-        role_id: userRole.id
+        user_id: adminUser?.id,
+        role_id: userRole?.id
       }
       ],
       skipDuplicates: true
