@@ -13,6 +13,7 @@ import {
     DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
 import { formatDateTime } from '@/lib/utils'
+import { MoreHorizontal } from 'lucide-react'
 
 export const department_columns: ColumnDef<DepartmentType>[] = [
     {
@@ -63,13 +64,16 @@ export const department_columns: ColumnDef<DepartmentType>[] = [
     },
     {
         id: 'actions',
+        accessorKey: 'action',
+        header: 'Actions',
         cell: ({ row }) => {
+          const id = row?.original?.id
           return (
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
                 <Button variant="ghost" className="h-8 w-8 p-0">
                   <span className="sr-only">Open menu</span>
-                  <div className="h-4 w-4" />
+                  <MoreHorizontal className="h-4 w-4" />
                 </Button>
               </DropdownMenuTrigger>
               <DropdownMenuContent align="end">

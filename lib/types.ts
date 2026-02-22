@@ -7,14 +7,15 @@ export interface UserLoginType {
 
 export interface UserCreateType {
     username: string;
-    email: string | null;
+    email?: string | null;
     password: string;
     first_name: string;
-    last_name: string;
-    phone_number: string;
+    last_name?: string;
+    phone_number?: string;
     department_id: string;
+    role_id: string;
     status: string;
-    created_at: Date;
+    created_at?: Date;
 }
 
 export interface UserUpdateType {
@@ -95,7 +96,7 @@ export interface UserRolePermissionType {
 export interface UserRolesType {
     id: string;
     name: string;
-    role_permissions?: UserRolePermissionType[];
+    // role_permissions?: UserRolePermissionType[];
 }
 
 export interface Roles {
@@ -104,8 +105,9 @@ export interface Roles {
 
 export interface UserSessionType {
     id: string;
-    username: string;
-    first_name: string | null;
-    password: string;
-    user_roles: Roles;
+    username?: string |null;
+    first_name?: string | null;
+    password?: string|null;
+    department_id?:string | null;
+    roles?: UserRolesType;
 }

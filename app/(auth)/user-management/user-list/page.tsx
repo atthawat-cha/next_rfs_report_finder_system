@@ -1,7 +1,6 @@
 'use client'
 import { ContentLayout } from '@/components/layouts/content-layout'
 import { Breadcrumb, BreadcrumbItem, BreadcrumbLink, BreadcrumbList, BreadcrumbPage, BreadcrumbSeparator } from '@/components/ui/breadcrumb'
-import { User } from '@/lib/auth';
 import Link from 'next/link'
 import React from 'react';
 import { UsersDataTable } from './users-data-table';
@@ -9,6 +8,7 @@ import { users_columns } from './columns';
 import { UserTableType } from '@/lib/types';
 import { Separator } from "@/components/ui/separator"
 import { Button } from '@/components/ui/button';
+import { redirect } from 'next/navigation';
 
 
 
@@ -76,8 +76,10 @@ export default function UserLists() {
         <div className='flex items-center justify-between'>
           <h3 className="text-3xl md:text-4xl font-bold">User Lists</h3>
           {/* <Link href="/user-management/user-department" className='btn btn-primary'>Add User</Link> */}
-          <Button >
-            New User
+          <Button asChild>
+            <Link href={'/user-management/user-form'}>
+              New User
+            </Link>
           </Button>
         </div>
         <Separator className='my-5'/>

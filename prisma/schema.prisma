@@ -218,6 +218,7 @@ model roles {
   updated_at       DateTime
   role_permissions role_permissions[]
   user_roles       user_roles[]
+  users            users[]              
 }
 
 model settings {
@@ -313,6 +314,9 @@ model users {
   support_tickets     support_tickets[]
   user_roles          user_roles[]
   user_sessions       user_sessions[]
+  role_id             String            @db.VarChar(100)
+
+  roles               roles             @relation(fields: [role_id], references: [id], onDelete: Cascade)
   departments         departments?      @relation(fields: [department_id], references: [id])
 }
 

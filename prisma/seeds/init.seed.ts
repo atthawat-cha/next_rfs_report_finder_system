@@ -53,8 +53,8 @@ export async function initSeed(prisma:PrismaClient) {
   /* -------------------- PERMISSIONS -------------------- */
   const manageReports = await prisma.permissions.create({
     data: {
-      id: "MANAGE_REPORTS",
-      name: "MANAGE_REPORTS",
+      id: faker.string.uuid(),
+      name: "REPORTS_LIST",
       display_name: "Manage Reports",
       category: "REPORT",
       updated_at: new Date()
@@ -63,10 +63,10 @@ export async function initSeed(prisma:PrismaClient) {
 
   const viewReports = await prisma.permissions.create({
     data: {
-      id: "VIEW_REPORTS",
-      name: "VIEW_REPORTS",
-      display_name: "View Reports",
-      category: "REPORT",
+      id:  faker.string.uuid(),
+      name: "DEPARTMENT",
+      display_name: "Department",
+      category: "User Management",
       updated_at: new Date()
     }
   })
@@ -104,6 +104,7 @@ export async function initSeed(prisma:PrismaClient) {
       first_name: "System",
       last_name: "Admin",
       department_id: itDept.id,
+      role_id: adminRole.id,
       status: UserStatus.ACTIVE,
       updated_at: new Date()
     }
@@ -117,18 +118,19 @@ export async function initSeed(prisma:PrismaClient) {
       password,
       first_name: "John",
       last_name: "Doe",
+      role_id: userRole.id,
       department_id: itDept.id,
       updated_at: new Date()
     }
   })
 
   /* -------------------- USER ROLES -------------------- */
-  await prisma.user_roles.createMany({
-    data: [
-      { id: faker.string.uuid(), user_id: adminUser.id, role_id: adminRole.id },
-      { id: faker.string.uuid(), user_id: normalUser.id, role_id: userRole.id }
-    ]
-  })
+  // await prisma.user_roles.createMany({
+  //   data: [
+  //     { id: faker.string.uuid(), user_id: adminUser.id, role_id: adminRole.id },
+  //     { id: faker.string.uuid(), user_id: normalUser.id, role_id: userRole.id }
+  //   ]
+  // })
 
   /* -------------------- CATEGORIES -------------------- */
   const financeCat = await prisma.categories.create({
@@ -143,9 +145,8 @@ export async function initSeed(prisma:PrismaClient) {
   const monthlyCat = await prisma.categories.create({
     data: {
       id: faker.string.uuid(),
-      name: "Monthly Report",
-      code: "FIN-MONTH",
-      parent_id: financeCat.id,
+      name: "OPD",
+      code: "OPD",
       updated_at: new Date()
     }
   })

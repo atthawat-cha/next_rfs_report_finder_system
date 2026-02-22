@@ -5,6 +5,7 @@ import bcrypt from 'bcryptjs';
 import { ZodSchema } from 'zod';
 import { RoleType, UserLoginType, UserSessionType } from './types';
 
+
 const JWT_SECRET = new TextEncoder().encode(
   process.env.JWT_SECRET ?? (() => { throw new Error("JWT_SECRET is not set"); })()
 );
@@ -96,7 +97,8 @@ export async function authenticate(loginUser: LoginRequest, user: UserSessionTyp
     username: user.username,
     first_name: user.first_name,
     password: user.password,
-    user_roles: user.user_roles,
+    department_id:user.department_id,
+    roles: user.roles,
   };
 }
 
@@ -176,14 +178,11 @@ export async function requireRole(req: NextRequest,allowedRoles: string[]): Prom
   const result = await requireAuth(req);
   if (result instanceof NextResponse) return result; // propagate 401
 
-  console.log(result)
-
   // Check if user has at least one of the allowed roles
-  const userRoles = result?.user_roles?.map(r => r.roles.name) || [];
-  const role = userRoles.map(r => r);
-  console.log(role);
+  const {user} = result
+  const userRoles:string = user?.roles?.name!
 
-  if (!allowedRoles.includes(role)) {
+  if (!allowedRoles.includes(userRoles.toLowerCase())) {
     return NextResponse.json({ error: "Forbidden" }, { status: 403 });
   }
 

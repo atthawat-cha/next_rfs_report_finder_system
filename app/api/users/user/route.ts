@@ -1,6 +1,9 @@
 import prisma from '@/lib/prisma';
+import { faker } from '@faker-js/faker';
 import { NextRequest, NextResponse } from 'next/server';
 import { z } from 'zod';
+import bcrypt from 'bcryptjs';
+import { UserStatus } from '@/app/generated/prisma/enums';
 
 export async function GET(req:NextRequest){
   try {
@@ -26,45 +29,47 @@ export async function GET(req:NextRequest){
     first_name: z.string().min(1, 'กรุณากรอกชื่อ'),
     last_name: z.string().min(1, 'กรุณากรอกนามสกุล'),
     department_id: z.string().min(1, 'กรุณาเลือกหน่วยงาน'),
+    role_id:z.string().min(3,'Plase choose role'),
     status: z.string().min(1, 'กรุณาเลือกสถานะ')
   })
 
-// export async function POST(req:NextRequest){
-//   try {
+export async function POST(req:NextRequest){
+  try {
 
-//     const body = await req.json();
-//     const validatedData = userZod.parse(body);
-//     const user = await prisma.users.create({
-//       data: {
-//         id: faker.string.uuid(),
-//         username: validatedData.username,
-//         email: validatedData.username,
-//         password: await bcrypt.hash(validatedData.password, 10),
-//         first_name: validatedData.first_name,
-//         last_name: validatedData.last_name,
-//         department_id: validatedData.department_id,
-//         status: UserStatus.ACTIVE,
-//         created_at: new Date(),
-//         updated_at: new Date()
-//       },
-//     });
+    const body = await req.json();
+    const validatedData = userZod.parse(body);
+    const user = await prisma.users.create({
+      data: {
+        id: faker.string.uuid(),
+        username: validatedData.username,
+        email: validatedData.username,
+        password: await bcrypt.hash(validatedData.password, 10),
+        first_name: validatedData.first_name,
+        last_name: validatedData.last_name,
+        department_id: validatedData.department_id,
+        status: UserStatus.ACTIVE,
+        role_id:validatedData.role_id,
+        created_at: new Date(),
+        updated_at: new Date()
+      },
+    });
 
-//     if (!user) {
-//       return NextResponse.json(
-//         { error: "Invalid input" },
-//         { status: 400 }
-//       );
-//     }
-//     return NextResponse.json({success: true, data: user.id}, { status: 200 });
-//   } catch (error) {
-//     console.error(error);
-//   return NextResponse.json(
-//     { error: "Invalid input", details: String(error) },
-//     { status: 400 }
-//   );
-//   }
+    if (!user) {
+      return NextResponse.json(
+        { error: "Invalid input" },
+        { status: 400 }
+      );
+    }
+    return NextResponse.json({success: true, data: user.id}, { status: 200 });
+  } catch (error) {
+    console.error(error);
+  return NextResponse.json(
+    { error: "Invalid input", details: String(error) },
+    { status: 400 }
+  );
+  }
   
-// }
+}
 
 
 // export async function GET(req: NextRequest, res: NextResponse) {
