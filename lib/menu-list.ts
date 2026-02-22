@@ -141,7 +141,7 @@
         ]
       },
       {
-        href: "/role-management",
+        href: "/role-management/roles",
         label: "Role Management",
         icon: Settings,
         submenus: []
