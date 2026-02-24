@@ -1,9 +1,15 @@
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';
 import { getCurrentUser } from '@/lib/auth';
+import { redirect } from 'next/navigation';
 
 export default async function Home() {
   const user = await getCurrentUser();
+  if (user) {
+    redirect('/dashboard');
+  }else {
+    redirect('/login');
+  }
 
   return (
     <div className="container mx-auto px-4 py-16">

@@ -17,11 +17,33 @@ export async function GET(req:NextRequest){
 
         const roles = await prisma.roles.findMany({
             select: {
+                _count:{
+                    select:{users:true}
+                },
                 id: true,
                 name: true,
-                user_roles: true,
+                display_name: true,
+                description: true,
+                role_permissions:{
+                    select:{
+                        id: true,
+                        permission_id: true,
+                        can_create: true,
+                        can_view: true,
+                        can_update: true,
+                        can_delete: true,
+                        permissions: {
+                            select:{
+                                id: true,
+                                name: true,
+                                display_name: true,
+                                category: true,
+                            }
+                        },
+                    },
+                },
                 created_at: true,
-                updated_at: true,
+                updated_at: true,               
             },
             orderBy: {
                 created_at: 'asc',

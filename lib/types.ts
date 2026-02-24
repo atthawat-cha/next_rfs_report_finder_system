@@ -68,6 +68,18 @@ export interface RoleType {
     name: string;
 }
 
+export interface RolesTableType {
+    id: string;
+    name: string;
+    created_at?: Date;
+    updated_at?: Date;
+    description?: string;
+    display_name?: string;
+    _count?: {
+        users: number;
+    };
+}
+
 export interface UserWithRolesType {
     id: string;
     username: string;

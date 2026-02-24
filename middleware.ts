@@ -18,12 +18,19 @@ export async function middleware(request: NextRequest) {
   // ดึงข้อมูล user จาก token
   const user = await getAuthFromRequest(request);
 
+  // get token from cookie
+  const token = request.cookies.get('auth_token')?.value;
+
   // ถ้าไม่มี user และพยายามเข้าหน้าที่ต้อง authentication
-  if (isProtectedPath && !user) {
+  if (!user) {
     const url = new URL('/login', request.url);
     url.searchParams.set('redirect', pathname);
     return NextResponse.redirect(url);
   }
+
+  // if (isPublicPath && !user) {
+  //   return NextResponse.redirect(new URL('/login', request.url));
+  // }
 
   // ถ้ามี user แล้วพยายามเข้าหน้า login
   if (pathname === '/login' && user) {
@@ -42,7 +49,9 @@ export const config = {
      * - _next/image (image optimization files)
      * - favicon.ico (favicon file)
      */
-    '/((?!api|_next/static|_next/image|favicon.ico).*)',
-    '/((?!api/auth/login).*)',
+    // '/((?!api|_next/static|_next/image|favicon.ico).*)',
+    // '/((?!api/auth/login).*)',
+    '/app/:path*',
+    '/((?!login|api|_next/static|_next/image|favicon.ico).*)',
   ],
 };
