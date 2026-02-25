@@ -62,8 +62,8 @@ export default function RolesManagement() {
         <div className='flex items-center justify-between'>
           <h5 className="text-xl md:text-3xl font-bold">Roles</h5>
           {/* <Link href="/user-management/user-department" className='btn btn-primary'>Add User</Link> */}
-          <Button>
-            New Role
+          <Button asChild>
+            <Link href="/role-management/role-form" className='btn btn-primary'>New Role</Link>
           </Button>
         </div>
         <Separator className='my-5'/>
