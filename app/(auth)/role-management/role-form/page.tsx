@@ -20,6 +20,38 @@ export default function RolesFormManage() {
     console.log(roleData);
   }
 
+  const fetchPermissionTemplate = async () => {
+    try {
+      const res = await fetch('/api/baseconfig/permissions',{
+        method: "GET",
+        headers: {
+          "Content-Type": "application/json",
+          "Access-Control-Allow-Origin": "*",
+        },
+        credentials: "include",
+      });
+
+      if (!res.ok) {
+        console.error(await res.text());
+        return;
+      }
+
+      const data = await res.json();
+
+      if (!data?.success) {
+        return;
+      }
+      console.log(data);
+      setRoleTemplate(data?.data);
+    } catch (error) {
+      console.error('Error fetching users:', error);
+    }
+  }
+
+  React.useEffect(() => {
+    fetchPermissionTemplate();
+  }, []);
+
 
   return (
     <ContentLayout title="Role Management">

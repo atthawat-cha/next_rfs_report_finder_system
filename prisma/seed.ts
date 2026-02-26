@@ -8,6 +8,7 @@ import 'dotenv/config'
 import { initSeed } from "./seeds/init.seed"; // All seed functions
 import { seedUsers } from "./seeds/user.seed"; // User seed
 import { seedReports } from "./seeds/reports.seed"; // Reports seed
+import { seedMenus } from "./seeds/menus.seed";
 
 const adapter = new PrismaPg({
   connectionString: process.env.DATABASE_URL,
@@ -18,9 +19,10 @@ const prisma = new PrismaClient({
 });
 
 async function main() {
-  await initSeed(prisma);
+  // await initSeed(prisma);
   // await seedUsers(prisma);
   // await seedReports(prisma);
+  await seedMenus(prisma);
 }
 
 main()
