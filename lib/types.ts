@@ -123,3 +123,26 @@ export interface UserSessionType {
     department_id?:string | null;
     roles?: UserRolesType;
 }
+
+
+// Permissions Type
+
+export interface MenuType {
+    label: string;
+    submenus?:[]
+    can_view?: boolean;
+    can_create?: boolean;
+    can_update?: boolean;
+    can_delete?: boolean;
+}
+
+export interface PermissionTemplateType {
+    role_permission_id:string;
+    group_label:string;
+    menu: MenuType[];
+}
+
+
+export interface RolePermissionsType {
+    role_permissions : PermissionTemplateType[]
+}
