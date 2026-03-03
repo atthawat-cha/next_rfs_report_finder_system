@@ -10,7 +10,7 @@ export async function seedReports(prisma: PrismaClient) {
         id: true
       },
       where: {
-        username: "admin"
+        username: "admin2"
       }
     });
 
@@ -46,11 +46,11 @@ export async function seedReports(prisma: PrismaClient) {
         file_size: BigInt(204800),
         category_id: financeCategory?.id,
         department_id: itDept?.id,
-        created_by_id: adminUser?.id,
+        created_by_id: adminUser?.id ,
         status: ReportStatus.PUBLISHED,
         access_level: AccessLevel.PUBLIC,
         published_at: new Date(),
-        updated_at: new Date()
+        updated_at: new Date(),
       },
       {
         id: faker.string.uuid(),
@@ -64,7 +64,7 @@ export async function seedReports(prisma: PrismaClient) {
         file_size: BigInt(204800),
         category_id: financeCategory?.id,
         department_id: itDept?.id,
-        created_by_id: adminUser?.id,
+        created_by_id: adminUser?.id ,
         status: ReportStatus.PUBLISHED,
         access_level: AccessLevel.PUBLIC,
         published_at: new Date(),
@@ -82,7 +82,7 @@ export async function seedReports(prisma: PrismaClient) {
         file_size: BigInt(204800),
         category_id: financeCategory?.id,
         department_id: itDept?.id,
-        created_by_id: adminUser?.id,
+        created_by_id: adminUser?.id ,
         status: ReportStatus.PUBLISHED,
         access_level: AccessLevel.PUBLIC,
         published_at: new Date(),
@@ -95,13 +95,9 @@ export async function seedReports(prisma: PrismaClient) {
     ==========================*/
     await prisma.reports.deleteMany()
 
-    for (const report of reportsData) {
       await prisma.reports.createMany({
-        data: {
-          ...report
-        }
+        data: reportsData
       });
-    }
 
-    console.log("Reports Seeding End...........");
+    console.log("Reports Seeding End...........")
 }

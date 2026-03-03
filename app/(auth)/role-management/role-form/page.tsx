@@ -1,4 +1,6 @@
 "use client";
+import Link from "next/link";
+import React from "react";
 import { ContentLayout } from "@/components/layouts/content-layout";
 import PermissionsFormCheckbox from "@/components/shared/permissions-form";
 import {
@@ -16,16 +18,52 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Separator } from "@/components/ui/separator";
 import { PermissionTemplateType } from "@/lib/types";
-import Link from "next/link";
-import React from "react";
+import toast from "react-hot-toast";
+
 
 export default function RolesFormManage() {
   const [isLoading, setIsLoading] = React.useState(false);
-  const [roleData, setRoleData] = React.useState({});
+  const [params, setParams] = React.useState({role:{name:"", display_name:""}, permissions: []});
   const [roleTemplate, setRoleTemplate] = React.useState<PermissionTemplateType[]>();
 
   const handleSubmit = async () => {
-    console.log(roleData);
+    setIsLoading(true);
+    if(!params.role.name || !params.role.display_name) {
+      toast.error("Please fill in all required fields");
+      setIsLoading(false);
+      return;
+    }
+    try {
+      const res = await fetch("/api/users/roles", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "Access-Control-Allow-Origin": "*",
+        },
+        credentials: "include",
+        body: JSON.stringify(params),
+      });
+
+      if (!res.ok) {
+        console.error(await res.text());
+        return;
+      }
+
+      const data = await res.json();
+      if (!data?.success) {
+        return;
+      }
+      toast.success("Role has been created successfully");
+      setIsLoading(false);
+      setParams({
+        role: { name: "", display_name: "" },
+        permissions: [],
+      });
+    } catch (error) {
+      toast.error("An error occurred while submitting the form");
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   const fetchPermissionTemplate = async () => {
@@ -49,7 +87,6 @@ export default function RolesFormManage() {
       if (!data?.success) {
         return;
       }
-      console.log(data);
       setRoleTemplate(data?.data);
     } catch (error) {
       console.error("Error fetching users:", error);
@@ -84,7 +121,6 @@ export default function RolesFormManage() {
       <div className="container mx-auto py-10 gap-6">
         <div className="flex items-center justify-between">
           <h5 className="text-xl md:text-3xl font-bold">Roles</h5>
-          {/* <Link href="/user-management/user-department" className='btn btn-primary'>Add User</Link> */}
           <Button asChild>
             <Link href="/role-management/roles" className="btn btn-primary">
               Back
@@ -102,13 +138,13 @@ export default function RolesFormManage() {
                     id="name"
                     type="text"
                     placeholder="Role Name"
-                    value={""}
+                    value={params?.role?.name ?? ''}
                     autoComplete="off"
-                    // onChange={(e) =>
-                    //   setUserParams({ ...userParams, username: e.target.value })
-                    // }
+                    onChange={(e) =>
+                      setParams({ ...params, role: { ...params.role, name: e.target.value } })
+                    }
                     required
-                    // disabled={isLoading}
+                    disabled={isLoading}
                   />
                   <FieldDescription className="text-sm text-muted-foreground pl-2">
                     Enter you're role name to above.
@@ -121,43 +157,38 @@ export default function RolesFormManage() {
                     id="display_name"
                     type="text"
                     placeholder="Display Name"
-                    value={""}
+                    value={params?.role?.display_name ?? ''}
                     autoComplete="off"
-                    // onChange={(e) =>
-                    //   setUserParams({ ...userParams, username: e.target.value })
-                    // }
+                    onChange={(e) =>
+                      setParams({ ...params, role: { ...params.role, display_name: e.target.value } })
+                    }
                     required
-                    // disabled={isLoading}
+                    disabled={isLoading}
                   />
                 </div>
               </div>
             </CardContent>
 
             <CardContent>
-              {roleTemplate?.length &&  <PermissionsFormCheckbox data={[]} template={roleTemplate} />}
+              {roleTemplate?.length &&  <PermissionsFormCheckbox params={params} setParams={setParams} template={roleTemplate} />}
             </CardContent>
 
             <CardFooter>
-              <div className="flex item-center justify-between my-2 gap-5">
+              <div className="w-full flex item-end justify-between my-2 gap-5">
                 <Button
                   type="button"
                   className="w-full"
                   disabled={isLoading}
-                  onClick={handleSubmit}
-                >
+                  onClick={handleSubmit}>
                   {isLoading ? "กำลังบันทึก..." : "บันทึก"}
                 </Button>
 
-                <div className="text-sm text-center text-muted-foreground">
-                  <Button asChild>
-                    <Link
-                      href="/user-management/user-list"
-                      className="hover:text-primary transition-colors"
-                    >
-                      Reset
-                    </Link>
-                  </Button>
-                </div>
+                <Button variant='outline' className="w-full" asChild>
+                  <Link href="/user-management/user-list" className="hover:text-primary transition-colors">
+                    ล้างข้อมูล
+                  </Link>
+                </Button>
+
               </div>
             </CardFooter>
           </form>

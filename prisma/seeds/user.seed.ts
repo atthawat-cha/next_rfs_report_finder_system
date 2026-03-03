@@ -6,7 +6,7 @@ export async function seedUsers(prisma: PrismaClient) {
 
   const userRole = await prisma.roles.findFirst({
     where: {
-      name: "User"
+      name: "USER"
     }
   });
 
@@ -15,7 +15,7 @@ export async function seedUsers(prisma: PrismaClient) {
       id: true
     },
     where: {
-      name: "Admin"
+      name: "ADMIN"
     }
   });
 

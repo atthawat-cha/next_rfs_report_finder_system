@@ -102,6 +102,8 @@ export async function POST(req:NextRequest){
 
         // Validate request body
         const body = await req.json();
+        console.log(body);
+        return NextResponse.json({success: true, data: []}, {status: 200});
         const {roleData , permissionData} = body;
 
         const roleValidate = roleZod.parse(roleData);

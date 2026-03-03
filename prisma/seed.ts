@@ -25,8 +25,8 @@ async function main() {
   // await initSeed(prisma);
   // await rolesSeed(prisma)
   // await seedUsers(prisma);
-  // await seedReports(prisma);
-  // await seedMenus(prisma);
+  await seedReports(prisma);
+  await seedMenus(prisma);
   await seedPermissions(prisma);
   await seedRolePermission(prisma);
 }

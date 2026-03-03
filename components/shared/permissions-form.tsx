@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useEffect } from "react";
 import { Checkbox } from "@/components/ui/checkbox";
 import {
   Field,
@@ -19,16 +19,18 @@ import _ from "lodash";
 
 export default function PermissionsFormCheckbox({
   params,
+  setParams,
   template,
 }: {
   params: RolePermissionsType;
+  setParams: React.Dispatch<React.SetStateAction<RolePermissionsType>>;
   template: PermissionTemplateType[];
 }) {
   if (!template) return null;
 
   const converted = perConvertToCheckbox(template)
   const [selectedRows, setSelectedRows] = React.useState<Set<string>>(
-    new Set(["1"])
+    new Set([])
   )
   const selectAll = selectedRows.size > converted.length
   // console.log(converted)
@@ -86,14 +88,18 @@ export default function PermissionsFormCheckbox({
     setSelectedRows(newSelected)
   }
   
-
+  useEffect(() => {
+    const selectedArray = Array.from(selectedRows)
+    setParams({...params, permissions: selectedArray})
+    
+  }, [selectedRows, setParams])
 
   return (
     <FieldSet>
       <div className="flex item-center justify-between my-2 gap-5">
         <div className="flex flex-col w-full justify-start">
             <FieldLegend variant="label">
-            <FieldTitle>Permissions</FieldTitle>
+            <FieldTitle className="text-xl">Permissions</FieldTitle>
           </FieldLegend>
           <FieldDescription>Select the permissions you want.</FieldDescription>
         </div>
@@ -111,7 +117,7 @@ export default function PermissionsFormCheckbox({
           template?.map((item: PermissionTemplateType) => (
             <div id={item.menu_id}>
               <FieldGroup className="gap-2 mx-auto">
-                <Field orientation="horizontal" className="pl-5 align-item-end">
+                <Field orientation="horizontal" className="pl-5 align-item-end items-center">
                   <FieldLegend variant="label" className="mt-5 w-40">
                     <FieldTitle className="">{item.group_label}</FieldTitle>
                   </FieldLegend>
