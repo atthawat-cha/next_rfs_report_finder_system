@@ -1,6 +1,7 @@
-import { menuPermissionsMock } from "@/fakedata/permissionsmock";
+import mockmenus from "@/fakedata/permissionsmock";
 import { requireAuth, requireRole } from "@/lib/auth";
 import prisma from "@/lib/prisma";
+import { buildMenusrender, buildMenuStructure } from "@/lib/user-management";
 import { NextRequest, NextResponse } from "next/server";
 
 
@@ -24,29 +25,28 @@ export async function GET(req:NextRequest){
             id: true,
             name: true,
             display_name: true,
-            menu_permissions:{
-                select :{
+            category: true,
+            menus: {
+                select: {
                     id: true,
-                    menu_id: true,
-                    menus:{
-                        select:{
-                            id: true,
-                            group_label: true,
-                            catagory_label: true,
-                            menu_label: true,
-                            sub_menu_label: true,
-                            sort_order: true
-                        }
-                    }
+                    group_label: true,
+                    catagory_label: true,
+                    menu_label: true,
+                    sub_menu_label: true,
+                    sort_order: true,
+                    href: true,
+                    icon: true
                 }
             }
+            
         }
-    });
+    })
+    const result = buildMenusrender(buildMenuStructure(permissionsTemplate));
+
+    // const result = buildMenusrender(mockmenus);
 
 
-    const mockData = menuPermissionsMock();
-
-    return NextResponse.json({success: true, data: mockData}, { status: 200 });
+    return NextResponse.json({success: true, data:result}, { status: 200 });
     } catch (error) {
         console.error(error);
         return NextResponse.json({error: console.error()}, {status: 400})

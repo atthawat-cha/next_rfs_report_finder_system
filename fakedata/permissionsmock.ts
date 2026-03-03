@@ -1,6 +1,6 @@
 import { faker } from "@faker-js/faker";
 
-const menus = [
+const mockmenus = [
   {
     groupLabel: "Dashboard & Analytics",
     menus: [
@@ -253,24 +253,4 @@ const menus = [
   },
 ];
 
-export const menuPermissionsMock = () => {
-  return menus.map((item) => ({
-    role_permission_id: faker.string.uuid(),
-    group_label: item.groupLabel,
-    menu : item.menus.map((menu) => ({
-      label: menu.label,
-      can_view: true,
-      can_update: true,
-      can_delete: true,
-      can_create: true,
-      submenus :menu.submenus.length > 0 && menu.submenus.map((submenu) => ({
-        label: submenu.label,
-        can_view: true,
-        can_update: true,
-        can_delete: true,
-        can_create: true
-      }))
-    })),
-    
-  }));
-};
+export default mockmenus;

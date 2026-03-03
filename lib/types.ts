@@ -127,17 +127,48 @@ export interface UserSessionType {
 
 // Permissions Type
 
-export interface MenuType {
+export interface SubmenuType {
     label: string;
-    submenus?:[]
+    href?: string;
+    icon?: string;
     can_view?: boolean;
     can_create?: boolean;
     can_update?: boolean;
     can_delete?: boolean;
 }
 
+export interface MenuType {
+    label: string;
+    href?: string;
+    icon?: string;
+    submenus:SubmenuType[];
+    can_view?: boolean;
+    can_create?: boolean;
+    can_update?: boolean;
+    can_delete?: boolean;
+}
+
+export interface MenusDBType{
+    id:string;
+    group_label:string;
+    catagory_label:string;
+    menu_label:string;
+    sub_menu_label:string;
+    href:string;
+    icon:string;
+    sort_order:number;
+}
+
+export interface MenusDataBaseType {
+    id: string;
+    name: string;
+    display_name: string;
+    catagory: string;
+    menus: MenusDBType;
+}
+
 export interface PermissionTemplateType {
-    role_permission_id:string;
+    menu_id:string;
     group_label:string;
     menu: MenuType[];
 }
@@ -145,4 +176,26 @@ export interface PermissionTemplateType {
 
 export interface RolePermissionsType {
     role_permissions : PermissionTemplateType[]
+}
+
+
+export interface PermissionType {
+    id: string;
+    name:string;
+    display_name:string;
+    category:string;
+    description?:string;
+    created_at?: Date;
+    updated_at?: Date;
+}
+
+export interface MenusListType{
+    menu_id:string;
+    groupLabel:string;
+    menus:MenuType[]
+
+}
+
+export interface MainMenusListType {
+    menus:MenusDataBaseType[]
 }

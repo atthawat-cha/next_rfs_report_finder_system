@@ -1,11 +1,12 @@
 import { PrismaClient, UserStatus } from "@/app/generated/prisma/client"
 import { faker } from '@faker-js/faker';
+import bcrypt from 'bcryptjs';
 
 export async function seedUsers(prisma: PrismaClient) {
 
   const userRole = await prisma.roles.findFirst({
     where: {
-      name: "user"
+      name: "User"
     }
   });
 
@@ -14,7 +15,7 @@ export async function seedUsers(prisma: PrismaClient) {
       id: true
     },
     where: {
-      name: "admin"
+      name: "Admin"
     }
   });
 
@@ -27,27 +28,30 @@ export async function seedUsers(prisma: PrismaClient) {
     }
   });
 
+  const password = await bcrypt.hash("123456", 10)
   const adminUser = await prisma.users.createMany({
       data: [
         {
         id: faker.string.uuid(),
         username: "admin2",
         email: "admin2@example.com",
-        password: "admin123",
+        password: password,
         first_name: "System",
         last_name: "Admin",
         status: UserStatus.ACTIVE,
         department_id: itDept?.id,
+        role_id: superAdminRole?.id,
         updated_at: new Date()
       },
       {
         id: faker.string.uuid(),
         username: "user2",
         email: "user2@example.com",
-        password: "user123",
+        password: password,
         first_name: "System",
         last_name: "User",
         status: UserStatus.ACTIVE,
+        role_id:userRole?.id,
         department_id: itDept?.id,
         updated_at: new Date()
       }
