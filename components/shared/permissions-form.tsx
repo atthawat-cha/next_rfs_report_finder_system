@@ -15,6 +15,7 @@ import {
   RolePermissionsType,
 } from "@/lib/types";
 import { perConvertToCheckbox } from "@/lib/user-management";
+import _ from "lodash";
 
 export default function PermissionsFormCheckbox({
   params,
@@ -26,22 +27,54 @@ export default function PermissionsFormCheckbox({
   if (!template) return null;
 
   const converted = perConvertToCheckbox(template)
-  console.log(converted)
   const [selectedRows, setSelectedRows] = React.useState<Set<string>>(
     new Set(["1"])
   )
-  const selectAll = selectedRows.size === converted.length
-  
-  const itemChecked = (id:string) =>{
-    return converted.includes(id)
+  const selectAll = selectedRows.size > converted.length
+  // console.log(converted)
+
+  const handleIdSplit = (id: string) => {
+    return id.split("-")
   }
 
   const handleSelectAll = (checked: boolean) => {
-    if (checked) {
-      setSelectedRows(new Set(converted.map((id) => id)))
+    const groupSelected = new Set(selectedRows)
+    if (checked && !selectAll) {
+      // merge group id
+      converted.map((id) =>{ 
+        const sp = handleIdSplit(id) 
+        const grpId = `p-${sp[1]}-${_.last(sp)}`
+        if(!groupSelected.has(grpId)){
+          groupSelected.add(grpId)
+          groupSelected.add(id)
+        }else{
+          groupSelected.add(id)
+        }
+      })
+      setSelectedRows(groupSelected)
     } else {
       setSelectedRows(new Set())
     }
+  }
+
+  const handleSelectGroupRows = (grpId:string,checked: boolean) => {
+    const newSelected = new Set(selectedRows)
+
+    // Split group id
+    const groupsplit = handleIdSplit(grpId)
+
+    if (checked) {
+      newSelected.add(grpId)
+      converted.filter((id) => id.startsWith(`p-${groupsplit[1]}-`) && id.endsWith(`-${groupsplit[2]}`)).forEach((id) => {
+        newSelected.add(id)
+      })
+    } else {
+      newSelected.delete(grpId)
+      converted.filter((id) => id.startsWith(`p-${groupsplit[1]}-`) && id.endsWith(`-${groupsplit[2]}`)).forEach((id) => {
+        newSelected.delete(id)
+      })
+    }
+    setSelectedRows(newSelected)
   }
   const handleSelectRow = (id: string, checked: boolean) => {
     const newSelected = new Set(selectedRows)
@@ -52,6 +85,7 @@ export default function PermissionsFormCheckbox({
     }
     setSelectedRows(newSelected)
   }
+  
 
 
   return (
@@ -87,7 +121,7 @@ export default function PermissionsFormCheckbox({
                     name={`p-${item.group_label}-view`}
                     checked={selectedRows.has(`p-${item.group_label}-view`)}
                     onCheckedChange={(checked) =>
-                    handleSelectRow(`p-${item.group_label}-view`,checked === true)
+                    handleSelectGroupRows(`p-${item.group_label}-view`,checked === true)
                     }
                   />
                   <FieldLabel htmlFor={`p-${item.group_label}-view`}>View</FieldLabel>
@@ -96,19 +130,26 @@ export default function PermissionsFormCheckbox({
                     id={`p-${item.group_label}-create`}
                     name={`p-${item.group_label}-create`}
                     checked={selectedRows.has(`p-${item.group_label}-create`)}
-                  />
+                    onCheckedChange={(checked) =>
+                    handleSelectGroupRows(`p-${item.group_label}-create`,checked === true)
+                    }/>
                   <FieldLabel htmlFor={`p-${item.group_label}-create`}>Create</FieldLabel>
 
                   <Checkbox
                     id={`p-${item.group_label}-update`}
                     name={`p-${item.group_label}-update`}
-                    // checked={itemChecked(`p-${item.group_label}-update`)}
+                    checked={selectedRows.has(`p-${item.group_label}-update`)}
+                    onCheckedChange={(checked) =>
+                    handleSelectGroupRows(`p-${item.group_label}-update`,checked === true)}
                   />
                   <FieldLabel htmlFor={`p-${item.group_label}-update`}>Update</FieldLabel>
 
                   <Checkbox
                     id={`p-${item.group_label}-delete`}
                     name={`p-${item.group_label}-delete`}
+                    checked={selectedRows.has(`p-${item.group_label}-delete`)}
+                    onCheckedChange={(checked) =>
+                    handleSelectGroupRows(`p-${item.group_label}-delete`,checked === true)}
                   />
                   <FieldLabel htmlFor={`p-${item.group_label}-delete`}>Delete</FieldLabel>
                 </Field>
@@ -139,6 +180,9 @@ export default function PermissionsFormCheckbox({
                       <Checkbox
                         id={`p-${item.group_label}-${menu.label}-create`}
                         name={`p-${item.group_label}-${menu.label}-create`}
+                        checked={selectedRows.has(`p-${item.group_label}-${menu.label}-create`)}
+                        onCheckedChange={(checked) =>
+                        handleSelectRow(`p-${item.group_label}-${menu.label}-create`,checked === true)}
                       />
                       <FieldLabel htmlFor={`p-${item.group_label}-${menu.label}-create`} className="text-muted-foreground">
                         Create
@@ -147,6 +191,9 @@ export default function PermissionsFormCheckbox({
                       <Checkbox
                         id={`p-${item.group_label}-${menu.label}-update`}
                         name={`p-${item.group_label}-${menu.label}-update`}
+                        checked={selectedRows.has(`p-${item.group_label}-${menu.label}-update`)}
+                        onCheckedChange={(checked) =>
+                        handleSelectRow(`p-${item.group_label}-${menu.label}-update`,checked === true)}
                       />
                       <FieldLabel htmlFor={`p-${item.group_label}-${menu.label}-update`} className="text-muted-foreground">
                         Update
@@ -155,6 +202,9 @@ export default function PermissionsFormCheckbox({
                       <Checkbox
                         id={`p-${item.group_label}-${menu.label}-delete`}
                         name={`p-${item.group_label}-${menu.label}-delete`}
+                        checked={selectedRows.has(`p-${item.group_label}-${menu.label}-delete`)}
+                        onCheckedChange={(checked) =>
+                        handleSelectRow(`p-${item.group_label}-${menu.label}-delete`,checked === true)}
                       />
                       <FieldLabel htmlFor={`p-${item.group_label}-${menu.label}-delete`} className="text-muted-foreground">
                         Delete
