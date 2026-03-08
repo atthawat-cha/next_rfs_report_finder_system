@@ -3,6 +3,8 @@ import { NextRequest, NextResponse } from 'next/server';
 import { requireAuth, requireRole } from '@/lib/auth';
 import z from 'zod';
 import { fa, faker } from '@faker-js/faker';
+import { permission } from 'process';
+import { buildRolePermissionInsert } from '@/lib/user-management';
 
 // GET all roles
 export async function GET(req:NextRequest){
@@ -69,20 +71,14 @@ export async function GET(req:NextRequest){
 
 
 // POST create role
-
 const roleZod = z.object({
-    name: z.string().min(1, 'กรุณากรอกชื่อ'),
-    display_name: z.string().min(1, 'กรุณากรอกชื่อแสดง')
+    role : z.object({
+        name: z.string().min(1, 'กรุณากรอกชื่อ'),
+        display_name: z.string().min(1, 'กรุณากรอกชื่อแสดง')
+    }),
+    // permission : z.array(z.string())
 })
 
-const permissionZod = z.object({
-    role_id: z.string().min(1, 'กรุณาเลือกหน่วยงาน'),
-    permission_id: z.string().min(1, 'กรุณาเลือกหน่วยงาน'),
-    can_create: z.boolean().default(false),
-    can_view: z.boolean().default(true),
-    can_update: z.boolean().default(false),
-    can_delete: z.boolean().default(false),
-})
 export async function POST(req:NextRequest){
     
     // Define accepted roles
@@ -102,52 +98,54 @@ export async function POST(req:NextRequest){
 
         // Validate request body
         const body = await req.json();
-        console.log(body);
-        return NextResponse.json({success: true, data: []}, {status: 200});
-        const {roleData , permissionData} = body;
 
-        const roleValidate = roleZod.parse(roleData);
-        const permissionValidate = permissionZod.parse(permissionData);
-        if (!roleValidate || !permissionValidate) {
+        if (!body) {
             return NextResponse.json({error: "Invalid input"}, {status: 400});
         }
 
-        const permissions = await prisma.permissions.findMany({
-            select:{
-                id: true
-            }
-        });
+        const roleValidate = roleZod.parse(body);
+        // const permissionValidate = permissionZod.parse(permissionData);
+        if (!roleValidate) {
+            return NextResponse.json({error: "Invalid input"}, {status: 400});
+        }
+
+        /**
+         * 
+         * - Create Role
+         * - Get ID Role for insert to role_permissions
+         * - Get all ID permission
+         * - Create role_permissions & Insert action
+         */
 
         // Vlidate Data
-        const res =await prisma.$transaction(async (prisma) => {        
+            await prisma.$transaction(async (prisma) => {       
+            const permissions = await prisma.permissions.findMany({
+                select:{
+                    id: true,
+                    name:true,
+                    display_name: true,
+                    category: true
+                }
+            });
+
             const role = await prisma.roles.create({
                 data: {
                     id: faker.string.uuid(),
-                    name: roleValidate.name,
-                    display_name: roleValidate.display_name,
+                    name: roleValidate.role.name,
+                    display_name: roleValidate.role.display_name,
                     created_at: new Date(),
                     updated_at: new Date(),
                 },
+                select:{
+                    id: true
+                }
             })
-
-            await prisma.role_permissions.createMany({
-                data: insertArray(role,permissions),
-            })
+            const rp = buildRolePermissionInsert(role?.id,permissions,body.permissions)
+            // console.log(rp);
             
-            // for (const permission of permissions) {
-            //     await prisma.role_permissions.create({
-            //         data: {
-            //             id: faker.string.uuid(),
-            //             role_id: role.id,
-            //             permission_id: permission.id,
-            //             can_create: permissionValidate.can_create ,
-            //             can_view: permissionValidate.can_view,
-            //             can_update: permissionValidate.can_update,
-            //             can_delete: permissionValidate.can_delete,
-            //             created_at: new Date(),
-            //         },
-            //     })
-            // }
+            await prisma.role_permissions.createMany({
+                data: rp
+            })
         })
         return NextResponse.json({success: true, data: []}, {status: 200});
     } catch (error) {
@@ -156,20 +154,3 @@ export async function POST(req:NextRequest){
     }
 }
 
-
-const insertArray = (role:any,perArr:any) => {
-    const res = []
-    for (const per of perArr) {
-        res.push({
-            id: faker.string.uuid(),
-            role_id: role.id,
-            permission_id: per.id,
-            can_create: per.can_create,
-            can_view: per.can_view,
-            can_update: per.can_update,
-            can_delete: per.can_delete,
-            created_at: new Date(),
-        })
-    }
-    return res ?? [] 
-}

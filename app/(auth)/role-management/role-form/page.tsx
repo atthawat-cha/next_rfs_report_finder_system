@@ -19,12 +19,15 @@ import { Label } from "@/components/ui/label";
 import { Separator } from "@/components/ui/separator";
 import { PermissionTemplateType } from "@/lib/types";
 import toast from "react-hot-toast";
+import { useRouter } from "next/navigation";
 
 
 export default function RolesFormManage() {
   const [isLoading, setIsLoading] = React.useState(false);
   const [params, setParams] = React.useState({role:{name:"", display_name:""}, permissions: []});
   const [roleTemplate, setRoleTemplate] = React.useState<PermissionTemplateType[]>();
+
+  const redirect = useRouter();
 
   const handleSubmit = async () => {
     setIsLoading(true);
@@ -59,7 +62,9 @@ export default function RolesFormManage() {
         role: { name: "", display_name: "" },
         permissions: [],
       });
+      redirect.push("/role-management/roles");
     } catch (error) {
+      console.error("Error creating user:", error);
       toast.error("An error occurred while submitting the form");
     } finally {
       setIsLoading(false);

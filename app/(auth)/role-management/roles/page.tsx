@@ -19,7 +19,6 @@ export default function RolesManagement() {
       const res = await fetch('/api/users/roles');
       if (res.ok) {        
         const data = await res.json();
-        console.log('Fetched roles:', data);
         setRolesData(data);
       }else {
         console.error('Failed to fetch roles:', res.statusText);

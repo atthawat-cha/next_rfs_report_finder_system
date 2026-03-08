@@ -175,14 +175,18 @@ export interface PermissionTemplateType {
 
 
 export interface RolePermissionsType {
-    role_permissions : PermissionTemplateType[]
+    role:{
+        name:string;
+        display_name:string;
+    }
+    permissions:string[]
 }
 
 
 export interface PermissionType {
     id: string;
     name:string;
-    display_name:string;
+    display_name?:string;
     category:string;
     description?:string;
     created_at?: Date;
@@ -198,4 +202,13 @@ export interface MenusListType{
 
 export interface MainMenusListType {
     menus:MenusDataBaseType[]
+}
+
+export interface RolesType {
+    id: string;
+    name: string;
+    display_name?:string;
+    description?:string;
+    created_at?: Date;
+    updated_at?: Date;
 }

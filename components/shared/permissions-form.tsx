@@ -23,7 +23,7 @@ export default function PermissionsFormCheckbox({
   template,
 }: {
   params: RolePermissionsType;
-  setParams: React.Dispatch<React.SetStateAction<RolePermissionsType>>;
+  setParams: React.Dispatch<React.SetStateAction<any>>;
   template: PermissionTemplateType[];
 }) {
   if (!template) return null;
