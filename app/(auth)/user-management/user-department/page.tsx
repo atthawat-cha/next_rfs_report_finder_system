@@ -10,38 +10,38 @@ import React from 'react'
 import { DeptDataTable } from './dept-data-table'
 import { DepartmentType } from '@/lib/types' 
 import { department_columns } from './dep-columns'
-import { DrawerWithSides } from '@/components/shared/right-drawer'
-
-// Drawer
-import {
-  Drawer,
-  DrawerClose,
-  DrawerContent,
-  DrawerDescription,
-  DrawerFooter,
-  DrawerHeader,
-  DrawerTitle,
-  DrawerTrigger,
-} from "@/components/ui/drawer"
-
+import { DrawerDialogDemo } from '@/components/shared/dialog-drawer'
+import toast from 'react-hot-toast'
 
 export default function UserDepartment() {
 
   const [deptData, setDeptData] = React.useState<DepartmentType[]>([]);
+  const [openDialog, setOpenDialog] = React.useState(false);
+  const [deptParams, setDeptParams] = React.useState({});
 
   const fetchDepartments = async () => {
     try {
       const response = await fetch('/api/users/departments');
-      if (!response.ok) {
+      if (!response.ok && response.status !== 403) {
         throw new Error('Failed to fetch departments');
       }
+
+      if (response.status === 403) {
+        return toast.error("You don't have permission to access this page");
+      }
+      
       const data = await response.json();
       setDeptData(data);
-      console.log(data);
+      
     } catch (error) {
       console.log('Error fetching departments:', error);
     }
   };
+
+
+  const handlerSubmit = async () => {
+    console.log("SUBMITED");
+  }
 
   React.useEffect(() => {
     fetchDepartments();
@@ -73,50 +73,16 @@ export default function UserDepartment() {
         <div className="flex items-center justify-between">
           <h5 className="text-xl md:text-3xl font-bold">Departments</h5>
           {/* <Link href="/user-management/user-department" className='btn btn-primary'>Add User</Link> */}
-          <Button>New Department</Button>
-
-          
+          <DrawerDialogDemo isOpen={openDialog} handlerSubmit={handlerSubmit} title="New Department" description="Add new department" btnText="New Department">
+          {'/* Content */'}
+          </DrawerDialogDemo>
         </div>
         <Separator className="my-5" />
         <DeptDataTable columns={department_columns} data={deptData} />
       </div>
-
-      <Drawer direction="right">
-            <DrawerTrigger asChild>
-              <Button variant="outline">Scrollable Content</Button>
-            </DrawerTrigger>
-            <DrawerContent>
-              <DrawerHeader>
-                <DrawerTitle>Move Goal</DrawerTitle>
-                <DrawerDescription>
-                  Set your daily activity goal.
-                </DrawerDescription>
-              </DrawerHeader>
-              <div className="no-scrollbar overflow-y-auto px-4">
-                {Array.from({ length: 10 }).map((_, index) => (
-                  <p
-                    key={index}
-                    className="mb-4 leading-normal style-lyra:mb-2 style-lyra:leading-relaxed"
-                  >
-                    Lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed
-                    do eiusmod tempor incididunt ut labore et dolore magna
-                    aliqua. Ut enim ad minim veniam, quis nostrud exercitation
-                    ullamco laboris nisi ut aliquip ex ea commodo consequat.
-                    Duis aute irure dolor in reprehenderit in voluptate velit
-                    esse cillum dolore eu fugiat nulla pariatur. Excepteur sint
-                    occaecat cupidatat non proident, sunt in culpa qui officia
-                    deserunt mollit anim id est laborum.
-                  </p>
-                ))}
-              </div>
-              <DrawerFooter>
-                <Button>Submit</Button>
-                <DrawerClose asChild>
-                  <Button variant="outline">Cancel</Button>
-                </DrawerClose>
-              </DrawerFooter>
-            </DrawerContent>
-          </Drawer>
     </ContentLayout>
   );
 }
+
+
+

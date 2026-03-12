@@ -181,7 +181,6 @@ export async function requireRole(req: NextRequest,allowedRoles: string[]): Prom
   // Check if user has at least one of the allowed roles
   const {user} = result
   const userRoles:string = user?.roles?.name!
-
   if (!allowedRoles.includes(userRoles.toLowerCase())) {
     return NextResponse.json({ error: "Forbidden" }, { status: 403 });
   }
