@@ -8,10 +8,11 @@ import React from 'react'
 
 //  Data Table
 import { DeptDataTable } from './dept-data-table'
-import { DepartmentType } from '@/lib/types' 
+import { DepartmentType } from '@/lib/types'
 import { department_columns } from './dep-columns'
 import { DrawerDialogDemo } from '@/components/shared/dialog-drawer'
 import toast from 'react-hot-toast'
+import DeptForm from './components/deptForm'
 
 export default function UserDepartment() {
 
@@ -29,19 +30,14 @@ export default function UserDepartment() {
       if (response.status === 403) {
         return toast.error("You don't have permission to access this page");
       }
-      
+
       const data = await response.json();
       setDeptData(data);
-      
+
     } catch (error) {
       console.log('Error fetching departments:', error);
     }
   };
-
-
-  const handlerSubmit = async () => {
-    console.log("SUBMITED");
-  }
 
   React.useEffect(() => {
     fetchDepartments();
@@ -73,8 +69,8 @@ export default function UserDepartment() {
         <div className="flex items-center justify-between">
           <h5 className="text-xl md:text-3xl font-bold">Departments</h5>
           {/* <Link href="/user-management/user-department" className='btn btn-primary'>Add User</Link> */}
-          <DrawerDialogDemo isOpen={openDialog} handlerSubmit={handlerSubmit} title="New Department" description="Add new department" btnText="New Department">
-          {'/* Content */'}
+          <DrawerDialogDemo isOpen={openDialog} title="New Department" description="Add new department" btnText="New Department">
+            <DeptForm />
           </DrawerDialogDemo>
         </div>
         <Separator className="my-5" />

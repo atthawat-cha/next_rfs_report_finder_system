@@ -1,14 +1,13 @@
 import prisma from '@/lib/prisma';
 import { NextRequest, NextResponse } from 'next/server';
-import { requireAuth, requireRole } from '@/lib/auth';
+import { requireAuth, requireRole, routeAcceptted } from '@/lib/auth';
 import z from 'zod';
-import { fa, faker } from '@faker-js/faker';
-import { permission } from 'process';
+import { faker } from '@faker-js/faker';
 import { buildRolePermissionInsert } from '@/lib/user-management';
 
 // GET all roles
-export async function GET(req:NextRequest){
-    const acceptedRoles = ['admin'];
+export async function GET(req: NextRequest) {
+    const acceptedRoles = routeAcceptted('admin');
     try {
         // Check Auth
         const auth = await requireAuth(req);
@@ -22,15 +21,15 @@ export async function GET(req:NextRequest){
 
         const roles = await prisma.roles.findMany({
             select: {
-                _count:{
-                    select:{users:true}
+                _count: {
+                    select: { users: true }
                 },
                 id: true,
                 name: true,
                 display_name: true,
                 description: true,
-                role_permissions:{
-                    select:{
+                role_permissions: {
+                    select: {
                         id: true,
                         permission_id: true,
                         can_create: true,
@@ -38,7 +37,7 @@ export async function GET(req:NextRequest){
                         can_update: true,
                         can_delete: true,
                         permissions: {
-                            select:{
+                            select: {
                                 id: true,
                                 name: true,
                                 display_name: true,
@@ -48,7 +47,7 @@ export async function GET(req:NextRequest){
                     },
                 },
                 created_at: true,
-                updated_at: true,               
+                updated_at: true,
             },
             orderBy: {
                 created_at: 'asc',
@@ -56,7 +55,7 @@ export async function GET(req:NextRequest){
         });
 
         if (roles.length === 0) {
-            return NextResponse.json({error: "Roles not found"}, {status: 404});
+            return NextResponse.json({ error: "Roles not found" }, { status: 404 });
         }
         return NextResponse.json(roles);
     } catch (error) {
@@ -72,20 +71,20 @@ export async function GET(req:NextRequest){
 
 // POST create role
 const roleZod = z.object({
-    role : z.object({
+    role: z.object({
         name: z.string().min(1, 'กรุณากรอกชื่อ'),
         display_name: z.string().min(1, 'กรุณากรอกชื่อแสดง')
     }),
     // permission : z.array(z.string())
 })
 
-export async function POST(req:NextRequest){
-    
+export async function POST(req: NextRequest) {
+
     // Define accepted roles
-    const acceptedRoles = ['admin'];
-    
+    const acceptedRoles = routeAcceptted('admin');
+
     try {
-        
+
         // Check Auth
         const auth = await requireAuth(req);
         if (auth instanceof NextResponse) return auth; // 401 or 403
@@ -100,13 +99,13 @@ export async function POST(req:NextRequest){
         const body = await req.json();
 
         if (!body) {
-            return NextResponse.json({error: "Invalid input"}, {status: 400});
+            return NextResponse.json({ error: "Invalid input" }, { status: 400 });
         }
 
         const roleValidate = roleZod.parse(body);
         // const permissionValidate = permissionZod.parse(permissionData);
         if (!roleValidate) {
-            return NextResponse.json({error: "Invalid input"}, {status: 400});
+            return NextResponse.json({ error: "Invalid input" }, { status: 400 });
         }
 
         /**
@@ -118,11 +117,11 @@ export async function POST(req:NextRequest){
          */
 
         // Vlidate Data
-            await prisma.$transaction(async (prisma) => {       
+        await prisma.$transaction(async (prisma) => {
             const permissions = await prisma.permissions.findMany({
-                select:{
+                select: {
                     id: true,
-                    name:true,
+                    name: true,
                     display_name: true,
                     category: true
                 }
@@ -136,21 +135,21 @@ export async function POST(req:NextRequest){
                     created_at: new Date(),
                     updated_at: new Date(),
                 },
-                select:{
+                select: {
                     id: true
                 }
             })
-            const rp = buildRolePermissionInsert(role?.id,permissions,body.permissions)
+            const rp = buildRolePermissionInsert(role?.id, permissions, body.permissions)
             // console.log(rp);
-            
+
             await prisma.role_permissions.createMany({
                 data: rp
             })
         })
-        return NextResponse.json({success: true, data: []}, {status: 200});
+        return NextResponse.json({ success: true, data: [] }, { status: 200 });
     } catch (error) {
         console.error(error);
-        return NextResponse.json({error: "Invalid input"}, {status: 400});
+        return NextResponse.json({ error: "Invalid input" }, { status: 400 });
     }
 }
 

@@ -55,7 +55,7 @@ export interface UserRoleType {
 }
 
 export interface DepartmentType {
-    id: string;
+    id?: string;
     name: string;
     code: string;
     is_active: boolean;
@@ -117,10 +117,10 @@ export interface Roles {
 
 export interface UserSessionType {
     id: string;
-    username?: string |null;
+    username?: string | null;
     first_name?: string | null;
-    password?: string|null;
-    department_id?:string | null;
+    password?: string | null;
+    department_id?: string | null;
     roles?: UserRolesType;
 }
 
@@ -141,22 +141,22 @@ export interface MenuType {
     label: string;
     href?: string;
     icon?: string;
-    submenus:SubmenuType[];
+    submenus: SubmenuType[];
     can_view?: boolean;
     can_create?: boolean;
     can_update?: boolean;
     can_delete?: boolean;
 }
 
-export interface MenusDBType{
-    id:string;
-    group_label:string;
-    catagory_label:string;
-    menu_label:string;
-    sub_menu_label:string;
-    href:string;
-    icon:string;
-    sort_order:number;
+export interface MenusDBType {
+    id: string;
+    group_label: string;
+    catagory_label: string;
+    menu_label: string;
+    sub_menu_label: string;
+    href: string;
+    icon: string;
+    sort_order: number;
 }
 
 export interface MenusDataBaseType {
@@ -168,47 +168,53 @@ export interface MenusDataBaseType {
 }
 
 export interface PermissionTemplateType {
-    menu_id:string;
-    group_label:string;
+    menu_id: string;
+    group_label: string;
     menu: MenuType[];
 }
 
 
 export interface RolePermissionsType {
-    role:{
-        name:string;
-        display_name:string;
+    role: {
+        name: string;
+        display_name: string;
     }
-    permissions:string[]
+    permissions: string[]
 }
 
 
 export interface PermissionType {
     id: string;
-    name:string;
-    display_name?:string;
-    category:string;
-    description?:string;
+    name: string;
+    display_name?: string;
+    category: string;
+    description?: string;
     created_at?: Date;
     updated_at?: Date;
 }
 
-export interface MenusListType{
-    menu_id:string;
-    groupLabel:string;
-    menus:MenuType[]
+export interface MenusListType {
+    menu_id: string;
+    groupLabel: string;
+    menus: MenuType[]
 
 }
 
 export interface MainMenusListType {
-    menus:MenusDataBaseType[]
+    menus: MenusDataBaseType[]
 }
 
 export interface RolesType {
     id: string;
     name: string;
-    display_name?:string;
-    description?:string;
+    display_name?: string;
+    description?: string;
     created_at?: Date;
     updated_at?: Date;
+}
+
+export interface DepartmentFormType {
+    name: string;
+    code: string;
+    is_active: boolean;
 }

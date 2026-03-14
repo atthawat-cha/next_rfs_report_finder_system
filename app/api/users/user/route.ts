@@ -4,38 +4,51 @@ import { NextRequest, NextResponse } from 'next/server';
 import { z } from 'zod';
 import bcrypt from 'bcryptjs';
 import { UserStatus } from '@/app/generated/prisma/enums';
+import { getAuthFromRequest, requireRole, routeAcceptted } from '@/lib/auth';
 
-export async function GET(req:NextRequest){
+export async function GET(req: NextRequest) {
   try {
+    const acceptedRoles = routeAcceptted('admin');
+    // ตรวจสอบการยืนยันตัวตนก่อนเข้าถึงข้อมูล
+    const auth = getAuthFromRequest(req);
+    if (!auth) {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
+
+    const authResult = await requireRole(req, acceptedRoles);
+
+    if (authResult instanceof NextResponse) {
+      return authResult; // ส่งต่อการตอบกลับ 401 หรือ 403 จาก requireRole
+    }
+
     const users = await prisma.users.findMany({});
 
-    if(!users){
-      return NextResponse.json({success: false, error: "User not found"}, { status: 404 });
+    if (!users) {
+      return NextResponse.json({ success: false, error: "User not found" }, { status: 404 });
     }
     // console.log(users);
-    return NextResponse.json({success: true, data: users}, { status: 200 });
+    return NextResponse.json({ success: true, data: users }, { status: 200 });
   } catch (error) {
     console.error(error);
     return NextResponse.json(
-      { error: console.error()},
+      { error: console.error() },
       { status: 400 }
     )
   }
 }
 
-  const userZod = z.object({
-    username: z.string().min(3, 'กรุณากรอกชื่อผู้ใช้'),
-    password: z.string().min(1, 'กรุณากรอกรหัสผ่าน'),
-    first_name: z.string().min(1, 'กรุณากรอกชื่อ'),
-    last_name: z.string().min(1, 'กรุณากรอกนามสกุล'),
-    department_id: z.string().min(1, 'กรุณาเลือกหน่วยงาน'),
-    role_id:z.string().min(3,'Plase choose role'),
-    status: z.string().min(1, 'กรุณาเลือกสถานะ')
-  })
+const userZod = z.object({
+  username: z.string().min(3, 'กรุณากรอกชื่อผู้ใช้'),
+  password: z.string().min(1, 'กรุณากรอกรหัสผ่าน'),
+  first_name: z.string().min(1, 'กรุณากรอกชื่อ'),
+  last_name: z.string().min(1, 'กรุณากรอกนามสกุล'),
+  department_id: z.string().min(1, 'กรุณาเลือกหน่วยงาน'),
+  role_id: z.string().min(3, 'Plase choose role'),
+  status: z.string().min(1, 'กรุณาเลือกสถานะ')
+})
 
-export async function POST(req:NextRequest){
+export async function POST(req: NextRequest) {
   try {
-
     const body = await req.json();
     const validatedData = userZod.parse(body);
     const user = await prisma.users.create({
@@ -48,7 +61,7 @@ export async function POST(req:NextRequest){
         last_name: validatedData.last_name,
         department_id: validatedData.department_id,
         status: UserStatus.ACTIVE,
-        role_id:validatedData.role_id,
+        role_id: validatedData.role_id,
         created_at: new Date(),
         updated_at: new Date()
       },
@@ -60,15 +73,15 @@ export async function POST(req:NextRequest){
         { status: 400 }
       );
     }
-    return NextResponse.json({success: true, data: user.id}, { status: 200 });
+    return NextResponse.json({ success: true, data: user.id }, { status: 200 });
   } catch (error) {
     console.error(error);
-  return NextResponse.json(
-    { error: "Invalid input", details: String(error) },
-    { status: 400 }
-  );
+    return NextResponse.json(
+      { error: "Invalid input", details: String(error) },
+      { status: 400 }
+    );
   }
-  
+
 }
 
 

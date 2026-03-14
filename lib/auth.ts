@@ -1,6 +1,6 @@
 import { SignJWT, jwtVerify } from 'jose';
 import { cookies } from 'next/headers';
-import { NextRequest,NextResponse } from 'next/server';
+import { NextRequest, NextResponse } from 'next/server';
 import bcrypt from 'bcryptjs';
 import { ZodSchema } from 'zod';
 import { RoleType, UserLoginType, UserSessionType } from './types';
@@ -9,9 +9,9 @@ import { RoleType, UserLoginType, UserSessionType } from './types';
 const JWT_SECRET = new TextEncoder().encode(
   process.env.JWT_SECRET ?? (() => { throw new Error("JWT_SECRET is not set"); })()
 );
-const ACCESS_TOKEN_TTL  = "15m";   // OWASP: keep short
+const ACCESS_TOKEN_TTL = "15m";   // OWASP: keep short
 const REFRESH_TOKEN_TTL = "7d";
-const COOKIE_NAME       = "auth-token";
+const COOKIE_NAME = "auth-token";
 
 export interface LoginRequest {
   username: string;
@@ -97,7 +97,7 @@ export async function authenticate(loginUser: LoginRequest, user: UserSessionTyp
     username: user.username,
     first_name: user.first_name,
     password: user.password,
-    department_id:user.department_id,
+    department_id: user.department_id,
     roles: user.roles,
   };
 }
@@ -173,14 +173,14 @@ export async function requireAuth(req: NextRequest): Promise<JWTPayload | NextRe
  * const auth = await requireRole(req, ["ADMIN"]);
  * if (auth instanceof NextResponse) return auth; // 401 or 403
  */
-export async function requireRole(req: NextRequest,allowedRoles: string[]): Promise<JWTPayload | NextResponse> {
+export async function requireRole(req: NextRequest, allowedRoles: string[]): Promise<JWTPayload | NextResponse> {
 
   const result = await requireAuth(req);
   if (result instanceof NextResponse) return result; // propagate 401
 
   // Check if user has at least one of the allowed roles
-  const {user} = result
-  const userRoles:string = user?.roles?.name!
+  const { user } = result
+  const userRoles: string = user?.roles?.name!
   if (!allowedRoles.includes(userRoles.toLowerCase())) {
     return NextResponse.json({ error: "Forbidden" }, { status: 403 });
   }
@@ -196,14 +196,14 @@ export async function requireRole(req: NextRequest,allowedRoles: string[]): Prom
 /** Simple in-memory rate limiter (replace with Redis in production) */
 const loginAttempts = new Map<string, { count: number; resetAt: number }>();
 const MAX_ATTEMPTS = 5;
-const WINDOW_MS    = 15 * 60 * 1000; // 15 minutes
+const WINDOW_MS = 15 * 60 * 1000; // 15 minutes
 
 export function checkRateLimit(identifier: string): { allowed: boolean; retryAfter?: number } {
-  
+
   if (!identifier) {
     return { allowed: false };
   }
-  const now   = Date.now();
+  const now = Date.now();
   const entry = loginAttempts.get(identifier);
 
   if (!entry || now > entry.resetAt) {
@@ -221,4 +221,19 @@ export function checkRateLimit(identifier: string): { allowed: boolean; retryAft
 
 export function resetRateLimit(identifier: string): void {
   loginAttempts.delete(identifier);
+}
+
+
+export function rateLimit(identifier: string): { allowed: boolean; retryAfter?: number } {
+  return checkRateLimit(identifier);
+}
+
+export function routeAcceptted(access: string): string[] {
+  const acc = {
+    admin: ['admin', 'super_admin'],
+    user: ['user', 'super_admin'],
+    guest: ['guest'],
+  }
+
+  return acc[access] || []
 }
