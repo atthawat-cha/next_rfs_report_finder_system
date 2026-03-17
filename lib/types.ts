@@ -218,3 +218,23 @@ export interface DepartmentFormType {
     code: string;
     is_active: boolean;
 }
+
+export interface ReportGetDataType {
+    id?: string;
+    code: string;
+    name: string;
+    description?: string;
+    file_path?: string;
+    file_name?: string;
+    category?: string;
+    department?: string;
+    created_by?: string;
+    status: boolean;
+    "version"?: string;
+    is_downloadable: boolean;
+    is_editable?: boolean;
+    published_at?: string;
+    created_at: string;
+    updated_at: string;
+    access_level?: string;
+}
