@@ -2,12 +2,12 @@ import prisma from '@/lib/prisma';
 import { NextRequest, NextResponse } from 'next/server';
 import { z } from 'zod';
 import bcrypt from 'bcryptjs';
-import { getAuthFromRequest, requireRole } from '@/lib/auth';
-import { UserStatus } from '@/app/generated/prisma/enums';
+import { getAuthFromRequest, requireRole, routeAcceptted } from '@/lib/auth';
+import { ReportStatus, UserStatus } from '@/app/generated/prisma/enums';
 
 
 export async function GET(req:NextRequest){
-    const acceptedRoles = ['admin', 'manager']; // กำหนดบทบาทที่สามารถเข้าถึงข้อมูลนี้ได้
+    const acceptedRoles = routeAcceptted('admin'); // กำหนดบทบาทที่สามารถเข้าถึงข้อมูลนี้ได้
 
     try {
          // ตรวจสอบการยืนยันตัวตนก่อนเข้าถึงข้อมูล
@@ -51,12 +51,15 @@ export async function GET(req:NextRequest){
 
         const baseStatus = [UserStatus.ACTIVE, UserStatus.INACTIVE, UserStatus.SUSPENDED]
 
+        const basereportStatus = [ReportStatus.DRAFT, ReportStatus.PUBLISHED, ReportStatus.ARCHIVED]
+
         const baseConfig = {
             baseRole,
             baseDept,
             baseTag,
             baseCatagory,
-            baseStatus
+            baseStatus,
+            basereportStatus
         }
 
         return NextResponse.json({success:true,baseConfig}, {status: 200});

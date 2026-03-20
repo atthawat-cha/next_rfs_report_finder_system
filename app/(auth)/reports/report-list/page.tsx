@@ -1,21 +1,23 @@
-'use client'
-import { ContentLayout } from '@/components/layouts/content-layout'
-import { SearchInput } from '@/components/shared/searchInput'
-import React, { useMemo } from 'react'
-import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group"
-import DefaultBreadcrumb from '@/components/shared/breadcrumb'
-import ReportTableView from './components/reportMainTable'
-import { ReportGetDataType } from '@/lib/types'
-import ReportCardView from './components/reportCards'
-import toast from 'react-hot-toast'
+"use client";
+import { ContentLayout } from "@/components/layouts/content-layout";
+import { SearchInput } from "@/components/shared/searchInput";
+import React, { useMemo } from "react";
+import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
+import DefaultBreadcrumb from "@/components/shared/breadcrumb";
+import ReportTableView from "./components/reportMainTable";
+import { ReportGetDataType } from "@/lib/types";
+import ReportCardView from "./components/reportCards";
+import toast from "react-hot-toast";
+import { Button } from "@/components/ui/button";
+import Link from "next/link";
 
 export default function ReportList() {
-  const [reportView, setReportView] = React.useState('table')
-  const [reports, setReports] = React.useState<ReportGetDataType[]>([])
+  const [reportView, setReportView] = React.useState("table");
+  const [reports, setReports] = React.useState<ReportGetDataType[]>([]);
 
   const fetchReports = async () => {
     try {
-      const res = await fetch('/api/reports/report/manage', {
+      const res = await fetch("/api/reports/report/manage", {
         method: "GET",
         headers: {
           "Content-Type": "application/json",
@@ -34,46 +36,60 @@ export default function ReportList() {
         return;
       }
       setReports(data?.data);
-      console.log(data)
+      console.log(data);
     } catch (error) {
-      console.error('Error fetching users:', error);
+      console.error("Error fetching users:", error);
     }
-  }
+  };
 
-  const hanelerSearch = () => {
-  }
+  const hanelerSearch = () => {};
 
   const hanelerViewChange = (value: string) => {
-    setReportView(value)
-  }
+    setReportView(value);
+  };
 
   useMemo(() => {
-    fetchReports()
-  }, [])
+    fetchReports();
+  }, []);
 
   return (
     <ContentLayout title="Report List">
-      <div className='w-full item-center my-2'>
+      <div className="w-full item-center my-2">
         <DefaultBreadcrumb />
       </div>
 
-      <div className='w-full flex item-center justify-between gap-y-5'>
-        <SearchInput countRes='10' onSearch={hanelerSearch} />
-
-        <ToggleGroup variant="outline" type="single" defaultValue="table" onValueChange={hanelerViewChange}>
-          <ToggleGroupItem value="table" aria-label="Toggle all">
-            List
-          </ToggleGroupItem>
-          <ToggleGroupItem value="card" aria-label="Toggle missed">
-            Card
-          </ToggleGroupItem>
-        </ToggleGroup>
-      </div>
-
       <div className="container mx-auto py-10 gap-6">
-        {reportView === 'table' ? <ReportTableView reports={reports} /> : <ReportCardView reports={reports} />}
-      </div>
+        <div className="w-full flex item-center justify-between mt-5">
+          <ToggleGroup
+            variant="outline"
+            type="single"
+            defaultValue="table"
+            onValueChange={hanelerViewChange}
+          >
+            <ToggleGroupItem value="table" aria-label="Toggle all">
+              List
+            </ToggleGroupItem>
+            <ToggleGroupItem value="card" aria-label="Toggle missed">
+              Card
+            </ToggleGroupItem>
+          </ToggleGroup>
 
+          <div className="flex gap-2 item-center">
+            <SearchInput countRes="10" onSearch={hanelerSearch} />
+            <Button asChild >
+              <Link href="/reports/report-create">Create</Link>
+            </Button>
+          </div>
+        </div>
+
+        <div className="w-full mt-5">
+          {reportView === "table" ? (
+            <ReportTableView reports={reports} />
+          ) : (
+            <ReportCardView reports={reports} />
+          )}
+        </div>
+      </div>
     </ContentLayout>
-  )
+  );
 }
