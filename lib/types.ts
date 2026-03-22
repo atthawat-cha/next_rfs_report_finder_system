@@ -228,13 +228,29 @@ export interface ReportGetDataType {
     file_name?: string;
     category?: string;
     department?: string;
-    created_by?: string;
-    status: boolean;
+    created_by_id?: string;
+    status: string;
     "version"?: string;
     is_downloadable: boolean;
     is_editable?: boolean;
     published_at?: string;
     created_at: string;
     updated_at: string;
+    access_level?: string;
+}
+
+export interface ReportCreateDataType {
+    code: string;
+    name: string;
+    description?: string;
+    file_path?: string;
+    file_name?: string;
+    category?: string;
+    department?: string;
+    created_by_id?: string;
+    status: string;
+    "version"?: string;
+    is_downloadable: boolean;
+    is_editable?: boolean;
     access_level?: string;
 }
