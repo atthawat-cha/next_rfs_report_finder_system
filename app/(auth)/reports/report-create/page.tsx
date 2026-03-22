@@ -1,6 +1,6 @@
 "use client";
 
-import React from "react";
+import React, { useCallback } from "react";
 import { ContentLayout } from "@/components/layouts/content-layout";
 import DefaultBreadcrumb from "@/components/shared/breadcrumb";
 import { Button } from "@/components/ui/button";
@@ -47,6 +47,7 @@ interface BaseSelect {
   departments: SelectOption[];
   status: string[];
   catagory: SelectOption[];
+  access_level: SelectOption[];
 }
 
 // ─── Component ───────────────────────────────────────────────────────────────
@@ -55,6 +56,7 @@ export default function ReportCreate() {
     departments: [],
     status: [],
     catagory: [],
+    access_level: [],
   });
   const [isSubmitting, setIsSubmitting] = React.useState(false);
   const [reportData, setReportData] = React.useState<ReportGetDataType>({
@@ -75,8 +77,9 @@ export default function ReportCreate() {
     updated_at: "",
     access_level: "",
   });
+  const anchor = useComboboxAnchor()
 
-  const fetchBaseData = async () => {
+  const fetchBaseData = useCallback(async () => {
     const res = await fetch("/api/baseconfig/selections", {
       method: "GET",
       headers: { "Content-Type": "application/json" },
@@ -91,13 +94,14 @@ export default function ReportCreate() {
     const data = await res.json();
     if (!data?.success) return;
 
-    const { baseDept, basereportStatus, baseCatagory } = data.baseConfig;
+    const { baseDept, basereportStatus, baseCatagory, baseRole } = data?.baseConfig;
     setBaseSelect({
       departments: baseDept,
       status: basereportStatus,
       catagory: baseCatagory,
+      access_level: baseRole,
     });
-  };
+  }, []);
 
   React.useEffect(() => {
     fetchBaseData();
@@ -112,6 +116,21 @@ export default function ReportCreate() {
     } finally {
       setIsSubmitting(false);
     }
+  };
+
+  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
+    const { name, value } = e.target;
+    setReportData((prev) => ({
+      ...prev,
+      [name]: value,
+    }));
+  };
+
+  const handleSelectChange = (name: string, value: string) => {
+    setReportData((prev) => ({
+      ...prev,
+      [name]: value,
+    }));
   };
 
   return (
@@ -152,6 +171,8 @@ export default function ReportCreate() {
                   placeholder="e.g. Anes-0001"
                   required
                   autoComplete="off"
+                  value={reportData?.code}
+                  onChange={handleInputChange}
                 />
                 <FieldDescription>Format: Department-XXXX</FieldDescription>
               </Field>
@@ -166,6 +187,8 @@ export default function ReportCreate() {
                   placeholder="Enter report name"
                   required
                   autoComplete="off"
+                  value={reportData?.name}
+                  onChange={handleInputChange}
                 />
               </Field>
 
@@ -173,7 +196,7 @@ export default function ReportCreate() {
               <div className="grid grid-cols-2 gap-3">
                 <Field>
                   <FieldLabel htmlFor="rp_catagory">Category</FieldLabel>
-                  <Select>
+                  <Select value={reportData?.category} onValueChange={(e) => handleSelectChange("category", e)}>
                     <SelectTrigger id="rp_catagory">
                       <SelectValue placeholder="Select category" />
                     </SelectTrigger>
@@ -191,7 +214,7 @@ export default function ReportCreate() {
 
                 <Field>
                   <FieldLabel htmlFor="rp_department">Department</FieldLabel>
-                  <Select>
+                  <Select value={reportData?.department} onValueChange={(e) => handleSelectChange("department", e)}>
                     <SelectTrigger id="rp_department">
                       <SelectValue placeholder="Select dept." />
                     </SelectTrigger>
@@ -211,7 +234,7 @@ export default function ReportCreate() {
               {/* Status */}
               <Field>
                 <FieldLabel htmlFor="rp_status">Status</FieldLabel>
-                <Select>
+                <Select value={reportData?.status} onValueChange={(e) => handleSelectChange("status", e)}>
                   <SelectTrigger id="rp_status">
                     <SelectValue placeholder="Select status" />
                   </SelectTrigger>
@@ -225,6 +248,40 @@ export default function ReportCreate() {
                     </SelectGroup>
                   </SelectContent>
                 </Select>
+              </Field>
+
+              {/* Access Level */}
+              <Field>
+                <FieldLabel htmlFor="rp_access_level">Access Roles</FieldLabel>
+                <Combobox
+                  multiple
+                  autoHighlight
+                  items={baseSelect?.access_level}
+                  itemToStringValue={(role: (typeof baseSelect.access_level)[number]) => role.name}
+                  defaultValue={[]}>
+                  <ComboboxChips ref={anchor} className="w-full">
+                    <ComboboxValue>
+                      {(values) => (
+                        <React.Fragment>
+                          {values.map((value: string) => (
+                            <ComboboxChip key={value}>{value}</ComboboxChip>
+                          ))}
+                          <ComboboxChipsInput />
+                        </React.Fragment>
+                      )}
+                    </ComboboxValue>
+                  </ComboboxChips>
+                  <ComboboxContent anchor={anchor}>
+                    <ComboboxEmpty>No items found.</ComboboxEmpty>
+                    <ComboboxList>
+                      {(item) => (
+                        <ComboboxItem key={item} value={item}>
+                          {item}
+                        </ComboboxItem>
+                      )}
+                    </ComboboxList>
+                  </ComboboxContent>
+                </Combobox>
               </Field>
 
             </CardContent>
@@ -275,6 +332,8 @@ export default function ReportCreate() {
                   id="rp_description"
                   placeholder="Add any additional information about this report…"
                   className="resize-none min-h-[96px]"
+                  value={reportData?.description}
+                  onChange={handleInputChange}
                 />
               </Field>
 
