@@ -229,13 +229,13 @@ export interface ReportGetDataType {
     category?: string;
     department?: string;
     created_by_id?: string;
-    status: string;
+    status?: string;
     "version"?: string;
-    is_downloadable: boolean;
+    is_downloadable?: boolean;
     is_editable?: boolean;
     published_at?: string;
-    created_at: string;
-    updated_at: string;
+    created_at?: string;
+    updated_at?: string;
     access_level?: string;
 }
 

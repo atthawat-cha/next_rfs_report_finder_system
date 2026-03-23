@@ -11,7 +11,7 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
-import { Field, FieldDescription, FieldLabel } from "@/components/ui/field";
+import { Field, FieldDescription, FieldLabel, FieldSeparator } from "@/components/ui/field";
 import { Input } from "@/components/ui/input";
 import {
   Select,
@@ -39,6 +39,7 @@ import {
   ComboboxValue,
   useComboboxAnchor,
 } from "@/components/ui/combobox"
+import { Checkbox } from "@/components/ui/checkbox";
 
 // ─── Types ───────────────────────────────────────────────────────────────────
 type SelectOption = { id: string; name: string };
@@ -63,20 +64,14 @@ export default function ReportCreate() {
     code: "",
     name: "",
     description: "",
-    file_path: "",
-    file_name: "",
     category: "",
     department: "",
-    created_by_id: "",
     status: "DRAFT",
-    version: "",
     is_downloadable: true,
     is_editable: true,
-    published_at: "",
-    created_at: "",
-    updated_at: "",
     access_level: "",
   });
+  const [formImage, setFormImage] = React.useState<File | null>(null);
   const anchor = useComboboxAnchor()
 
   const fetchBaseData = useCallback(async () => {
@@ -99,7 +94,7 @@ export default function ReportCreate() {
       departments: baseDept,
       status: basereportStatus,
       catagory: baseCatagory,
-      access_level: baseRole,
+      access_level: convertObjectToArrayValue(baseRole),
     });
   }, []);
 
@@ -112,6 +107,7 @@ export default function ReportCreate() {
     setIsSubmitting(true);
     try {
       // TODO: implement submit logic
+      console.log(reportData)
       await new Promise((r) => setTimeout(r, 1000));
     } finally {
       setIsSubmitting(false);
@@ -119,19 +115,33 @@ export default function ReportCreate() {
   };
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
-    const { name, value } = e.target;
+    const { id, value } = e.target;
+    setReportData((prev) => ({
+      ...prev,
+      [id]: value,
+    }));
+  };
+
+  const handleSelectChange = (name: string, value: string | boolean) => {
     setReportData((prev) => ({
       ...prev,
       [name]: value,
     }));
   };
 
-  const handleSelectChange = (name: string, value: string) => {
-    setReportData((prev) => ({
-      ...prev,
-      [name]: value,
-    }));
+  const convertObjectToArrayValue = (data: any[]) => {
+    return data.map((item) => item.name);
   };
+
+  // const handleAccessLevelChange = (value: string) => {
+  //   const accessLevel = baseSelect.access_level.find((item) => item.name === value);
+  //   if (accessLevel) {
+  //     setReportData((prev) => ({
+  //       ...prev,
+  //       access_level: accessLevel.id,
+  //     }));
+  //   }
+  // };
 
   return (
     <ContentLayout title="Report Create">
@@ -163,11 +173,12 @@ export default function ReportCreate() {
 
               {/* Code */}
               <Field>
-                <FieldLabel htmlFor="rp_code">
+                <FieldLabel htmlFor="code">
                   Code <span className="text-destructive ml-0.5">*</span>
                 </FieldLabel>
                 <Input
-                  id="rp_code"
+                  id="code"
+                  name="code"
                   placeholder="e.g. Anes-0001"
                   required
                   autoComplete="off"
@@ -179,11 +190,12 @@ export default function ReportCreate() {
 
               {/* Name */}
               <Field>
-                <FieldLabel htmlFor="rp_name">
+                <FieldLabel htmlFor="name">
                   Name <span className="text-destructive ml-0.5">*</span>
                 </FieldLabel>
                 <Input
-                  id="rp_name"
+                  id="name"
+                  name="name"
                   placeholder="Enter report name"
                   required
                   autoComplete="off"
@@ -257,8 +269,8 @@ export default function ReportCreate() {
                   multiple
                   autoHighlight
                   items={baseSelect?.access_level}
-                  itemToStringValue={(role: (typeof baseSelect.access_level)[number]) => role.name}
-                  defaultValue={[]}>
+                  // itemToStringValue={(role: (typeof baseSelect.access_level)[number]) => role?.name}
+                  defaultValue={[baseSelect?.access_level[2]]}>
                   <ComboboxChips ref={anchor} className="w-full">
                     <ComboboxValue>
                       {(values) => (
@@ -299,7 +311,7 @@ export default function ReportCreate() {
             <CardContent className="space-y-5">
 
               {/* Report Type – Radio cards */}
-              <Field>
+              {/* <Field>
                 <FieldLabel>Report Type</FieldLabel>
                 <RadioGroup
                   defaultValue="crystal"
@@ -316,7 +328,28 @@ export default function ReportCreate() {
                     </label>
                   ))}
                 </RadioGroup>
+              </Field> */}
+
+              {/* Report options */}
+              <FieldDescription>Report Options</FieldDescription>
+              <Field orientation="horizontal">
+                <Checkbox id="is_downloadable" checked={reportData?.is_downloadable} onCheckedChange={(e) => handleSelectChange("is_downloadable", e)} />
+                <FieldLabel
+                  htmlFor="is_downloadable"
+                  className="font-normal">
+                  Downloadable
+                </FieldLabel>
               </Field>
+              <Field orientation="horizontal">
+                <Checkbox id="is_editable" checked={reportData?.is_editable} onCheckedChange={(e) => handleSelectChange("is_editable", e)} />
+                <FieldLabel
+                  htmlFor="is_editable"
+                  className="font-normal"
+                >
+                  Editable
+                </FieldLabel>
+              </Field>
+
               {/* File Upload */}
               <FileUpload
                 label="Attachments"
@@ -327,9 +360,10 @@ export default function ReportCreate() {
 
               {/* Description */}
               <Field>
-                <FieldLabel htmlFor="rp_description">Description</FieldLabel>
+                <FieldLabel htmlFor="description">Description</FieldLabel>
                 <Textarea
-                  id="rp_description"
+                  id="description"
+                  name="description"
                   placeholder="Add any additional information about this report…"
                   className="resize-none min-h-[96px]"
                   value={reportData?.description}

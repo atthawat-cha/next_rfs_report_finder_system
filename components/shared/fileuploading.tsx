@@ -13,6 +13,7 @@ import {
   AlertCircle,
   File,
 } from "lucide-react";
+import Image from "next/image";
 
 // ─────────────────────────────────────────────
 // Types
@@ -131,7 +132,7 @@ function ImagePreview({ file }: { file: File }) {
   if (!src) return <ImageIcon className="h-5 w-5 text-blue-500" />;
 
   return (
-    <img
+    <Image
       src={src}
       alt={file.name}
       className="h-10 w-10 rounded object-cover border border-border"
