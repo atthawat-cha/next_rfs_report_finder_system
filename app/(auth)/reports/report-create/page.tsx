@@ -70,6 +70,7 @@ export default function ReportCreate() {
     is_downloadable: true,
     is_editable: true,
     access_level: "",
+    files: []
   });
   const [formImage, setFormImage] = React.useState<File | null>(null);
   const anchor = useComboboxAnchor()
@@ -276,7 +277,7 @@ export default function ReportCreate() {
                       {(values) => (
                         <React.Fragment>
                           {values.map((value: string) => (
-                            <ComboboxChip key={value}>{value}</ComboboxChip>
+                            <ComboboxChip key={`${value}-${Math.random()}`}>{value}</ComboboxChip>
                           ))}
                           <ComboboxChipsInput />
                         </React.Fragment>
@@ -287,7 +288,7 @@ export default function ReportCreate() {
                     <ComboboxEmpty>No items found.</ComboboxEmpty>
                     <ComboboxList>
                       {(item) => (
-                        <ComboboxItem key={item} value={item}>
+                        <ComboboxItem key={`${item}-${Math.random()}`} value={item}>
                           {item}
                         </ComboboxItem>
                       )}

@@ -237,6 +237,7 @@ export interface ReportGetDataType {
     created_at?: string;
     updated_at?: string;
     access_level?: string;
+    files?: File[];
 }
 
 export interface ReportCreateDataType {
