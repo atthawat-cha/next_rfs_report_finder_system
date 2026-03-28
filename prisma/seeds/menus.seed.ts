@@ -257,7 +257,7 @@ export async function seedMenus(prisma:PrismaClient) {
 }
 
 
-const menusSeedMapping =  (data:[]) => {
+const menusSeedMapping =  (data: any[]) => {
   return data.map((item: any) => {
     return {
         id: faker.string.uuid(),

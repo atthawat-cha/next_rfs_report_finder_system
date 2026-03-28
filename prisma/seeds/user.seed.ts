@@ -28,31 +28,38 @@ export async function seedUsers(prisma: PrismaClient) {
     }
   });
 
+  if (!userRole || !superAdminRole || !itDept) {
+    throw new Error("Missing roles or departments required to seed users.");
+  }
+
   const password = await bcrypt.hash("123456", 10)
-  const adminUser = await prisma.users.createMany({
+  const adminId = faker.string.uuid();
+  const userId = faker.string.uuid();
+
+  await prisma.users.createMany({
       data: [
         {
-        id: faker.string.uuid(),
+        id: adminId,
         username: "admin2",
         email: "admin2@example.com",
         password: password,
         first_name: "System",
         last_name: "Admin",
         status: UserStatus.ACTIVE,
-        department_id: itDept?.id,
-        role_id: superAdminRole?.id,
+        department_id: itDept.id,
+        role_id: superAdminRole.id,
         updated_at: new Date()
       },
       {
-        id: faker.string.uuid(),
+        id: userId,
         username: "user2",
         email: "user2@example.com",
         password: password,
         first_name: "System",
         last_name: "User",
         status: UserStatus.ACTIVE,
-        role_id:userRole?.id,
-        department_id: itDept?.id,
+        role_id: userRole.id,
+        department_id: itDept.id,
         updated_at: new Date()
       }
       ]
@@ -62,13 +69,13 @@ export async function seedUsers(prisma: PrismaClient) {
       data: [
         {
         id: faker.string.uuid(),
-        user_id: adminUser?.id,
-        role_id: superAdminRole?.id
+        user_id: adminId,
+        role_id: superAdminRole.id
       },
       {
         id: faker.string.uuid(),
-        user_id: adminUser?.id,
-        role_id: userRole?.id
+        user_id: adminId,
+        role_id: userRole.id
       }
       ],
       skipDuplicates: true

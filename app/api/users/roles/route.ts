@@ -139,7 +139,7 @@ export async function POST(req: NextRequest) {
                     id: true
                 }
             })
-            const rp = buildRolePermissionInsert(role?.id, permissions, body.permissions)
+            const rp = buildRolePermissionInsert(role.id, permissions, body.permissions)
             // console.log(rp);
 
             await prisma.role_permissions.createMany({

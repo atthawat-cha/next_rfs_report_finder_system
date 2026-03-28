@@ -96,8 +96,8 @@ export interface UserWithRolesType {
 
 export interface UserRolePermissionType {
     id: string;
-    role_id?: string;
-    permission_id?: string;
+    role_id: string;
+    permission_id: string;
     created_at?: Date;
     can_create?: boolean;
     can_view?: boolean;
@@ -223,35 +223,36 @@ export interface ReportGetDataType {
     id?: string;
     code: string;
     name: string;
-    description?: string;
+    description: string;
     file_path?: string;
     file_name?: string;
-    category?: string;
-    department?: string;
+    category: string;
+    department: string;
     created_by_id?: string;
-    status?: string;
+    status: string;
     "version"?: string;
-    is_downloadable?: boolean;
-    is_editable?: boolean;
+    is_downloadable: boolean;
+    is_editable: boolean;
     published_at?: string;
     created_at?: string;
     updated_at?: string;
-    access_level?: string;
-    files?: File[];
+    access_level: string[];
+
 }
 
 export interface ReportCreateDataType {
     code: string;
     name: string;
-    description?: string;
+    description: string;
     file_path?: string;
     file_name?: string;
-    category?: string;
-    department?: string;
+    category: string;
+    department: string;
     created_by_id?: string;
     status: string;
     "version"?: string;
     is_downloadable: boolean;
-    is_editable?: boolean;
-    access_level?: string;
+    is_editable: boolean;
+    access_level: string[];
+    files: File[];
 }

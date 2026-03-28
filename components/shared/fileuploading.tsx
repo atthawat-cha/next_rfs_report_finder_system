@@ -57,6 +57,9 @@ export interface FileUploadProps {
   className?: string;
   /** แสดง required asterisk */
   required?: boolean;
+  // Main component File param
+  setFilesOutside?: (files: File[]) => void;
+  fileOutside?: File[]
 }
 
 // ─────────────────────────────────────────────
@@ -135,6 +138,8 @@ function ImagePreview({ file }: { file: File }) {
     <Image
       src={src}
       alt={file.name}
+      width={40}
+      height={40}
       className="h-10 w-10 rounded object-cover border border-border"
     />
   );
@@ -207,6 +212,7 @@ export function FileUpload({
   disabled = false,
   className,
   required = false,
+  setFilesOutside
 }: FileUploadProps) {
   const inputRef = useRef<HTMLInputElement>(null);
   const [files, setFiles] = useState<File[]>([]);

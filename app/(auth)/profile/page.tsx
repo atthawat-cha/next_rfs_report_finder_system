@@ -4,8 +4,17 @@ import { redirect } from 'next/navigation';
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
 import { ContentLayout } from '@/components/layouts/content-layout';
 
+interface UserSessionType {
+  id: string;
+  username: string;
+  name: string;
+  role: string;
+  department: string;
+  permissions: string[];
+}
+
 export default async function ProfilePage() {
-  const user = await getCurrentUser();
+  const user = await getCurrentUser() as UserSessionType;
 
   if (!user) {
     redirect('/login');
@@ -94,6 +103,6 @@ export default async function ProfilePage() {
           </CardContent>
         </Card>
       </div>
-    </ContentLayout>      
+    </ContentLayout>
   );
 }

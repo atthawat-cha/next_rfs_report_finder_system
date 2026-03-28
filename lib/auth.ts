@@ -235,5 +235,5 @@ export function routeAcceptted(access: string): string[] {
     guest: ['guest'],
   }
 
-  return acc[access] || []
+  return acc[access as keyof typeof acc] || []
 }

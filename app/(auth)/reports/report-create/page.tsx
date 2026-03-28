@@ -26,7 +26,7 @@ import { Separator } from "@/components/ui/separator";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import FileUpload from "@/components/shared/fileuploading";
 import { Loader2, FileText, Layers } from "lucide-react";
-import { ReportGetDataType } from "@/lib/types";
+import { ReportCreateDataType, ReportGetDataType } from "@/lib/types";
 import {
   Combobox,
   ComboboxChip,
@@ -40,6 +40,7 @@ import {
   useComboboxAnchor,
 } from "@/components/ui/combobox"
 import { Checkbox } from "@/components/ui/checkbox";
+import toast from "react-hot-toast";
 
 // ─── Types ───────────────────────────────────────────────────────────────────
 type SelectOption = { id: string; name: string };
@@ -60,7 +61,7 @@ export default function ReportCreate() {
     access_level: [],
   });
   const [isSubmitting, setIsSubmitting] = React.useState(false);
-  const [reportData, setReportData] = React.useState<ReportGetDataType>({
+  const [reportData, setReportData] = React.useState<ReportCreateDataType>({
     code: "",
     name: "",
     description: "",
@@ -69,10 +70,9 @@ export default function ReportCreate() {
     status: "DRAFT",
     is_downloadable: true,
     is_editable: true,
-    access_level: "",
+    access_level: [],
     files: []
   });
-  const [formImage, setFormImage] = React.useState<File | null>(null);
   const anchor = useComboboxAnchor()
 
   const fetchBaseData = useCallback(async () => {
@@ -108,8 +108,60 @@ export default function ReportCreate() {
     setIsSubmitting(true);
     try {
       // TODO: implement submit logic
-      console.log(reportData)
+      const formData = new FormData();
+      formData.append("code", reportData.code);
+      formData.append("name", reportData.name);
+      formData.append("description", reportData.description);
+      formData.append("category", reportData.category);
+      formData.append("department", reportData.department);
+      formData.append("status", reportData.status);
+      formData.append("is_downloadable", reportData.is_downloadable.toString());
+      formData.append("is_editable", reportData.is_editable.toString());
+      formData.append("access_level", JSON.stringify(reportData.access_level));
+
+      // Fix: iterate through the array of files and append each individually
+      if (reportData.files && reportData.files.length > 0) {
+        reportData.files.forEach((file) => {
+          formData.append("files", file);
+        });
+      }
+
+      if (reportData.access_level.length === 0 || reportData.files.length === 0) {
+        toast.error("Please select at least one access level and one file");
+        return;
+      }
+
+      const res = await fetch("/api/reports/report/manage", {
+        method: "POST",
+        credentials: "include",
+        body: formData,
+      });
+      if (!res.ok) {
+        console.error(await res.text());
+        throw new Error("Failed response from server");
+      }
+      const data = await res.json();
+      if (!data?.success) throw new Error("Operation unsuccessful");
+
+      toast.success("Report created successfully");
+      setReportData({
+        code: "",
+        name: "",
+        description: "",
+        category: "",
+        department: "",
+        status: "DRAFT",
+        is_downloadable: true,
+        is_editable: true,
+        access_level: [],
+        files: []
+      });
       await new Promise((r) => setTimeout(r, 1000));
+    } catch (error) {
+      if (process.env.NODE_ENV === "development") {
+        console.error("Failed to create report", error);
+      }
+      toast.error("Failed to create report");
     } finally {
       setIsSubmitting(false);
     }
@@ -123,7 +175,7 @@ export default function ReportCreate() {
     }));
   };
 
-  const handleSelectChange = (name: string, value: string | boolean) => {
+  const handleSelectChange = (name: string, value: string | boolean | string[]) => {
     setReportData((prev) => ({
       ...prev,
       [name]: value,
@@ -134,15 +186,6 @@ export default function ReportCreate() {
     return data.map((item) => item.name);
   };
 
-  // const handleAccessLevelChange = (value: string) => {
-  //   const accessLevel = baseSelect.access_level.find((item) => item.name === value);
-  //   if (accessLevel) {
-  //     setReportData((prev) => ({
-  //       ...prev,
-  //       access_level: accessLevel.id,
-  //     }));
-  //   }
-  // };
 
   return (
     <ContentLayout title="Report Create">
@@ -269,9 +312,10 @@ export default function ReportCreate() {
                 <Combobox
                   multiple
                   autoHighlight
-                  items={baseSelect?.access_level}
-                  // itemToStringValue={(role: (typeof baseSelect.access_level)[number]) => role?.name}
-                  defaultValue={[baseSelect?.access_level[2]]}>
+                  items={baseSelect?.access_level ?? []}
+                  onValueChange={(value) => handleSelectChange("access_level", value)}
+                  value={reportData?.access_level}
+                >
                   <ComboboxChips ref={anchor} className="w-full">
                     <ComboboxValue>
                       {(values) => (
@@ -357,6 +401,8 @@ export default function ReportCreate() {
                 accept="all"
                 multiple
                 maxSizeMB={20}
+                onFilesChange={(files) => setReportData(prev => ({ ...prev, files }))}
+                fileOutside={reportData?.files}
               />
 
               {/* Description */}

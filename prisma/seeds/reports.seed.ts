@@ -32,6 +32,9 @@ export async function seedReports(prisma: PrismaClient) {
       }
     });
 
+    if (!adminUser || !itDept || !financeCategory) {
+      throw new Error("Required relations (adminUser, itDept, financeCategory) not found for Reports seeding");
+    }
 
     const reportsData = [
       {
@@ -44,9 +47,9 @@ export async function seedReports(prisma: PrismaClient) {
         file_name: "rpt1.pdf",
         file_type: "pdf",
         file_size: BigInt(204800),
-        category_id: financeCategory?.id,
-        department_id: itDept?.id,
-        created_by_id: adminUser?.id ,
+        category_id: financeCategory.id,
+        department_id: itDept.id,
+        created_by_id: adminUser.id,
         status: ReportStatus.PUBLISHED,
         access_level: AccessLevel.PUBLIC,
         published_at: new Date(),
@@ -62,9 +65,9 @@ export async function seedReports(prisma: PrismaClient) {
         file_name: "rpt2.pdf",
         file_type: "pdf",
         file_size: BigInt(204800),
-        category_id: financeCategory?.id,
-        department_id: itDept?.id,
-        created_by_id: adminUser?.id ,
+        category_id: financeCategory.id,
+        department_id: itDept.id,
+        created_by_id: adminUser.id,
         status: ReportStatus.PUBLISHED,
         access_level: AccessLevel.PUBLIC,
         published_at: new Date(),
@@ -80,9 +83,9 @@ export async function seedReports(prisma: PrismaClient) {
         file_name: "rpt3.pdf",
         file_type: "pdf",
         file_size: BigInt(204800),
-        category_id: financeCategory?.id,
-        department_id: itDept?.id,
-        created_by_id: adminUser?.id ,
+        category_id: financeCategory.id,
+        department_id: itDept.id,
+        created_by_id: adminUser.id,
         status: ReportStatus.PUBLISHED,
         access_level: AccessLevel.PUBLIC,
         published_at: new Date(),

@@ -1,3 +1,4 @@
+export const dynamic = 'force-dynamic';
 import mockmenus from "@/fakedata/permissionsmock";
 import { requireAuth, requireRole } from "@/lib/auth";
 import prisma from "@/lib/prisma";
