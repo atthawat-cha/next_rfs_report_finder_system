@@ -41,6 +41,7 @@ import {
 } from "@/components/ui/combobox"
 import { Checkbox } from "@/components/ui/checkbox";
 import toast from "react-hot-toast";
+import { useRouter } from "next/navigation";
 
 // ─── Types ───────────────────────────────────────────────────────────────────
 type SelectOption = { id: string; name: string };
@@ -54,6 +55,7 @@ interface BaseSelect {
 
 // ─── Component ───────────────────────────────────────────────────────────────
 export default function ReportCreate() {
+  const router = useRouter();
   const [baseSelect, setBaseSelect] = React.useState<BaseSelect>({
     departments: [],
     status: [],
@@ -112,8 +114,8 @@ export default function ReportCreate() {
       formData.append("code", reportData.code);
       formData.append("name", reportData.name);
       formData.append("description", reportData.description);
-      formData.append("category", reportData.category);
-      formData.append("department", reportData.department);
+      formData.append("categories", reportData.category);
+      formData.append("departments", reportData.department);
       formData.append("status", reportData.status);
       formData.append("is_downloadable", reportData.is_downloadable.toString());
       formData.append("is_editable", reportData.is_editable.toString());
@@ -141,6 +143,7 @@ export default function ReportCreate() {
         throw new Error("Failed response from server");
       }
       const data = await res.json();
+      console.log(data);
       if (!data?.success) throw new Error("Operation unsuccessful");
 
       toast.success("Report created successfully");
@@ -157,6 +160,7 @@ export default function ReportCreate() {
         files: []
       });
       await new Promise((r) => setTimeout(r, 1000));
+      router.push("/reports/report-list");
     } catch (error) {
       if (process.env.NODE_ENV === "development") {
         console.error("Failed to create report", error);

@@ -251,8 +251,8 @@ export interface ReportCreateDataType {
     created_by_id?: string;
     status: string;
     "version"?: string;
-    is_downloadable: boolean;
-    is_editable: boolean;
-    access_level: string[];
+    is_downloadable?: boolean | undefined;
+    is_editable?: boolean | undefined;
+    access_level?: string[];
     files: File[];
 }
