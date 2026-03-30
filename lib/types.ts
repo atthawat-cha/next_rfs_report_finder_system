@@ -222,10 +222,13 @@ export interface DepartmentFormType {
 export interface ReportGetDataType {
     id?: string;
     code: string;
-    name: string;
+    name_th: string;
+    name_en: string;
     description: string;
     file_path?: string;
     file_name?: string;
+    file_type?: string;
+    file_size?: number;
     category: string;
     department: string;
     created_by_id?: string;

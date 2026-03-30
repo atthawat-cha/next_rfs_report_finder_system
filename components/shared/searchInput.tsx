@@ -6,7 +6,7 @@ import {
 import { Search } from "lucide-react"
 
 type Prop = {
-    onSearch: () => void;
+    onSearch: (search: string) => void;
     countRes: string;
 }
 
