@@ -259,3 +259,23 @@ export interface ReportCreateDataType {
     access_level?: string[];
     files: File[];
 }
+
+
+export interface CategoryType {
+    id?: string;
+    code: string;
+    name: string;
+    description: string;
+    status: boolean;
+    created_at?: string;
+    updated_at?: string;
+}
+
+export interface TagsType {
+    id?: string;
+    name: string;
+    slug: string;
+    description: string;
+    created_at?: string;
+    updated_at?: string;
+}

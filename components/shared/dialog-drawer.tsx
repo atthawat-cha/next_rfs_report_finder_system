@@ -46,7 +46,7 @@ export function DrawerDialogDemo({ children, title, isOpen, handlerSubmit, descr
   return (
     <Dialog>
       <DialogTrigger asChild>
-        <Button variant="outline">{btnText}</Button>
+        <Button variant="default">{btnText}</Button>
       </DialogTrigger>
 
       <DialogContent className="sm:max-w-xl">
