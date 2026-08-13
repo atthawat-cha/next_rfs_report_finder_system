@@ -1,24 +1,24 @@
 {
   "main": {
-    "id": "b9181c1c8f870927",
+    "id": "de4d06ce45cf6d64",
     "type": "split",
     "children": [
       {
-        "id": "4d518a7a6ebb8992",
+        "id": "339528e3651b20d4",
         "type": "tabs",
         "children": [
           {
-            "id": "97336e87a8ed4bab",
+            "id": "a1eecdc9369f9dbd",
             "type": "leaf",
             "state": {
               "type": "markdown",
               "state": {
-                "file": "feature-list.md",
+                "file": "project-specification.md",
                 "mode": "source",
                 "source": false
               },
               "icon": "lucide-file",
-              "title": "feature-list"
+              "title": "project-specification"
             }
           }
         ]
@@ -27,30 +27,28 @@
     "direction": "vertical"
   },
   "left": {
-    "id": "b0577faa258b7642",
+    "id": "c05ecb3c17425758",
     "type": "split",
     "children": [
       {
-        "id": "02b847ec720c2d96",
+        "id": "8a7545a7a5ff6c44",
         "type": "tabs",
         "children": [
           {
-            "id": "6fff589aec276897",
+            "id": "707e2b02735a40e4",
             "type": "leaf",
             "state": {
               "type": "file-explorer",
               "state": {
                 "sortOrder": "alphabetical",
-                "autoReveal": false,
-                "showSearch": false,
-                "searchQuery": ""
+                "autoReveal": false
               },
               "icon": "lucide-folder-closed",
               "title": "Files"
             }
           },
           {
-            "id": "32cf8dd01f6bf0c0",
+            "id": "611be021c2c8d80d",
             "type": "leaf",
             "state": {
               "type": "search",
@@ -67,14 +65,11 @@
             }
           },
           {
-            "id": "c19c278a3e1c1411",
+            "id": "6d2c0beac06267ee",
             "type": "leaf",
             "state": {
               "type": "bookmarks",
-              "state": {
-                "showSearch": false,
-                "searchQuery": ""
-              },
+              "state": {},
               "icon": "lucide-bookmark",
               "title": "Bookmarks"
             }
@@ -86,20 +81,20 @@
     "width": 300
   },
   "right": {
-    "id": "f78f1f8dda93acd6",
+    "id": "4275765da2bb5956",
     "type": "split",
     "children": [
       {
-        "id": "3cb33ecfd33da468",
+        "id": "9738a4f487ddf7c6",
         "type": "tabs",
         "children": [
           {
-            "id": "c78aebe950773fe8",
+            "id": "80c29e92cbad1294",
             "type": "leaf",
             "state": {
               "type": "backlink",
               "state": {
-                "file": "feature-list.md",
+                "file": "project-specification.md",
                 "collapseAll": false,
                 "extraContext": false,
                 "sortOrder": "alphabetical",
@@ -109,25 +104,25 @@
                 "unlinkedCollapsed": true
               },
               "icon": "links-coming-in",
-              "title": "Backlinks"
+              "title": "Backlinks for project-specification"
             }
           },
           {
-            "id": "034e8cafb6b231c7",
+            "id": "0e536719e85c6fe0",
             "type": "leaf",
             "state": {
               "type": "outgoing-link",
               "state": {
-                "file": "feature-list.md",
+                "file": "project-specification.md",
                 "linksCollapsed": false,
                 "unlinkedCollapsed": true
               },
               "icon": "links-going-out",
-              "title": "Outgoing links"
+              "title": "Outgoing links from project-specification"
             }
           },
           {
-            "id": "0a54e58b668879dc",
+            "id": "52250e31e48c68fb",
             "type": "leaf",
             "state": {
               "type": "tag",
@@ -142,7 +137,7 @@
             }
           },
           {
-            "id": "d8af86eeda680ce4",
+            "id": "aea840cefaf9f8f5",
             "type": "leaf",
             "state": {
               "type": "all-properties",
@@ -156,18 +151,18 @@
             }
           },
           {
-            "id": "56851799d02a97b4",
+            "id": "f7d663857b524b89",
             "type": "leaf",
             "state": {
               "type": "outline",
               "state": {
-                "file": "feature-list.md",
+                "file": "project-specification.md",
                 "followCursor": false,
                 "showSearch": false,
                 "searchQuery": ""
               },
               "icon": "lucide-list",
-              "title": "Outline"
+              "title": "Outline of project-specification"
             }
           }
         ]
@@ -188,11 +183,15 @@
       "bases:Create new base": false
     }
   },
-  "active": "97336e87a8ed4bab",
+  "active": "a1eecdc9369f9dbd",
   "lastOpenFiles": [
-    "workflow.md",
     "system-design.md",
-    "diagrams.md",
-    "feature-list.md"
+    "new_requirement.md",
+    "01-system-design.md",
+    "00-new_requirement.md",
+    "requrisement.md",
+    "workflow.md",
+    "feature-list.md",
+    "diagrams.md"
   ]
 }
