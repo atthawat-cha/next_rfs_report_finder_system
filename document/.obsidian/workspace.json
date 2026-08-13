@@ -185,10 +185,17 @@
   },
   "active": "a1eecdc9369f9dbd",
   "lastOpenFiles": [
+<<<<<<< HEAD
     "01-system-design.md",
     "00-new_requirement.md",
     "system-design.md",
     "new_requirement.md",
+=======
+    "system-design.md",
+    "new_requirement.md",
+    "01-system-design.md",
+    "00-new_requirement.md",
+>>>>>>> b6764685e7ba4ede8bcb9e1bdddd177a39f9e9d3
     "requrisement.md",
     "workflow.md",
     "feature-list.md",
