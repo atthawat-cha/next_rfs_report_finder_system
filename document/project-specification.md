@@ -1,6 +1,6 @@
 # Project Specification — RFS Report Finder System
 
-> เอกสาร specification ระดับโครงการ ตามหลัก Software Development Life Cycle (SDLC) รวบรวมจาก `document/requrisement.md`, `document/new_requirement.md`, `document/phase0-plan.md`, [system-design.md](./system-design.md), [workflow.md](./workflow.md), [diagrams.md](./diagrams.md) และ [feature-list.md](./feature-list.md)
+> เอกสาร specification ระดับโครงการ ตามหลัก Software Development Life Cycle (SDLC) รวบรวมจาก `document/requrisement.md`, `document/new_requirement.md`, `document/phase0-plan.md`, [system-design.md](01-system-design.md), [workflow.md](./workflow.md), [diagrams.md](./diagrams.md) และ [feature-list.md](./feature-list.md)
 
 ---
 
@@ -17,7 +17,7 @@
 
 ### 1.1 Background
 
-รายงานขององค์กรถูกสร้างและดูแลโดย reporter จากหลายแผนก ผลลัพธ์ที่ผู้ใช้ต้องการคือใบพิมพ์ (PDF) และรายงานข้อมูล (Excel/ตาราง) — **ระบบนี้ไม่ได้ทำหน้าที่ render/สร้างรายงานจาก source ใด ๆ** (เช่น `.jasper`) เอง แต่เป็นที่จัดเก็บ ค้นหา และแจกจ่ายไฟล์ผลลัพธ์สำเร็จรูปที่ admin อัปโหลดเข้ามาโดยตรง (ดูรายละเอียดใน [system-design.md §3.8-3.9](./system-design.md#38-preview-download--print-design-no-rendering-engine)) เมื่อจำนวนผู้ใช้ ผู้ใช้จากหลายแผนก และจำนวนรายงานเพิ่มขึ้น เกิดปัญหาหลัก 4 ข้อ:
+รายงานขององค์กรถูกสร้างและดูแลโดย reporter จากหลายแผนก ผลลัพธ์ที่ผู้ใช้ต้องการคือใบพิมพ์ (PDF) และรายงานข้อมูล (Excel/ตาราง) — **ระบบนี้ไม่ได้ทำหน้าที่ render/สร้างรายงานจาก source ใด ๆ** (เช่น `.jasper`) เอง แต่เป็นที่จัดเก็บ ค้นหา และแจกจ่ายไฟล์ผลลัพธ์สำเร็จรูปที่ admin อัปโหลดเข้ามาโดยตรง (ดูรายละเอียดใน [system-design.md §3.8-3.9](01-system-design.md#38-preview-download--print-design-no-rendering-engine)) เมื่อจำนวนผู้ใช้ ผู้ใช้จากหลายแผนก และจำนวนรายงานเพิ่มขึ้น เกิดปัญหาหลัก 4 ข้อ:
 
 1. ไม่มีที่ค้นหารายงานที่มีอยู่แล้วได้ง่าย → สร้างรายงานซ้ำ/ใกล้เคียงของเดิมโดยไม่รู้ตัว
 2. ไม่มีการควบคุมสิทธิ์การเข้าถึงรายงานแบบละเอียด (รายบุคคล/รายบทบาท) ต่อ 1 รายงาน
@@ -101,13 +101,13 @@
 
 รายละเอียด functional requirement แต่ละข้อ (FR-1 ถึง FR-14) พร้อมสถานะ ✅/⚠️/❌ อยู่ใน `document/new_requirement.md §4` และแปลงเป็น checklist ที่ execute ได้ใน [feature-list.md](./feature-list.md) — เอกสารนี้อ้างอิงไม่ทำซ้ำเพื่อลดความเสี่ยงเอกสารไม่ sync กัน
 
-Non-functional requirements (security, performance, scalability, availability, i18n, observability, testing) อยู่ใน `document/new_requirement.md §5` และแปลงเป็นการออกแบบจริงใน [system-design.md §6-7](./system-design.md#6-security-design-owasp-aligned)
+Non-functional requirements (security, performance, scalability, availability, i18n, observability, testing) อยู่ใน `document/new_requirement.md §5` และแปลงเป็นการออกแบบจริงใน [system-design.md §6-7](01-system-design.md#6-security-design-owasp-aligned)
 
 ---
 
 ## 5. System Architecture Summary
 
-ดูรายละเอียดเต็มที่ [system-design.md](./system-design.md) และ diagram ที่ [diagrams.md §1](./diagrams.md#1-system-architecture) สรุปสั้น:
+ดูรายละเอียดเต็มที่ [system-design.md](01-system-design.md) และ diagram ที่ [diagrams.md §1](./diagrams.md#1-system-architecture) สรุปสั้น:
 
 - **Frontend**: Next.js 14 App Router + React 18 + TypeScript, shadcn/ui (new-york) + Tailwind, Zustand, `@tanstack/react-table`
 - **Backend**: Next.js Route Handlers (`app/api/**`) แบบ layered (route → service `lib/*` → Prisma), JWT auth (`jose`) + httpOnly cookie

@@ -1,6 +1,6 @@
 # System Diagrams (Mermaid) — RFS Report Finder System
 
-> Diagram รวมทั้งระบบ — architecture, data model (ERD), sequence, state, deployment ทุกไดอะแกรมสอดคล้องกับ [system-design.md](./system-design.md) และ [workflow.md](./workflow.md) หัวข้อย่อยตรงกันเพื่อให้ลิงก์ข้ามเอกสารใช้งานได้ (`workflow.md` มีลิงก์อ้างมาที่หัวข้อในไฟล์นี้)
+> Diagram รวมทั้งระบบ — architecture, data model (ERD), sequence, state, deployment ทุกไดอะแกรมสอดคล้องกับ [system-design.md](01-system-design.md) และ [workflow.md](./workflow.md) หัวข้อย่อยตรงกันเพื่อให้ลิงก์ข้ามเอกสารใช้งานได้ (`workflow.md` มีลิงก์อ้างมาที่หัวข้อในไฟล์นี้)
 >
 > Diagram แสดงสถานะ **เป้าหมายรวมทุก phase** — ส่วนที่เป็นสีเทาในคำอธิบาย (❌/Phase 2-4) คือของที่ยังไม่มีในโค้ดจริงวันนี้
 
