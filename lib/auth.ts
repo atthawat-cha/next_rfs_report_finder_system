@@ -189,45 +189,6 @@ export async function requireRole(req: NextRequest, allowedRoles: string[]): Pro
 }
 
 
-// ─────────────────────────────────────────────
-// RATE LIMITING HELPER (OWASP A07 - brute-force)
-// ─────────────────────────────────────────────
-
-/** Simple in-memory rate limiter (replace with Redis in production) */
-const loginAttempts = new Map<string, { count: number; resetAt: number }>();
-const MAX_ATTEMPTS = 5;
-const WINDOW_MS = 15 * 60 * 1000; // 15 minutes
-
-export function checkRateLimit(identifier: string): { allowed: boolean; retryAfter?: number } {
-
-  if (!identifier) {
-    return { allowed: false };
-  }
-  const now = Date.now();
-  const entry = loginAttempts.get(identifier);
-
-  if (!entry || now > entry.resetAt) {
-    loginAttempts.set(identifier, { count: 1, resetAt: now + WINDOW_MS });
-    return { allowed: true };
-  }
-
-  if (entry.count >= MAX_ATTEMPTS) {
-    return { allowed: false, retryAfter: Math.ceil((entry.resetAt - now) / 1000) };
-  }
-
-  entry.count++;
-  return { allowed: true };
-}
-
-export function resetRateLimit(identifier: string): void {
-  loginAttempts.delete(identifier);
-}
-
-
-export function rateLimit(identifier: string): { allowed: boolean; retryAfter?: number } {
-  return checkRateLimit(identifier);
-}
-
 export function routeAcceptted(access: string): string[] {
   const acc = {
     admin: ['admin', 'super_admin'],

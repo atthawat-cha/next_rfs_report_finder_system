@@ -3,6 +3,7 @@ import prisma from '@/lib/prisma';
 import { faker } from '@faker-js/faker';
 import { NextRequest, NextResponse } from 'next/server';
 import z from 'zod';
+import { logActivity } from '@/lib/activity-log';
 
 export async function GET(req: NextRequest) {
     // กำหนดบทบาทที่สามารถเข้าถึงข้อมูลนี้ได้
@@ -86,6 +87,14 @@ export async function POST(req: NextRequest) {
         }
         const department = await prisma.departments.create({
             data: params,
+        });
+
+        await logActivity(req, {
+            userId: authResult.user.id,
+            action: 'create',
+            entity: 'department',
+            entityId: department.id,
+            description: `Created department ${department.code}`,
         });
 
         return NextResponse.json(department);

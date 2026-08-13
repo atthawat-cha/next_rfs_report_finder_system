@@ -6,6 +6,8 @@ import { convertToWebp, getFileExtension, getImageMetadata } from '@/lib/imageCo
 import { uploadImageFile, uploadMultipleImages } from '@/lib/fileUploadServices';
 import { ReportCreateDataType, ReportGetDataType } from '@/lib/types';
 import { faker } from '@faker-js/faker';
+import { parsePagination } from '@/lib/pagination';
+import { logActivity } from '@/lib/activity-log';
 
 /**
  * GET /api/reports/report/manage
@@ -28,31 +30,43 @@ export async function GET(req: NextRequest) {
             return authResult; // ส่งต่อการตอบกลับ 401 หรือ 403 จาก requireRole
         }
 
-        const reports = await prisma.reports.findMany({
-            select: {
-                id: true,
-                code: true,
-                name_th: true,
-                name_en: true,
-                description: true,
-                file_path: true,
-                file_name: true,
-                categories: { select: { id: true, name: true } },
-                departments: { select: { id: true, name: true } },
-                users: { select: { id: true, username: true } },
-                created_at: true,
-                status: true,
-                updated_at: true,
-                is_downloadable: true,
-                is_editable: true
-            }
-        })
+        // NOTE: default pageSize=100 comfortably covers current dev dataset; once report volume
+        // exceeds pageSize this will silently truncate until Phase 1 adds real pagination UI.
+        const { page, pageSize, skip, take } = parsePagination(req.nextUrl.searchParams);
+
+        const [reports, total] = await Promise.all([
+            prisma.reports.findMany({
+                select: {
+                    id: true,
+                    code: true,
+                    name_th: true,
+                    name_en: true,
+                    description: true,
+                    file_path: true,
+                    file_name: true,
+                    categories: { select: { id: true, name: true } },
+                    departments: { select: { id: true, name: true } },
+                    users: { select: { id: true, username: true } },
+                    created_at: true,
+                    status: true,
+                    updated_at: true,
+                    is_downloadable: true,
+                    is_editable: true
+                },
+                skip,
+                take,
+            }),
+            prisma.reports.count(),
+        ]);
 
         if (!reports) {
             return NextResponse.json({ success: false, error: "reports not found" }, { status: 404 });
         }
         // console.log(users);
-        return NextResponse.json({ success: true, data: reports }, { status: 200 });
+        return NextResponse.json(
+            { success: true, data: reports, meta: { page, pageSize, total, totalPages: Math.ceil(total / pageSize) } },
+            { status: 200 }
+        );
     } catch (error) {
         process.env.NODE_ENV === 'development' && console.log(error)
         return NextResponse.json({ error: "Internal Server Error" }, { status: 500 });
@@ -186,6 +200,15 @@ export async function POST(req: NextRequest) {
         if (!report) {
             return NextResponse.json({ success: false, error: "Failed to create report" }, { status: 500 });
         }
+
+        await logActivity(req, {
+            userId: authResult.user.id,
+            action: 'create',
+            entity: 'report',
+            entityId: report.id,
+            description: `Created report ${report.code}`,
+        });
+
         return NextResponse.json({ success: true, data: { id: report.id } }, { status: 200 });
     } catch (error) {
         process.env.NODE_ENV === 'development' && console.log(error)

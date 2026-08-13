@@ -1,7 +1,10 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { authenticate, checkRateLimit, createToken, resetRateLimit, setAuthCookie } from '@/lib/auth';
+import { authenticate, createToken, setAuthCookie } from '@/lib/auth';
+import { checkRateLimit, resetRateLimit } from '@/lib/rate-limit';
 import { z } from 'zod';
 import prisma from '@/lib/prisma';
+import { getClientIp } from '@/lib/request-info';
+import { logActivity } from '@/lib/activity-log';
 
 const loginSchema = z.object({
   username: z.string().min(3, 'กรุณากรอกชื่อผู้ใช้'),
@@ -11,8 +14,8 @@ const loginSchema = z.object({
 export async function POST(request: NextRequest) {
 
   // ตรวจสอบ rate limit
-  const ip = request.headers.get('x-forwarded-for') || request.ip || request.headers.get('x-real-ip') || 'unknown';
-  const {allowed, retryAfter} = checkRateLimit(ip);
+  const ip = getClientIp(request);
+  const { allowed, retryAfter } = await checkRateLimit(ip);
   if (!allowed) {
     return NextResponse.json(
       { error: 'คุณพยายามเข้าสู่ระบบหลายครั้งเกินไป โปรดลองใหม่อีกครั้งในภายหลัง' },
@@ -72,6 +75,12 @@ export async function POST(request: NextRequest) {
     // });
 
     if (!getUser) {
+      await logActivity(request, {
+        userId: null,
+        action: 'login_failed',
+        entity: 'auth',
+        description: `Login failed for username "${validatedData.username}" (user not found)`,
+      });
       return NextResponse.json(
         { error: 'ชื่อผู้ใช้หรือรหัสผ่านไม่ถูกต้อง' },
         { status: 401 }
@@ -82,6 +91,13 @@ export async function POST(request: NextRequest) {
     const user = await authenticate(validatedData, getUser);
 
     if (!user) {
+      await logActivity(request, {
+        userId: getUser.id,
+        action: 'login_failed',
+        entity: 'auth',
+        entityId: getUser.id,
+        description: `Login failed for username "${validatedData.username}" (wrong password)`,
+      });
       return NextResponse.json(
         { error: 'ชื่อผู้ใช้หรือรหัสผ่านไม่ถูกต้อง' },
         { status: 401 }
@@ -95,9 +111,15 @@ export async function POST(request: NextRequest) {
     await setAuthCookie(token);
 
     // Reset rate limit on successful login
-    resetRateLimit(ip);
+    await resetRateLimit(ip);
 
-    
+    await logActivity(request, {
+      userId: user.id,
+      action: 'login',
+      entity: 'auth',
+      entityId: user.id,
+      description: `Login success for username "${user.username}"`,
+    });
 
     return NextResponse.json(
       { 
