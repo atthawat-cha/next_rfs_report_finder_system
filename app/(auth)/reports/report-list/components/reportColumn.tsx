@@ -82,6 +82,9 @@ export const report_column: ColumnDef<ReportGetDataType>[] = [
                     <DropdownMenuContent align="end">
                         <DropdownMenuLabel>Actions</DropdownMenuLabel>
                         <DropdownMenuItem asChild>
+                            <a href={`/reports/report-edit/${id}`}>Edit</a>
+                        </DropdownMenuItem>
+                        <DropdownMenuItem asChild>
                             <a href={`/api/reports/${id}/download`}>Download</a>
                         </DropdownMenuItem>
                         <DropdownMenuItem onClick={() => addToFavorites(id)}>

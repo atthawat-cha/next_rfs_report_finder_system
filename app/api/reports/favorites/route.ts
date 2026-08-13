@@ -4,7 +4,7 @@ import { getAuthFromRequest, requireRole, routeAcceptted } from '@/lib/auth';
 import { faker } from '@faker-js/faker';
 import { z } from 'zod';
 import { logActivity } from '@/lib/activity-log';
-import { isReportVisibleToNonAdmin } from '@/lib/report-visibility';
+import { resolveReportAcl } from '@/lib/report-acl';
 
 /**
  * GET /api/reports/favorites — list current user's favorite reports
@@ -79,10 +79,8 @@ export async function POST(req: NextRequest) {
             return NextResponse.json({ success: false, error: validate.error.errors }, { status: 400 });
         }
 
-        // Phase 1 can_favorite rule: only reports visible under the coarse non-admin
-        // visibility rule can be favorited (see lib/report-visibility.ts)
-        const visible = await isReportVisibleToNonAdmin(validate.data.report_id);
-        if (!visible) {
+        const acl = await resolveReportAcl(validate.data.report_id, authResult.user);
+        if (!acl.can_favorite) {
             return NextResponse.json({ success: false, error: "Report not found or not favoritable" }, { status: 403 });
         }
 

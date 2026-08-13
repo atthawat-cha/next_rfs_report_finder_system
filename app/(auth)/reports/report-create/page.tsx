@@ -27,7 +27,7 @@ import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import FileUpload from "@/components/shared/fileuploading";
 import { Loader2, FileText, Layers } from "lucide-react";
 import { ReportCreateDataType, ReportGetDataType } from "@/lib/types";
-import { AccessLevel } from "@/app/generated/prisma/enums";
+import { AccessLevel, ReportOutputType } from "@/app/generated/prisma/enums";
 import { Checkbox } from "@/components/ui/checkbox";
 import toast from "react-hot-toast";
 import { useRouter } from "next/navigation";
@@ -40,6 +40,7 @@ interface BaseSelect {
   status: string[];
   catagory: SelectOption[];
   access_level: string[];
+  output_type: string[];
 }
 
 // ─── Component ───────────────────────────────────────────────────────────────
@@ -50,6 +51,7 @@ export default function ReportCreate() {
     status: [],
     catagory: [],
     access_level: [],
+    output_type: [],
   });
   const [isSubmitting, setIsSubmitting] = React.useState(false);
   const [reportData, setReportData] = React.useState<ReportCreateDataType>({
@@ -62,6 +64,7 @@ export default function ReportCreate() {
     is_downloadable: true,
     is_editable: true,
     access_level: AccessLevel.PUBLIC,
+    output_type: ReportOutputType.DATA_REPORT,
     files: []
   });
 
@@ -80,12 +83,13 @@ export default function ReportCreate() {
     const data = await res.json();
     if (!data?.success) return;
 
-    const { baseDept, basereportStatus, baseCatagory, baseAccessLevel } = data?.baseConfig;
+    const { baseDept, basereportStatus, baseCatagory, baseAccessLevel, baseOutputType } = data?.baseConfig;
     setBaseSelect({
       departments: baseDept,
       status: basereportStatus,
       catagory: baseCatagory,
       access_level: baseAccessLevel,
+      output_type: baseOutputType,
     });
   }, []);
 
@@ -108,6 +112,7 @@ export default function ReportCreate() {
       formData.append("is_downloadable", (reportData.is_downloadable ?? true).toString());
       formData.append("is_editable", (reportData.is_editable ?? true).toString());
       formData.append("access_level", reportData.access_level);
+      formData.append("output_type", reportData.output_type);
 
       // Fix: iterate through the array of files and append each individually
       if (reportData.files && reportData.files.length > 0) {
@@ -145,6 +150,7 @@ export default function ReportCreate() {
         is_downloadable: true,
         is_editable: true,
         access_level: AccessLevel.PUBLIC,
+        output_type: ReportOutputType.DATA_REPORT,
         files: []
       });
       await new Promise((r) => setTimeout(r, 1000));
@@ -312,7 +318,29 @@ export default function ReportCreate() {
                   </SelectContent>
                 </Select>
                 <FieldDescription>
-                  PUBLIC เผยแพร่ให้ผู้ใช้ทั่วไปเห็นได้ · RESTRICTED/PRIVATE ยังไม่มีผลกรองสิทธิ์จริงจนกว่าจะถึง Phase 2
+                  PUBLIC เผยแพร่ให้ผู้ใช้ทั่วไปเห็นได้ · RESTRICTED/PRIVATE ต้องกำหนดสิทธิ์รายบุคคล/บทบาทเพิ่มในหน้าแก้ไขรายงาน ไม่งั้นจะไม่มีใครเห็นเลยนอกจากแอดมิน
+                </FieldDescription>
+              </Field>
+
+              {/* Output Type */}
+              <Field>
+                <FieldLabel htmlFor="rp_output_type">Output Type</FieldLabel>
+                <Select value={reportData?.output_type} onValueChange={(e) => handleSelectChange("output_type", e)}>
+                  <SelectTrigger id="rp_output_type">
+                    <SelectValue placeholder="Select output type" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectGroup>
+                      {baseSelect.output_type.map((item) => (
+                        <SelectItem key={item} value={item}>
+                          {item}
+                        </SelectItem>
+                      ))}
+                    </SelectGroup>
+                  </SelectContent>
+                </Select>
+                <FieldDescription>
+                  PRINT_FORM = ใบพิมพ์ (PDF) · DATA_REPORT = รายงานข้อมูล (Excel) — กำหนดครั้งเดียวตอนสร้าง เปลี่ยนไม่ได้หลังแนบไฟล์แล้ว
                 </FieldDescription>
               </Field>
 

@@ -2,11 +2,12 @@ import prisma from '@/lib/prisma';
 import { NextRequest, NextResponse } from 'next/server';
 import { getAuthFromRequest, requireRole, routeAcceptted } from '@/lib/auth';
 import { parsePagination } from '@/lib/pagination';
-import { nonAdminVisibilityWhere } from '@/lib/report-visibility';
+import { visibleReportIdsFor } from '@/lib/report-acl';
 
 /**
  * GET /api/reports/browse
- * Non-admin report list — Phase 1 coarse visibility rule (PUBLIC + PUBLISHED only).
+ * Non-admin report list — filtered via lib/report-acl.ts's visibleReportIdsFor
+ * (individual grant > role grant > access_level fallback).
  * Query params: q, category, department, tag, page, pageSize
  */
 export async function GET(req: NextRequest) {
@@ -29,8 +30,16 @@ export async function GET(req: NextRequest) {
         const department = searchParams.get('department');
         const tag = searchParams.get('tag');
 
+        const visibleIds = await visibleReportIdsFor(authResult.user);
+        if (visibleIds.length === 0) {
+            return NextResponse.json(
+                { success: true, data: [], meta: { page, pageSize, total: 0, totalPages: 0 } },
+                { status: 200 }
+            );
+        }
+
         const where: Record<string, unknown> = {
-            ...nonAdminVisibilityWhere,
+            id: { in: visibleIds },
             ...(category && { category_id: category }),
             ...(department && { department_id: department }),
             ...(tag && { report_tags: { some: { tags: { slug: tag } } } }),
@@ -43,10 +52,13 @@ export async function GET(req: NextRequest) {
             const likeTerm = `%${q}%`;
             const rows = await prisma.$queryRaw<{ id: string }[]>`
                 SELECT id FROM reports
-                WHERE search_vector @@ to_tsquery('simple', ${toTsQueryInput(q)})
-                   OR name_th ILIKE ${likeTerm}
-                   OR name_en ILIKE ${likeTerm}
-                   OR code ILIKE ${likeTerm}
+                WHERE id = ANY(${visibleIds})
+                  AND (
+                    search_vector @@ to_tsquery('simple', ${toTsQueryInput(q)})
+                    OR name_th ILIKE ${likeTerm}
+                    OR name_en ILIKE ${likeTerm}
+                    OR code ILIKE ${likeTerm}
+                  )
             `;
             matchingIds = rows.map((r) => r.id);
             if (matchingIds.length === 0) {

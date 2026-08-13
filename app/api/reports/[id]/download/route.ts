@@ -5,6 +5,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { getAuthFromRequest, requireRole, routeAcceptted } from '@/lib/auth';
 import { logActivity } from '@/lib/activity-log';
 import { getClientIp } from '@/lib/request-info';
+import { resolveReportAcl } from '@/lib/report-acl';
 import { faker } from '@faker-js/faker';
 
 const PUBLIC_DIR = path.join(process.cwd(), 'public');
@@ -48,8 +49,6 @@ export async function GET(req: NextRequest, { params }: { params: { id: string }
                 file_path: true,
                 file_name: true,
                 is_downloadable: true,
-                status: true,
-                access_level: true,
             },
         });
 
@@ -57,8 +56,11 @@ export async function GET(req: NextRequest, { params }: { params: { id: string }
             return NextResponse.json({ success: false, error: "Report not found" }, { status: 404 });
         }
 
-        if (!isAdmin && (report.status !== 'PUBLISHED' || report.access_level !== 'PUBLIC')) {
-            return NextResponse.json({ success: false, error: "Not found" }, { status: 404 });
+        if (!isAdmin) {
+            const acl = await resolveReportAcl(id, authResult.user);
+            if (!acl.can_export) {
+                return NextResponse.json({ success: false, error: "Not found" }, { status: 404 });
+            }
         }
 
         if (!report.is_downloadable) {
