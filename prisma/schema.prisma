@@ -113,6 +113,89 @@ model permissions {
   menus            menus              @relation(fields: [menu_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
 }
 
+model report_files {
+  id          String   @id
+  report_id   String
+  file_kind   FileKind
+  file_path   String
+  file_name   String
+  file_type   String
+  file_size   BigInt
+  version     String   @default("1.0")
+  is_current  Boolean  @default(true)
+  uploaded_by String
+  created_at  DateTime @default(now())
+  reports     reports  @relation(fields: [report_id], references: [id], onDelete: Cascade)
+
+  @@index([report_id, file_kind])
+}
+
+// Reference/documentation only — the app never executes sql_text (see system-design.md §5.2).
+model report_queries {
+  id                    String                  @id
+  report_id             String
+  name                  String
+  sql_text              String
+  is_main               Boolean                 @default(false)
+  version               String                  @default("1.0")
+  created_by            String
+  created_at            DateTime                @default(now())
+  updated_at            DateTime
+  reports               reports                 @relation(fields: [report_id], references: [id], onDelete: Cascade)
+  report_query_versions report_query_versions[]
+  // partial unique index (one is_main=true per report) added via raw SQL migration —
+  // Prisma's schema DSL doesn't support partial indexes.
+
+  @@index([report_id])
+}
+
+model report_query_versions {
+  id             String         @id
+  query_id       String
+  version        String
+  sql_text       String
+  change_log     String?
+  created_by     String
+  created_at     DateTime       @default(now())
+  report_queries report_queries @relation(fields: [query_id], references: [id], onDelete: Cascade)
+}
+
+model report_variables {
+  id            String  @id
+  report_id     String
+  name          String
+  label         String?
+  data_type     String
+  default_value String?
+  is_required   Boolean @default(false)
+  sort_order    Int     @default(0)
+  reports       reports @relation(fields: [report_id], references: [id], onDelete: Cascade)
+
+  @@unique([report_id, name])
+}
+
+// subject_id refers to users.id or roles.id depending on subject_type — not FK'd to both
+// (Postgres/Prisma can't express a conditional FK), validated at the application layer.
+// See lib/report-acl.ts.
+model report_permissions {
+  id           String      @id
+  report_id    String
+  subject_type SubjectType
+  subject_id   String
+  can_view     Boolean     @default(false)
+  can_edit     Boolean     @default(false)
+  can_delete   Boolean     @default(false)
+  can_favorite Boolean     @default(false)
+  can_export   Boolean     @default(false)
+  can_print    Boolean     @default(false)
+  created_at   DateTime    @default(now())
+  updated_at   DateTime
+  reports      reports     @relation(fields: [report_id], references: [id], onDelete: Cascade)
+
+  @@unique([report_id, subject_type, subject_id])
+  @@index([subject_type, subject_id])
+}
+
 model report_shares {
   id           String    @id
   report_id    String
@@ -153,41 +236,46 @@ model report_versions {
 }
 
 model reports {
-  id              String            @id
-  code            String            @unique
-  name_th         String
-  name_en         String?
-  description     String?
-  file_path       String
-  file_name       String
-  file_type       String
-  file_size       BigInt
-  thumbnail_path  String?
-  category_id     String
-  department_id   String?
-  created_by_id   String
-  author          String?
-  report_date     DateTime?
-  version         String            @default("1.0")
-  status          ReportStatus      @default(DRAFT)
-  access_level    AccessLevel       @default(PUBLIC)
-  is_downloadable Boolean           @default(true)
-  is_editable     Boolean           @default(true)
-  view_count      Int               @default(0)
-  download_count  Int               @default(0)
-  published_at    DateTime?
-  archived_at     DateTime?
-  created_at      DateTime          @default(now())
-  updated_at      DateTime
-  search_vector   Unsupported("tsvector")?
-  downloads       downloads[]
-  favorites       favorites[]
-  report_shares   report_shares[]
-  report_tags     report_tags[]
-  report_versions report_versions[]
-  categories      categories        @relation(fields: [category_id], references: [id])
-  users           users             @relation(fields: [created_by_id], references: [id])
-  departments     departments?      @relation(fields: [department_id], references: [id])
+  id                 String                   @id
+  code               String                   @unique
+  name_th            String
+  name_en            String?
+  description        String?
+  file_path          String
+  file_name          String
+  file_type          String
+  file_size          BigInt
+  thumbnail_path     String?
+  category_id        String
+  department_id      String?
+  created_by_id      String
+  author             String?
+  report_date        DateTime?
+  version            String                   @default("1.0")
+  status             ReportStatus             @default(DRAFT)
+  access_level       AccessLevel              @default(PUBLIC)
+  output_type        ReportOutputType         @default(DATA_REPORT)
+  is_downloadable    Boolean                  @default(true)
+  is_editable        Boolean                  @default(true)
+  view_count         Int                      @default(0)
+  download_count     Int                      @default(0)
+  published_at       DateTime?
+  archived_at        DateTime?
+  created_at         DateTime                 @default(now())
+  updated_at         DateTime
+  search_vector      Unsupported("tsvector")?
+  downloads          downloads[]
+  favorites          favorites[]
+  report_shares      report_shares[]
+  report_tags        report_tags[]
+  report_versions    report_versions[]
+  report_files       report_files[]
+  report_queries     report_queries[]
+  report_variables   report_variables[]
+  report_permissions report_permissions[]
+  categories         categories               @relation(fields: [category_id], references: [id])
+  users              users                    @relation(fields: [created_by_id], references: [id])
+  departments        departments?             @relation(fields: [department_id], references: [id])
 
   @@index([category_id])
   @@index([code])
@@ -222,7 +310,7 @@ model roles {
   updated_at       DateTime
   role_permissions role_permissions[]
   user_roles       user_roles[]
-  users            users[]              
+  users            users[]
 }
 
 model settings {
@@ -320,24 +408,23 @@ model users {
   user_sessions       user_sessions[]
   role_id             String            @db.VarChar(100)
 
-  roles               roles             @relation(fields: [role_id], references: [id], onDelete: Cascade)
-  departments         departments?      @relation(fields: [department_id], references: [id])
+  roles       roles        @relation(fields: [role_id], references: [id], onDelete: Cascade)
+  departments departments? @relation(fields: [department_id], references: [id])
 }
 
 model menus {
-  id                String              @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
-  group_label       String?             @db.VarChar(100)
-  catagory_label    String?             @db.VarChar(150)
-  menu_label        String?             @db.VarChar(150)
-  sub_menu_label    String?             @db.VarChar(150)
-  href              String?             @db.VarChar(255)
-  icon              String?             @db.VarChar(100)
-  sort_order        Int?                @default(0)
-  created_at        DateTime?           @default(now()) @db.Timestamp(6)
-  updated_at        DateTime?           @default(now()) @db.Timestamp(6)
-  permissions       permissions[]
+  id             String        @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  group_label    String?       @db.VarChar(100)
+  catagory_label String?       @db.VarChar(150)
+  menu_label     String?       @db.VarChar(150)
+  sub_menu_label String?       @db.VarChar(150)
+  href           String?       @db.VarChar(255)
+  icon           String?       @db.VarChar(100)
+  sort_order     Int?          @default(0)
+  created_at     DateTime?     @default(now()) @db.Timestamp(6)
+  updated_at     DateTime?     @default(now()) @db.Timestamp(6)
+  permissions    permissions[]
 }
-
 
 enum AccessLevel {
   PUBLIC
@@ -349,6 +436,22 @@ enum ReportStatus {
   DRAFT
   PUBLISHED
   ARCHIVED
+}
+
+enum ReportOutputType {
+  PRINT_FORM
+  DATA_REPORT
+}
+
+enum FileKind {
+  BLANK_FORM
+  SAMPLE_FILLED_FORM
+  SAMPLE_DATA
+}
+
+enum SubjectType {
+  USER
+  ROLE
 }
 
 enum UserStatus {
