@@ -196,13 +196,77 @@ export async function visibleReportIdsFor(user: UserSessionType): Promise<string
 
 ---
 
-## Sub-phase 2b (overview — จะลงรายละเอียดตอนถึงตา)
+## Sub-phase 2b
 
-- `report_files` CRUD ต่อรายงาน + versioning (`is_current` toggle)
-- Reconcile `[id]`/`modify` route stub → เลือกอันเดียวเป็นตัวจริง ลบอีกอันทิ้ง
-- หน้าแก้ไขรายงาน (admin) — form เดียวกับ create แต่ preload ข้อมูล + จัดการไฟล์แยกตาม `output_type`
-- สลับ `browse`/`favorites`/`download` (Phase 1) จาก `lib/report-visibility.ts` → `lib/report-acl.ts` + `visibleReportIdsFor`
-- Sync `reports.file_path` cache จาก `report_files WHERE is_current=true` ทุกครั้งที่มีการเปลี่ยนไฟล์
+Audit เพิ่มก่อนลงรายละเอียด พบ 2 เรื่องที่ overview เดิมไม่ครอบคลุม:
+- `app/api/reports/report/manage/modify/route.ts` **ไม่มี frontend เรียกเลย** (grep ทั้ง `app/` ไม่เจอ) — dead stub แน่นอน ลบทิ้ง ใช้ `[id]/route.ts` เป็นตัวจริงแทน
+- Pipeline อัปโหลดปัจจุบัน (`lib/fileUploadServices.ts`) เป็น **image-only ล้วน** — บังคับ jpg/png/webp + convert เป็น WebP เสมอ (`convertToWebp`) แต่ `report_files` ต้องรับ PDF (`BLANK_FORM`/`SAMPLE_FILLED_FORM`) และ Excel (`SAMPLE_DATA`) ซึ่งไม่ใช่รูป ต้องมี upload service ใหม่แยกที่ไม่ผ่าน image conversion
+
+Resolved decisions (ยืนยันจากผู้ใช้):
+1. Cache priority เมื่อรายงานมีไฟล์ current หลาย kind พร้อมกัน: ลำดับคงที่ตาม `output_type` — `PRINT_FORM` ใช้ `BLANK_FORM` เป็น primary, `DATA_REPORT` ใช้ `SAMPLE_DATA` เป็น primary (ไม่ใช่ "ล่าสุด" เพราะจะสลับไม่แน่นอนไม่ผูกกับ session)
+2. หน้าแก้ไขรายงานแยกเป็นเพจใหม่ `app/(auth)/reports/report-edit/[id]/page.tsx` (ไม่รวมเข้า `report-create`)
+
+### 1. `lib/reportFileUploadServices.ts` (ใหม่) — non-image upload
+
+Validate ตาม `file_kind`:
+- `BLANK_FORM`, `SAMPLE_FILLED_FORM` → เฉพาะ `.pdf` (`application/pdf`)
+- `SAMPLE_DATA` → `.xlsx`/`.xls`/`.csv`
+
+บันทึกไฟล์ตรงลง `public/assest/report-files/` (ไม่ convert อะไรทั้งสิ้น ไม่มี thumbnail) คืน `{filePath, fileName, fileType, fileSize}` เหมือน shape ของ `fileUploadServices.ts` เดิมเพื่อให้ route handler เรียกใช้แบบเดียวกัน
+
+**Files**: `lib/reportFileUploadServices.ts` (ใหม่)
+
+### 2. `report_files` CRUD + versioning
+
+`GET/POST/PUT/DELETE /api/reports/[id]/files`:
+- `POST`: validate `file_kind` ตรงกับ `output_type` ของรายงาน (`PRINT_FORM` รับ `BLANK_FORM`/`SAMPLE_FILLED_FORM` เท่านั้น, `DATA_REPORT` รับ `SAMPLE_DATA` เท่านั้น — 400 ถ้าไม่ตรง) → ถ้ามีไฟล์ `is_current=true` ของ `file_kind` เดียวกันอยู่แล้ว ตั้ง `is_current=false` ให้แถวเก่า (versioning แบบง่าย ไม่มี diff/rollback ใน Phase 2 — รอ Phase 3) → insert แถวใหม่ `is_current=true`, bump `version` (`parseFloat` + 0.1 หรือ scheme ง่ายๆ) → sync cache (ข้อ 4) → `logActivity('update'/'report')`
+- `DELETE`: soft-check ก่อนว่าไม่ใช่ไฟล์ current ตัวสุดท้ายของ kind ที่ `output_type` บังคับต้องมี (กัน report เหลือ 0 ไฟล์ที่จำเป็น) — ตัดสินใจ MVP: อนุญาตลบได้เสมอ ถ้าลบ current แล้วไม่มีไฟล์ทดแทน ให้ report นั้นแสดง "ไม่มีไฟล์" ในหน้า preview/download (ไม่ block การลบ)
+- Auth: `routeAcceptted('admin')` เท่านั้น (การจัดการไฟล์ของรายงานเป็นงาน admin)
+
+**Files**: `app/api/reports/[id]/files/route.ts` (ใหม่)
+
+### 3. Reconcile `[id]`/`modify` stub
+
+- ลบ `app/api/reports/report/manage/modify/` ทั้ง folder
+- Implement `app/api/reports/report/manage/[id]/route.ts` จริง:
+  - `GET`: single report + `report_files` (current เท่านั้น) + `categories`/`departments` สำหรับ preload หน้า edit
+  - `PUT`: update metadata (code/name/description/category/department/status/access_level/output_type/is_downloadable/is_editable) — **ไม่แก้ไฟล์ที่นี่** (แยกไปที่ `/files` endpoint ข้อ 2) — `logActivity('update')`
+  - `DELETE`: cascade ลบ `report_files`/`report_versions`/... ผ่าน `onDelete: Cascade` ที่มีอยู่แล้วใน schema — `logActivity('delete')`
+
+**Files**: `app/api/reports/report/manage/[id]/route.ts` (rewrite), ลบ `app/api/reports/report/manage/modify/` ทั้ง folder
+
+### 4. Sync `reports.file_path` cache
+
+Helper กลาง `lib/report-file-cache.ts`: `syncReportFileCache(reportId)` — query `report_files WHERE report_id=X AND is_current=true`, เลือก primary ตาม `output_type` (ตัดสินใจแล้ว: `PRINT_FORM`→`BLANK_FORM`, `DATA_REPORT`→`SAMPLE_DATA`), แล้ว `prisma.reports.update` ให้ `file_path/file_name/file_type/file_size` ตรงกับไฟล์นั้น เรียกจากท้าย `POST`/`DELETE` ของ `/files` endpoint ทุกครั้งที่ `is_current` เปลี่ยน
+
+**Files**: `lib/report-file-cache.ts` (ใหม่)
+
+### 5. หน้าแก้ไขรายงาน — เพจใหม่
+
+`app/(auth)/reports/report-edit/[id]/page.tsx`:
+- Preload ผ่าน `GET /api/reports/report/manage/[id]`, form เดียวกับ `report-create` (metadata fields + `output_type` select ที่ **ต้องเพิ่มใน create form ด้วย** เพราะปัจจุบันไม่มี field นี้ในฟอร์มสร้างเลย — ทุกรายงานใหม่จะได้ default `DATA_REPORT` เงียบๆถ้าไม่เพิ่ม)
+- ส่วนจัดการไฟล์แยกเป็น section ต่างหาก: list `report_files` ปัจจุบันตาม `file_kind` ที่ `output_type` กำหนด พร้อมปุ่ม "แทนที่ไฟล์" ต่อ kind (เรียก `POST /api/reports/[id]/files`)
+- ปุ่ม "แก้ไขข้อมูล" ในตาราง `report-list`/`reportColumn.tsx` (ปัจจุบันไม่มี action นี้เลย นอกจาก Download/Add to Favorites ที่เพิ่งเพิ่มใน Phase 1) เพิ่ม link ไปหน้านี้
+
+**Files**: `app/(auth)/reports/report-edit/[id]/page.tsx` (ใหม่), `app/(auth)/reports/report-create/page.tsx` (เพิ่ม `output_type` field), `.../report-list/components/reportColumn.tsx` (เพิ่มปุ่ม Edit ที่ link จริงแทนของเดิมที่ไม่มี onClick)
+
+### 6. สลับ Phase 1 endpoints ไปใช้ `lib/report-acl.ts`
+
+- `app/api/reports/browse/route.ts`: แทน `nonAdminVisibilityWhere` ด้วย `where.id = { in: await visibleReportIdsFor(user) }`
+- `app/api/reports/favorites/route.ts` (POST): แทน `isReportVisibleToNonAdmin` ด้วย `(await resolveReportAcl(reportId, user)).can_favorite`
+- `app/api/reports/[id]/download/route.ts`: แทน visibility check ด้วย `(await resolveReportAcl(reportId, user)).can_export` (ไม่ใช่ `can_view` — download คือ export ตาม flag ที่ออกแบบไว้)
+- ลบ `lib/report-visibility.ts` ทิ้งหลังจากไม่มีจุดเรียกแล้ว (ยืนยันด้วย grep ก่อนลบ)
+
+**Files**: `app/api/reports/browse/route.ts`, `app/api/reports/favorites/route.ts`, `app/api/reports/[id]/download/route.ts` (แก้ทั้งสาม), ลบ `lib/report-visibility.ts`
+
+### Verification (2b)
+
+- สร้างรายงานใหม่ `output_type=PRINT_FORM` → อัปโหลด `BLANK_FORM` (pdf) ผ่านหน้า edit → เห็นไฟล์จริงใน `report_files`, `reports.file_path` cache ตรงกับไฟล์นั้น
+- อัปโหลด `SAMPLE_DATA` (xlsx) ให้รายงาน `output_type=PRINT_FORM` → ต้องถูกปฏิเสธ 400 (kind ไม่ตรง output_type)
+- แทนที่ `BLANK_FORM` ด้วยไฟล์ใหม่ → แถวเก่า `is_current=false`, แถวใหม่ `is_current=true`, cache sync ตาม
+- ลบ `[id]`/`modify` reconcile: `curl` ตรงไป `.../modify` → 404 (ลบ route แล้ว); `[id]` GET/PUT/DELETE ทำงานจริง
+- `browse`/`favorites`/`download` ยังทำงานเหมือน Phase 1 ทุกอย่าง (regression check) + เพิ่ม test ใหม่: ให้ `report_permissions` grant สิทธิ์ดูรายงาน DRAFT แก่ user คนหนึ่ง → user นั้นเห็นในผลลัพธ์ `browse`, user อื่นไม่เห็น
+- `npx tsc --noEmit` / `npm run build` ไม่มี error ใหม่
 
 ## Sub-phase 2c (overview)
 
