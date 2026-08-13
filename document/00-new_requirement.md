@@ -19,6 +19,7 @@
 
 ---
 
+
 ## 2. ขอบเขตผู้ใช้งาน (User Roles)
 
 จาก schema ปัจจุบัน (`prisma/schema.prisma`) มี `roles` เป็นตารางแยก ไม่ผูกตายตัวกับโค้ด แต่โดย convention ที่ใช้จริงใน `lib/auth.ts` (`routeAcceptted`) มี 3 กลุ่มสิทธิ์หลัก:
