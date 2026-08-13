@@ -1,5 +1,7 @@
 // This file contains TypeScript interfaces for user-related data structures used in the application.
 
+import { AccessLevel } from '@/app/generated/prisma/enums';
+
 export interface UserLoginType {
     username: string;
     password: string;
@@ -239,7 +241,7 @@ export interface ReportGetDataType {
     published_at?: string;
     created_at?: string;
     updated_at?: string;
-    access_level: string[];
+    access_level: AccessLevel;
 
 }
 
@@ -256,7 +258,7 @@ export interface ReportCreateDataType {
     "version"?: string;
     is_downloadable?: boolean | undefined;
     is_editable?: boolean | undefined;
-    access_level?: string[];
+    access_level: AccessLevel;
     files: File[];
 }
 

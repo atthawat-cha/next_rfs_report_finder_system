@@ -6,8 +6,8 @@ import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel,
 import { Button } from '@/components/ui/button'
 import { MoreHorizontal } from 'lucide-react'
 
-
-export const favReportColumn: ColumnDef<ReportGetDataType>[] = [
+export function getFavReportColumn(onUnfavorite: (reportId: string) => void): ColumnDef<ReportGetDataType>[] {
+    return [
     {
         accessorKey: 'code',
         header: 'Code',
@@ -41,7 +41,8 @@ export const favReportColumn: ColumnDef<ReportGetDataType>[] = [
         accessorKey: 'action',
         header: 'Actions',
         cell: ({ row }) => {
-            const id = row?.original?.id
+            const id = row.original.id
+            if (!id) return null
             return (
                 <DropdownMenu>
                     <DropdownMenuTrigger asChild>
@@ -52,11 +53,16 @@ export const favReportColumn: ColumnDef<ReportGetDataType>[] = [
                     </DropdownMenuTrigger>
                     <DropdownMenuContent align="end">
                         <DropdownMenuLabel>Actions</DropdownMenuLabel>
-                        <DropdownMenuItem>Edit</DropdownMenuItem>
-                        <DropdownMenuItem>Delete</DropdownMenuItem>
+                        <DropdownMenuItem asChild>
+                            <a href={`/api/reports/${id}/download`}>Download</a>
+                        </DropdownMenuItem>
+                        <DropdownMenuItem onClick={() => onUnfavorite(id)}>
+                            Remove from Favorites
+                        </DropdownMenuItem>
                     </DropdownMenuContent>
                 </DropdownMenu>
             )
         }
     }
-]
+    ]
+}

@@ -1,10 +1,10 @@
 
 import { ReportGetDataType } from "@/lib/types";
 import { FavReportsDataTable } from "./favReportTable";
-import { favReportColumn } from "./favReportColumn";
+import { getFavReportColumn } from "./favReportColumn";
 
-export default function FavReportMainTableView({ reports }: { reports: ReportGetDataType[] }) {
+export default function FavReportMainTableView({ reports, onUnfavorite }: { reports: ReportGetDataType[]; onUnfavorite: (reportId: string) => void }) {
     return (
-        <FavReportsDataTable columns={favReportColumn} data={reports} />
+        <FavReportsDataTable columns={getFavReportColumn(onUnfavorite)} data={reports} />
     )
 }

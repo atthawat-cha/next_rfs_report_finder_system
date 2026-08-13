@@ -1,28 +1,35 @@
 "use client";
 import { ContentLayout } from "@/components/layouts/content-layout";
 import { SearchInput } from "@/components/shared/searchInput";
-import React, { useMemo } from "react";
+import React from "react";
 import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
 import DefaultBreadcrumb from "@/components/shared/breadcrumb";
 import ReportTableView from "./components/reportMainTable";
 import { ReportGetDataType } from "@/lib/types";
 import ReportCardView from "./components/reportCards";
-import toast from "react-hot-toast";
 import { Button } from "@/components/ui/button";
 import Link from "next/link";
+import { usePathname, useRouter, useSearchParams } from "next/navigation";
 
 export default function ReportList() {
+  const router = useRouter();
+  const pathname = usePathname();
+  const searchParams = useSearchParams();
+  const q = searchParams.get("q") ?? "";
+
   const [reportView, setReportView] = React.useState("table");
   const [reports, setReports] = React.useState<ReportGetDataType[]>([]);
+  const [total, setTotal] = React.useState(0);
+  const searchDebounceRef = React.useRef<ReturnType<typeof setTimeout>>();
 
-  const fetchReports = async () => {
+  const fetchReports = React.useCallback(async (query: string) => {
     try {
-      const res = await fetch("/api/reports/report/manage", {
+      const params = new URLSearchParams();
+      if (query) params.set("q", query);
+
+      const res = await fetch(`/api/reports/browse?${params.toString()}`, {
         method: "GET",
-        headers: {
-          "Content-Type": "application/json",
-          "Access-Control-Allow-Origin": "*",
-        },
+        headers: { "Content-Type": "application/json" },
         credentials: "include",
       });
 
@@ -35,22 +42,30 @@ export default function ReportList() {
       if (!data?.success) {
         return;
       }
-      setReports(data?.data);
-      console.log(data);
+      setReports(data?.data ?? []);
+      setTotal(data?.meta?.total ?? 0);
     } catch (error) {
-      console.error("Error fetching users:", error);
+      console.error("Error fetching reports:", error);
     }
-  };
+  }, []);
 
-  const hanelerSearch = () => {};
+  React.useEffect(() => {
+    fetchReports(q);
+  }, [q, fetchReports]);
+
+  const hanelerSearch = (value: string) => {
+    clearTimeout(searchDebounceRef.current);
+    searchDebounceRef.current = setTimeout(() => {
+      const params = new URLSearchParams(searchParams.toString());
+      if (value) params.set("q", value);
+      else params.delete("q");
+      router.replace(`${pathname}?${params.toString()}`);
+    }, 300);
+  };
 
   const hanelerViewChange = (value: string) => {
     setReportView(value);
   };
-
-  useMemo(() => {
-    fetchReports();
-  }, []);
 
   return (
     <ContentLayout title="Report List">
@@ -75,7 +90,7 @@ export default function ReportList() {
           </ToggleGroup>
 
           <div className="flex gap-2 item-center">
-            <SearchInput countRes="10" onSearch={hanelerSearch} />
+            <SearchInput countRes={total.toString()} defaultValue={q} onSearch={hanelerSearch} />
             <Button asChild >
               <Link href="/reports/report-create">Create</Link>
             </Button>

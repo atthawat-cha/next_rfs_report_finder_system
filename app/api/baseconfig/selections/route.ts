@@ -4,7 +4,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { z } from 'zod';
 import bcrypt from 'bcryptjs';
 import { getAuthFromRequest, requireRole, routeAcceptted } from '@/lib/auth';
-import { ReportStatus, UserStatus } from '@/app/generated/prisma/enums';
+import { AccessLevel, ReportStatus, UserStatus } from '@/app/generated/prisma/enums';
 
 
 export async function GET(req:NextRequest){
@@ -54,13 +54,16 @@ export async function GET(req:NextRequest){
 
         const basereportStatus = [ReportStatus.DRAFT, ReportStatus.PUBLISHED, ReportStatus.ARCHIVED]
 
+        const baseAccessLevel = [AccessLevel.PUBLIC, AccessLevel.RESTRICTED, AccessLevel.PRIVATE]
+
         const baseConfig = {
             baseRole,
             baseDept,
             baseTag,
             baseCatagory,
             baseStatus,
-            basereportStatus
+            basereportStatus,
+            baseAccessLevel,
         }
 
         return NextResponse.json({success:true,baseConfig}, {status: 200});

@@ -2,22 +2,69 @@
 import { ContentLayout } from '@/components/layouts/content-layout'
 import React from 'react'
 import FavReportCardView from './components/favReportCard'
-import { fakeReportList } from "@/fakedata/fakeReportList";
 import DefaultBreadcrumb from '@/components/shared/breadcrumb';
 import FavReportMainTableView from './components/favReportMainTable';
 import { ToggleGroup, ToggleGroupItem } from '@/components/ui/toggle-group';
 import { SearchInput } from '@/components/shared/searchInput';
 import { Card } from '@/components/ui/card';
+import { ReportGetDataType } from '@/lib/types';
+import toast from 'react-hot-toast';
 
 export default function ReportFavorites() {
 
   const [reportView, setReportView] = React.useState("table");
-  const models = fakeReportList;
-  console.log(models)
+  const [favorites, setFavorites] = React.useState<ReportGetDataType[]>([]);
+  const [search, setSearch] = React.useState("");
 
+  const fetchFavorites = React.useCallback(async () => {
+    try {
+      const res = await fetch("/api/reports/favorites", {
+        method: "GET",
+        headers: { "Content-Type": "application/json" },
+        credentials: "include",
+      });
+      if (!res.ok) {
+        console.error(await res.text());
+        return;
+      }
+      const data = await res.json();
+      if (!data?.success) return;
+      setFavorites(data?.data ?? []);
+    } catch (error) {
+      console.error("Error fetching favorites:", error);
+    }
+  }, []);
 
-  const hanelerSearch = (search: string) => {
-    console.log(search)
+  React.useEffect(() => {
+    fetchFavorites();
+  }, [fetchFavorites]);
+
+  const handleUnfavorite = async (reportId: string) => {
+    try {
+      const res = await fetch(`/api/reports/favorites/${reportId}`, {
+        method: "DELETE",
+        credentials: "include",
+      });
+      if (!res.ok) {
+        toast.error("Failed to remove favorite");
+        return;
+      }
+      setFavorites((prev) => prev.filter((r) => r.id !== reportId));
+      toast.success("Removed from favorites");
+    } catch (error) {
+      console.error("Error removing favorite:", error);
+      toast.error("Failed to remove favorite");
+    }
+  };
+
+  const filteredFavorites = search
+    ? favorites.filter((r) =>
+        `${r.name_th} ${r.name_en ?? ""} ${r.code}`.toLowerCase().includes(search.toLowerCase())
+      )
+    : favorites;
+
+  const hanelerSearch = (value: string) => {
+    setSearch(value)
   }
 
   const hanelerViewChange = (view: string) => {
@@ -45,16 +92,16 @@ export default function ReportFavorites() {
           </ToggleGroup>
 
           <div className="flex gap-2 item-center">
-            <SearchInput countRes={models.length.toString()} onSearch={hanelerSearch} />
+            <SearchInput countRes={filteredFavorites.length.toString()} onSearch={hanelerSearch} />
           </div>
         </div>
 
 
         <div className="w-full mt-5">
           {reportView === "table" ? (
-            <FavReportMainTableView reports={models} />
+            <FavReportMainTableView reports={filteredFavorites} onUnfavorite={handleUnfavorite} />
           ) : (
-            <FavReportCardView reports={models} />
+            <FavReportCardView reports={filteredFavorites} />
           )}
         </div>
       </Card>

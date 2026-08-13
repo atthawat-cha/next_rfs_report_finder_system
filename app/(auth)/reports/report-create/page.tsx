@@ -27,18 +27,7 @@ import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import FileUpload from "@/components/shared/fileuploading";
 import { Loader2, FileText, Layers } from "lucide-react";
 import { ReportCreateDataType, ReportGetDataType } from "@/lib/types";
-import {
-  Combobox,
-  ComboboxChip,
-  ComboboxChips,
-  ComboboxChipsInput,
-  ComboboxContent,
-  ComboboxEmpty,
-  ComboboxItem,
-  ComboboxList,
-  ComboboxValue,
-  useComboboxAnchor,
-} from "@/components/ui/combobox"
+import { AccessLevel } from "@/app/generated/prisma/enums";
 import { Checkbox } from "@/components/ui/checkbox";
 import toast from "react-hot-toast";
 import { useRouter } from "next/navigation";
@@ -50,7 +39,7 @@ interface BaseSelect {
   departments: SelectOption[];
   status: string[];
   catagory: SelectOption[];
-  access_level: SelectOption[];
+  access_level: string[];
 }
 
 // ─── Component ───────────────────────────────────────────────────────────────
@@ -72,10 +61,9 @@ export default function ReportCreate() {
     status: "DRAFT",
     is_downloadable: true,
     is_editable: true,
-    access_level: [],
+    access_level: AccessLevel.PUBLIC,
     files: []
   });
-  const anchor = useComboboxAnchor()
 
   const fetchBaseData = useCallback(async () => {
     const res = await fetch("/api/baseconfig/selections", {
@@ -92,12 +80,12 @@ export default function ReportCreate() {
     const data = await res.json();
     if (!data?.success) return;
 
-    const { baseDept, basereportStatus, baseCatagory, baseRole } = data?.baseConfig;
+    const { baseDept, basereportStatus, baseCatagory, baseAccessLevel } = data?.baseConfig;
     setBaseSelect({
       departments: baseDept,
       status: basereportStatus,
       catagory: baseCatagory,
-      access_level: convertObjectToArrayValue(baseRole),
+      access_level: baseAccessLevel,
     });
   }, []);
 
@@ -117,9 +105,9 @@ export default function ReportCreate() {
       formData.append("categories", reportData.category);
       formData.append("departments", reportData.department);
       formData.append("status", reportData.status);
-      formData.append("is_downloadable", reportData.is_downloadable.toString());
-      formData.append("is_editable", reportData.is_editable.toString());
-      formData.append("access_level", JSON.stringify(reportData.access_level));
+      formData.append("is_downloadable", (reportData.is_downloadable ?? true).toString());
+      formData.append("is_editable", (reportData.is_editable ?? true).toString());
+      formData.append("access_level", reportData.access_level);
 
       // Fix: iterate through the array of files and append each individually
       if (reportData.files && reportData.files.length > 0) {
@@ -128,8 +116,8 @@ export default function ReportCreate() {
         });
       }
 
-      if (reportData.access_level.length === 0 || reportData.files.length === 0) {
-        toast.error("Please select at least one access level and one file");
+      if (reportData.files.length === 0) {
+        toast.error("Please select at least one file");
         return;
       }
 
@@ -156,7 +144,7 @@ export default function ReportCreate() {
         status: "DRAFT",
         is_downloadable: true,
         is_editable: true,
-        access_level: [],
+        access_level: AccessLevel.PUBLIC,
         files: []
       });
       await new Promise((r) => setTimeout(r, 1000));
@@ -184,10 +172,6 @@ export default function ReportCreate() {
       ...prev,
       [name]: value,
     }));
-  };
-
-  const convertObjectToArrayValue = (data: any[]) => {
-    return data.map((item) => item.name);
   };
 
 
@@ -312,37 +296,24 @@ export default function ReportCreate() {
 
               {/* Access Level */}
               <Field>
-                <FieldLabel htmlFor="rp_access_level">Access Roles</FieldLabel>
-                <Combobox
-                  multiple
-                  autoHighlight
-                  items={baseSelect?.access_level ?? []}
-                  onValueChange={(value) => handleSelectChange("access_level", value)}
-                  value={reportData?.access_level}
-                >
-                  <ComboboxChips ref={anchor} className="w-full">
-                    <ComboboxValue>
-                      {(values) => (
-                        <React.Fragment>
-                          {values.map((value: string) => (
-                            <ComboboxChip key={`${value}-${Math.random()}`}>{value}</ComboboxChip>
-                          ))}
-                          <ComboboxChipsInput />
-                        </React.Fragment>
-                      )}
-                    </ComboboxValue>
-                  </ComboboxChips>
-                  <ComboboxContent anchor={anchor}>
-                    <ComboboxEmpty>No items found.</ComboboxEmpty>
-                    <ComboboxList>
-                      {(item) => (
-                        <ComboboxItem key={`${item}-${Math.random()}`} value={item}>
+                <FieldLabel htmlFor="rp_access_level">Access Level</FieldLabel>
+                <Select value={reportData?.access_level} onValueChange={(e) => handleSelectChange("access_level", e)}>
+                  <SelectTrigger id="rp_access_level">
+                    <SelectValue placeholder="Select access level" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectGroup>
+                      {baseSelect.access_level.map((item) => (
+                        <SelectItem key={item} value={item}>
                           {item}
-                        </ComboboxItem>
-                      )}
-                    </ComboboxList>
-                  </ComboboxContent>
-                </Combobox>
+                        </SelectItem>
+                      ))}
+                    </SelectGroup>
+                  </SelectContent>
+                </Select>
+                <FieldDescription>
+                  PUBLIC เผยแพร่ให้ผู้ใช้ทั่วไปเห็นได้ · RESTRICTED/PRIVATE ยังไม่มีผลกรองสิทธิ์จริงจนกว่าจะถึง Phase 2
+                </FieldDescription>
               </Field>
 
             </CardContent>

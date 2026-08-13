@@ -179,6 +179,7 @@ model reports {
   archived_at     DateTime?
   created_at      DateTime          @default(now())
   updated_at      DateTime
+  search_vector   Unsupported("tsvector")?
   downloads       downloads[]
   favorites       favorites[]
   report_shares   report_shares[]
@@ -192,6 +193,8 @@ model reports {
   @@index([code])
   @@index([created_at])
   @@index([status])
+  @@index([department_id])
+  @@index([status, category_id])
 }
 
 model role_permissions {

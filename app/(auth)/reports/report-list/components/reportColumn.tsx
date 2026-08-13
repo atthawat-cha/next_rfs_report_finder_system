@@ -14,10 +14,26 @@ import {
 } from "@/components/ui/dropdown-menu"
 import { formatDateTime } from '@/lib/utils'
 import { MoreHorizontal } from 'lucide-react'
+import toast from 'react-hot-toast'
 
-
-
-
+async function addToFavorites(reportId: string) {
+    try {
+        const res = await fetch('/api/reports/favorites', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            credentials: 'include',
+            body: JSON.stringify({ report_id: reportId }),
+        })
+        if (!res.ok) {
+            toast.error('Failed to add favorite')
+            return
+        }
+        toast.success('Added to favorites')
+    } catch (error) {
+        console.error('Error adding favorite:', error)
+        toast.error('Failed to add favorite')
+    }
+}
 
 export const report_column: ColumnDef<ReportGetDataType>[] = [
     {
@@ -53,7 +69,8 @@ export const report_column: ColumnDef<ReportGetDataType>[] = [
         accessorKey: 'action',
         header: 'Actions',
         cell: ({ row }) => {
-            const id = row?.original?.id
+            const id = row.original.id
+            if (!id) return null
             return (
                 <DropdownMenu>
                     <DropdownMenuTrigger asChild>
@@ -64,8 +81,12 @@ export const report_column: ColumnDef<ReportGetDataType>[] = [
                     </DropdownMenuTrigger>
                     <DropdownMenuContent align="end">
                         <DropdownMenuLabel>Actions</DropdownMenuLabel>
-                        <DropdownMenuItem>Edit</DropdownMenuItem>
-                        <DropdownMenuItem>Delete</DropdownMenuItem>
+                        <DropdownMenuItem asChild>
+                            <a href={`/api/reports/${id}/download`}>Download</a>
+                        </DropdownMenuItem>
+                        <DropdownMenuItem onClick={() => addToFavorites(id)}>
+                            Add to Favorites
+                        </DropdownMenuItem>
                     </DropdownMenuContent>
                 </DropdownMenu>
             )
