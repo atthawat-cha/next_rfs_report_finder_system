@@ -5,36 +5,27 @@ import { getAuthFromRequest } from './lib/auth';
 // หน้าที่ไม่ต้อง authentication
 const publicPaths = ['/login', '/'];
 
-// หน้าที่ต้อง authentication
-const protectedPaths = ['/(auth)/dashboard', '/(auth)/profile'];
-
 export async function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl;
-  
-  // ตรวจสอบว่าเป็นหน้าที่ต้อง authentication หรือไม่
-  const isProtectedPath = protectedPaths.some((path) => pathname.startsWith(path));
-  const isPublicPath = publicPaths.includes(pathname);
 
-  // ดึงข้อมูล user จาก token
+  // ดึงข้อมูล user จาก token (cookie ชื่อ 'auth-token' ตาม COOKIE_NAME ใน lib/auth.ts)
   const user = await getAuthFromRequest(request);
 
-  // get token from cookie
-  const token = request.cookies.get('auth_token')?.value;
+  // ถ้ามี user แล้วพยายามเข้าหน้า login → ส่งไป dashboard
+  // (ต้องเช็คก่อน publicPaths เพราะ /login เองก็เป็น public path)
+  if (pathname === '/login' && user) {
+    return NextResponse.redirect(new URL('/dashboard', request.url));
+  }
+
+  if (publicPaths.includes(pathname)) {
+    return NextResponse.next();
+  }
 
   // ถ้าไม่มี user และพยายามเข้าหน้าที่ต้อง authentication
   if (!user) {
     const url = new URL('/login', request.url);
     url.searchParams.set('redirect', pathname);
     return NextResponse.redirect(url);
-  }
-
-  // if (isPublicPath && !user) {
-  //   return NextResponse.redirect(new URL('/login', request.url));
-  // }
-
-  // ถ้ามี user แล้วพยายามเข้าหน้า login
-  if (pathname === '/login' && user) {
-    return NextResponse.redirect(new URL('/(auth)/dashboard', request.url));
   }
 
   return NextResponse.next();
@@ -49,9 +40,9 @@ export const config = {
      * - _next/image (image optimization files)
      * - favicon.ico (favicon file)
      */
-    // '/((?!api|_next/static|_next/image|favicon.ico).*)',
-    // '/((?!api/auth/login).*)',
     '/app/:path*',
-    '/((?!login|api|_next/static|_next/image|favicon.ico).*)',
+    // ไม่ exclude '/login' ที่นี่ — middleware ต้องทำงานบน /login เพื่อ redirect
+    // user ที่ login แล้วไปหน้า dashboard (ตัว /login เองอยู่ใน publicPaths อยู่แล้ว)
+    '/((?!api|_next/static|_next/image|favicon.ico).*)',
   ],
 };

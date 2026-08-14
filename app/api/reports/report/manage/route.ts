@@ -6,6 +6,7 @@ import { convertToWebp, getFileExtension, getImageMetadata } from '@/lib/imageCo
 import { uploadImageFile, uploadMultipleImages } from '@/lib/fileUploadServices';
 import { ReportCreateDataType, ReportGetDataType } from '@/lib/types';
 import { faker } from '@faker-js/faker';
+import { parsePagination } from '@/lib/pagination';
 
 /**
  * GET /api/reports/report/manage
@@ -28,31 +29,44 @@ export async function GET(req: NextRequest) {
             return authResult; // ส่งต่อการตอบกลับ 401 หรือ 403 จาก requireRole
         }
 
-        const reports = await prisma.reports.findMany({
-            select: {
-                id: true,
-                code: true,
-                name_th: true,
-                name_en: true,
-                description: true,
-                file_path: true,
-                file_name: true,
-                categories: { select: { id: true, name: true } },
-                departments: { select: { id: true, name: true } },
-                users: { select: { id: true, username: true } },
-                created_at: true,
-                status: true,
-                updated_at: true,
-                is_downloadable: true,
-                is_editable: true
-            }
-        })
+        // NOTE: default pageSize = 100 — ฝั่ง frontend ยังไม่ส่ง page/pageSize (Phase 1 จะเพิ่ม UI)
+        // ดังนั้นเมื่อจำนวนรายงานจริงเกิน 100 endpoint นี้จะตัดข้อมูลเงียบ ๆ จนกว่าจะทำ Phase 1
+        const { page, pageSize, skip, take } = parsePagination(req.nextUrl.searchParams);
+
+        const [reports, total] = await Promise.all([
+            prisma.reports.findMany({
+                select: {
+                    id: true,
+                    code: true,
+                    name_th: true,
+                    name_en: true,
+                    description: true,
+                    file_path: true,
+                    file_name: true,
+                    categories: { select: { id: true, name: true } },
+                    departments: { select: { id: true, name: true } },
+                    users: { select: { id: true, username: true } },
+                    created_at: true,
+                    status: true,
+                    updated_at: true,
+                    is_downloadable: true,
+                    is_editable: true
+                },
+                skip,
+                take
+            }),
+            prisma.reports.count(),
+        ]);
 
         if (!reports) {
             return NextResponse.json({ success: false, error: "reports not found" }, { status: 404 });
         }
         // console.log(users);
-        return NextResponse.json({ success: true, data: reports }, { status: 200 });
+        return NextResponse.json({
+            success: true,
+            data: reports,
+            meta: { page, pageSize, total, totalPages: Math.ceil(total / pageSize) }
+        }, { status: 200 });
     } catch (error) {
         process.env.NODE_ENV === 'development' && console.log(error)
         return NextResponse.json({ error: "Internal Server Error" }, { status: 500 });
