@@ -26,7 +26,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Separator } from "@/components/ui/separator";
 import { Checkbox } from "@/components/ui/checkbox";
 import FileUpload, { AllowedFileType } from "@/components/shared/fileuploading";
-import { Loader2, FileText, Layers, Database, Variable as VariableIcon, Shield } from "lucide-react";
+import { Loader2, FileText, Layers, Database, Variable as VariableIcon, Shield, History } from "lucide-react";
 import toast from "react-hot-toast";
 
 type SelectOption = { id: string; name: string };
@@ -122,6 +122,34 @@ const PERMISSION_ACTIONS: { key: keyof PermissionFlags; label: string }[] = [
   { key: "can_print", label: "Print" },
 ];
 
+interface HistoryFileRow {
+  id: string;
+  file_kind: ReportFileRow["file_kind"];
+  file_name: string;
+  version: string;
+  is_current: boolean;
+  created_at: string;
+}
+
+interface QueryVersionRow {
+  id: string;
+  version: string;
+  sql_text: string;
+  change_log: string | null;
+  created_at: string;
+}
+
+interface HistoryQueryRow extends ReportQueryRow {
+  report_query_versions: QueryVersionRow[];
+}
+
+interface VersionHistory {
+  files: Record<string, HistoryFileRow[]>;
+  queries: HistoryQueryRow[];
+}
+
+const EMPTY_HISTORY: VersionHistory = { files: {}, queries: [] };
+
 const FILE_KINDS_BY_OUTPUT_TYPE: Record<string, { kind: ReportFileRow["file_kind"]; label: string; accept: AllowedFileType }[]> = {
   PRINT_FORM: [
     { kind: "BLANK_FORM", label: "แบบฟอร์มเปล่า (PDF)", accept: "pdf" },
@@ -158,6 +186,7 @@ export default function ReportEdit() {
     subject_id: "",
     ...EMPTY_FLAGS,
   });
+  const [history, setHistory] = React.useState<VersionHistory>(EMPTY_HISTORY);
   const [baseSelect, setBaseSelect] = React.useState<BaseSelect>({
     departments: [],
     status: [],
@@ -179,7 +208,7 @@ export default function ReportEdit() {
   const fetchAll = useCallback(async () => {
     setLoading(true);
     try {
-      const [reportRes, baseRes, queriesRes, variablesRes, permissionsRes, usersRes, rolesRes] = await Promise.all([
+      const [reportRes, baseRes, queriesRes, variablesRes, permissionsRes, usersRes, rolesRes, historyRes] = await Promise.all([
         fetch(`/api/reports/report/manage/${reportId}`, { credentials: "include" }),
         fetch("/api/baseconfig/selections", { credentials: "include" }),
         fetch(`/api/reports/${reportId}/queries`, { credentials: "include" }),
@@ -187,6 +216,7 @@ export default function ReportEdit() {
         fetch(`/api/reports/${reportId}/permissions`, { credentials: "include" }),
         fetch("/api/users/user", { credentials: "include" }),
         fetch("/api/users/roles", { credentials: "include" }),
+        fetch(`/api/reports/${reportId}/versions`, { credentials: "include" }),
       ]);
 
       if (!reportRes.ok) {
@@ -263,6 +293,11 @@ export default function ReportEdit() {
             }))
           );
         }
+      }
+
+      if (historyRes.ok) {
+        const historyJson = await historyRes.json();
+        if (historyJson?.success) setHistory(historyJson.data);
       }
     } finally {
       setLoading(false);
@@ -538,6 +573,36 @@ export default function ReportEdit() {
       return;
     }
     toast.success("Permission grant deleted");
+    fetchAll();
+  };
+
+  const handleRollbackFile = async (row: HistoryFileRow) => {
+    const res = await fetch(`/api/reports/${reportId}/versions/rollback`, {
+      method: "POST",
+      credentials: "include",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ target: "file", report_files_id: row.id }),
+    });
+    if (!res.ok) {
+      toast.error("Rollback failed");
+      return;
+    }
+    toast.success(`Rolled back to v${row.version}`);
+    fetchAll();
+  };
+
+  const handleRollbackQuery = async (version: QueryVersionRow) => {
+    const res = await fetch(`/api/reports/${reportId}/versions/rollback`, {
+      method: "POST",
+      credentials: "include",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ target: "query", version_id: version.id }),
+    });
+    if (!res.ok) {
+      toast.error("Rollback failed");
+      return;
+    }
+    toast.success(`Rolled back to v${version.version}`);
     fetchAll();
   };
 
@@ -1086,6 +1151,67 @@ export default function ReportEdit() {
                 </Button>
               </div>
             </div>
+          </CardContent>
+        </Card>
+
+        <Card className="mt-6">
+          <CardHeader className="pb-4">
+            <div className="flex items-center gap-2">
+              <History className="h-4 w-4 text-muted-foreground" />
+              <CardTitle className="text-base">Version History</CardTitle>
+            </div>
+            <CardDescription>ประวัติไฟล์และคิวรี่ทุกเวอร์ชัน — กด Rollback เพื่อย้อนกลับไปเวอร์ชันเก่า</CardDescription>
+          </CardHeader>
+          <CardContent className="space-y-6">
+            {fileKinds.map(({ kind, label }) => {
+              const rows = history.files[kind] ?? [];
+              if (rows.length === 0) return null;
+              return (
+                <div key={kind} className="space-y-2">
+                  <FieldLabel>{label}</FieldLabel>
+                  <div className="space-y-1">
+                    {rows.map((r) => (
+                      <div key={r.id} className="flex items-center justify-between text-sm bg-muted/40 rounded px-3 py-2">
+                        <div className="flex items-center gap-2">
+                          <span className="truncate">{r.file_name} (v{r.version})</span>
+                          {r.is_current && (
+                            <span className="text-xs rounded bg-primary/10 text-primary px-1.5 py-0.5">ปัจจุบัน</span>
+                          )}
+                        </div>
+                        {!r.is_current && (
+                          <Button type="button" size="sm" variant="ghost" onClick={() => handleRollbackFile(r)}>
+                            Rollback
+                          </Button>
+                        )}
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              );
+            })}
+
+            {history.queries.map((q) => (
+              <div key={q.id} className="space-y-2">
+                <FieldLabel>{q.name} (คิวรี่)</FieldLabel>
+                {q.report_query_versions.length === 0 ? (
+                  <FieldDescription>ยังไม่มีประวัติการแก้ไข</FieldDescription>
+                ) : (
+                  <div className="space-y-1">
+                    {q.report_query_versions.map((v) => (
+                      <div key={v.id} className="flex items-center justify-between text-sm bg-muted/40 rounded px-3 py-2">
+                        <div className="min-w-0">
+                          <span>v{v.version}</span>
+                          {v.change_log && <span className="text-muted-foreground truncate"> — {v.change_log}</span>}
+                        </div>
+                        <Button type="button" size="sm" variant="ghost" onClick={() => handleRollbackQuery(v)}>
+                          Rollback
+                        </Button>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+            ))}
           </CardContent>
         </Card>
 
