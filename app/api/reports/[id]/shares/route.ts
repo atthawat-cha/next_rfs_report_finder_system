@@ -2,6 +2,7 @@ import prisma from '@/lib/prisma';
 import { NextRequest, NextResponse } from 'next/server';
 import { getCurrentUser, requireRole, routeAcceptted } from '@/lib/auth';
 import { logActivity } from '@/lib/activity-log';
+import { createNotification } from '@/lib/notifications';
 import { faker } from '@faker-js/faker';
 import crypto from 'crypto';
 import { z } from 'zod';
@@ -75,7 +76,7 @@ export async function POST(req: NextRequest, { params }: { params: { id: string 
         const authResult = await requireRole(req, routeAcceptted('admin'));
         if (authResult instanceof NextResponse) return authResult;
 
-        const report = await prisma.reports.findUnique({ where: { id: params.id }, select: { id: true } });
+        const report = await prisma.reports.findUnique({ where: { id: params.id }, select: { id: true, name_th: true } });
         if (!report) {
             return NextResponse.json({ success: false, error: "Report not found" }, { status: 404 });
         }
@@ -129,6 +130,15 @@ export async function POST(req: NextRequest, { params }: { params: { id: string 
             entityId: params.id,
             description: `Created ${data.share_type} share for report ${params.id}`,
         });
+
+        if (data.share_type === 'USER' && sharedWith) {
+            await createNotification(
+                sharedWith,
+                'REPORT_SHARED',
+                'มีรายงานถูกแชร์ให้คุณ',
+                `รายงาน "${report.name_th}" ถูกแชร์ให้คุณ`
+            );
+        }
 
         return NextResponse.json({ success: true, data: created }, { status: 200 });
     } catch (error) {

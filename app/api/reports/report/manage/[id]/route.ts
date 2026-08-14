@@ -2,6 +2,7 @@ import prisma from '@/lib/prisma';
 import { NextRequest, NextResponse } from 'next/server';
 import { getAuthFromRequest, requireRole, routeAcceptted } from '@/lib/auth';
 import { logActivity } from '@/lib/activity-log';
+import { createNotification } from '@/lib/notifications';
 import { z } from 'zod';
 
 /**
@@ -106,6 +107,21 @@ export async function PUT(req: NextRequest, { params }: { params: { id: string }
             entityId: report.id,
             description: `Updated report ${report.code}`,
         });
+
+        const favoritedBy = await prisma.favorites.findMany({
+            where: { report_id: report.id, user_id: { not: authResult.user.id } },
+            select: { user_id: true },
+        });
+        await Promise.all(
+            favoritedBy.map((f) =>
+                createNotification(
+                    f.user_id,
+                    'REPORT_UPDATED',
+                    'รายงานที่คุณติดตามถูกแก้ไข',
+                    `รายงาน "${report.name_th}" ที่คุณเพิ่มเป็นรายการโปรดถูกแก้ไข`
+                )
+            )
+        );
 
         return NextResponse.json({ success: true, data: { id: report.id } }, { status: 200 });
     } catch (error) {

@@ -116,12 +116,59 @@ Resolved decisions:
 - เข้าหน้า `/shares/<token>` จาก browser ที่ไม่มี cookie login เลย → ไม่ถูก middleware redirect ไป `/login`
 - `npx tsc --noEmit` ไม่มี error ใหม่
 
-## Sub-phase 3c (overview) — Notifications
+## Sub-phase 3c — Notifications
 
-- `GET /api/notifications`, `POST /api/notifications/[id]/read` — list + mark-read สำหรับ user ปัจจุบัน (`user_id` จาก session)
-- กระดิ่งแจ้งเตือนใน UI (navbar) — unread count badge, dropdown list
-- Trigger points ที่ต้อง insert `notifications` row: report ใหม่ publish (`REPORT_NEW`), แชร์รายงาน (`REPORT_SHARED`, ผูกกับ 3b), แก้ไขรายงานที่ favorite ไว้ (`REPORT_UPDATED`) — เลือก wire เท่าที่ endpoint mutation มีอยู่แล้วก่อน ไม่สร้าง trigger ใหม่ที่ยังไม่มี use case ชัด
-- Email สำหรับ severity สูง: เกิน scope (ต้องมี mail service) — deferred ไป Phase 4 ตาม feature-list.md
+Audit ก่อนลงรายละเอียด: `notifications`/`NotificationType` ไม่มีจุดเรียกใช้เลย (schema-only เหมือน `report_shares` ก่อน 3b) — เขียนใหม่ทั้งก้อน
+
+Resolved decisions:
+1. **Trigger point ที่ wire จริงใน sub-phase นี้มีแค่ 2 จาก 4 ที่ระบุไว้ใน overview เดิม**:
+   - `REPORT_SHARED` — ตอนสร้าง share `share_type=USER` (ผูกกับ 3b ตรงๆ, มี `user_id` เป้าหมายชัดเจนอยู่แล้วจาก `shared_with`) — **ไม่ wire** `share_type=DEPARTMENT` เพราะจะต้อง fan-out แจ้งเตือนทุกคนในแผนก ซึ่งเป็นการตัดสินใจ product ที่ควรถามก่อน ไม่ใช่เดาทำเงียบๆ
+   - `REPORT_UPDATED` — ตอน `PUT /api/reports/report/manage/[id]` สำเร็จ แจ้งทุก user ที่มี `favorites` แถวผูกกับรายงานนั้น (relation ที่มีอยู่แล้วชัดเจนตั้งแต่ Phase 1)
+   - **ไม่ wire** `REPORT_NEW` — ไม่มี concept "ใครสนใจ category/department ไหน" (follow/subscribe) อยู่ในระบบเลย การเดา fan-out ไปทั้งแผนกของรายงานตอน publish จะเป็นการสร้าง behavior ที่ไม่มีใครขอ ต้องมี subscribe model ก่อนถึงจะ wire ได้แบบมีเหตุผล — ทิ้งไว้เป็น follow-up ที่ต้องออกแบบเพิ่ม ไม่ใช่ deferred เงียบๆแบบไม่บอก
+   - Email severity สูง: เกิน scope (ต้องมี mail service) — deferred ไป Phase 4 ตาม `feature-list.md` เหมือน overview เดิม
+2. **Mark-read ทำได้แค่ทีละรายการ** ตาม endpoint ที่ระบุใน `01-system-design.md §4.2` (`POST /api/notifications/[id]/read`) — ไม่เพิ่ม "mark all read" เพราะไม่มีอยู่ใน spec เดิม (คลิกรายการในกระดิ่งทีละอันแทน)
+
+### 1. `lib/notifications.ts` — helper กลาง
+
+`createNotification(userId, type, title, message, link?)` — insert แถวเดียวลง `notifications` (id ผ่าน `faker.string.uuid()` ตาม convention เดิม) reuse จากทุก trigger point ไม่เขียน insert ซ้ำในแต่ละ route (เหมือน `logActivity`) — swallow error เหมือน `logActivity` (แจ้งเตือนพลาดต้องไม่ทำให้ mutation หลักพัง)
+
+**Files**: `lib/notifications.ts` (ใหม่)
+
+### 2. `GET /api/notifications` + `POST /api/notifications/[id]/read`
+
+`app/api/notifications/route.ts`:
+- **GET**: list การแจ้งเตือนของ user ปัจจุบัน (`user_id` จาก session, ไม่รับจาก query param) เรียง `created_at desc` จำกัด 50 แถวล่าสุด + คืน `unread_count` (นับแยก ไม่ใช่นับจาก array ที่ตัดมาแค่ 50 — ถ้ามี unread เกิน 50 ต้องเห็นตัวเลขจริง)
+- Auth: แค่ login (`requireAuth`, ไม่ใช่ `requireRole('admin')` — เป็นฟีเจอร์ user ทุกคน)
+
+`app/api/notifications/[id]/read/route.ts`:
+- **POST**: ตั้ง `is_read=true, read_at=now()` ให้แถวที่ `id` ตรงและ `user_id` ตรงกับ session เท่านั้น (404 ถ้าไม่ตรง — กัน user คนอื่น mark read แจ้งเตือนของคนอื่น)
+
+**Files**: `app/api/notifications/route.ts` (ใหม่, GET เท่านั้น), `app/api/notifications/[id]/read/route.ts` (ใหม่, POST เท่านั้น)
+
+### 3. Wire trigger points
+
+- `app/api/reports/[id]/shares/route.ts` POST: หลัง insert share สำเร็จ ถ้า `share_type === 'USER'` เรียก `createNotification(shared_with, 'REPORT_SHARED', ...)` พร้อม `link: /reports/report-edit/${reportId}` (ถ้าผู้รับเป็น admin) — เดายากว่าผู้รับเป็น admin หรือ user ทั่วไป เพราะไม่มีหน้า report view สำหรับ user ทั่วไปที่ผูกกับ report id ตรงๆนอกจาก report-list — ใช้ `link: null` ไปก่อน (แจ้งแค่ title/message พอ ไม่ใส่ link ที่อาจ 404 สำหรับ user ทั่วไป)
+- `app/api/reports/report/manage/[id]/route.ts` PUT: หลัง update สำเร็จ query `favorites.findMany({where: {report_id}})` → `createNotification` วนทุก `user_id` (ยกเว้นถ้าเป็นคนที่กำลังแก้ไขเอง — เช็ค `favorite.user_id !== authResult.user.id`)
+
+**Files**: `app/api/reports/[id]/shares/route.ts` (แก้), `app/api/reports/report/manage/[id]/route.ts` (แก้)
+
+### 4. UI — Notification Bell ใน navbar
+
+`components/layouts/notification-bell.tsx` (ใหม่, client component, pattern เดียวกับ `user-nav.tsx`): `DropdownMenu` + bell icon + unread count badge, fetch `GET /api/notifications` ตอน mount และ poll ทุก 30s (`setInterval`, เบาสุดสำหรับ MVP ที่ยังไม่มี websocket/SSE) → คลิกรายการ → เรียก mark-read แล้ว refetch, ถ้ามี `link` ให้ navigate ไปด้วย
+
+`components/layouts/navbar.tsx`: เพิ่ม `<NotificationBell />` ข้าง `<ModeToggle />`/`<UserNav />`
+
+**Files**: `components/layouts/notification-bell.tsx` (ใหม่), `components/layouts/navbar.tsx` (แก้)
+
+### Verification (3c)
+
+- สร้าง share `type=USER` → user เป้าหมาย login แล้วเห็น notification ใหม่ใน bell, unread count +1
+- แก้ไขรายงานที่มีคน favorite ไว้ 2 คน → ทั้ง 2 คนได้ notification `REPORT_UPDATED`, คนที่แก้ไขเอง (ถ้า favorite รายงานตัวเองด้วย) ไม่ได้รับ
+- คลิก mark-read รายการเดียว → เฉพาะรายการนั้น `is_read=true`, unread count ลดลง 1
+- user คนอื่น mark-read notification ที่ไม่ใช่ของตัวเอง (ยิง id ตรงๆ) → 404
+- `npx tsc --noEmit` ไม่มี error ใหม่
+
+## Sub-phase 3d (overview) — Dashboard & Activity Log
 
 ## Sub-phase 3d (overview) — Dashboard & Activity Log
 

@@ -1,6 +1,7 @@
 import { ModeToggle } from "@/components/ui/mode-toggle";
 import { UserNav } from "@/components/layouts/user-nav";
 import { SheetMenu } from "@/components/layouts/sheet-menu";
+import { NotificationBell } from "@/components/layouts/notification-bell";
 // import { getCurrentUser } from "@/lib/auth";
 
 interface NavbarProps {
@@ -17,7 +18,8 @@ return (
         <SheetMenu />
         <h1 className="font-bold">{title}</h1>
     </div>
-    <div className="flex flex-1 items-center justify-end">
+    <div className="flex flex-1 items-center justify-end gap-2">
+        <NotificationBell />
         <ModeToggle />
         <UserNav user={null} />
     </div>
