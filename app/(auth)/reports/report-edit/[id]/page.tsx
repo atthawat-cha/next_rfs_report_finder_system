@@ -26,7 +26,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Separator } from "@/components/ui/separator";
 import { Checkbox } from "@/components/ui/checkbox";
 import FileUpload, { AllowedFileType } from "@/components/shared/fileuploading";
-import { Loader2, FileText, Layers, Database, Variable as VariableIcon } from "lucide-react";
+import { Loader2, FileText, Layers, Database, Variable as VariableIcon, Shield } from "lucide-react";
 import toast from "react-hot-toast";
 
 type SelectOption = { id: string; name: string };
@@ -88,6 +88,40 @@ const EMPTY_NEW_VARIABLE = {
   sort_order: 0,
 };
 
+interface PermissionFlags {
+  can_view: boolean;
+  can_edit: boolean;
+  can_delete: boolean;
+  can_favorite: boolean;
+  can_export: boolean;
+  can_print: boolean;
+}
+
+interface ReportPermissionRow extends PermissionFlags {
+  id: string;
+  subject_type: "USER" | "ROLE";
+  subject_id: string;
+  subject_name: string;
+}
+
+const EMPTY_FLAGS: PermissionFlags = {
+  can_view: false,
+  can_edit: false,
+  can_delete: false,
+  can_favorite: false,
+  can_export: false,
+  can_print: false,
+};
+
+const PERMISSION_ACTIONS: { key: keyof PermissionFlags; label: string }[] = [
+  { key: "can_view", label: "View" },
+  { key: "can_edit", label: "Edit" },
+  { key: "can_delete", label: "Delete" },
+  { key: "can_favorite", label: "Favorite" },
+  { key: "can_export", label: "Export" },
+  { key: "can_print", label: "Print" },
+];
+
 const FILE_KINDS_BY_OUTPUT_TYPE: Record<string, { kind: ReportFileRow["file_kind"]; label: string; accept: AllowedFileType }[]> = {
   PRINT_FORM: [
     { kind: "BLANK_FORM", label: "แบบฟอร์มเปล่า (PDF)", accept: "pdf" },
@@ -116,6 +150,14 @@ export default function ReportEdit() {
   const [newVariable, setNewVariable] = React.useState(EMPTY_NEW_VARIABLE);
   const [editingVariableId, setEditingVariableId] = React.useState<string | null>(null);
   const [variableDraft, setVariableDraft] = React.useState(EMPTY_NEW_VARIABLE);
+  const [permissions, setPermissions] = React.useState<ReportPermissionRow[]>([]);
+  const [userOptions, setUserOptions] = React.useState<SelectOption[]>([]);
+  const [roleOptions, setRoleOptions] = React.useState<SelectOption[]>([]);
+  const [newGrant, setNewGrant] = React.useState<{ subject_type: "USER" | "ROLE"; subject_id: string } & PermissionFlags>({
+    subject_type: "USER",
+    subject_id: "",
+    ...EMPTY_FLAGS,
+  });
   const [baseSelect, setBaseSelect] = React.useState<BaseSelect>({
     departments: [],
     status: [],
@@ -137,11 +179,14 @@ export default function ReportEdit() {
   const fetchAll = useCallback(async () => {
     setLoading(true);
     try {
-      const [reportRes, baseRes, queriesRes, variablesRes] = await Promise.all([
+      const [reportRes, baseRes, queriesRes, variablesRes, permissionsRes, usersRes, rolesRes] = await Promise.all([
         fetch(`/api/reports/report/manage/${reportId}`, { credentials: "include" }),
         fetch("/api/baseconfig/selections", { credentials: "include" }),
         fetch(`/api/reports/${reportId}/queries`, { credentials: "include" }),
         fetch(`/api/reports/${reportId}/variables`, { credentials: "include" }),
+        fetch(`/api/reports/${reportId}/permissions`, { credentials: "include" }),
+        fetch("/api/users/user", { credentials: "include" }),
+        fetch("/api/users/roles", { credentials: "include" }),
       ]);
 
       if (!reportRes.ok) {
@@ -189,6 +234,35 @@ export default function ReportEdit() {
       if (variablesRes.ok) {
         const variablesJson = await variablesRes.json();
         if (variablesJson?.success) setVariables(variablesJson.data);
+      }
+
+      if (permissionsRes.ok) {
+        const permissionsJson = await permissionsRes.json();
+        if (permissionsJson?.success) setPermissions(permissionsJson.data);
+      }
+
+      if (usersRes.ok) {
+        const usersJson = await usersRes.json();
+        if (usersJson?.success) {
+          setUserOptions(
+            usersJson.data.map((u: { id: string; first_name: string; last_name: string; username: string }) => ({
+              id: u.id,
+              name: `${u.first_name} ${u.last_name}`.trim() || u.username,
+            }))
+          );
+        }
+      }
+
+      if (rolesRes.ok) {
+        const rolesJson = await rolesRes.json();
+        if (Array.isArray(rolesJson)) {
+          setRoleOptions(
+            rolesJson.map((r: { id: string; display_name: string; name: string }) => ({
+              id: r.id,
+              name: r.display_name || r.name,
+            }))
+          );
+        }
       }
     } finally {
       setLoading(false);
@@ -403,6 +477,67 @@ export default function ReportEdit() {
       return;
     }
     toast.success("Variable deleted");
+    fetchAll();
+  };
+
+  const handleAddGrant = async () => {
+    if (!newGrant.subject_id) {
+      toast.error("Please choose a user or role");
+      return;
+    }
+    const res = await fetch(`/api/reports/${reportId}/permissions`, {
+      method: "POST",
+      credentials: "include",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(newGrant),
+    });
+    if (!res.ok) {
+      const body = await res.json().catch(() => null);
+      toast.error(body?.error ?? "Failed to add permission grant");
+      return;
+    }
+    toast.success("Permission grant added");
+    setNewGrant({ subject_type: "USER", subject_id: "", ...EMPTY_FLAGS });
+    fetchAll();
+  };
+
+  const handleTogglePermissionFlag = (rowId: string, key: keyof PermissionFlags, checked: boolean) => {
+    setPermissions((prev) => prev.map((p) => (p.id === rowId ? { ...p, [key]: checked } : p)));
+  };
+
+  const handleSavePermission = async (row: ReportPermissionRow) => {
+    const res = await fetch(`/api/reports/${reportId}/permissions`, {
+      method: "PUT",
+      credentials: "include",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        id: row.id,
+        can_view: row.can_view,
+        can_edit: row.can_edit,
+        can_delete: row.can_delete,
+        can_favorite: row.can_favorite,
+        can_export: row.can_export,
+        can_print: row.can_print,
+      }),
+    });
+    if (!res.ok) {
+      toast.error("Failed to save permission grant");
+      return;
+    }
+    toast.success("Permission grant saved");
+    fetchAll();
+  };
+
+  const handleDeleteGrant = async (row: ReportPermissionRow) => {
+    const res = await fetch(`/api/reports/${reportId}/permissions?id=${row.id}`, {
+      method: "DELETE",
+      credentials: "include",
+    });
+    if (!res.ok) {
+      toast.error("Failed to delete permission grant");
+      return;
+    }
+    toast.success("Permission grant deleted");
     fetchAll();
   };
 
@@ -839,6 +974,115 @@ export default function ReportEdit() {
               <div className="col-span-2 flex justify-end">
                 <Button type="button" size="sm" variant="outline" onClick={handleAddVariable}>
                   Add Variable
+                </Button>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+
+        <Card className="mt-6">
+          <CardHeader className="pb-4">
+            <div className="flex items-center gap-2">
+              <Shield className="h-4 w-4 text-muted-foreground" />
+              <CardTitle className="text-base">Permissions</CardTitle>
+            </div>
+            <CardDescription>
+              สิทธิ์ต่อผู้ใช้/บทบาทสำหรับรายงานนี้ — ถ้าไม่มี grant ระบบจะ fallback ไปใช้ Access Level ด้านบน
+            </CardDescription>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            {permissions.length > 0 && (
+              <div className="overflow-x-auto">
+                <table className="w-full text-sm">
+                  <thead>
+                    <tr className="text-left text-xs text-muted-foreground">
+                      <th className="pb-2 pr-2">Subject</th>
+                      {PERMISSION_ACTIONS.map((a) => (
+                        <th key={a.key} className="pb-2 px-2 text-center">{a.label}</th>
+                      ))}
+                      <th className="pb-2 pl-2" />
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {permissions.map((p) => (
+                      <tr key={p.id} className="border-t">
+                        <td className="py-2 pr-2 whitespace-nowrap">
+                          <span className="font-medium">{p.subject_name}</span>{" "}
+                          <span className="text-xs text-muted-foreground">
+                            ({p.subject_type === "USER" ? "User" : "Role"})
+                          </span>
+                        </td>
+                        {PERMISSION_ACTIONS.map((a) => (
+                          <td key={a.key} className="text-center px-2">
+                            <Checkbox
+                              checked={p[a.key]}
+                              onCheckedChange={(c) => handleTogglePermissionFlag(p.id, a.key, c === true)}
+                            />
+                          </td>
+                        ))}
+                        <td className="py-2 pl-2 whitespace-nowrap text-right">
+                          <Button type="button" size="sm" variant="ghost" onClick={() => handleSavePermission(p)}>
+                            Save
+                          </Button>
+                          <Button type="button" size="sm" variant="ghost" onClick={() => handleDeleteGrant(p)}>
+                            Delete
+                          </Button>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            )}
+
+            <div className="border-t pt-4 space-y-3">
+              <FieldLabel>เพิ่มสิทธิ์</FieldLabel>
+              <div className="grid grid-cols-2 gap-2">
+                <Select
+                  value={newGrant.subject_type}
+                  onValueChange={(v) => setNewGrant((prev) => ({ ...prev, subject_type: v as "USER" | "ROLE", subject_id: "" }))}
+                >
+                  <SelectTrigger>
+                    <SelectValue placeholder="Subject type" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectGroup>
+                      <SelectItem value="USER">User</SelectItem>
+                      <SelectItem value="ROLE">Role</SelectItem>
+                    </SelectGroup>
+                  </SelectContent>
+                </Select>
+                <Select
+                  value={newGrant.subject_id}
+                  onValueChange={(v) => setNewGrant((prev) => ({ ...prev, subject_id: v }))}
+                >
+                  <SelectTrigger>
+                    <SelectValue placeholder={newGrant.subject_type === "USER" ? "Select user" : "Select role"} />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectGroup>
+                      {(newGrant.subject_type === "USER" ? userOptions : roleOptions).map((o) => (
+                        <SelectItem key={o.id} value={o.id}>{o.name}</SelectItem>
+                      ))}
+                    </SelectGroup>
+                  </SelectContent>
+                </Select>
+              </div>
+              <div className="flex flex-wrap items-center gap-4">
+                {PERMISSION_ACTIONS.map((a) => (
+                  <div key={a.key} className="flex items-center gap-2">
+                    <Checkbox
+                      id={`new-grant-${a.key}`}
+                      checked={newGrant[a.key]}
+                      onCheckedChange={(c) => setNewGrant((prev) => ({ ...prev, [a.key]: c === true }))}
+                    />
+                    <FieldLabel htmlFor={`new-grant-${a.key}`} className="font-normal">{a.label}</FieldLabel>
+                  </div>
+                ))}
+              </div>
+              <div className="flex justify-end">
+                <Button type="button" size="sm" variant="outline" onClick={handleAddGrant}>
+                  Add Permission Grant
                 </Button>
               </div>
             </div>

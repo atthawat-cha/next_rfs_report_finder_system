@@ -315,5 +315,37 @@ Resolved decision (ผู้ใช้ไม่ได้ยืนยันเพ�
 
 ## Sub-phase 2d (overview)
 
-- `report_permissions` CRUD ต่อรายงาน
-- หน้า permission editor: matrix ผู้ใช้/บทบาท × action (`can_view/can_edit/can_delete/can_favorite/can_export/can_print`) — คล้าย pattern ที่มีอยู่แล้วใน `role-management` (`components/shared/permissions-form.tsx`) ให้ดูเป็นตัวอย่าง
+## Sub-phase 2d — `report_permissions` CRUD + Permission Editor UI
+
+Audit ก่อนลงรายละเอียด: `components/shared/permissions-form.tsx` (ตัวอย่างที่ระบุไว้ใน overview เดิม) เป็น matrix ของ **menu × CRUD flag** (`role_permissions`) — คนละแกนกับ `report_permissions` (**subject (user/role) × action** ต่อ **1 รายงาน**) และผูกกับ `template: PermissionTemplateType[]`/`perConvertToCheckbox` ที่ออกแบบมาสำหรับ menu tree โดยเฉพาะ ไม่มีโครงสร้างที่ reuse ตรงๆได้ — ใช้เป็นแค่ตัวอย่าง "list ของ items แต่ละอันมี checkbox 6 ตัวต่อแถว" แล้วเขียน UI ใหม่เฉพาะสำหรับ subject-based matrix นี้ (เหมือนที่ Queries/Variables section ใน 2c ก็เขียนใหม่แทน reuse `SharedDataTable`)
+
+`subject_id` ไม่ได้ผูก FK กับทั้ง `users`/`roles` (Postgres/Prisma ทำ conditional FK ไม่ได้ — comment ไว้ใน schema แล้ว) → ต้อง validate ที่ endpoint ว่า `subject_id` มีอยู่จริงในตารางที่ `subject_type` ชี้ไป ก่อน insert เสมอ
+
+### 1. `report_permissions` CRUD
+
+`app/api/reports/[id]/permissions/route.ts`:
+- **GET**: list ทุก grant ของรายงาน + join ชื่อผู้ใช้/บทบาทมาแสดง (fetch `users`/`roles` แยกตาม `subject_id` ที่เจอ เพราะไม่มี FK ให้ Prisma `include` ตรงๆ) → คืน `{..., subject_name}`
+- **POST**: body `{subject_type: 'USER'|'ROLE', subject_id, can_view?, can_edit?, can_delete?, can_favorite?, can_export?, can_print?}` → validate `subject_id` มีอยู่จริงในตาราง `users`/`roles` ตาม `subject_type` (404 ถ้าไม่เจอ) → เช็ค grant ซ้ำด้วย unique compound key `report_id_subject_type_subject_id` (ตัวเดียวกับที่ `lib/report-acl.ts` ใช้ query) ก่อน insert คืน 409 อ่านง่ายถ้ามีอยู่แล้ว ("Permission grant already exists for this subject — edit it instead") แทนให้ Prisma ปฏิเสธด้วย P2002 ตรงๆ (pattern เดียวกับ `report_variables` POST ใน 2c) → `logActivity('create', ...)`
+- **PUT**: body `{id, can_view?, can_edit?, can_delete?, can_favorite?, can_export?, can_print?}` → แก้ได้แค่ 6 flag เท่านั้น **ไม่แก้ `subject_type`/`subject_id`** (เปลี่ยน subject ต้องลบแล้วสร้างใหม่ กัน edge case ชนกับ grant อื่นที่มีอยู่แล้วโดยไม่ผ่าน unique check) → `logActivity('update', ...)`
+- **DELETE**: query param `?id=` → ลบแถว → `logActivity('delete', ...)`
+- Auth: `routeAcceptted('admin')` ทั้ง 4 method (เหมือน files/queries/variables — จัดการสิทธิ์ของรายงานเป็นงาน admin)
+
+**Files**: `app/api/reports/[id]/permissions/route.ts` (ใหม่)
+
+### 2. UI — Permission Editor section ในหน้าแก้ไขรายงาน
+
+เพิ่มการ์ดที่ 4 ต่อจาก Queries/Variables ใน `app/(auth)/reports/report-edit/[id]/page.tsx`:
+- Fetch รายชื่อ `users` (`GET /api/users/user`) และ `roles` (`GET /api/users/roles`) มาเป็น option สำหรับ dropdown เลือก subject (admin-only endpoint ที่มีอยู่แล้ว ไม่ต้องสร้างใหม่)
+- ตาราง/list ของ grant ที่มีอยู่: badge ประเภท (User/Role) + ชื่อ subject + checkbox 6 ตัว (`can_view/edit/delete/favorite/export/print`) แก้ inline แล้วกด "บันทึก" ต่อแถว (เรียก `PUT`) + ปุ่มลบ
+- ฟอร์ม "เพิ่มสิทธิ์": เลือกประเภท (User/Role) → dropdown เลือก user หรือ role ตามประเภท → checkbox 6 ตัว → ปุ่มเพิ่ม (เรียก `POST`)
+
+**Files**: `app/(auth)/reports/report-edit/[id]/page.tsx` (แก้)
+
+### Verification (2d)
+
+- เพิ่ม grant ให้ user รายบุคคลดูรายงาน `DRAFT` → user นั้นเห็นในผลลัพธ์ `browse` (ทดสอบ regression กับของที่ทำไว้ใน 2b), user อื่นไม่เห็น
+- เพิ่ม grant ซ้ำ (subject เดิม) → 409 อ่านง่าย ไม่ใช่ raw P2002
+- ส่ง `subject_id` ที่ไม่มีอยู่จริงในตาราง `users`/`roles` → 404/400 ไม่ insert แถว
+- แก้ไข flag ผ่าน `PUT` แล้วเช็คผลผ่าน `resolveReportAcl` ตรงๆ (individual ชนะ role ตาม resolution order ที่ทำไว้ใน 2a)
+- ลบ grant → `resolveReportAcl` fallback กลับไปที่ role grant หรือ `access_level` ตามลำดับเดิม
+- `npx tsc --noEmit` ไม่มี error ใหม่
