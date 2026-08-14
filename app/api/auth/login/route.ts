@@ -2,6 +2,8 @@ import { NextRequest, NextResponse } from 'next/server';
 import { authenticate, checkRateLimit, createToken, resetRateLimit, setAuthCookie } from '@/lib/auth';
 import { z } from 'zod';
 import prisma from '@/lib/prisma';
+import { logActivity } from '@/lib/activity-log';
+import { getClientIp } from '@/lib/request-info';
 
 const loginSchema = z.object({
   username: z.string().min(3, 'กรุณากรอกชื่อผู้ใช้'),
@@ -11,7 +13,7 @@ const loginSchema = z.object({
 export async function POST(request: NextRequest) {
 
   // ตรวจสอบ rate limit
-  const ip = request.headers.get('x-forwarded-for') || request.ip || request.headers.get('x-real-ip') || 'unknown';
+  const ip = getClientIp(request);
   const {allowed, retryAfter} = checkRateLimit(ip);
   if (!allowed) {
     return NextResponse.json(
@@ -72,6 +74,13 @@ export async function POST(request: NextRequest) {
     // });
 
     if (!getUser) {
+      // username ไม่มีในระบบ — ไม่มี user id ให้ผูก log
+      await logActivity(request, {
+        userId: null,
+        action: 'login_failed',
+        entity: 'auth',
+        description: `Failed login attempt: unknown username "${validatedData.username}"`,
+      });
       return NextResponse.json(
         { error: 'ชื่อผู้ใช้หรือรหัสผ่านไม่ถูกต้อง' },
         { status: 401 }
@@ -82,6 +91,14 @@ export async function POST(request: NextRequest) {
     const user = await authenticate(validatedData, getUser);
 
     if (!user) {
+      // username ถูก แต่รหัสผ่านผิด — ผูก log กับ user ที่หาเจอได้
+      await logActivity(request, {
+        userId: getUser.id,
+        action: 'login_failed',
+        entity: 'auth',
+        entityId: getUser.id,
+        description: `Failed login attempt: wrong password for "${validatedData.username}"`,
+      });
       return NextResponse.json(
         { error: 'ชื่อผู้ใช้หรือรหัสผ่านไม่ถูกต้อง' },
         { status: 401 }
@@ -97,7 +114,13 @@ export async function POST(request: NextRequest) {
     // Reset rate limit on successful login
     resetRateLimit(ip);
 
-    
+    await logActivity(request, {
+      userId: user.id,
+      action: 'login',
+      entity: 'auth',
+      entityId: user.id,
+      description: `User "${user.username}" logged in`,
+    });
 
     return NextResponse.json(
       { 

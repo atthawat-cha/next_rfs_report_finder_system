@@ -7,6 +7,7 @@ import { uploadImageFile, uploadMultipleImages } from '@/lib/fileUploadServices'
 import { ReportCreateDataType, ReportGetDataType } from '@/lib/types';
 import { faker } from '@faker-js/faker';
 import { parsePagination } from '@/lib/pagination';
+import { logActivity } from '@/lib/activity-log';
 
 /**
  * GET /api/reports/report/manage
@@ -200,6 +201,15 @@ export async function POST(req: NextRequest) {
         if (!report) {
             return NextResponse.json({ success: false, error: "Failed to create report" }, { status: 500 });
         }
+
+        await logActivity(req, {
+            userId: authResult.user?.id,
+            action: 'create',
+            entity: 'report',
+            entityId: report.id,
+            description: `Created report "${report.code}"`,
+        });
+
         return NextResponse.json({ success: true, data: { id: report.id } }, { status: 200 });
     } catch (error) {
         process.env.NODE_ENV === 'development' && console.log(error)

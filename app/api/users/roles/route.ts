@@ -4,6 +4,7 @@ import { requireAuth, requireRole, routeAcceptted } from '@/lib/auth';
 import z from 'zod';
 import { faker } from '@faker-js/faker';
 import { buildRolePermissionInsert } from '@/lib/user-management';
+import { logActivity } from '@/lib/activity-log';
 
 // GET all roles
 export async function GET(req: NextRequest) {
@@ -116,6 +117,10 @@ export async function POST(req: NextRequest) {
          * - Create role_permissions & Insert action
          */
 
+        // เก็บ id ของ role ที่สร้างไว้นอก transaction เพื่อเขียน activity log หลัง transaction สำเร็จ
+        // (ถ้า rollback จะไม่มี log ค้างอยู่)
+        let createdRoleId = '';
+
         // Vlidate Data
         await prisma.$transaction(async (prisma) => {
             const permissions = await prisma.permissions.findMany({
@@ -139,6 +144,7 @@ export async function POST(req: NextRequest) {
                     id: true
                 }
             })
+            createdRoleId = role.id;
             const rp = buildRolePermissionInsert(role.id, permissions, body.permissions)
             // console.log(rp);
 
@@ -146,6 +152,15 @@ export async function POST(req: NextRequest) {
                 data: rp
             })
         })
+
+        await logActivity(req, {
+            userId: authResult.user?.id,
+            action: 'create',
+            entity: 'role',
+            entityId: createdRoleId,
+            description: `Created role "${roleValidate.role.name}"`,
+        });
+
         return NextResponse.json({ success: true, data: [] }, { status: 200 });
     } catch (error) {
         console.error(error);
