@@ -90,11 +90,11 @@ export async function POST(req: NextRequest) {
         });
 
         await logActivity(req, {
-            userId: authResult.user.id,
+            userId: authResult.user?.id,
             action: 'create',
             entity: 'department',
             entityId: department.id,
-            description: `Created department ${department.code}`,
+            description: `Created department "${department.code}"`,
         });
 
         return NextResponse.json(department);

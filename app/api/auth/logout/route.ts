@@ -4,7 +4,7 @@ import { logActivity } from '@/lib/activity-log';
 
 export async function POST(request: NextRequest) {
   try {
-    // ต้องอ่าน user ก่อนลบ cookie ไม่งั้นจะไม่มีข้อมูลระบุตัวตนสำหรับ log
+    // ต้องอ่าน user ก่อน deleteAuthCookie() — หลังจากนั้นไม่เหลืออะไรระบุตัวผู้ใช้แล้ว
     const user = await getCurrentUser();
 
     // Delete auth cookie
@@ -15,7 +15,7 @@ export async function POST(request: NextRequest) {
       action: 'logout',
       entity: 'auth',
       entityId: user?.id,
-      description: user ? `Logout for username "${user.username}"` : undefined,
+      description: user ? `User "${user.username}" logged out` : 'Logout without an active session',
     });
 
     return NextResponse.json(

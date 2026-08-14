@@ -30,8 +30,8 @@ export async function GET(req: NextRequest) {
             return authResult; // ส่งต่อการตอบกลับ 401 หรือ 403 จาก requireRole
         }
 
-        // NOTE: default pageSize=100 comfortably covers current dev dataset; once report volume
-        // exceeds pageSize this will silently truncate until Phase 1 adds real pagination UI.
+        // NOTE: default pageSize = 100 — ฝั่ง frontend ยังไม่ส่ง page/pageSize (Phase 1 จะเพิ่ม UI)
+        // ดังนั้นเมื่อจำนวนรายงานจริงเกิน 100 endpoint นี้จะตัดข้อมูลเงียบ ๆ จนกว่าจะทำ Phase 1
         const { page, pageSize, skip, take } = parsePagination(req.nextUrl.searchParams);
 
         const [reports, total] = await Promise.all([
@@ -54,7 +54,7 @@ export async function GET(req: NextRequest) {
                     is_editable: true
                 },
                 skip,
-                take,
+                take
             }),
             prisma.reports.count(),
         ]);
@@ -63,10 +63,11 @@ export async function GET(req: NextRequest) {
             return NextResponse.json({ success: false, error: "reports not found" }, { status: 404 });
         }
         // console.log(users);
-        return NextResponse.json(
-            { success: true, data: reports, meta: { page, pageSize, total, totalPages: Math.ceil(total / pageSize) } },
-            { status: 200 }
-        );
+        return NextResponse.json({
+            success: true,
+            data: reports,
+            meta: { page, pageSize, total, totalPages: Math.ceil(total / pageSize) }
+        }, { status: 200 });
     } catch (error) {
         process.env.NODE_ENV === 'development' && console.log(error)
         return NextResponse.json({ error: "Internal Server Error" }, { status: 500 });
@@ -87,8 +88,7 @@ const reportZod = z.object({
     categories: z.string().min(1, "Categories is required"),
     departments: z.string().min(1, "Departments is required"),
     status: z.string().min(1, "Status is required"),
-    access_level: z.enum(["PUBLIC", "RESTRICTED", "PRIVATE"]),
-    output_type: z.enum(["PRINT_FORM", "DATA_REPORT"]),
+    access_level: z.array(z.string()).min(1, "Access level is required"),
     is_downloadable: z.boolean(),
     is_editable: z.boolean()
 })
@@ -128,14 +128,26 @@ export async function POST(req: NextRequest) {
             categories: data.get("categories") as string,
             departments: data.get("departments") as string,
             status: data.get("status") as string,
-            access_level: data.get("access_level") as string,
-            output_type: data.get("output_type") as string,
+            access_level: JSON.parse(data.get("access_level") as string),
             is_downloadable: data.get("is_downloadable") === 'true' ? true : false,
             is_editable: data.get("is_editable") === 'true' ? true : false,
         });
         if (!validate.success) {
             return NextResponse.json({ success: false, error: validate.error.errors }, { status: 400 });
         }
+
+        // get role id from access_level
+        const accessLevel = data.get("access_level") as string;
+        const roleIds = await prisma.roles.findMany({
+            where: {
+                name: {
+                    in: JSON.parse(accessLevel)
+                }
+            },
+            select: {
+                id: true
+            }
+        })
 
         // Multiple files
         if (files.length > 1) {
@@ -175,8 +187,6 @@ export async function POST(req: NextRequest) {
             department_id: data.get("departments") as string,
             created_by_id: user?.id as string,
             status: data.get("status") as string,
-            access_level: validate.data.access_level,
-            output_type: validate.data.output_type,
             is_downloadable: data.get("is_downloadable") === 'true' ? true : false,
             is_editable: data.get("is_editable") === 'true' ? true : false,
             created_at: new Date(),
@@ -193,11 +203,11 @@ export async function POST(req: NextRequest) {
         }
 
         await logActivity(req, {
-            userId: authResult.user.id,
+            userId: authResult.user?.id,
             action: 'create',
             entity: 'report',
             entityId: report.id,
-            description: `Created report ${report.code}`,
+            description: `Created report "${report.code}"`,
         });
 
         return NextResponse.json({ success: true, data: { id: report.id } }, { status: 200 });

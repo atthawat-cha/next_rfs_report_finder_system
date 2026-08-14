@@ -117,8 +117,11 @@ export async function POST(req: NextRequest) {
          * - Create role_permissions & Insert action
          */
 
+        // เก็บ id ของ role ที่สร้างไว้นอก transaction เพื่อเขียน activity log หลัง transaction สำเร็จ
+        // (ถ้า rollback จะไม่มี log ค้างอยู่)
+        let createdRoleId = '';
+
         // Vlidate Data
-        let createdRoleId: string | undefined;
         await prisma.$transaction(async (prisma) => {
             const permissions = await prisma.permissions.findMany({
                 select: {
@@ -151,11 +154,11 @@ export async function POST(req: NextRequest) {
         })
 
         await logActivity(req, {
-            userId: authResult.user.id,
+            userId: authResult.user?.id,
             action: 'create',
             entity: 'role',
             entityId: createdRoleId,
-            description: `Created role ${roleValidate.role.name}`,
+            description: `Created role "${roleValidate.role.name}"`,
         });
 
         return NextResponse.json({ success: true, data: [] }, { status: 200 });

@@ -51,12 +51,14 @@ const userZod = z.object({
 export async function POST(req: NextRequest) {
   try {
     const acceptedRoles = routeAcceptted('admin');
+    // ตรวจสอบการยืนยันตัวตนก่อนสร้างผู้ใช้
     const auth = getAuthFromRequest(req);
     if (!auth) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
     const authResult = await requireRole(req, acceptedRoles);
+
     if (authResult instanceof NextResponse) {
       return authResult; // ส่งต่อการตอบกลับ 401 หรือ 403 จาก requireRole
     }
@@ -85,13 +87,12 @@ export async function POST(req: NextRequest) {
         { status: 400 }
       );
     }
-
     await logActivity(req, {
-      userId: authResult.user.id,
+      userId: authResult.user?.id,
       action: 'create',
       entity: 'user',
       entityId: user.id,
-      description: `Created user ${user.username}`,
+      description: `Created user "${user.username}"`,
     });
 
     return NextResponse.json({ success: true, data: user.id }, { status: 200 });

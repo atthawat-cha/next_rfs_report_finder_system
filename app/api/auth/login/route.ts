@@ -1,10 +1,9 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { authenticate, createToken, setAuthCookie } from '@/lib/auth';
-import { checkRateLimit, resetRateLimit } from '@/lib/rate-limit';
+import { authenticate, checkRateLimit, createToken, resetRateLimit, setAuthCookie } from '@/lib/auth';
 import { z } from 'zod';
 import prisma from '@/lib/prisma';
-import { getClientIp } from '@/lib/request-info';
 import { logActivity } from '@/lib/activity-log';
+import { getClientIp } from '@/lib/request-info';
 
 const loginSchema = z.object({
   username: z.string().min(3, 'กรุณากรอกชื่อผู้ใช้'),
@@ -15,7 +14,7 @@ export async function POST(request: NextRequest) {
 
   // ตรวจสอบ rate limit
   const ip = getClientIp(request);
-  const { allowed, retryAfter } = await checkRateLimit(ip);
+  const {allowed, retryAfter} = checkRateLimit(ip);
   if (!allowed) {
     return NextResponse.json(
       { error: 'คุณพยายามเข้าสู่ระบบหลายครั้งเกินไป โปรดลองใหม่อีกครั้งในภายหลัง' },
@@ -75,11 +74,12 @@ export async function POST(request: NextRequest) {
     // });
 
     if (!getUser) {
+      // username ไม่มีในระบบ — ไม่มี user id ให้ผูก log
       await logActivity(request, {
         userId: null,
         action: 'login_failed',
         entity: 'auth',
-        description: `Login failed for username "${validatedData.username}" (user not found)`,
+        description: `Failed login attempt: unknown username "${validatedData.username}"`,
       });
       return NextResponse.json(
         { error: 'ชื่อผู้ใช้หรือรหัสผ่านไม่ถูกต้อง' },
@@ -91,12 +91,13 @@ export async function POST(request: NextRequest) {
     const user = await authenticate(validatedData, getUser);
 
     if (!user) {
+      // username ถูก แต่รหัสผ่านผิด — ผูก log กับ user ที่หาเจอได้
       await logActivity(request, {
         userId: getUser.id,
         action: 'login_failed',
         entity: 'auth',
         entityId: getUser.id,
-        description: `Login failed for username "${validatedData.username}" (wrong password)`,
+        description: `Failed login attempt: wrong password for "${validatedData.username}"`,
       });
       return NextResponse.json(
         { error: 'ชื่อผู้ใช้หรือรหัสผ่านไม่ถูกต้อง' },
@@ -111,14 +112,14 @@ export async function POST(request: NextRequest) {
     await setAuthCookie(token);
 
     // Reset rate limit on successful login
-    await resetRateLimit(ip);
+    resetRateLimit(ip);
 
     await logActivity(request, {
       userId: user.id,
       action: 'login',
       entity: 'auth',
       entityId: user.id,
-      description: `Login success for username "${user.username}"`,
+      description: `User "${user.username}" logged in`,
     });
 
     return NextResponse.json(

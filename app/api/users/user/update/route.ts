@@ -6,17 +6,6 @@ import { getAuthFromRequest, requireRole, routeAcceptted } from "@/lib/auth";
 import { logActivity } from "@/lib/activity-log";
 
 export async function POST(req: NextRequest) {
-  const acceptedRoles = routeAcceptted('admin');
-  const auth = getAuthFromRequest(req);
-  if (!auth) {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-  }
-
-  const authResult = await requireRole(req, acceptedRoles);
-  if (authResult instanceof NextResponse) {
-    return authResult; // ส่งต่อการตอบกลับ 401 หรือ 403 จาก requireRole
-  }
-
   const schema = z.object({
     id: z.string(),
 
@@ -31,6 +20,19 @@ export async function POST(req: NextRequest) {
   });
 
   try {
+    const acceptedRoles = routeAcceptted('admin');
+    // ตรวจสอบการยืนยันตัวตนก่อนแก้ไขผู้ใช้
+    const auth = getAuthFromRequest(req);
+    if (!auth) {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
+
+    const authResult = await requireRole(req, acceptedRoles);
+
+    if (authResult instanceof NextResponse) {
+      return authResult; // ส่งต่อการตอบกลับ 401 หรือ 403 จาก requireRole
+    }
+
     const body = await req.json();
 
     const data = schema.parse(body);
@@ -76,11 +78,12 @@ export async function POST(req: NextRequest) {
     });
 
     await logActivity(req, {
-      userId: authResult.user.id,
+      userId: authResult.user?.id,
       action: 'update',
       entity: 'user',
       entityId: user.id,
-      description: `Updated user ${user.username}`,
+      description: `Updated user "${user.username}"`,
+      metadata: { fields: Object.keys(updateData) },
     });
 
     return NextResponse.json({

@@ -1,7 +1,11 @@
 import { NextRequest } from 'next/server';
 
+/**
+ * ดึง client IP จาก request
+ * ใช้ร่วมกันระหว่าง rate limiter (lib/auth.ts) และ activity logger (lib/activity-log.ts)
+ */
 export function getClientIp(req: NextRequest): string {
-  const forwarded = req.headers.get('x-forwarded-for');
-  if (forwarded) return forwarded.split(',')[0].trim();
-  return req.ip || req.headers.get('x-real-ip') || 'unknown';
+    const forwarded = req.headers.get('x-forwarded-for');
+    if (forwarded) return forwarded.split(',')[0].trim();
+    return req.ip || req.headers.get('x-real-ip') || 'unknown';
 }
