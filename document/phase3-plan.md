@@ -63,11 +63,58 @@ Auth: `routeAcceptted('admin')`
 
 ---
 
-## Sub-phase 3b (overview) — Report Sharing
+## Sub-phase 3b — Report Sharing
 
-- `report_shares` CRUD ต่อรายงาน (`GET/POST/DELETE /api/reports/[id]/shares`) — แชร์ให้ user รายบุคคล (`shared_with`) หรือสร้าง link token (`share_type=LINK`, `share_token` สุ่ม, `expires_at`)
-- `GET /api/shares/[token]` — public-token-gated read access (ไม่ต้อง login), เช็ค `expires_at` ก่อนเสมอ, เช็ค `can_download`/`can_edit` ตาม flag บน share row
-- Cleanup งาน expired link: ตัดสินใจก่อนว่าเป็น cron job จริง (ต้องมี job runner) หรือ soft-check ตอน query (`WHERE expires_at IS NULL OR expires_at > now()`) แบบ lazy — แนะนำ lazy check ก่อนสำหรับ MVP เพราะยังไม่มี job scheduler ในระบบ
+Audit ก่อนลงรายละเอียด: `report_shares`/`ShareType` ไม่มีจุดเรียกใช้เลย (`grep -rn "report_shares|ShareType" app/ lib/` เจอแค่ generated Prisma client) — งานนี้เขียนใหม่ทั้งก้อนจริงๆ ไม่มีของเดิมให้ reconcile เหมือน 2b
+
+Resolved decisions:
+1. **จัดการ share เป็นงาน admin เท่านั้น** (`routeAcceptted('admin')`) เหมือนงาน report management อื่นทั้งหมดในระบบตอนนี้ — ยังไม่เปิดให้ user ทั่วไปที่มีสิทธิ์ `can_edit` ผ่าน `report_permissions` สร้าง share เอง (ต้องมี UI แยกสำหรับ user ทั่วไปซึ่งไม่มีอยู่เลยตอนนี้ — เกินสโคป รอ phase ถัดไปถ้าต้องการ)
+2. **`can_edit` บน `report_shares` เป็น field ที่ยังไม่ enforce ที่ไหนเลยใน sub-phase นี้** — ไม่มี anonymous edit flow ให้คนถือลิงก์แก้ไขรายงานได้โดยไม่ login (จะเป็นช่องโหว่ใหญ่ถ้าทำเร็วๆแบบไม่คิด) เก็บ field ไว้ตาม schema เพื่อไม่เสีย data model แต่ documentation ชัดว่ายังไม่มีผลจริง — เหมือนที่ 3a เจอกับ `report_versions`, ต่างกันที่ตัวนี้ "ยังไม่ build ใช้งาน" ไม่ใช่ "build แล้วแต่ตายไปแล้ว"
+3. **Public share page**: `/shares/[token]` ต้องเป็นหน้าที่เข้าได้โดยไม่ login จริง — `middleware.ts`'s `publicPaths` เช็คแบบ exact-match (`publicPaths.includes(pathname)`) ไม่รองรับ dynamic prefix เลย ต้องเพิ่มเงื่อนไข prefix check (`pathname.startsWith('/shares/')`) แยกจาก `publicPaths` array เดิม — แก้ `middleware.ts` เพิ่มเติมใน sub-phase นี้
+4. **ไฟล์ที่แชร์ผ่านลิงก์ยังอยู่ใต้ `public/`** เหมือนที่ Phase 1/2 ตัดสินใจไว้ (ไม่ใช่ object storage แยกตามที่ system-design.md §1.1 แนะนำระยะยาว) — หมายความว่าไฟล์เหล่านี้ถูก fetch ได้ตรงๆถ้ารู้ path อยู่แล้วโดยไม่ผ่าน endpoint นี้เลย ไม่ใช่ช่องโหว่ใหม่ที่ 3b สร้างขึ้น เป็น debt เดิมจาก Phase 1/2 ที่ระบุไว้แล้วในเอกสาร — endpoint นี้แค่บอก path ให้คนถือ token ที่ยังไม่หมดอายุ ไม่ได้ทำให้ path เข้าถึงได้ง่ายขึ้นกว่าที่เป็นอยู่แล้ว
+5. **Cleanup expired link**: lazy check ตอน query (`WHERE expires_at IS NULL OR expires_at > now()`) ไม่ทำ cron job จริง เพราะยังไม่มี job scheduler ในระบบ (ตรงกับ overview เดิม)
+
+### 1. `report_shares` CRUD ต่อรายงาน
+
+`app/api/reports/[id]/shares/route.ts`:
+- **GET**: list share ของรายงาน เรียง `created_at desc` → join ชื่อ user/department ตาม `share_type` (`USER`→`users`, `DEPARTMENT`→`departments`, `LINK`→ไม่ต้อง join คืน `share_token` ตรงๆให้ฝั่ง client ประกอบเป็น URL เต็ม)
+- **POST**: body แบบ discriminated union ตาม `share_type`:
+  - `USER`/`DEPARTMENT`: ต้องมี `shared_with` → validate ว่ามีอยู่จริงใน `users`/`departments` ตามลำดับ (404 ถ้าไม่เจอ)
+  - `LINK`: ห้ามส่ง `shared_with` → generate `share_token` ด้วย `crypto.randomBytes(24).toString('hex')` (ฝั่ง server เท่านั้น ไม่รับ token จาก client)
+  - ทุก type: `can_download` (default `true`), `can_edit` (default `false`, ดูข้อ 2), `expires_at` (optional ISO string หรือ `null` = ไม่หมดอายุ) → `logActivity('create', 'report', reportId, ...)`
+- **DELETE**: query param `?id=` → ลบ (revoke) แถว → `logActivity('delete', ...)`
+- **ไม่มี PUT** — ตรงกับ endpoint table ใน `01-system-design.md §4.2` ที่ระบุแค่ `GET/POST/DELETE` (แก้ share ที่มีอยู่ = revoke แล้วสร้างใหม่ ไม่ใช่ edit in place)
+- Auth: `routeAcceptted('admin')` ทั้ง 3 method
+
+**Files**: `app/api/reports/[id]/shares/route.ts` (ใหม่)
+
+### 2. Public token-gated access
+
+`app/api/shares/[token]/route.ts` (GET, **ไม่มี auth check** — จุดประสงค์คือให้เข้าได้โดยไม่ login):
+- หา `report_shares` ด้วย `share_token` → 404 ถ้าไม่เจอ → 410 (Gone) ถ้า `expires_at` ผ่านไปแล้ว
+- คืน report metadata (`code/name_th/name_en/description/output_type`) + `report_files` ที่ `is_current=true` **เฉพาะตอน `can_download=true`** (ถ้า `false` คืน metadata อย่างเดียว ไม่คืน path ไฟล์)
+- ไม่เช็ค/ใช้ `can_edit` เลยตามข้อ 2 (ยังไม่มี flow ให้ทำอะไรกับมัน)
+
+`app/shares/[token]/page.tsx` (public page, ต้องเพิ่ม `/shares/` เข้า middleware ตามข้อ 3):
+- เรียก endpoint ข้างบน, แสดงข้อมูลรายงาน + ปุ่มดาวน์โหลดไฟล์ (ถ้า `can_download`) หรือข้อความ "ลิงก์หมดอายุ/ไม่พบ" ถ้า 404/410
+- ไม่ใช้ `ContentLayout`/sidebar (หน้านี้ไม่ต้อง login) — layout เรียบง่ายแบบเดียวกับ `/login`
+
+**Files**: `app/api/shares/[token]/route.ts` (ใหม่), `app/shares/[token]/page.tsx` (ใหม่), `middleware.ts` (เพิ่ม prefix check)
+
+### 3. UI — Sharing section ในหน้าแก้ไขรายงาน
+
+การ์ดที่ 6 ใน `report-edit/[id]/page.tsx`: list share ที่มีอยู่ (type badge, target name หรือลิงก์เต็มพร้อมปุ่ม copy, วันหมดอายุ, ปุ่ม Revoke) + ฟอร์มสร้าง share ใหม่ (เลือกประเภท → ถ้า USER/DEPARTMENT โชว์ dropdown เลือก user/department, ถ้า LINK ไม่โชว์ dropdown → checkbox `can_download`/`can_edit` → date picker `expires_at` (ไม่บังคับ) → ปุ่มสร้าง)
+
+**Files**: `app/(auth)/reports/report-edit/[id]/page.tsx` (แก้)
+
+### Verification (3b)
+
+- สร้าง share `type=LINK` ไม่มี `expires_at` → เข้า `/shares/<token>` โดยไม่ login เห็นข้อมูลรายงาน + ไฟล์ (ถ้า `can_download=true`)
+- สร้าง share `type=LINK`, `expires_at` เป็นอดีต → เข้า endpoint คืน 410
+- สร้าง share `type=USER` ด้วย `shared_with` ที่ไม่มีอยู่จริง → 404 ไม่ insert แถว
+- Revoke share แล้วเข้า token เดิม → 404
+- เข้าหน้า `/shares/<token>` จาก browser ที่ไม่มี cookie login เลย → ไม่ถูก middleware redirect ไป `/login`
+- `npx tsc --noEmit` ไม่มี error ใหม่
 
 ## Sub-phase 3c (overview) — Notifications
 

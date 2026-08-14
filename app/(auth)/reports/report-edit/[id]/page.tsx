@@ -26,7 +26,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Separator } from "@/components/ui/separator";
 import { Checkbox } from "@/components/ui/checkbox";
 import FileUpload, { AllowedFileType } from "@/components/shared/fileuploading";
-import { Loader2, FileText, Layers, Database, Variable as VariableIcon, Shield, History } from "lucide-react";
+import { Loader2, FileText, Layers, Database, Variable as VariableIcon, Shield, History, Share2, Copy } from "lucide-react";
 import toast from "react-hot-toast";
 
 type SelectOption = { id: string; name: string };
@@ -150,6 +150,25 @@ interface VersionHistory {
 
 const EMPTY_HISTORY: VersionHistory = { files: {}, queries: [] };
 
+interface ReportShareRow {
+  id: string;
+  share_type: "USER" | "DEPARTMENT" | "LINK";
+  shared_with: string | null;
+  share_token: string | null;
+  target_name: string | null;
+  can_download: boolean;
+  can_edit: boolean;
+  expires_at: string | null;
+}
+
+const EMPTY_NEW_SHARE = {
+  share_type: "LINK" as ReportShareRow["share_type"],
+  shared_with: "",
+  can_download: true,
+  can_edit: false,
+  expires_at: "",
+};
+
 const FILE_KINDS_BY_OUTPUT_TYPE: Record<string, { kind: ReportFileRow["file_kind"]; label: string; accept: AllowedFileType }[]> = {
   PRINT_FORM: [
     { kind: "BLANK_FORM", label: "แบบฟอร์มเปล่า (PDF)", accept: "pdf" },
@@ -187,6 +206,9 @@ export default function ReportEdit() {
     ...EMPTY_FLAGS,
   });
   const [history, setHistory] = React.useState<VersionHistory>(EMPTY_HISTORY);
+  const [shares, setShares] = React.useState<ReportShareRow[]>([]);
+  const [departmentOptions, setDepartmentOptions] = React.useState<SelectOption[]>([]);
+  const [newShare, setNewShare] = React.useState(EMPTY_NEW_SHARE);
   const [baseSelect, setBaseSelect] = React.useState<BaseSelect>({
     departments: [],
     status: [],
@@ -208,7 +230,7 @@ export default function ReportEdit() {
   const fetchAll = useCallback(async () => {
     setLoading(true);
     try {
-      const [reportRes, baseRes, queriesRes, variablesRes, permissionsRes, usersRes, rolesRes, historyRes] = await Promise.all([
+      const [reportRes, baseRes, queriesRes, variablesRes, permissionsRes, usersRes, rolesRes, historyRes, sharesRes, deptRes] = await Promise.all([
         fetch(`/api/reports/report/manage/${reportId}`, { credentials: "include" }),
         fetch("/api/baseconfig/selections", { credentials: "include" }),
         fetch(`/api/reports/${reportId}/queries`, { credentials: "include" }),
@@ -217,6 +239,8 @@ export default function ReportEdit() {
         fetch("/api/users/user", { credentials: "include" }),
         fetch("/api/users/roles", { credentials: "include" }),
         fetch(`/api/reports/${reportId}/versions`, { credentials: "include" }),
+        fetch(`/api/reports/${reportId}/shares`, { credentials: "include" }),
+        fetch("/api/users/departments", { credentials: "include" }),
       ]);
 
       if (!reportRes.ok) {
@@ -298,6 +322,18 @@ export default function ReportEdit() {
       if (historyRes.ok) {
         const historyJson = await historyRes.json();
         if (historyJson?.success) setHistory(historyJson.data);
+      }
+
+      if (sharesRes.ok) {
+        const sharesJson = await sharesRes.json();
+        if (sharesJson?.success) setShares(sharesJson.data);
+      }
+
+      if (deptRes.ok) {
+        const deptJson = await deptRes.json();
+        if (Array.isArray(deptJson)) {
+          setDepartmentOptions(deptJson.map((d: { id: string; name: string }) => ({ id: d.id, name: d.name })));
+        }
       }
     } finally {
       setLoading(false);
@@ -604,6 +640,52 @@ export default function ReportEdit() {
     }
     toast.success(`Rolled back to v${version.version}`);
     fetchAll();
+  };
+
+  const handleAddShare = async () => {
+    if (newShare.share_type !== "LINK" && !newShare.shared_with) {
+      toast.error(newShare.share_type === "USER" ? "Please choose a user" : "Please choose a department");
+      return;
+    }
+    const res = await fetch(`/api/reports/${reportId}/shares`, {
+      method: "POST",
+      credentials: "include",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        share_type: newShare.share_type,
+        ...(newShare.share_type !== "LINK" ? { shared_with: newShare.shared_with } : {}),
+        can_download: newShare.can_download,
+        can_edit: newShare.can_edit,
+        expires_at: newShare.expires_at ? new Date(newShare.expires_at).toISOString() : null,
+      }),
+    });
+    if (!res.ok) {
+      const body = await res.json().catch(() => null);
+      toast.error(body?.error ?? "Failed to create share");
+      return;
+    }
+    toast.success("Share created");
+    setNewShare(EMPTY_NEW_SHARE);
+    fetchAll();
+  };
+
+  const handleRevokeShare = async (row: ReportShareRow) => {
+    const res = await fetch(`/api/reports/${reportId}/shares?id=${row.id}`, {
+      method: "DELETE",
+      credentials: "include",
+    });
+    if (!res.ok) {
+      toast.error("Failed to revoke share");
+      return;
+    }
+    toast.success("Share revoked");
+    fetchAll();
+  };
+
+  const handleCopyLink = (token: string) => {
+    const url = `${window.location.origin}/shares/${token}`;
+    navigator.clipboard.writeText(url);
+    toast.success("Copied link to clipboard");
   };
 
   if (loading) {
@@ -1212,6 +1294,123 @@ export default function ReportEdit() {
                 )}
               </div>
             ))}
+          </CardContent>
+        </Card>
+
+        <Card className="mt-6">
+          <CardHeader className="pb-4">
+            <div className="flex items-center gap-2">
+              <Share2 className="h-4 w-4 text-muted-foreground" />
+              <CardTitle className="text-base">Sharing</CardTitle>
+            </div>
+            <CardDescription>
+              แชร์รายงานนี้ให้ผู้ใช้/แผนก หรือสร้างลิงก์สาธารณะ (ไม่ต้อง login)
+            </CardDescription>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            {shares.map((s) => (
+              <div key={s.id} className="flex items-center justify-between text-sm border rounded-md px-3 py-2 gap-3">
+                <div className="min-w-0 flex-1">
+                  <div className="flex items-center gap-2">
+                    <span className="text-xs rounded bg-muted px-1.5 py-0.5">
+                      {s.share_type === "USER" ? "User" : s.share_type === "DEPARTMENT" ? "Department" : "Link"}
+                    </span>
+                    {s.can_download && <span className="text-xs rounded bg-primary/10 text-primary px-1.5 py-0.5">Download</span>}
+                    {s.can_edit && <span className="text-xs rounded bg-primary/10 text-primary px-1.5 py-0.5">Edit</span>}
+                    {s.expires_at && (
+                      <span className="text-xs text-muted-foreground">
+                        หมดอายุ {new Date(s.expires_at).toLocaleDateString("th-TH")}
+                      </span>
+                    )}
+                  </div>
+                  {s.share_type === "LINK" && s.share_token ? (
+                    <button
+                      type="button"
+                      onClick={() => handleCopyLink(s.share_token as string)}
+                      className="mt-1 flex items-center gap-1 text-xs text-muted-foreground hover:text-foreground truncate"
+                    >
+                      <Copy className="h-3 w-3" /> /shares/{s.share_token.slice(0, 12)}…
+                    </button>
+                  ) : (
+                    <div className="mt-1 text-xs text-muted-foreground truncate">{s.target_name}</div>
+                  )}
+                </div>
+                <Button type="button" size="sm" variant="ghost" onClick={() => handleRevokeShare(s)}>
+                  Revoke
+                </Button>
+              </div>
+            ))}
+
+            <div className="border-t pt-4 space-y-3">
+              <FieldLabel>สร้างการแชร์ใหม่</FieldLabel>
+              <div className="grid grid-cols-2 gap-2">
+                <Select
+                  value={newShare.share_type}
+                  onValueChange={(v) => setNewShare((prev) => ({ ...prev, share_type: v as ReportShareRow["share_type"], shared_with: "" }))}
+                >
+                  <SelectTrigger>
+                    <SelectValue placeholder="Share type" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectGroup>
+                      <SelectItem value="LINK">Public Link</SelectItem>
+                      <SelectItem value="USER">User</SelectItem>
+                      <SelectItem value="DEPARTMENT">Department</SelectItem>
+                    </SelectGroup>
+                  </SelectContent>
+                </Select>
+                {newShare.share_type !== "LINK" && (
+                  <Select
+                    value={newShare.shared_with}
+                    onValueChange={(v) => setNewShare((prev) => ({ ...prev, shared_with: v }))}
+                  >
+                    <SelectTrigger>
+                      <SelectValue placeholder={newShare.share_type === "USER" ? "Select user" : "Select department"} />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectGroup>
+                        {(newShare.share_type === "USER" ? userOptions : departmentOptions).map((o) => (
+                          <SelectItem key={o.id} value={o.id}>{o.name}</SelectItem>
+                        ))}
+                      </SelectGroup>
+                    </SelectContent>
+                  </Select>
+                )}
+              </div>
+              <div className="flex flex-wrap items-center gap-4">
+                <div className="flex items-center gap-2">
+                  <Checkbox
+                    id="new-share-download"
+                    checked={newShare.can_download}
+                    onCheckedChange={(c) => setNewShare((prev) => ({ ...prev, can_download: c === true }))}
+                  />
+                  <FieldLabel htmlFor="new-share-download" className="font-normal">Can download</FieldLabel>
+                </div>
+                <div className="flex items-center gap-2">
+                  <Checkbox
+                    id="new-share-edit"
+                    checked={newShare.can_edit}
+                    onCheckedChange={(c) => setNewShare((prev) => ({ ...prev, can_edit: c === true }))}
+                  />
+                  <FieldLabel htmlFor="new-share-edit" className="font-normal">Can edit</FieldLabel>
+                </div>
+                <div className="flex items-center gap-2">
+                  <FieldLabel htmlFor="new-share-expires" className="font-normal">Expires</FieldLabel>
+                  <Input
+                    id="new-share-expires"
+                    type="date"
+                    className="w-auto"
+                    value={newShare.expires_at}
+                    onChange={(e) => setNewShare((prev) => ({ ...prev, expires_at: e.target.value }))}
+                  />
+                </div>
+              </div>
+              <div className="flex justify-end">
+                <Button type="button" size="sm" variant="outline" onClick={handleAddShare}>
+                  Create Share
+                </Button>
+              </div>
+            </div>
           </CardContent>
         </Card>
 
