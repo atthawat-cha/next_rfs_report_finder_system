@@ -26,7 +26,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Separator } from "@/components/ui/separator";
 import { Checkbox } from "@/components/ui/checkbox";
 import FileUpload, { AllowedFileType } from "@/components/shared/fileuploading";
-import { Loader2, FileText, Layers } from "lucide-react";
+import { Loader2, FileText, Layers, Database, Variable as VariableIcon } from "lucide-react";
 import toast from "react-hot-toast";
 
 type SelectOption = { id: string; name: string };
@@ -58,6 +58,36 @@ interface ReportFileRow {
   version: string;
 }
 
+interface ReportQueryRow {
+  id: string;
+  name: string;
+  sql_text: string;
+  is_main: boolean;
+  version: string;
+}
+
+interface ReportVariableRow {
+  id: string;
+  name: string;
+  label: string | null;
+  data_type: "STRING" | "NUMBER" | "DATE" | "BOOLEAN";
+  default_value: string | null;
+  is_required: boolean;
+  sort_order: number;
+}
+
+const DATA_TYPES: ReportVariableRow["data_type"][] = ["STRING", "NUMBER", "DATE", "BOOLEAN"];
+
+const EMPTY_NEW_QUERY = { name: "", sql_text: "", is_main: false };
+const EMPTY_NEW_VARIABLE = {
+  name: "",
+  label: "",
+  data_type: "STRING" as ReportVariableRow["data_type"],
+  default_value: "",
+  is_required: false,
+  sort_order: 0,
+};
+
 const FILE_KINDS_BY_OUTPUT_TYPE: Record<string, { kind: ReportFileRow["file_kind"]; label: string; accept: AllowedFileType }[]> = {
   PRINT_FORM: [
     { kind: "BLANK_FORM", label: "แบบฟอร์มเปล่า (PDF)", accept: "pdf" },
@@ -78,6 +108,14 @@ export default function ReportEdit() {
   const [outputType, setOutputType] = React.useState<string>("DATA_REPORT");
   const [currentFiles, setCurrentFiles] = React.useState<ReportFileRow[]>([]);
   const [pendingFiles, setPendingFiles] = React.useState<Record<string, File[]>>({});
+  const [queries, setQueries] = React.useState<ReportQueryRow[]>([]);
+  const [newQuery, setNewQuery] = React.useState(EMPTY_NEW_QUERY);
+  const [editingQueryId, setEditingQueryId] = React.useState<string | null>(null);
+  const [queryDraft, setQueryDraft] = React.useState({ name: "", sql_text: "", is_main: false, change_log: "" });
+  const [variables, setVariables] = React.useState<ReportVariableRow[]>([]);
+  const [newVariable, setNewVariable] = React.useState(EMPTY_NEW_VARIABLE);
+  const [editingVariableId, setEditingVariableId] = React.useState<string | null>(null);
+  const [variableDraft, setVariableDraft] = React.useState(EMPTY_NEW_VARIABLE);
   const [baseSelect, setBaseSelect] = React.useState<BaseSelect>({
     departments: [],
     status: [],
@@ -99,9 +137,11 @@ export default function ReportEdit() {
   const fetchAll = useCallback(async () => {
     setLoading(true);
     try {
-      const [reportRes, baseRes] = await Promise.all([
+      const [reportRes, baseRes, queriesRes, variablesRes] = await Promise.all([
         fetch(`/api/reports/report/manage/${reportId}`, { credentials: "include" }),
         fetch("/api/baseconfig/selections", { credentials: "include" }),
+        fetch(`/api/reports/${reportId}/queries`, { credentials: "include" }),
+        fetch(`/api/reports/${reportId}/variables`, { credentials: "include" }),
       ]);
 
       if (!reportRes.ok) {
@@ -139,6 +179,16 @@ export default function ReportEdit() {
             access_level: baseAccessLevel,
           });
         }
+      }
+
+      if (queriesRes.ok) {
+        const queriesJson = await queriesRes.json();
+        if (queriesJson?.success) setQueries(queriesJson.data);
+      }
+
+      if (variablesRes.ok) {
+        const variablesJson = await variablesRes.json();
+        if (variablesJson?.success) setVariables(variablesJson.data);
       }
     } finally {
       setLoading(false);
@@ -217,6 +267,142 @@ export default function ReportEdit() {
       return;
     }
     toast.success(`${kind} removed`);
+    fetchAll();
+  };
+
+  const handleAddQuery = async () => {
+    if (!newQuery.name.trim() || !newQuery.sql_text.trim()) {
+      toast.error("Name and SQL text are required");
+      return;
+    }
+    const res = await fetch(`/api/reports/${reportId}/queries`, {
+      method: "POST",
+      credentials: "include",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(newQuery),
+    });
+    if (!res.ok) {
+      const body = await res.json().catch(() => null);
+      toast.error(body?.error ?? "Failed to add query");
+      return;
+    }
+    toast.success("Query added");
+    setNewQuery(EMPTY_NEW_QUERY);
+    fetchAll();
+  };
+
+  const startEditQuery = (row: ReportQueryRow) => {
+    setEditingQueryId(row.id);
+    setQueryDraft({ name: row.name, sql_text: row.sql_text, is_main: row.is_main, change_log: "" });
+  };
+
+  const handleSaveQuery = async () => {
+    if (!editingQueryId) return;
+    const res = await fetch(`/api/reports/${reportId}/queries`, {
+      method: "PUT",
+      credentials: "include",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ id: editingQueryId, ...queryDraft }),
+    });
+    if (!res.ok) {
+      const body = await res.json().catch(() => null);
+      toast.error(body?.error ?? "Failed to save query");
+      return;
+    }
+    toast.success("Query saved");
+    setEditingQueryId(null);
+    fetchAll();
+  };
+
+  const handleSetMainQuery = async (row: ReportQueryRow) => {
+    const res = await fetch(`/api/reports/${reportId}/queries`, {
+      method: "PUT",
+      credentials: "include",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ id: row.id, is_main: true }),
+    });
+    if (!res.ok) {
+      toast.error("Failed to set as main query");
+      return;
+    }
+    toast.success(`"${row.name}" set as main query`);
+    fetchAll();
+  };
+
+  const handleDeleteQuery = async (row: ReportQueryRow) => {
+    const res = await fetch(`/api/reports/${reportId}/queries?id=${row.id}`, {
+      method: "DELETE",
+      credentials: "include",
+    });
+    if (!res.ok) {
+      toast.error("Failed to delete query");
+      return;
+    }
+    toast.success("Query deleted");
+    fetchAll();
+  };
+
+  const handleAddVariable = async () => {
+    if (!newVariable.name.trim()) {
+      toast.error("Name is required");
+      return;
+    }
+    const res = await fetch(`/api/reports/${reportId}/variables`, {
+      method: "POST",
+      credentials: "include",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(newVariable),
+    });
+    if (!res.ok) {
+      const body = await res.json().catch(() => null);
+      toast.error(body?.error ?? "Failed to add variable");
+      return;
+    }
+    toast.success("Variable added");
+    setNewVariable(EMPTY_NEW_VARIABLE);
+    fetchAll();
+  };
+
+  const startEditVariable = (row: ReportVariableRow) => {
+    setEditingVariableId(row.id);
+    setVariableDraft({
+      name: row.name,
+      label: row.label ?? "",
+      data_type: row.data_type,
+      default_value: row.default_value ?? "",
+      is_required: row.is_required,
+      sort_order: row.sort_order,
+    });
+  };
+
+  const handleSaveVariable = async () => {
+    if (!editingVariableId) return;
+    const res = await fetch(`/api/reports/${reportId}/variables`, {
+      method: "PUT",
+      credentials: "include",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ id: editingVariableId, ...variableDraft }),
+    });
+    if (!res.ok) {
+      const body = await res.json().catch(() => null);
+      toast.error(body?.error ?? "Failed to save variable");
+      return;
+    }
+    toast.success("Variable saved");
+    setEditingVariableId(null);
+    fetchAll();
+  };
+
+  const handleDeleteVariable = async (row: ReportVariableRow) => {
+    const res = await fetch(`/api/reports/${reportId}/variables?id=${row.id}`, {
+      method: "DELETE",
+      credentials: "include",
+    });
+    if (!res.ok) {
+      toast.error("Failed to delete variable");
+      return;
+    }
+    toast.success("Variable deleted");
     fetchAll();
   };
 
@@ -407,6 +593,257 @@ export default function ReportEdit() {
             </CardContent>
           </Card>
         </div>
+
+        <Card className="mt-6">
+          <CardHeader className="pb-4">
+            <div className="flex items-center gap-2">
+              <Database className="h-4 w-4 text-muted-foreground" />
+              <CardTitle className="text-base">Queries</CardTitle>
+            </div>
+            <CardDescription>
+              Reference/documentation only — the app never executes these queries. หนึ่งรายงานมี main query ได้ 1 อัน
+            </CardDescription>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            {queries.map((q) => (
+              <div key={q.id} className="border rounded-md p-3 space-y-2">
+                {editingQueryId === q.id ? (
+                  <div className="space-y-2">
+                    <Input
+                      value={queryDraft.name}
+                      onChange={(e) => setQueryDraft((prev) => ({ ...prev, name: e.target.value }))}
+                      placeholder="Query name"
+                    />
+                    <Textarea
+                      className="resize-none min-h-[80px] font-mono text-xs"
+                      value={queryDraft.sql_text}
+                      onChange={(e) => setQueryDraft((prev) => ({ ...prev, sql_text: e.target.value }))}
+                      placeholder="SQL text"
+                    />
+                    <Input
+                      value={queryDraft.change_log}
+                      onChange={(e) => setQueryDraft((prev) => ({ ...prev, change_log: e.target.value }))}
+                      placeholder="Change log (optional, saved with the version snapshot)"
+                    />
+                    <div className="flex items-center gap-2">
+                      <Checkbox
+                        id={`q-main-${q.id}`}
+                        checked={queryDraft.is_main}
+                        onCheckedChange={(v) => setQueryDraft((prev) => ({ ...prev, is_main: v === true }))}
+                      />
+                      <FieldLabel htmlFor={`q-main-${q.id}`} className="font-normal">Main query</FieldLabel>
+                    </div>
+                    <div className="flex justify-end gap-2">
+                      <Button type="button" size="sm" variant="outline" onClick={() => setEditingQueryId(null)}>
+                        Cancel
+                      </Button>
+                      <Button type="button" size="sm" onClick={handleSaveQuery}>
+                        Save
+                      </Button>
+                    </div>
+                  </div>
+                ) : (
+                  <>
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center gap-2">
+                        <span className="font-medium text-sm">{q.name}</span>
+                        {q.is_main && (
+                          <span className="text-xs rounded bg-primary/10 text-primary px-1.5 py-0.5">Main</span>
+                        )}
+                        <span className="text-xs text-muted-foreground">v{q.version}</span>
+                      </div>
+                      <div className="flex gap-2">
+                        {!q.is_main && (
+                          <Button type="button" size="sm" variant="ghost" onClick={() => handleSetMainQuery(q)}>
+                            Set as main
+                          </Button>
+                        )}
+                        <Button type="button" size="sm" variant="ghost" onClick={() => startEditQuery(q)}>
+                          Edit
+                        </Button>
+                        <Button type="button" size="sm" variant="ghost" onClick={() => handleDeleteQuery(q)}>
+                          Delete
+                        </Button>
+                      </div>
+                    </div>
+                    <pre className="text-xs bg-muted/40 rounded p-2 overflow-x-auto whitespace-pre-wrap">{q.sql_text}</pre>
+                  </>
+                )}
+              </div>
+            ))}
+
+            <div className="border-t pt-4 space-y-2">
+              <FieldLabel>Add query</FieldLabel>
+              <Input
+                value={newQuery.name}
+                onChange={(e) => setNewQuery((prev) => ({ ...prev, name: e.target.value }))}
+                placeholder="Query name"
+              />
+              <Textarea
+                className="resize-none min-h-[80px] font-mono text-xs"
+                value={newQuery.sql_text}
+                onChange={(e) => setNewQuery((prev) => ({ ...prev, sql_text: e.target.value }))}
+                placeholder="SQL text"
+              />
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-2">
+                  <Checkbox
+                    id="new-q-main"
+                    checked={newQuery.is_main}
+                    onCheckedChange={(v) => setNewQuery((prev) => ({ ...prev, is_main: v === true }))}
+                  />
+                  <FieldLabel htmlFor="new-q-main" className="font-normal">Main query</FieldLabel>
+                </div>
+                <Button type="button" size="sm" variant="outline" onClick={handleAddQuery}>
+                  Add Query
+                </Button>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+
+        <Card className="mt-6">
+          <CardHeader className="pb-4">
+            <div className="flex items-center gap-2">
+              <VariableIcon className="h-4 w-4 text-muted-foreground" />
+              <CardTitle className="text-base">Variables</CardTitle>
+            </div>
+            <CardDescription>ตัวแปรอ้างอิงของรายงาน (ข้อมูลอ้างอิงเท่านั้น)</CardDescription>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            {variables.map((v) => (
+              <div key={v.id} className="border rounded-md p-3 space-y-2">
+                {editingVariableId === v.id ? (
+                  <div className="grid grid-cols-2 gap-2">
+                    <Input
+                      value={variableDraft.name}
+                      onChange={(e) => setVariableDraft((prev) => ({ ...prev, name: e.target.value }))}
+                      placeholder="Name"
+                    />
+                    <Input
+                      value={variableDraft.label}
+                      onChange={(e) => setVariableDraft((prev) => ({ ...prev, label: e.target.value }))}
+                      placeholder="Label"
+                    />
+                    <Select
+                      value={variableDraft.data_type}
+                      onValueChange={(val) => setVariableDraft((prev) => ({ ...prev, data_type: val as ReportVariableRow["data_type"] }))}
+                    >
+                      <SelectTrigger>
+                        <SelectValue placeholder="Data type" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectGroup>
+                          {DATA_TYPES.map((t) => (
+                            <SelectItem key={t} value={t}>{t}</SelectItem>
+                          ))}
+                        </SelectGroup>
+                      </SelectContent>
+                    </Select>
+                    <Input
+                      value={variableDraft.default_value}
+                      onChange={(e) => setVariableDraft((prev) => ({ ...prev, default_value: e.target.value }))}
+                      placeholder="Default value"
+                    />
+                    <Input
+                      type="number"
+                      value={variableDraft.sort_order}
+                      onChange={(e) => setVariableDraft((prev) => ({ ...prev, sort_order: Number(e.target.value) }))}
+                      placeholder="Sort order"
+                    />
+                    <div className="flex items-center gap-2">
+                      <Checkbox
+                        id={`v-required-${v.id}`}
+                        checked={variableDraft.is_required}
+                        onCheckedChange={(c) => setVariableDraft((prev) => ({ ...prev, is_required: c === true }))}
+                      />
+                      <FieldLabel htmlFor={`v-required-${v.id}`} className="font-normal">Required</FieldLabel>
+                    </div>
+                    <div className="col-span-2 flex justify-end gap-2">
+                      <Button type="button" size="sm" variant="outline" onClick={() => setEditingVariableId(null)}>
+                        Cancel
+                      </Button>
+                      <Button type="button" size="sm" onClick={handleSaveVariable}>
+                        Save
+                      </Button>
+                    </div>
+                  </div>
+                ) : (
+                  <div className="flex items-center justify-between">
+                    <div className="text-sm">
+                      <span className="font-medium">{v.name}</span>
+                      {v.label && <span className="text-muted-foreground"> ({v.label})</span>}
+                      <span className="ml-2 text-xs rounded bg-muted px-1.5 py-0.5">{v.data_type}</span>
+                      {v.is_required && (
+                        <span className="ml-2 text-xs rounded bg-primary/10 text-primary px-1.5 py-0.5">Required</span>
+                      )}
+                    </div>
+                    <div className="flex gap-2">
+                      <Button type="button" size="sm" variant="ghost" onClick={() => startEditVariable(v)}>
+                        Edit
+                      </Button>
+                      <Button type="button" size="sm" variant="ghost" onClick={() => handleDeleteVariable(v)}>
+                        Delete
+                      </Button>
+                    </div>
+                  </div>
+                )}
+              </div>
+            ))}
+
+            <div className="border-t pt-4 grid grid-cols-2 gap-2">
+              <Input
+                value={newVariable.name}
+                onChange={(e) => setNewVariable((prev) => ({ ...prev, name: e.target.value }))}
+                placeholder="Name"
+              />
+              <Input
+                value={newVariable.label}
+                onChange={(e) => setNewVariable((prev) => ({ ...prev, label: e.target.value }))}
+                placeholder="Label"
+              />
+              <Select
+                value={newVariable.data_type}
+                onValueChange={(val) => setNewVariable((prev) => ({ ...prev, data_type: val as ReportVariableRow["data_type"] }))}
+              >
+                <SelectTrigger>
+                  <SelectValue placeholder="Data type" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectGroup>
+                    {DATA_TYPES.map((t) => (
+                      <SelectItem key={t} value={t}>{t}</SelectItem>
+                    ))}
+                  </SelectGroup>
+                </SelectContent>
+              </Select>
+              <Input
+                value={newVariable.default_value}
+                onChange={(e) => setNewVariable((prev) => ({ ...prev, default_value: e.target.value }))}
+                placeholder="Default value"
+              />
+              <Input
+                type="number"
+                value={newVariable.sort_order}
+                onChange={(e) => setNewVariable((prev) => ({ ...prev, sort_order: Number(e.target.value) }))}
+                placeholder="Sort order"
+              />
+              <div className="flex items-center gap-2">
+                <Checkbox
+                  id="new-v-required"
+                  checked={newVariable.is_required}
+                  onCheckedChange={(c) => setNewVariable((prev) => ({ ...prev, is_required: c === true }))}
+                />
+                <FieldLabel htmlFor="new-v-required" className="font-normal">Required</FieldLabel>
+              </div>
+              <div className="col-span-2 flex justify-end">
+                <Button type="button" size="sm" variant="outline" onClick={handleAddVariable}>
+                  Add Variable
+                </Button>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
 
         <div className="mt-6 flex items-center justify-end gap-3">
           <Button variant="outline" type="button" onClick={() => router.push("/reports/report-list")}>

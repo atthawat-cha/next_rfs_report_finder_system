@@ -268,10 +268,50 @@ Helper กลาง `lib/report-file-cache.ts`: `syncReportFileCache(reportId)` 
 - `browse`/`favorites`/`download` ยังทำงานเหมือน Phase 1 ทุกอย่าง (regression check) + เพิ่ม test ใหม่: ให้ `report_permissions` grant สิทธิ์ดูรายงาน DRAFT แก่ user คนหนึ่ง → user นั้นเห็นในผลลัพธ์ `browse`, user อื่นไม่เห็น
 - `npx tsc --noEmit` / `npm run build` ไม่มี error ใหม่
 
-## Sub-phase 2c (overview)
+## Sub-phase 2c — `report_queries` + `report_variables` CRUD
 
-- `report_queries` CRUD + `report_query_versions` (auto-snapshot เมื่อแก้ `sql_text`) + บังคับ `is_main` 1 อันต่อรายงานฝั่ง application (ก่อนชน DB constraint ให้ error message ที่อ่านง่าย)
-- `report_variables` CRUD
+ตาม `01-system-design.md §4.2` endpoint shape ที่ระบุไว้แล้วคือ path เดียว (`/api/reports/[id]/queries`, `/api/reports/[id]/variables`) รับทั้ง GET/POST/PUT/DELETE — ไม่มี nested `[queryId]`/`[variableId]` segment เพิ่ม เหมือน pattern ที่ `/api/reports/[id]/files` ใช้ query param (`?fileKind=`) สำหรับ DELETE, sub-phase นี้ใช้ pattern เดียวกัน: PUT ส่ง `id` มาใน body, DELETE รับ `id` เป็น query param
+
+Resolved decision (ผู้ใช้ไม่ได้ยืนยันเพราะ AskUserQuestion ใช้ไม่ได้ในรอบนี้ — เลือกทางที่สอดคล้องกับ precedent ที่มีอยู่แล้ว ถ้าไม่ตรงใจแก้ทีหลังได้):
+- **is_main auto-swap**: ตั้ง query ใหม่เป็น `is_main=true` ขณะที่มีตัวอื่น `is_main=true` อยู่แล้ว → ระบบ demote ตัวเก่าให้เป็น `false` อัตโนมัติในทรานแซกชันเดียว (ไม่ reject ให้ไปสั่ง unset เอง) — ใช้ pattern เดียวกับ `report_files.is_current` ที่ `POST /files` ทำอยู่แล้ว ให้ผู้ใช้ไม่ต้องสั่ง 2 ครั้ง DB partial unique index (`report_queries_one_main_per_report`) ยังทำหน้าที่เป็น safety net ชั้นที่สองเหมือนเดิม
+
+### 1. `report_queries` CRUD + auto-snapshot versioning
+
+`app/api/reports/[id]/queries/route.ts`:
+- **GET**: list ทุก query ของรายงาน (`orderBy: [{is_main: 'desc'}, {created_at: 'asc'}]`)
+- **POST**: body `{name, sql_text, is_main?}` → ถ้า `is_main=true` และมีตัวอื่น `is_main=true` อยู่ (ต่างรายงานเดียวกัน) → transaction: demote ตัวเก่าเป็น `false` ก่อน insert แถวใหม่ (`version: '1.0'`, `created_by: user.id`) → `logActivity('create','report', reportId, ...)`
+- **PUT**: body `{id, name?, sql_text?, is_main?, change_log?}` → หา query ที่ `id` ตรงและ `report_id` ตรงกับ path (404 ถ้าไม่ตรง/ไม่เจอ — กัน cross-report id guessing) → ถ้า `sql_text` ถูกส่งมาและต่างจากค่าเดิม: **ก่อน**ทำ update ให้ snapshot ค่าเดิมทั้งหมด (`version`, `sql_text` เดิม) ลง `report_query_versions` (พร้อม `change_log` ถ้ามี) แล้ว bump `version` ของ query (`parseFloat + 0.1`, scheme เดียวกับ `report_files`) → ถ้า `is_main=true` และมีตัวอื่นเป็น main อยู่ (คนละ id) demote ตัวนั้นในทรานแซกชันเดียวกัน → `logActivity('update', ...)`
+- **DELETE**: query param `?id=` → ลบแถว (cascade ลบ `report_query_versions` ที่ผูกอยู่ผ่าน schema เดิม) — ไม่ block การลบ main query (MVP เดียวกับ `report_files`, ถ้ารายงานไม่มี main query เหลือก็แค่ไม่มีให้แสดง) → `logActivity('delete', ...)`
+- Auth: `routeAcceptted('admin')` ทั้ง 4 method (จัดการคิวรี่เป็นงาน admin เหมือน files/metadata)
+- **ไม่มี** endpoint ดู version history ใน sub-phase นี้ (การ snapshot เกิดขึ้นและเก็บข้อมูลไว้ถูกต้อง แต่ UI/endpoint สำหรับ "ดูประวัติ/rollback" อยู่ใน scope Phase 3 ตาม `feature-list.md` — ไม่สร้างล่วงหน้า)
+
+**Files**: `app/api/reports/[id]/queries/route.ts` (ใหม่)
+
+### 2. `report_variables` CRUD
+
+`app/api/reports/[id]/variables/route.ts`:
+- **GET**: list ทุกตัวแปรของรายงาน (`orderBy: {sort_order: 'asc'}`)
+- **POST**: body `{name, label?, data_type, default_value?, is_required?, sort_order?}` → `data_type` validate เป็น enum ฝั่ง zod (`STRING | NUMBER | DATE | BOOLEAN` ตาม comment ใน `01-system-design.md §5.3`, เก็บเป็น `String` ใน DB ตาม schema เดิม ไม่แก้ schema) → เช็ค `(report_id, name)` ซ้ำเอง (`findFirst`) ก่อน insert คืน 409 message อ่านง่าย ("Variable name already exists for this report") แทนให้ Prisma ปฏิเสธด้วย P2002 ตรงๆ → `logActivity('create', ...)`
+- **PUT**: body `{id, name?, label?, data_type?, default_value?, is_required?, sort_order?}` → ถ้าเปลี่ยน `name` เช็คซ้ำกับแถวอื่นในรายงานเดียวกัน (exclude ตัวเอง) ก่อน update → `logActivity('update', ...)`
+- **DELETE**: query param `?id=` → ลบแถว → `logActivity('delete', ...)`
+- Auth: `routeAcceptted('admin')` ทั้ง 4 method
+
+**Files**: `app/api/reports/[id]/variables/route.ts` (ใหม่)
+
+### 3. UI — เพิ่ม section ในหน้าแก้ไขรายงาน
+
+`app/(auth)/reports/report-edit/[id]/page.tsx`: เพิ่ม 2 การ์ดใหม่ต่อจาก Files card (full-width, ใต้ grid เดิม) — "Queries" และ "Variables" — fetch/mutate แยกจาก form metadata เดิม (เหมือนที่ Files ทำ ไม่ผูกกับปุ่ม "Save Changes") list + inline add-form + inline edit ต่อแถว ไม่ใช้ dialog/drawer แยก (สอดคล้องกับความเรียบง่ายของ Files section ที่มีอยู่แล้วในหน้านี้)
+
+**Files**: `app/(auth)/reports/report-edit/[id]/page.tsx` (แก้)
+
+### Verification (2c)
+
+- สร้าง query ใหม่ `is_main=true` ให้รายงานที่มี main query อยู่แล้ว → query เก่าถูก demote เป็น `false`, DB unique index ไม่ถูกชน (auto-swap ทำงานถูกต้อง)
+- แก้ `sql_text` ของ query ที่มีอยู่ → มีแถวใหม่โผล่ใน `report_query_versions` เก็บค่าเดิมไว้ครบ, `version` ของ query bump ขึ้น
+- แก้ query แค่ `name` (ไม่แตะ `sql_text`) → **ไม่มี** แถวใหม่ใน `report_query_versions` (snapshot เกิดเฉพาะตอน `sql_text` เปลี่ยนจริง)
+- สร้าง `report_variables` ชื่อซ้ำในรายงานเดียวกัน → 409 message อ่านง่าย, ไม่ใช่ raw Prisma error
+- ลบ query/variable แล้วเช็คว่า `report_query_versions` ที่ผูกกับ query ถูก cascade ลบไปด้วย
+- `npx tsc --noEmit` ไม่มี error ใหม่
 
 ## Sub-phase 2d (overview)
 
