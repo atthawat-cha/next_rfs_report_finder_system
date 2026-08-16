@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { authenticate, checkRateLimit, createToken, resetRateLimit, setAuthCookie } from '@/lib/auth';
+import { authenticate, createToken, setAuthCookie } from '@/lib/auth';
+import { checkRateLimit, resetRateLimit } from '@/lib/rate-limit';
 import { z } from 'zod';
 import prisma from '@/lib/prisma';
 import { logActivity } from '@/lib/activity-log';
@@ -14,7 +15,7 @@ export async function POST(request: NextRequest) {
 
   // ตรวจสอบ rate limit
   const ip = getClientIp(request);
-  const {allowed, retryAfter} = checkRateLimit(ip);
+  const {allowed, retryAfter} = await checkRateLimit(ip);
   if (!allowed) {
     return NextResponse.json(
       { error: 'คุณพยายามเข้าสู่ระบบหลายครั้งเกินไป โปรดลองใหม่อีกครั้งในภายหลัง' },
@@ -112,7 +113,7 @@ export async function POST(request: NextRequest) {
     await setAuthCookie(token);
 
     // Reset rate limit on successful login
-    resetRateLimit(ip);
+    await resetRateLimit(ip);
 
     await logActivity(request, {
       userId: user.id,
