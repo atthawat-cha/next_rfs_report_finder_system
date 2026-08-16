@@ -395,6 +395,7 @@ model users {
   last_login_at       DateTime?
   last_login_ip       String?
   password_changed_at DateTime?
+  theme_preference    String?
   created_at          DateTime          @default(now())
   updated_at          DateTime
   activity_logs       activity_logs[]

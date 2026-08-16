@@ -249,10 +249,43 @@ Auth: `routeAcceptted('admin')`
 - `npx tsc --noEmit` ไม่มี error ใหม่ (เทียบ baseline 6 error เดิมใน `CLAUDE.md`)
 - อัปเดต `feature-list.md`: FR-10 audit log filter, FR-11 dashboard analytics ทั้งหมดเป็น ✅ (ยกเว้น cache/precompute ยังเป็น ❌ ตามที่ resolved decision #4)
 
-## Sub-phase 3e (overview) — Settings (theme persistence)
+## Sub-phase 3e — Settings (per-user theme persistence)
 
-- `GET/PUT /api/settings/theme` (หรือ key ทั่วไปใน `settings` table) ผูกกับ `next-themes` ที่มีอยู่แล้วฝั่ง client — เก็บค่าต่อ user (ต้องเพิ่ม `user_id` scoping ไม่ใช่ table `settings` แบบ global key/value เฉยๆ ถ้าต้องการ per-user — ตัดสินใจตอนถึงตา sub-phase นี้)
+**สถานะ: หยุดชั่วคราว (blocked)** — ตอนรัน `npx prisma migrate dev --name add_user_theme_preference` (2026-08-16) เจอ **DB schema drift ที่ไม่เกี่ยวกับ 3e เลย**: `users.role_id`, `permissions.menu_id` มีอยู่จริงใน DB (dev) แต่ไม่มี migration file รองรับ, ตาราง `menus_permissions` และ index บางตัวของ `reports` ก็ต่างจากที่ migration history บันทึกไว้ — วิธีเดียวที่ `prisma migrate dev` เสนอคือ `prisma migrate reset` ซึ่ง**ลบข้อมูลทั้งหมดใน DB** ไม่ได้รันคำสั่งนั้น (หยุดที่ prompt เพราะ non-interactive shell) — DB และ migration files ไม่ถูกแตะต้อง มีแค่ `prisma/schema.prisma` ที่เพิ่ม `theme_preference String?` ไว้เฉยๆ (ยังไม่ apply) ผู้ใช้ตัดสินใจให้หยุด 3e ไว้ก่อนจนกว่าจะรู้ที่มาของ drift นี้ (สงสัยว่าเกี่ยวกับงาน login/rate-limit ที่มีคนอื่นแก้ค้างอยู่ในโปรเจกต์เดียวกัน ดู `app/api/auth/login/route.ts`/`lib/redis.ts` ที่ modified แต่ยังไม่ commit) — **ก่อน resume 3e ต้องแก้ drift นี้ก่อน** (สร้าง migration ที่ backfill ประวัติให้ตรงกับ DB จริง หรือยืนยันกับเจ้าของงาน role_id/menu_id ว่าตั้งใจทำแบบนั้น) ไม่ใช่แค่เปลี่ยนไปใช้ `db push` เพื่อเลี่ยงปัญหา เพราะจะทิ้ง drift เดิมไว้ไม่ถูกบันทึกต่อไป
 
-## Sub-phase 3e (overview) — Settings (theme persistence)
+Audit ก่อนลงรายละเอียด: `settings` table ที่มีอยู่แล้วเป็น **global key/value ล้วน** (`key String @unique`, ไม่มี `user_id` เลย) และ `menus.seed.ts` วาง `/settings/theme` ไว้ใต้กลุ่ม "System Settings" เคียงกับ storage/API settings (ของ admin ทั้งหมด) — ตรงข้ามกับ `feature-list.md` FR-13 ที่เขียนว่า "Persist ธีมต่อผู้ใช้" (personal) เอกสารสองที่ขัดกันเอง ถามผู้ใช้แล้ว **เลือก per-user**
 
-- `GET/PUT /api/settings/theme` (หรือ key ทั่วไปใน `settings` table) ผูกกับ `next-themes` ที่มีอยู่แล้วฝั่ง client — เก็บค่าต่อ user (ต้องเพิ่ม `user_id` scoping ไม่ใช่ table `settings` แบบ global key/value เฉยๆ ถ้าต้องการ per-user — ตัดสินใจตอนถึงตา sub-phase นี้)
+Resolved decisions:
+1. **ไม่ใช้ตาราง `settings` เดิม** — มันถูกออกแบบมาเป็น global config (`key` unique ทั้งตาราง, มี `is_public` สำหรับ site-wide flag) การยัด `user_id` เข้าไปจะต้องเปลี่ยน unique constraint เป็น `@@unique([user_id, key])` ซึ่งกระทบทุกแถวที่อาจมีอยู่แล้วสำหรับ system settings อื่น (storage/API) — repurpose ตารางนี้เกินสโคปเล็กๆของ 3e แทนที่ด้วยคอลัมน์ใหม่บน `users` โดยตรง: **`theme_preference String?`** (nullable, ค่า `'light' | 'dark' | 'system'`, `null` = ยังไม่เคย set มาก่อน ใช้ default ฝั่ง client ต่อไป) — migration แบบ additive ล้วน ไม่กระทบข้อมูลเดิม
+2. **ไม่เพิ่ม `'settings'` เข้า `ActivityEntity`** — การ toggle ธีมเป็น preference ส่วนตัวเล็กๆ ไม่ใช่ audit-worthy mutation แบบ CRUD รายงาน/ผู้ใช้/แผนก/บทบาท — ข้าม `logActivity` สำหรับ endpoint นี้ (ต่างจาก endpoint อื่นทุกตัวใน Phase 2-3 ที่ log ทุก mutation เพราะสิ่งเหล่านั้นกระทบข้อมูลที่คนอื่นเห็น ส่วนนี้กระทบแค่ตัวเอง)
+3. **Sync ตอน mount**: client component ใหม่ `components/layouts/theme-sync.tsx` เมาท์ใน `AuthenticationLayout` (ราก auth shell, รันทุกหน้า authenticated) — fetch `GET` ครั้งเดียวตอน mount, ถ้า `theme` ที่ได้ไม่ใช่ `null` และต่างจาก `next-themes` ปัจจุบัน → `setTheme(theme)` ครั้งเดียว ไม่ poll ซ้ำ
+4. **Persist ตอน toggle**: แก้ `components/ui/mode-toggle.tsx` ให้ยิง `PUT` แบบ fire-and-forget หลัง `setTheme()` ทุกครั้งที่ผู้ใช้กดสลับธีม (ไม่ block UI, ไม่ต้องรอ response)
+
+### 1. Schema — `users.theme_preference`
+
+`prisma/schema.prisma`: เพิ่ม `theme_preference String?` ใน `model users`. Migration ใหม่ (`npx prisma migrate dev --name add_user_theme_preference`).
+
+### 2. `GET/PUT /api/settings/theme`
+
+`app/api/settings/theme/route.ts`:
+- **GET**: คืน `{ theme: string | null }` จาก `users.theme_preference` ของ session ปัจจุบัน
+- **PUT**: body `{ theme: 'light' | 'dark' | 'system' }` (zod enum, reject ค่าอื่น) → update `users.theme_preference` ของ session ปัจจุบันเท่านั้น (ไม่รับ `user_id` จาก client)
+- Auth: `requireAuth` เท่านั้น (ไม่ใช่ admin-only — เป็น preference ส่วนตัวของทุก role)
+
+**Files**: `app/api/settings/theme/route.ts` (ใหม่)
+
+### 3. UI wiring
+
+- `components/layouts/theme-sync.tsx` (ใหม่, client component, ไม่ render อะไร — แค่ effect) — mount ใน `components/layouts/authenticationLayout.tsx`
+- `components/ui/mode-toggle.tsx` (แก้) — persist หลัง toggle
+
+**Files**: `components/layouts/theme-sync.tsx` (ใหม่), `components/layouts/authenticationLayout.tsx` (แก้), `components/ui/mode-toggle.tsx` (แก้)
+
+### Verification (3e)
+
+- Login user A → toggle เป็น dark → logout → login ใหม่ (เครื่อง/browser เดียวกัน, เคลียร์ localStorage ก่อน) → เห็น dark ทันที (มาจาก server, ไม่ใช่ localStorage)
+- Login user B (คนละ account) → เห็นธีม default ของตัวเอง ไม่ใช่ของ user A (ยืนยัน scoping ถูก user ไม่ใช่ global)
+- `PUT` ด้วยค่าที่ไม่ใช่ `light/dark/system` (เช่น `"purple"`) → 400 จาก zod validation
+- เรียก endpoint โดยไม่ login → 401
+- `npx tsc --noEmit` ไม่มี error ใหม่ (เทียบ baseline ใน `CLAUDE.md`)
+- อัปเดต `feature-list.md` FR-13 แถว theme persistence เป็น ✅
