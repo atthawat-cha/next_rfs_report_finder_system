@@ -85,3 +85,22 @@ When working on navigation or permissions, check which of these two the specific
 
 - `lib/security_get.ts` and `lib/security_post.ts` exist but are currently empty — don't assume they contain active logic.
 - Files under `app/(auth)/reports/report-create/page copy.tsx` are stray/duplicate scratch pages left in the tree; don't treat them as the canonical implementation of that route.
+
+## Task workflow / Definition of Done
+
+This project is built phase-by-phase (see `document/phase0-plan.md` … `phase3-plan.md`, tracked via git log messages like `feat: Phase 3c - notifications`). Apply this checklist automatically for every phase/sub-phase task **without waiting to be asked** — the point of writing it down here is so the user doesn't have to re-request it each session:
+
+1. **Plan before implementing.** If the target phase only has an "(overview)" section (currently 3d, 3e in `phase3-plan.md`), flesh it out into a detailed sub-section (endpoints, files, auth tier, resolved decisions, Verification list) — matching the level of detail in 3a-3c — before writing code. Commit the plan doc separately first (matches existing history: `d973668 docs: flesh out Phase 2b plan` before `02ee75d feat: Phase 2b`).
+2. **Implement per plan.**
+3. **Type-check and compare against baseline**, don't just run `npx tsc --noEmit` and react to whatever appears — this repo has a known pre-existing baseline of 6 errors, all predating Phase 1 (last touched in `f8d7598`, phase0), unrelated to reports/versions/shares/notifications work:
+   - `app/api/auth/login/route.ts` — missing `checkRateLimit`/`resetRateLimit` exports from `lib/auth`
+   - `app/api/reports/[id]/download/route.ts`, `app/api/reports/favorites/[reportId]/route.ts`, `app/api/reports/favorites/route.ts` — `ActivityAction` type missing `'download'`/`'unfavorite'`/`'favorite'`
+   - `app/api/reports/report/manage/route.ts` — `UploadServiceResponse`/`MultipleUploadResult` shape mismatch + `file_size` string vs `number|bigint`
+   - `components/ui/combobox.tsx` — `"icon-xs"` not a valid Button size
+   Only flag *new* errors introduced by the current change as blocking; the baseline six are known debt, not yours to silently fix mid-task (call them out if asked to clean up, don't fix unprompted per the no-unrequested-refactor rule).
+4. **Manually execute the phase plan's "Verification" bullet list** — these are written as concrete repro steps (e.g. "upload BLANK_FORM twice → GET versions shows 3 rows"), not just aspirational — actually hit the endpoints/UI, don't mark done from reading the code alone.
+5. **Update `document/feature-list.md`** status column (✅/⚠️/❌) for any row the task touched. Note: as of 2026-08-16 this file is stale — it still shows Phase 1/2/3a-3c rows as ❌ despite being shipped — refresh the rows you touch, and flag broader staleness rather than doing a silent mass-rewrite.
+6. **Commit** with the existing message convention: `feat: Phase Xy - <short description>`.
+7. **Extra care** (don't skip verification steps) when touching: auth/session (`lib/auth.ts`, `middleware.ts`), the ACL layer (`lib/report-acl.ts`, `report_permissions`), file upload/path handling (`lib/fileUploadServices.ts`), or any Prisma schema change (`prisma/schema.prisma` + migration) — these are the areas most likely to introduce a real security/data bug versus a cosmetic one.
+
+**Current status (as of 2026-08-16, branch `feature/phase3`):** Phase 0, 1, 2a-2d, 3a (version history/rollback), 3b (report sharing), 3c (notifications) are implemented and committed. **Not started**: 3d (dashboard & activity-log analytics — `app/(auth)/dashboard/page.tsx` is still the unmodified starter scaffold, no `app/api/dashboard/*` exists) and 3e (settings/theme persistence — no `app/api/settings/*` exists). `report_versions` table is confirmed dead code (superseded by `report_files.is_current` + `report_query_versions`) but intentionally not dropped — that's a destructive migration awaiting explicit user sign-off, not an oversight.
