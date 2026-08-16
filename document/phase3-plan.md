@@ -168,13 +168,90 @@ Resolved decisions:
 - user คนอื่น mark-read notification ที่ไม่ใช่ของตัวเอง (ยิง id ตรงๆ) → 404
 - `npx tsc --noEmit` ไม่มี error ใหม่
 
-## Sub-phase 3d (overview) — Dashboard & Activity Log
+## Sub-phase 3d — Dashboard & Activity Log Analytics
 
-## Sub-phase 3d (overview) — Dashboard & Activity Log
+Audit โค้ดจริงก่อนวางแผนพบ:
+- `app/(auth)/dashboard/page.tsx` ยังเป็น starter scaffold เดิม ("พื้นที่ว่างสำหรับ features ของคุณ") ไม่มี query จริงแม้แต่ query เดียว
+- `app/(auth)/user-management/activity/page.tsx` เป็น **stub ว่างเปล่าบรรทัดเดียว** (`<div>UsersActivityLog</div>`) และ **ไม่มี `app/api` endpoint ใดๆสำหรับ activity log เลย** — `feature-list.md` แถว FR-10 ที่ระบุ "⚠️ มีหน้า user-management/activity, endpoint filter ยังไม่ครบ" คลาดเคลื่อน (ที่จริงคือ `❌` ทั้งหน้าและ endpoint ไม่มีอยู่จริง ไม่ใช่แค่ "ยังไม่ครบ") — จะแก้สถานะให้ตรงตอนจบ sub-phase นี้
+- ไม่มี `app/api/dashboard/*` เลยสักตัว
+- **`reports.view_count` ไม่เคยถูก increment ที่ไหนเลยใน `app/`** (`grep -rn view_count app/` เจอแค่ generated Prisma client) ต่างจาก `download_count` ที่ increment จริงใน `app/api/reports/[id]/download/route.ts` (Phase 1) — และไม่มี endpoint "ดู/เปิดรายงาน" แยกจาก list สำหรับ user ทั่วไปเลย (`app/api/reports/browse/route.ts` เป็น list-only, ไม่มี `GET /api/reports/[id]` สำหรับ non-admin) ดังนั้นไม่มีจุดเกาะที่สมเหตุสมผลให้ increment `view_count` ได้โดยไม่ต้องสร้าง endpointใหม่ทั้งอัน — เป็น dead-but-schema-present column ประเภทเดียวกับ `report_versions` ที่ 3a เจอ ตัดสินใจ**ไม่แตะ**ในรอบนี้ (สร้าง endpoint ใหม่เพื่อ side-quest นี้เกินสโคป dashboard aggregation) ใช้ `download_count` + จำนวน `favorites` เป็นสัญญาณการใช้งานจริงแทนสำหรับ "top reports"
 
-- `GET /api/dashboard/summary`, `/trends`, `/top-reports` — aggregate count ตาม status/category/department, top-N download/view, ใช้ query จริงแทน placeholder
-- แทนที่ `app/(auth)/dashboard/page.tsx` ทั้งหน้าด้วย stat cards + กราฟจริง (ใช้ `dataviz` skill ตอนสร้างกราฟ ตามที่ระบุไว้ใน system instructions)
-- เติม filter ให้ endpoint audit log ที่มีอยู่ (by user/entity/date range) ตามที่ `feature-list.md` ระบุว่ายังไม่ครบ
+Resolved decisions:
+1. **Auth tier**: `routeAcceptted('admin')` ทั้ง 2 endpoint กลุ่ม (`/api/dashboard/*`, `/api/activity-logs`) — top-reports/summary คืนชื่อ/รหัสรายงานทุกใบรวมถึงใบที่ non-admin ไม่มีสิทธิ์ `can_view` ตาม ACL (RESTRICTED/PRIVATE) ถ้าเปิดให้ user ทั่วไปเรียกตรงๆจะเป็นการรั่วไหล existence/count ของรายงานที่เขาไม่ควรเห็น — **แต่** `/dashboard` เป็นหน้า landing หลังล็อกอินของ**ทุก role** (`middleware.ts` redirect ทุกคนมาที่นี่) ดังนั้นแก้ที่ฝั่งหน้าเว็บแทน: `app/(auth)/dashboard/page.tsx` เปลี่ยนกลับเป็น async server component เช็ค `user.roles.name` ก่อน — admin เห็น `<DashboardAnalytics />` (client component เรียก 3 endpoint), non-admin เห็นการ์ดต้อนรับธรรมดา (ไม่เรียก endpoint เหล่านี้เลย ไม่ใช่เรียกแล้วเจอ 403)
+2. **Trends**: granularity รายวันเท่านั้นในรอบนี้ (query param `days`, default 30, max 90) ผ่าน `$queryRaw` + `date_trunc('day', created_at)` บน `downloads` (สัญญาณจริงที่มี, ไม่ใช่ `view_count` ที่ตาย) — ไม่ทำ toggle รายเดือนรอบนี้ (Should-priority, เปลี่ยน bucket ทีหลังง่าย ไม่ใช่งานหลักของรอบนี้)
+3. **พื้นที่จัดเก็บที่ใช้ไป**: sum `file_size` จาก `report_files` **ทุกแถว** (ไม่ filter `is_current`) เพราะ 3a ออกแบบไว้แล้วว่าไฟล์เวอร์ชันเก่าไม่ถูกลบออกจาก disk (แค่ toggle `is_current=false`) — sum เฉพาะแถว current จะนับพื้นที่ต่ำกว่าจริง ผลลัพธ์เป็น `BigInt` จาก Prisma `_sum` ต้อง `Number(...)` ก่อน `NextResponse.json` (BigInt ไม่ serialize เป็น JSON ได้ตรงๆ) ปลอดภัยเพราะพื้นที่รวมของระบบ internal นี้ไม่มีทางเกิน `Number.MAX_SAFE_INTEGER` ไบต์
+4. **ไม่ทำ cache/precompute** ของสถิติหนัก (feature-list.md ระบุเป็น Should/Phase 3-4) — query สดทุกครั้ง เพราะขนาดข้อมูลของระบบ internal นี้ยังไม่ถึงจุดที่ต้องการ precompute
+5. **Activity log filter**: read-only endpoint ใหม่ (ไม่มีของเดิมให้ "เติม filter" ตามที่ overview เดิมเข้าใจผิด — เขียนใหม่ทั้งอัน) filter `user_id` / `entity` / `date range` (`from`/`to` ISO string) พร้อม pagination ผ่าน `parsePagination` เดิม
+
+### 1. `GET /api/dashboard/summary`
+
+Aggregate นับสด ไม่ cache:
+- `reports.groupBy({by: ['status'], _count: true})` — จำนวนรายงานแยกตามสถานะ
+- `reports.groupBy({by: ['category_id'], _count: true})` join ชื่อหมวดหมู่จาก `categories.findMany` แยก (groupBy คืนแค่ id)
+- `reports.groupBy({by: ['department_id'], _count: true})` join ชื่อแผนกเช่นกัน (ข้าม `department_id === null`)
+- Total counts: `reports.count()`, `users.count({where: {status: 'ACTIVE'}})`, `downloads.count()`, `favorites.count()`
+- Storage: `report_files.aggregate({_sum: {file_size: true}})` → `Number(_sum.file_size ?? 0n)`
+
+Auth: `routeAcceptted('admin')`
+
+**Files**: `app/api/dashboard/summary/route.ts` (ใหม่, GET เท่านั้น)
+
+### 2. `GET /api/dashboard/trends`
+
+- Query param `days` (optional, default 30, clamp 1-90)
+- `$queryRaw` group `downloads.created_at` ด้วย `date_trunc('day', created_at)` ภายในช่วง `now() - interval '<days> days'` → คืน `{date, count}[]` เรียง `date asc` (เติมวันที่ไม่มี download เป็น 0 ฝั่ง JS หลัง query กลับมา ไม่ generate series ใน SQL — ง่ายกว่าและช่วงข้อมูลเล็กพอ)
+- Auth: `routeAcceptted('admin')`
+
+**Files**: `app/api/dashboard/trends/route.ts` (ใหม่, GET เท่านั้น)
+
+### 3. `GET /api/dashboard/top-reports`
+
+- Query param `limit` (optional, default 10, max 50)
+- Top by `download_count desc` (real signal) — `reports.findMany({orderBy: {download_count: 'desc'}, take: limit, select: {id, code, name_th, download_count, categories: {name}}})`
+- แนบจำนวน favorites ต่อรายงานด้วย (`favorites.groupBy({by: ['report_id'], _count: true})` filter เฉพาะ id ที่อยู่ใน top list) — คืนเป็น field แยก `favorite_count` ไม่ใช่ตัวจัดอันดับหลัก
+- Auth: `routeAcceptted('admin')`
+
+**Files**: `app/api/dashboard/top-reports/route.ts` (ใหม่, GET เท่านั้น)
+
+### 4. `GET /api/activity-logs` — filterable audit trail
+
+- Query params: `user_id`, `entity` (`ActivityEntity`), `from`/`to` (ISO date string, filter บน `created_at`), `page`/`pageSize` (ผ่าน `parsePagination` เดิม)
+- `activity_logs.findMany({where: {...filters}, include: {users: {select: {id, username, first_name, last_name}}}, orderBy: {created_at: 'desc'}, skip, take})` + `activity_logs.count({where})`
+- Auth: `routeAcceptted('admin')`
+
+**Files**: `app/api/activity-logs/route.ts` (ใหม่, GET เท่านั้น)
+
+### 5. UI — Dashboard page rewrite
+
+`app/(auth)/dashboard/page.tsx` (แก้ทั้งหน้า, client component เพราะต้อง fetch จาก 3 endpoint):
+- Stat cards แถวบน: รายงานทั้งหมด, ผู้ใช้ active, ดาวน์โหลดทั้งหมด, พื้นที่จัดเก็บ (format เป็น MB/GB)
+- กราฟแนวโน้ม (line/area chart, 30 วันล่าสุดจาก `/trends`) — **ใช้ `dataviz` skill ก่อนเขียนโค้ดกราฟ** ตามที่ระบุไว้ใน system instructions
+- แผนภูมิแยกตาม status (donut/bar) และตาม category (bar) จาก `/summary`
+- ตาราง Top 10 reports จาก `/top-reports` (code, ชื่อ, ยอดดาวน์โหลด, ยอด favorite)
+
+**Files**: `app/(auth)/dashboard/page.tsx` (แก้)
+
+### 6. UI — Activity Log page
+
+`app/(auth)/user-management/activity/page.tsx` (แก้จาก stub เดิม, ตาม pattern `*Table.tsx` + `SharedDataTable` ที่ใช้ใน categories/tags):
+- Filter bar: dropdown user, dropdown entity, date range picker (`from`/`to`)
+- ตาราง: เวลา, ผู้ใช้, action, entity, description, IP — pagination ผ่าน `meta` ที่ endpoint คืน
+
+**Files**: `app/(auth)/user-management/activity/page.tsx` (แก้), อาจเพิ่ม `app/(auth)/user-management/activity/components/` ถ้าจำเป็นตาม pattern เดิม
+
+### Verification (3d)
+
+- ดาวน์โหลดรายงาน 3 ครั้งจาก user ต่างกัน → `/api/dashboard/summary` `total downloads` +3, `/api/dashboard/top-reports` เห็นรายงานนั้นขึ้นอันดับ
+- `/api/dashboard/trends?days=7` คืน array 7 วัน เรียงวันที่ถูกต้อง วันที่ไม่มี download เป็น 0 ไม่ใช่ null/หาย
+- Rollback ไฟล์ (จาก 3a) แล้วเช็ค storage used เพิ่มขึ้นตามขนาดแถวเก่าที่ยังอยู่ (ไม่ใช่แค่แถว current)
+- `/api/activity-logs?entity=report&from=...&to=...` คืนเฉพาะ log ที่ entity/ช่วงวันตรง, `user_id` filter คืนเฉพาะของ user นั้น
+- เข้าหน้า `/dashboard` และ `/user-management/activity` ด้วย user ทั่วไป (ไม่ใช่ admin) → endpoint คืน 403 (ตรวจผ่าน `routeAcceptted('admin')`)
+- `npx tsc --noEmit` ไม่มี error ใหม่ (เทียบ baseline 6 error เดิมใน `CLAUDE.md`)
+- อัปเดต `feature-list.md`: FR-10 audit log filter, FR-11 dashboard analytics ทั้งหมดเป็น ✅ (ยกเว้น cache/precompute ยังเป็น ❌ ตามที่ resolved decision #4)
+
+## Sub-phase 3e (overview) — Settings (theme persistence)
+
+- `GET/PUT /api/settings/theme` (หรือ key ทั่วไปใน `settings` table) ผูกกับ `next-themes` ที่มีอยู่แล้วฝั่ง client — เก็บค่าต่อ user (ต้องเพิ่ม `user_id` scoping ไม่ใช่ table `settings` แบบ global key/value เฉยๆ ถ้าต้องการ per-user — ตัดสินใจตอนถึงตา sub-phase นี้)
 
 ## Sub-phase 3e (overview) — Settings (theme persistence)
 

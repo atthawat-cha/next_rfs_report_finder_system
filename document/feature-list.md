@@ -122,20 +122,20 @@
 
 | Feature | Priority | สถานะ | Phase |
 |---|---|---|---|
-| Helper กลาง `logActivity()` เรียกจากทุก mutation | Must | ❌ | 0 |
-| บันทึก log สำหรับ login/login_failed/logout | Must | ❌ | 0 |
-| บันทึก log สำหรับ CRUD รายงาน/ผู้ใช้/แผนก/บทบาท | Must | ❌ | 0 |
-| หน้า audit log filter ตาม user/entity/วันที่ | Should | ⚠️ (มีหน้า `user-management/activity`, endpoint filter ยังไม่ครบ) | 0/3 |
+| Helper กลาง `logActivity()` เรียกจากทุก mutation | Must | ✅ | 0 |
+| บันทึก log สำหรับ login/login_failed/logout | Must | ✅ | 0 |
+| บันทึก log สำหรับ CRUD รายงาน/ผู้ใช้/แผนก/บทบาท | Must | ✅ | 0 |
+| หน้า audit log filter ตาม user/entity/วันที่ | Should | ✅ (`GET /api/activity-logs` + `user-management/activity` page, filter user/entity/date range) | 0/3 |
 | Alert เมื่อพบ pattern ผิดปกติ (401/403/429 ถี่ผิดปกติ) | Could | ❌ | 4 |
 
 ## 11. Dashboard & Usage Analytics (FR-11)
 
 | Feature | Priority | สถานะ | Phase |
 |---|---|---|---|
-| สรุปจำนวนรายงานทั้งหมด แยกตามสถานะ/หมวดหมู่/แผนก | Must | ❌ (placeholder ล้วน) | 3 |
-| รายงานที่ถูกดาวน์โหลด/เข้าชมมากสุด (top N) | Must | ❌ | 3 |
-| พื้นที่จัดเก็บที่ใช้ไป | Should | ❌ | 3 |
-| กราฟแนวโน้มการใช้งานรายวัน/รายเดือน | Should | ❌ | 3 |
+| สรุปจำนวนรายงานทั้งหมด แยกตามสถานะ/หมวดหมู่/แผนก | Must | ✅ (`GET /api/dashboard/summary`) | 3 |
+| รายงานที่ถูกดาวน์โหลด/เข้าชมมากสุด (top N) | Must | ✅ (`GET /api/dashboard/top-reports` — จัดอันดับด้วย `download_count`, ไม่ใช่ `view_count` ที่ยังไม่ถูก increment ที่ไหนเลย ดู `phase3-plan.md` 3d audit) | 3 |
+| พื้นที่จัดเก็บที่ใช้ไป | Should | ✅ (sum `report_files.file_size` ทุกแถวรวม version เก่า) | 3 |
+| กราฟแนวโน้มการใช้งานรายวัน/รายเดือน | Should | ⚠️ (รายวันเท่านั้น, `GET /api/dashboard/trends`, ยังไม่มี toggle รายเดือน) | 3 |
 | Cache/precompute สถิติหนัก (ไม่คำนวณสดทุกครั้ง) | Should | ❌ | 3/4 |
 
 ## 12. User & Department Management (FR-12)
