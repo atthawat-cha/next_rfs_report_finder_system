@@ -77,7 +77,7 @@ function LoginContent() {
                 <Input
                   id="username"
                   type="username"
-                  placeholder="admin@example.com"
+                  placeholder="admin"
                   value={username}
                   onChange={(e) => setUsername(e.target.value)}
                   required
@@ -100,8 +100,8 @@ function LoginContent() {
 
               <div className="p-3 text-xs bg-muted rounded-md space-y-1">
                 <p className="font-medium">ข้อมูลสำหรับทดสอบ:</p>
-                <p>Username: admin1</p>
-                <p>Password: admin123</p>
+                <p>Username: admin</p>
+                <p>Password: 123456</p>
               </div>
             </CardContent>
             <CardFooter className="flex flex-col space-y-4">
