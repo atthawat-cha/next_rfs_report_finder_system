@@ -35,7 +35,8 @@ async function addToFavorites(reportId: string) {
     }
 }
 
-export const report_column: ColumnDef<ReportGetDataType>[] = [
+export function getReportColumn(onPreview: (reportId: string) => void): ColumnDef<ReportGetDataType>[] {
+    return [
     {
         accessorKey: 'code',
         header: 'Code',
@@ -84,6 +85,9 @@ export const report_column: ColumnDef<ReportGetDataType>[] = [
                         <DropdownMenuItem asChild>
                             <a href={`/reports/report-edit/${id}`}>Edit</a>
                         </DropdownMenuItem>
+                        <DropdownMenuItem onClick={() => onPreview(id)}>
+                            Preview
+                        </DropdownMenuItem>
                         <DropdownMenuItem asChild>
                             <a href={`/api/reports/${id}/download`}>Download</a>
                         </DropdownMenuItem>
@@ -95,4 +99,5 @@ export const report_column: ColumnDef<ReportGetDataType>[] = [
             )
         }
     }
-]
+    ]
+}

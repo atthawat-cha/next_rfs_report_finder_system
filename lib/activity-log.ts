@@ -4,7 +4,7 @@ import prisma from '@/lib/prisma';
 import { getClientIp } from '@/lib/request-info';
 import logger from '@/lib/logger';
 
-export type ActivityAction = 'create' | 'update' | 'delete' | 'login' | 'login_failed' | 'logout' | 'favorite' | 'unfavorite' | 'download';
+export type ActivityAction = 'create' | 'update' | 'delete' | 'login' | 'login_failed' | 'logout' | 'favorite' | 'unfavorite' | 'download' | 'view';
 export type ActivityEntity = 'report' | 'user' | 'department' | 'role' | 'auth';
 
 interface LogActivityParams {
