@@ -6,6 +6,7 @@ import bcrypt from 'bcryptjs';
 import { UserStatus } from '@/app/generated/prisma/enums';
 import { getAuthFromRequest, requireRole, routeAcceptted } from '@/lib/auth';
 import { logActivity } from '@/lib/activity-log';
+import { passwordPolicySchema } from '@/lib/password-policy';
 
 export async function GET(req: NextRequest) {
   try {
@@ -40,7 +41,7 @@ export async function GET(req: NextRequest) {
 
 const userZod = z.object({
   username: z.string().min(3, 'กรุณากรอกชื่อผู้ใช้'),
-  password: z.string().min(1, 'กรุณากรอกรหัสผ่าน'),
+  password: passwordPolicySchema,
   first_name: z.string().min(1, 'กรุณากรอกชื่อ'),
   last_name: z.string().min(1, 'กรุณากรอกนามสกุล'),
   department_id: z.string().min(1, 'กรุณาเลือกหน่วยงาน'),
@@ -77,7 +78,8 @@ export async function POST(req: NextRequest) {
         status: UserStatus.ACTIVE,
         role_id: validatedData.role_id,
         created_at: new Date(),
-        updated_at: new Date()
+        updated_at: new Date(),
+        password_changed_at: new Date(),
       },
     });
 

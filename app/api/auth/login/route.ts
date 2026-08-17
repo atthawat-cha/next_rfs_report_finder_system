@@ -5,6 +5,7 @@ import { z } from 'zod';
 import prisma from '@/lib/prisma';
 import { logActivity } from '@/lib/activity-log';
 import { getClientIp } from '@/lib/request-info';
+import { createPendingTwoFactorToken } from '@/lib/two-factor';
 
 const loginSchema = z.object({
   username: z.string().min(3, 'กรุณากรอกชื่อผู้ใช้'),
@@ -39,6 +40,7 @@ export async function POST(request: NextRequest) {
         password:true,
         first_name:true,
         department_id:true,
+        two_factor_enabled:true,
         roles:{
           select:{
             id:true,
@@ -46,7 +48,7 @@ export async function POST(request: NextRequest) {
           }
         }
       },
-      
+
     });
 
     // const getUser = await prisma.users.findUnique({
@@ -104,6 +106,23 @@ export async function POST(request: NextRequest) {
         { error: 'ชื่อผู้ใช้หรือรหัสผ่านไม่ถูกต้อง' },
         { status: 401 }
       );
+    }
+
+    // 2FA enabled — withhold the full session until a code is verified.
+    // Fails closed: if Redis is unreachable, this must not fall through to
+    // granting a session (unlike the rate limiter's deliberate fail-open).
+    if (getUser.two_factor_enabled) {
+      let pendingToken: string;
+      try {
+        pendingToken = await createPendingTwoFactorToken(user.id);
+      } catch (err) {
+        console.error('2FA pending-token error:', err);
+        return NextResponse.json(
+          { error: 'ไม่สามารถเริ่มการยืนยันตัวตนสองขั้นตอนได้ โปรดลองใหม่อีกครั้ง' },
+          { status: 500 }
+        );
+      }
+      return NextResponse.json({ success: true, requires2fa: true, pendingToken }, { status: 200 });
     }
 
     // Create JWT token

@@ -4,6 +4,7 @@ import { z } from "zod";
 import bcrypt from "bcryptjs";
 import { getAuthFromRequest, requireRole, routeAcceptted } from "@/lib/auth";
 import { logActivity } from "@/lib/activity-log";
+import { passwordPolicySchema } from "@/lib/password-policy";
 
 export async function POST(req: NextRequest) {
   const schema = z.object({
@@ -11,7 +12,7 @@ export async function POST(req: NextRequest) {
 
     username: z.string().min(3).optional(),
     email: z.string().email().nullable().optional(),
-    password: z.string().min(1).optional(),
+    password: passwordPolicySchema.optional(),
 
     first_name: z.string().optional(),
     last_name: z.string().optional(),
@@ -70,6 +71,7 @@ export async function POST(req: NextRequest) {
     // hash password if provided
     if (data.password) {
       updateData.password = await bcrypt.hash(data.password, 10);
+      updateData.password_changed_at = new Date();
     }
 
     const user = await prisma.users.update({

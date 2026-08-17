@@ -3,6 +3,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { redirect } from 'next/navigation';
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
 import { ContentLayout } from '@/components/layouts/content-layout';
+import { TwoFactorSettings } from '@/components/shared/twoFactorSettings';
 
 interface UserSessionType {
   id: string;
@@ -86,20 +87,13 @@ export default async function ProfilePage() {
 
         <Card>
           <CardHeader>
-            <CardTitle>การตั้งค่าบัญชี</CardTitle>
+            <CardTitle>ยืนยันตัวตนสองขั้นตอน (2FA)</CardTitle>
             <CardDescription>
-              ตัวเลือกเพิ่มเติมสำหรับบัญชีของคุณ
+              เพิ่มความปลอดภัยให้บัญชีของคุณด้วยรหัสยืนยันจากแอปยืนยันตัวตน
             </CardDescription>
           </CardHeader>
           <CardContent>
-            <div className="rounded-lg border border-dashed p-8 text-center">
-              <p className="text-muted-foreground">
-                พื้นที่สำหรับการตั้งค่าเพิ่มเติม
-              </p>
-              <p className="text-sm text-muted-foreground mt-2">
-                เช่น เปลี่ยนรหัสผ่าน, การแจ้งเตือน, ความเป็นส่วนตัว ฯลฯ
-              </p>
-            </div>
+            <TwoFactorSettings />
           </CardContent>
         </Card>
       </div>
