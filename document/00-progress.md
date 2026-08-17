@@ -22,7 +22,7 @@
 >
 > ระหว่างทำ 3e (2026-08-17) พบว่า `.env`/`.env.local` ถูกชี้ไปที่ **DB คนละตัว** จากที่บันทึกไว้ก่อนหน้านี้: `nextjs_rfs`@`localhost:5432` แทน `next_rfs_master`@`5434` เดิม (เปลี่ยนนอกรอบ conversation นี้ — ไฟล์ `.env*` ไม่ได้ถูก track ใน git เลยหาต้นตอที่แน่ชัดไม่ได้)
 >
-> **ข่าวดี:** DB ใหม่นี้มีครบทั้ง 25 ตาราง ตรงกับ `schema.prisma` ปัจจุบันแล้ว (`report_files`/`queries`/`variables`/`permissions`, `reports.search_vector`, `output_type` ครบ) — Phase 1/2/3 **น่าจะ**รันได้จริงบน DB นี้ (ยังไม่ได้ไล่ verification list ใหม่ทีละเฟส แค่ยืนยันว่าตารางที่ขาดหายไปก่อนหน้านี้กลับมาครบ)
+> **ข่าวดี:** DB ใหม่นี้มีครบทั้ง 25 ตาราง ตรงกับ `schema.prisma` ปัจจุบันแล้ว (`report_files`/`queries`/`variables`/`permissions`, `reports.search_vector`, `output_type` ครบ) — **ยืนยันแล้ว (2026-08-17)** ว่า Phase 1/2/3 รันได้จริงบน DB นี้ ไล่ verification list ครบทุก sub-phase ผ่าน 39/39 (ดูรายละเอียดด้านล่าง)
 >
 > **แต่ของค้าง #1 (drift) ยังไม่ได้แก้จริง แค่ย้ายไป DB ใหม่พร้อมกัน** — `npx prisma migrate dev` ยัง detect drift signature เดิมเป๊ะ (`menus_permissions` หาย, `users.role_id`/`permissions.menu_id` เพิ่มมาไม่มี migration รองรับ) และ `_prisma_migrations` มี `applied_steps_count=0` ทุกแถว → มีคนรัน **Option B** (`migrate resolve --applied`) ไปแล้วกับ DB นี้ก่อนหน้า session นี้ โดยไม่อัปเดตเอกสาร ตอนทำ migration ของ 3e ก็ใช้ pattern เดียวกันต่อ (เขียน SQL มือ + `resolve --applied`) ไม่ใช้ `migrate reset`
 >
@@ -30,11 +30,20 @@
 
 **ค้างอยู่:** ไม่มีงานเฟส 0-3 ค้างแล้ว — Phase 3e เสร็จใน `f27a1dc`
 
+> ### ✅ Verification ของ Phase 1/2a-2d/3a-3d รันจริงแล้วบน DB `nextjs_rfs` (2026-08-17) — ผ่านทั้งหมด 39/39
+>
+> ไล่ตาม bullet list ทุกข้อใน `phase1-plan.md`/`phase2-plan.md`/`phase3-plan.md` ด้วย curl/psql/tsx จริง (ไม่ใช่อ่านโค้ดเดา) — **ผ่านหมด 39/39** รวม `tsc --noEmit` ตรงกับ baseline ที่แก้ไว้ (ดูของค้าง #2)
+>
+> ระหว่างทางเจอบั๊กจริงเพิ่ม 1 ตัว (ไม่เกี่ยวกับของค้าง #2): **`app/api/shares/[token]/route.ts`** อ่านไฟล์สำหรับดาวน์โหลดจาก `report_files` (ตาราง Phase 2) เท่านั้น ไม่ fallback ไปที่ `reports.file_path`/`file_name` (cache column เดิม) เลย — รายงานที่สร้างก่อน Phase 2 หรือยังไม่เคยอัปโหลดไฟล์ผ่าน `/api/reports/[id]/files` จะได้ `files: []` จากลิงก์แชร์ ทั้งที่ดาวน์โหลดผ่าน endpoint ปกติได้ปกติ (ยืนยันซ้ำกับ `RPT-002`) — **ยังไม่ได้แก้**
+>
+> **Test fixtures ที่เหลือค้างใน DB** (ยังไม่ลบ รอตัดสินใจ): user `TEST-user2`, reports `TEST-PRINT-001`/`TEST-DATA-001`/`TEST-NODOWNLOAD-001`/`TEST-ACL-PRIVATE`(ของเก่าก่อนแก้บั๊ก access_level, access_level ผิดเป็น PUBLIC)/`TEST-ACL-PUBLIC-v2`/`TEST-ACL-RESTRICTED-v2`/`TEST-ACL-PRIVATE-v2`, 2 `report_shares` บน `RPT-002`, 1 USER share บน `RPT-003`, favorites หลายแถว, notifications/activity_logs ที่เป็นผลพลอยได้ — ทั้งหมด marked ด้วย prefix `TEST-`/`TEST-user2` ให้หาเจอง่าย
+
 **งานถัดไปที่ควรทำ (เรียงตามลำดับ):**
-1. **ไล่ Verification list ของ Phase 1/2/3a-3d ใหม่บน DB `nextjs_rfs`** — ยังไม่เคยรันจริงบน DB ตัวนี้ทีละเฟส (แค่ยืนยันว่าตารางครบตอนทำ 3e) ควรทำก่อนเชื่อว่า Phase ก่อนหน้าใช้งานได้จริง
-2. **ตัดสินใจ root cause ของของค้าง #1 ให้จบจริง** — ใครรัน Option B ไปแล้ว, ทำไม `menus_permissions`/`role_id`/`menu_id` ถึงเปลี่ยนแบบไม่มี migration — ไม่งั้น drift แบบเดิมจะเกิดซ้ำทุกครั้งที่แก้ schema
-3. **รีเฟรช `feature-list.md`** — refresh แล้วเฉพาะแถว 3e (FR-13 theme) ที่เหลือ Phase 1/2/3a-3c ยังมีจุดที่ค้าง ❌ ให้เช็คทั้งไฟล์ (ดู [ของค้าง #4](#4-feature-listmd-ค้าง))
-4. **วางแผน Phase 4** — ยังไม่มี `phase4-plan.md` เลย ทั้งที่ `feature-list.md` อ้างถึง Phase 4 อยู่หลายสิบแถว
+1. **ตัดสินใจเรื่อง test fixtures ข้างบน** — ลบทิ้งหรือเก็บไว้เป็น dev fixture ต่อ
+2. **แก้บั๊ก share-endpoint fallback** ที่เจอระหว่าง verification (ข้างบน)
+3. **ตัดสินใจ root cause ของของค้าง #1 ให้จบจริง** — ใครรัน Option B ไปแล้ว, ทำไม `menus_permissions`/`role_id`/`menu_id` ถึงเปลี่ยนแบบไม่มี migration — ไม่งั้น drift แบบเดิมจะเกิดซ้ำทุกครั้งที่แก้ schema
+4. **รีเฟรช `feature-list.md`** — refresh แล้วเฉพาะแถว 3e (FR-13 theme) ที่เหลือ Phase 1/2/3a-3c ยังมีจุดที่ค้าง ❌ ให้เช็คทั้งไฟล์ (ดู [ของค้าง #4](#4-feature-listmd-ค้าง))
+5. **วางแผน Phase 4** — ยังไม่มี `phase4-plan.md` เลย ทั้งที่ `feature-list.md` อ้างถึง Phase 4 อยู่หลายสิบแถว
 
 ---
 
