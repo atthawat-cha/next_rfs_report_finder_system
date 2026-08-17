@@ -1,6 +1,6 @@
 # ความคืบหน้าโครงการ — RFS Report Finder System
 
-> **อัปเดตล่าสุด:** 2026-08-17 · **Branch:** `feature/phase3` · **HEAD:** `f222dca`
+> **อัปเดตล่าสุด:** 2026-08-17 · **Branch:** `feature/phase3` · **HEAD:** `be89ddf`
 >
 > ไฟล์นี้ตอบคำถามเดียว: **"ตอนนี้ถึงไหนแล้ว และเหลืออะไร"** สถานะทุกแถวอ้างอิง commit จริงใน git log เป็นหลักฐาน ไม่ใช่การอ่านโค้ดเดา
 >
@@ -16,7 +16,7 @@
 
 ## 👉 ตอนนี้อยู่ตรงไหน
 
-**โค้ดเสร็จแล้ว:** Phase 0 → 3e ทั้งหมด (14 sub-phase) — ครบวงจรตั้งแต่ค้นหา/ดาวน์โหลดฝั่งผู้ใช้ ไปจนถึง CRUD รายงาน + ไฟล์ + คิวรี่ + สิทธิ์รายรายงาน + version rollback + แชร์ + แจ้งเตือน + dashboard + persist ธีมต่อผู้ใช้ — **verified จริง 39/39 บน DB `nextjs_rfs`** (2026-08-17) **Phase 4 เริ่มแล้ว**: 4a (security headers) + 4b (Vitest test suite) เสร็จ, 4c/4d/4e/4f เหลือ overview/รอ implement
+**โค้ดเสร็จแล้ว:** Phase 0 → 3e ทั้งหมด (14 sub-phase) — ครบวงจรตั้งแต่ค้นหา/ดาวน์โหลดฝั่งผู้ใช้ ไปจนถึง CRUD รายงาน + ไฟล์ + คิวรี่ + สิทธิ์รายรายงาน + version rollback + แชร์ + แจ้งเตือน + dashboard + persist ธีมต่อผู้ใช้ — **verified จริง 39/39 บน DB `nextjs_rfs`** (2026-08-17) **Phase 4**: 4a (security headers)/4b (Vitest)/4c (single-report view + per-file download/preview/print) เสร็จ, 4f เริ่มแล้วบางส่วน (structured logging), 4d/4e เหลือ overview
 
 **สรุปเหตุการณ์วันที่ 2026-08-17 แบบย่อ** (รายละเอียดเต็มอยู่ในตารางด้านล่าง + ของค้างแต่ละข้อ):
 - DB drift (ของค้าง #1) — ปิดจบแล้ว หา root cause ครบ ยืนยันด้วย shadow-DB replay ตรงกันเป๊ะ (`34468ff`)
@@ -93,7 +93,7 @@
 |---|---|---|---|
 | **4a** | Security response headers (CSP/HSTS/X-Content-Type-Options/X-Frame-Options/Referrer-Policy/Permissions-Policy) | ✅ | `dd98843` |
 | **4b** | Automated test suite bootstrap — Vitest, first tests on `lib/report-acl.ts` | ✅ | `dad7014` |
-| 4c | Upload/file-serving gaps (AV scan, per-`file_kind` download, PDF/Excel preview + print, `view_count`) | 📝 overview | — |
+| **4c** | Upload/file-serving gaps — single-report view, per-`file_kind` download, PDF/Excel preview + print, `view_count` ✅ (AV scan deferred, no ClamAV confirmed) | ✅ | `be89ddf` |
 | 4d | Auth flexibility & policy (2FA, password policy — auth provider selection dropped, aspirational) | 📝 scope narrowed, รอ policy values | — |
 | 4e | Settings ที่เหลือ + notification ที่ defer ไว้ (max upload size, department sharing, expiry/system notif — storage backend dropped, aspirational) | 📝 scope narrowed | — |
 | 4f | Observability & ops — structured logging ✅ (`lib/logger.ts`, pino), ที่เหลือ (dependency scanning, alert, dashboard cache) ยัง 📝 | 🚧 | `f222dca` |
@@ -106,6 +106,16 @@
 - [x] `npm test`/`npm run test:watch` ผ่าน Vitest, native `resolve.tsconfigPaths` reuse `@/*` alias เดิม
 - [x] `lib/report-acl.test.ts` — 7 test ครอบ `resolveReportAcl`/`visibleReportIdsFor` ทั้ง resolution order (individual > role > fallback) และ deny/allow edge case ตรงกับที่ Phase 2a เคยตรวจมือไว้
 - [x] ยืนยันว่า suite จับ regression ได้จริง (comment เช็ค individual grant ออกชั่วคราว → test ที่เกี่ยวข้อง fail ตามคาด, revert แล้ว), รัน 2 รอบติดกันไม่มี fixture ค้าง (`VITEST-*` = 0 แถวหลังรันเสร็จทุกครั้ง)
+
+**4c ปิดจบแล้ว** (`be89ddf`):
+- [x] `GET /api/reports/[id]` (ใหม่) — single-report detail สำหรับ non-admin ทุก role, ACL-gated (404 ไม่ใช่ 403), admin bypass, **increment `view_count` จริงเป็นครั้งแรก** ตั้งแต่เพิ่มคอลัมน์มา + log `'view'` activity ใหม่
+- [x] `GET /api/reports/[id]/files/[fileId]/download` (ใหม่) — ดาวน์โหลดไฟล์เฉพาะ kind ที่ไม่ใช่ primary (เช่น `SAMPLE_FILLED_FORM` บนรายงาน `PRINT_FORM`) ซึ่งก่อนหน้านี้ไม่มีทางเข้าถึงได้เลยสำหรับ user ทั่วไป
+- [x] `GET /api/reports/[id]/files/[fileId]/preview` (ใหม่) — parse excel/csv ฝั่ง server ด้วย `exceljs` คืน `{headers, rows}` จำกัด 200 แถว (ไม่ bundle exceljs ไปฝั่ง client)
+- [x] `components/shared/reportPreviewDialog.tsx` (ใหม่) — controlled dialog (ไม่ใช้ `DialogTrigger` ซ้อนใน `DropdownMenuItem` เพราะเจอ conflict ของ Radix), PDF preview ผ่าน `<embed>`, Excel preview ผ่าน endpoint ใหม่, ปุ่มพิมพ์ scope เฉพาะ `.report-print-area`
+- [x] wire เป็นเมนู "Preview" ใน `reportColumn.tsx`/`favReportColumn.tsx` (แปลงเป็น factory function รับ callback)
+- [x] ยืนยันสดครบ: `view_count`/`download_count` เพิ่มจริงผ่าน SQL ตรง, ดาวน์โหลด `SAMPLE_FILLED_FORM` ได้ byte-identical, preview excel คืนค่าตรงกับไฟล์จริง, preview PDF ได้ 400 ถูกต้อง, หน้า report-list/favorites compile ผ่าน 200
+- ⚠️ `exceljs` ดึง advisory ระดับ moderate ผ่าน `uuid` (`GHSA-w5hq-g745-h8pq`) มาด้วย — ไม่ reachable จาก usage ของแอปนี้ (parse ไฟล์ server-side ไม่รับ buffer จาก client โดยตรง) ไม่ downgrade เพราะ fix เดียวที่มีคือ exceljs 3.4.0 ซึ่งเก่ากว่าที่ควร
+- AV scan (ClamAV) — deferred ตามที่ผู้ใช้ยืนยัน ไม่มี daemon ยืนยันในสภาพแวดล้อม deploy
 
 **4f — เริ่มแล้ว** (`f222dca`, ยังไม่จบทั้ง sub-phase):
 - [x] `lib/logger.ts` (pino, self-hosted ตามที่ผู้ใช้เลือก) + wire เข้า `logActivity`'s swallowed catch
