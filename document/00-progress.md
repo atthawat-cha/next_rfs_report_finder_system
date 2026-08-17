@@ -1,6 +1,6 @@
 # ความคืบหน้าโครงการ — RFS Report Finder System
 
-> **อัปเดตล่าสุด:** 2026-08-17 · **Branch:** `feature/phase3` · **HEAD:** `dd98843`
+> **อัปเดตล่าสุด:** 2026-08-17 · **Branch:** `feature/phase3` · **HEAD:** `dad7014`
 >
 > ไฟล์นี้ตอบคำถามเดียว: **"ตอนนี้ถึงไหนแล้ว และเหลืออะไร"** สถานะทุกแถวอ้างอิง commit จริงใน git log เป็นหลักฐาน ไม่ใช่การอ่านโค้ดเดา
 >
@@ -16,7 +16,7 @@
 
 ## 👉 ตอนนี้อยู่ตรงไหน
 
-**โค้ดเสร็จแล้ว:** Phase 0 → 3e ทั้งหมด (14 sub-phase) — ครบวงจรตั้งแต่ค้นหา/ดาวน์โหลดฝั่งผู้ใช้ ไปจนถึง CRUD รายงาน + ไฟล์ + คิวรี่ + สิทธิ์รายรายงาน + version rollback + แชร์ + แจ้งเตือน + dashboard + persist ธีมต่อผู้ใช้ — **verified จริง 39/39 บน DB `nextjs_rfs`** (2026-08-17) **Phase 4 เริ่มแล้ว** (4a security headers ✅, 4b-4f เป็น overview รอ input)
+**โค้ดเสร็จแล้ว:** Phase 0 → 3e ทั้งหมด (14 sub-phase) — ครบวงจรตั้งแต่ค้นหา/ดาวน์โหลดฝั่งผู้ใช้ ไปจนถึง CRUD รายงาน + ไฟล์ + คิวรี่ + สิทธิ์รายรายงาน + version rollback + แชร์ + แจ้งเตือน + dashboard + persist ธีมต่อผู้ใช้ — **verified จริง 39/39 บน DB `nextjs_rfs`** (2026-08-17) **Phase 4 เริ่มแล้ว**: 4a (security headers) + 4b (Vitest test suite) เสร็จ, 4c/4d/4e/4f เหลือ overview/รอ implement
 
 **สรุปเหตุการณ์วันที่ 2026-08-17 แบบย่อ** (รายละเอียดเต็มอยู่ในตารางด้านล่าง + ของค้างแต่ละข้อ):
 - DB drift (ของค้าง #1) — ปิดจบแล้ว หา root cause ครบ ยืนยันด้วย shadow-DB replay ตรงกันเป๊ะ (`34468ff`)
@@ -92,16 +92,22 @@
 | Sub-phase | งาน | สถานะ | Commit |
 |---|---|---|---|
 | **4a** | Security response headers (CSP/HSTS/X-Content-Type-Options/X-Frame-Options/Referrer-Policy/Permissions-Policy) | ✅ | `dd98843` |
-| 4b | Automated test suite bootstrap (`lib/report-acl.ts` ก่อน) | 📝 รอเลือก framework | — |
+| **4b** | Automated test suite bootstrap — Vitest, first tests on `lib/report-acl.ts` | ✅ | `dad7014` |
 | 4c | Upload/file-serving gaps (AV scan, per-`file_kind` download, PDF/Excel preview + print, `view_count`) | 📝 overview | — |
-| 4d | Auth flexibility & policy (auth provider selection, 2FA, password policy) | 📝 รอยืนยัน scope | — |
-| 4e | Settings ที่เหลือ + notification ที่ defer ไว้ (storage backend, max upload size, department sharing, i18n) | 📝 รอยืนยัน scope | — |
-| 4f | Observability & ops (structured logging/error tracking, dependency scanning, alert, dashboard cache) | 📝 รอเลือก vendor | — |
+| 4d | Auth flexibility & policy (2FA, password policy — auth provider selection dropped, aspirational) | 📝 scope narrowed, รอ policy values | — |
+| 4e | Settings ที่เหลือ + notification ที่ defer ไว้ (max upload size, department sharing, expiry/system notif — storage backend dropped, aspirational) | 📝 scope narrowed | — |
+| 4f | Observability & ops (structured logging/error tracking, dependency scanning, alert, dashboard cache) | 📝 vendor ตัดสินใจแล้ว (self-hosted pino) รอ implement | — |
 
 **4a ปิดจบแล้ว** (`dd98843`):
 - [x] `next.config.js` `headers()` — ครอบทุก route ทั้งหน้าเว็บและ `/api/*`
 - [x] ยืนยันโครงสร้าง header ถูกต้องด้วยการ `require()` ไฟล์ config ตรงๆใน Node + `tsc --noEmit`/`build` ไม่มี error ใหม่
 - [ ] **ยังไม่ได้ยืนยันด้วย `curl -I` บน server จริง** — ต้อง restart dev server เพื่อให้ `next.config.js` มีผล แต่ instance ที่รันอยู่ port 3501 เป็นของผู้ใช้ ไม่ได้แตะ — รอผู้ใช้ restart แล้วขอให้ช่วยเช็คให้ทีหลังได้
+
+**4b ปิดจบแล้ว** (`dad7014`):
+- [x] `npm test`/`npm run test:watch` ผ่าน Vitest, native `resolve.tsconfigPaths` reuse `@/*` alias เดิม
+- [x] `lib/report-acl.test.ts` — 7 test ครอบ `resolveReportAcl`/`visibleReportIdsFor` ทั้ง resolution order (individual > role > fallback) และ deny/allow edge case ตรงกับที่ Phase 2a เคยตรวจมือไว้
+- [x] ยืนยันว่า suite จับ regression ได้จริง (comment เช็ค individual grant ออกชั่วคราว → test ที่เกี่ยวข้อง fail ตามคาด, revert แล้ว), รัน 2 รอบติดกันไม่มี fixture ค้าง (`VITEST-*` = 0 แถวหลังรันเสร็จทุกครั้ง)
+- [x] เจอ+แก้ BigInt literal (`0n`) ไม่รองรับที่ ES2017 target ระหว่างทำ ใช้ `BigInt(0)` แทน
 
 ---
 
