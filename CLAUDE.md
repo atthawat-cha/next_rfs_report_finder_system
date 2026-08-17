@@ -18,9 +18,11 @@ npm run dev      # start dev server on http://localhost:3501 (not 3000)
 npm run build    # production build
 npm start        # run production build, also on port 3501
 npm run lint     # next lint
+npm test         # Vitest, run once (CI-safe)
+npm run test:watch  # Vitest, watch mode
 ```
 
-There is no test runner configured in this repo.
+**Never run `npm run build`/`next build` while a dev server is already running against this same working copy** — both processes share the `.next` directory, and on Windows a build racing the dev server's open file handles can corrupt `.next` (a real incident: it deleted `.next/server/middleware-manifest.json` mid-build, and every route 500'd until the dev server was restarted after clearing `.next`). To verify a `next.config.js`/build-only change, use `npx tsc --noEmit` plus live verification against the already-running dev server (e.g. `curl -I` for header changes) instead of a parallel build.
 
 ### Database (Prisma 7 + PostgreSQL)
 

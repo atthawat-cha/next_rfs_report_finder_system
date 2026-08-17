@@ -1,6 +1,6 @@
 # ความคืบหน้าโครงการ — RFS Report Finder System
 
-> **อัปเดตล่าสุด:** 2026-08-17 · **Branch:** `feature/phase3` · **HEAD:** `dad7014`
+> **อัปเดตล่าสุด:** 2026-08-17 · **Branch:** `feature/phase3` · **HEAD:** `f222dca`
 >
 > ไฟล์นี้ตอบคำถามเดียว: **"ตอนนี้ถึงไหนแล้ว และเหลืออะไร"** สถานะทุกแถวอ้างอิง commit จริงใน git log เป็นหลักฐาน ไม่ใช่การอ่านโค้ดเดา
 >
@@ -96,17 +96,23 @@
 | 4c | Upload/file-serving gaps (AV scan, per-`file_kind` download, PDF/Excel preview + print, `view_count`) | 📝 overview | — |
 | 4d | Auth flexibility & policy (2FA, password policy — auth provider selection dropped, aspirational) | 📝 scope narrowed, รอ policy values | — |
 | 4e | Settings ที่เหลือ + notification ที่ defer ไว้ (max upload size, department sharing, expiry/system notif — storage backend dropped, aspirational) | 📝 scope narrowed | — |
-| 4f | Observability & ops (structured logging/error tracking, dependency scanning, alert, dashboard cache) | 📝 vendor ตัดสินใจแล้ว (self-hosted pino) รอ implement | — |
+| 4f | Observability & ops — structured logging ✅ (`lib/logger.ts`, pino), ที่เหลือ (dependency scanning, alert, dashboard cache) ยัง 📝 | 🚧 | `f222dca` |
 
-**4a ปิดจบแล้ว** (`dd98843`):
+**4a ปิดจบแล้ว** (`dd98843`, ยืนยันสดแล้ว):
 - [x] `next.config.js` `headers()` — ครอบทุก route ทั้งหน้าเว็บและ `/api/*`
-- [x] ยืนยันโครงสร้าง header ถูกต้องด้วยการ `require()` ไฟล์ config ตรงๆใน Node + `tsc --noEmit`/`build` ไม่มี error ใหม่
-- [ ] **ยังไม่ได้ยืนยันด้วย `curl -I` บน server จริง** — ต้อง restart dev server เพื่อให้ `next.config.js` มีผล แต่ instance ที่รันอยู่ port 3501 เป็นของผู้ใช้ ไม่ได้แตะ — รอผู้ใช้ restart แล้วขอให้ช่วยเช็คให้ทีหลังได้
+- [x] ยืนยันด้วย `curl -I` จริงหลัง restart dev server: `/login` (page) และ `/api/reports/browse` (API) ทั้งคู่มีครบ 6 header ค่าตรงตามที่ตั้งไว้
 
 **4b ปิดจบแล้ว** (`dad7014`):
 - [x] `npm test`/`npm run test:watch` ผ่าน Vitest, native `resolve.tsconfigPaths` reuse `@/*` alias เดิม
 - [x] `lib/report-acl.test.ts` — 7 test ครอบ `resolveReportAcl`/`visibleReportIdsFor` ทั้ง resolution order (individual > role > fallback) และ deny/allow edge case ตรงกับที่ Phase 2a เคยตรวจมือไว้
 - [x] ยืนยันว่า suite จับ regression ได้จริง (comment เช็ค individual grant ออกชั่วคราว → test ที่เกี่ยวข้อง fail ตามคาด, revert แล้ว), รัน 2 รอบติดกันไม่มี fixture ค้าง (`VITEST-*` = 0 แถวหลังรันเสร็จทุกครั้ง)
+
+**4f — เริ่มแล้ว** (`f222dca`, ยังไม่จบทั้ง sub-phase):
+- [x] `lib/logger.ts` (pino, self-hosted ตามที่ผู้ใช้เลือก) + wire เข้า `logActivity`'s swallowed catch
+- [x] **ไม่แตะ** `lib/auth.ts`'s swallowed catches ตามที่ระบุใน plan เดิม — เจอว่า `middleware.ts` import `getAuthFromRequest` จากไฟล์นี้และรันบน Edge runtime ซึ่ง bundle worker-thread ของ pino ไม่ได้ (ปัญหาเดียวกับที่ `lib/rate-limit.ts`/`ioredis` ต้องแยกออกจาก `lib/auth.ts` อยู่แล้ว)
+- [ ] Dependency vulnerability scanning (CI), abnormal-auth-pattern alerting, dashboard cache/precompute — ยังไม่ทำ
+
+> ⚠️ **เหตุการณ์ระหว่างทำ 4a**: รัน `npm run build` เพื่อตรวจ header เจอ EPERM ชน `.next/trace` เพราะ dev server ของผู้ใช้ (port 3501) ใช้โฟลเดอร์ `.next` เดียวกันอยู่พร้อมกัน — build ที่ fail กลางคันไปลบ `.next/server/middleware-manifest.json` ทำให้ dev server ตอบ 500 ทุก request ล้างแคช `.next` แล้วขอให้ผู้ใช้ restart dev server เอง (ไม่แตะ process ของผู้ใช้ตรงๆ) กลับมาใช้งานได้ปกติ **บทเรียน**: ห้ามรัน `npm run build`/`next build` ขณะ dev server กำลังรันอยู่ ให้ตรวจด้วย `tsc --noEmit` + verify สดผ่าน dev server ที่รันอยู่แล้วแทน
 - [x] เจอ+แก้ BigInt literal (`0n`) ไม่รองรับที่ ES2017 target ระหว่างทำ ใช้ `BigInt(0)` แทน
 
 ---
