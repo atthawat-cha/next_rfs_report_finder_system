@@ -151,13 +151,100 @@ New shared component `components/shared/reportPreviewDialog.tsx` (shadcn `Dialog
 - Open the Preview dialog in the browser on a `PRINT_FORM` report → PDF renders inline; on a `DATA_REPORT` → table renders with real data; click Print on both → only the preview content appears in the print dialog, not the rest of the page
 - `npx tsc --noEmit` — no new errors vs baseline (2 pre-existing)
 
-## Sub-phase 4d — Auth Flexibility & Policy (overview, scope narrowed)
+## Sub-phase 4d — Auth Flexibility & Policy
 
 **Resolved (user, 2026-08-17): auth provider selection (Local DB / External API / Email OTP) is aspirational, not real near-term demand — dropped from scope entirely.** Not designing a pluggable auth adapter interface with only one implementation to validate it against.
 
-Remaining scope, both self-contained and schema-ready (`users.two_factor_enabled`/`two_factor_secret`, `users.password_changed_at` already exist):
-- TOTP 2FA: enroll (generate secret + QR, verify one code before enabling), verify-on-login step, backup codes (not yet scoped in schema — needs a decision on storage shape when this is picked up for real)
-- Password policy: minimum complexity on set/change, `password_changed_at` enforcement (force change after N days) — needs the actual policy values (min length? rotation period?) confirmed when picked up, not guessed here
+**Further decisions confirmed (user, 2026-08-17):**
+- 2FA backup codes: **included** (10 single-use codes, hashed, new table) — without them a lost authenticator device is a permanent lockout (no admin-assisted recovery path exists either)
+- Password policy: **8 characters minimum, at least 1 letter + 1 number** — unintrusive baseline, not the stricter NIST-adjacent option
+- `password_changed_at`: **tracked, not enforced** — no forced periodic rotation. Current NIST guidance (SP 800-63B) actually recommends against forced rotation; it tends to produce weaker passwords (incrementing a digit). Just populate the column for future audit/display use.
+
+Audit before detailing: `users.two_factor_enabled`/`two_factor_secret` exist but are **never read or written anywhere in the codebase** (confirmed via grep) — `login/route.ts` doesn't even select them. There is no backup-code storage at all. There is no self-service "change my own password" flow either — the only two places a password is ever written are the **admin-driven** create (`app/api/users/user/route.ts`) and update (`app/api/users/user/update/route.ts`) routes, both of which currently validate password with `z.string().min(1, ...)` — i.e. no policy at all, a single non-empty character passes. `app/(auth)/profile/page.tsx` has a literal placeholder card ("พื้นที่สำหรับการตั้งค่าเพิ่มเติม เช่น เปลี่ยนรหัสผ่าน...") — the natural, already-intended slot for 2FA enrollment UI.
+
+**Security note (this touches login — CLAUDE.md's "extra care" list):** a 6-digit TOTP code is only 1,000,000 combinations and brute-forceable within its 30s validity window if the verify step isn't rate-limited. The new `verify-2fa` endpoint reuses the existing IP-keyed `checkRateLimit`/`resetRateLimit` (`lib/rate-limit.ts`) rather than inventing a second limiter.
+
+### 1. Schema — backup codes table
+
+```prisma
+model two_factor_backup_codes {
+  id         String    @id
+  user_id    String
+  code_hash  String
+  used_at    DateTime?
+  created_at DateTime  @default(now())
+  users      users     @relation(fields: [user_id], references: [id], onDelete: Cascade)
+
+  @@index([user_id])
+}
+```
+Plus the inverse relation field on `model users`. New migration (`npx prisma migrate dev --name add_two_factor_backup_codes` — expect this to work cleanly now that ของค้าง #1's drift is closed and `migrate dev` no longer needs the hand-written-SQL-plus-`resolve --applied` workaround).
+
+**Files**: `prisma/schema.prisma`, new migration
+
+### 2. `lib/two-factor.ts` — TOTP helper (new deps: `otplib`, `qrcode`)
+
+- `generateSecret()` → `otplib.authenticator.generateSecret()`
+- `buildOtpauthUrl(secret, username)` → `otplib.authenticator.keyuri(username, 'RFS Report Finder', secret)`
+- `verifyTotp(secret, code)` → `otplib.authenticator.verify({ token: code, secret })`
+- `generateBackupCodes()` → 10 codes, format `xxxx-xxxx` (random alphanumeric via `crypto.randomBytes`), returns `{ plaintext: string[], hashes: Promise<string>[] }` (hash with `bcryptjs`, same cost factor as password hashing elsewhere)
+
+**Files**: `lib/two-factor.ts` (new)
+
+### 3. Enrollment endpoints — `app/api/auth/2fa/*`
+
+All `requireAuth`-gated (self-service, any role):
+- **`POST /api/auth/2fa/setup`**: 400 if already enabled (must disable first to re-enroll — no silent secret replacement while active). Generates a secret, saves to `users.two_factor_secret` (enabled stays `false` until confirmed), returns `{ secret, otpauthUrl, qrCodeDataUrl }` (`qrcode.toDataURL(otpauthUrl)`).
+- **`POST /api/auth/2fa/confirm`** — body `{ code }`. Verifies against the pending secret. On success: `two_factor_enabled=true`, generates + stores 10 hashed backup codes, returns the **plaintext codes once** (never retrievable again — same one-time-reveal pattern as any secret). `logActivity('update', 'user', userId, '2FA enabled')`.
+- **`POST /api/auth/2fa/disable`** — body `{ password }` (re-auth with current password, not just being logged in, since this lowers account security). Verifies via `bcrypt.compare`. On success: `two_factor_enabled=false`, `two_factor_secret=null`, delete all backup code rows. `logActivity('update', 'user', userId, '2FA disabled')`.
+- **`GET /api/auth/2fa/status`** — `{ enabled: boolean }`, fresh DB read (not trusted from the JWT payload, which is stale relative to live 2FA state).
+
+**Files**: `app/api/auth/2fa/setup/route.ts`, `.../confirm/route.ts`, `.../disable/route.ts`, `.../status/route.ts` (all new)
+
+### 4. Login flow — two-step when 2FA is enabled
+
+`app/api/auth/login/route.ts` (modify): select `two_factor_enabled` in the user query. After password verifies, if enabled:
+- Generate a random pending token (`crypto.randomBytes(24).toString('hex')`)
+- Store `pending2fa:<token> → userId` in Redis, TTL 300s
+- Return `{ success: true, requires2fa: true, pendingToken }` — **no cookie set yet**, full session withheld until 2FA verifies
+- **Fails closed, not open, if Redis is unreachable** — unlike `lib/rate-limit.ts`'s deliberate fail-open (rate limiting is defense-in-depth; withholding a session pending 2FA is the actual security boundary here, so a Redis outage must not silently grant a full session)
+
+`app/api/auth/login/verify-2fa/route.ts` (new): body `{ pendingToken, code }`.
+- `checkRateLimit(ip)` first (same limiter as the main login endpoint)
+- Look up `pending2fa:<pendingToken>` in Redis → 401 "session expired, log in again" if missing/expired
+- Try `code` as a TOTP code first; if that fails, try it against unused backup codes (`bcrypt.compare` against each unused row) — mark the matched row `used_at=now()` on success
+- On success: delete the Redis key (single-use), `resetRateLimit(ip)`, create the full JWT + cookie (identical to normal login), `logActivity('login', ...)`, return the same response shape as a normal login
+- On failure: 401 "invalid code", Redis key stays (retry allowed within the TTL window)
+
+**Files**: `app/api/auth/login/route.ts` (modify), `app/api/auth/login/verify-2fa/route.ts` (new)
+
+### 5. UI
+
+- `app/login/page.tsx` (modify): on `requires2fa: true`, switch to a second step (code input, "ใช้ backup code แทน" toggle) that posts to `verify-2fa` with the `pendingToken`, then proceeds exactly like a normal successful login
+- `components/shared/twoFactorSettings.tsx` (new, client component) replacing the placeholder card in `app/(auth)/profile/page.tsx`: fetches `GET /api/auth/2fa/status` on mount; **disabled state** shows an "เปิดใช้งาน 2FA" button → calls `setup` → shows QR code + secret fallback text + confirm-code input → calls `confirm` → shows the 10 backup codes once with an explicit "ฉันบันทึกโค้ดเหล่านี้แล้ว" acknowledgment before closing; **enabled state** shows "ปิดใช้งาน 2FA" button → password prompt → calls `disable`
+
+**Files**: `app/login/page.tsx` (modify), `components/shared/twoFactorSettings.tsx` (new), `app/(auth)/profile/page.tsx` (modify — swap in the new component)
+
+### 6. Password policy
+
+- `lib/password-policy.ts` (new): exports `PASSWORD_POLICY_MESSAGE` (Thai, for error responses) and a zod `.refine()` (`/^(?=.*[A-Za-z])(?=.*\d).{8,}$/`) — one source of truth, not duplicated across the two call sites
+- `app/api/users/user/route.ts`: `userZod.password` uses the shared refinement instead of bare `min(1)`; set `password_changed_at: new Date()` in `createParams`
+- `app/api/users/user/update/route.ts`: same refinement on the optional password field; set `password_changed_at: new Date()` whenever `data.password` is provided
+- No rotation enforcement, no UI surfacing of "days since last change" — tracking only, per the resolved decision; not building a display feature nobody asked for
+
+**Files**: `lib/password-policy.ts` (new), `app/api/users/user/route.ts` (modify), `app/api/users/user/update/route.ts` (modify)
+
+### Verification (4d)
+
+- Enroll 2FA: `setup` → scan QR with a real authenticator app (or compute TOTP from the returned `secret` directly) → `confirm` with a valid code → `two_factor_enabled=true` in DB, 10 backup code rows created (hashed, not plaintext)
+- `confirm` with a wrong code → stays disabled, no backup codes created
+- Log out, log back in with 2FA enabled → normal login returns `requires2fa:true` + `pendingToken`, no cookie set; `verify-2fa` with a valid current TOTP code → full session cookie granted, can access authenticated routes
+- `verify-2fa` with a wrong code 6 times in a row from one IP → rate-limited (429), matching the main login endpoint's threshold
+- `verify-2fa` with a backup code → succeeds once, same code rejected on a second attempt (marked used)
+- `disable` with the wrong password → 401, 2FA stays enabled; with the correct password → `two_factor_enabled=false`, secret cleared, backup code rows deleted
+- Create a user with password `"short1"` (7 chars) → 400; `"noNumbers"` (no digit) → 400; `"valid1pw"` → 201, `password_changed_at` set
+- Update a user's password through the admin update route → `password_changed_at` refreshes to now
+- `npx tsc --noEmit` — no new errors vs baseline (2 pre-existing)
 
 ## Sub-phase 4e — Remaining Settings + Deferred Notifications (overview, scope narrowed)
 
