@@ -1,6 +1,6 @@
 # ความคืบหน้าโครงการ — RFS Report Finder System
 
-> **อัปเดตล่าสุด:** 2026-08-17 · **Branch:** `feature/phase3` · **HEAD:** `be5a772`
+> **อัปเดตล่าสุด:** 2026-08-17 · **Branch:** `feature/phase3` · **HEAD:** `34468ff`
 >
 > ไฟล์นี้ตอบคำถามเดียว: **"ตอนนี้ถึงไหนแล้ว และเหลืออะไร"** สถานะทุกแถวอ้างอิง commit จริงใน git log เป็นหลักฐาน ไม่ใช่การอ่านโค้ดเดา
 >
@@ -18,15 +18,9 @@
 
 **โค้ดเสร็จแล้ว:** Phase 0 → 3e ทั้งหมด (14 sub-phase) — ครบวงจรตั้งแต่ค้นหา/ดาวน์โหลดฝั่งผู้ใช้ ไปจนถึง CRUD รายงาน + ไฟล์ + คิวรี่ + สิทธิ์รายรายงาน + version rollback + แชร์ + แจ้งเตือน + dashboard + persist ธีมต่อผู้ใช้
 
-> ### 🟡 DB คนละตัวกับที่เอกสารนี้เคยพูดถึง — อ่านก่อนรันโปรเจกต์
+> ### ✅ DB drift (ของค้าง #1) ปิดจบแล้ว (2026-08-17, `34468ff`)
 >
-> ระหว่างทำ 3e (2026-08-17) พบว่า `.env`/`.env.local` ถูกชี้ไปที่ **DB คนละตัว** จากที่บันทึกไว้ก่อนหน้านี้: `nextjs_rfs`@`localhost:5432` แทน `next_rfs_master`@`5434` เดิม (เปลี่ยนนอกรอบ conversation นี้ — ไฟล์ `.env*` ไม่ได้ถูก track ใน git เลยหาต้นตอที่แน่ชัดไม่ได้)
->
-> **ข่าวดี:** DB ใหม่นี้มีครบทั้ง 25 ตาราง ตรงกับ `schema.prisma` ปัจจุบันแล้ว (`report_files`/`queries`/`variables`/`permissions`, `reports.search_vector`, `output_type` ครบ) — **ยืนยันแล้ว (2026-08-17)** ว่า Phase 1/2/3 รันได้จริงบน DB นี้ ไล่ verification list ครบทุก sub-phase ผ่าน 39/39 (ดูรายละเอียดด้านล่าง)
->
-> **แต่ของค้าง #1 (drift) ยังไม่ได้แก้จริง แค่ย้ายไป DB ใหม่พร้อมกัน** — `npx prisma migrate dev` ยัง detect drift signature เดิมเป๊ะ (`menus_permissions` หาย, `users.role_id`/`permissions.menu_id` เพิ่มมาไม่มี migration รองรับ) และ `_prisma_migrations` มี `applied_steps_count=0` ทุกแถว → มีคนรัน **Option B** (`migrate resolve --applied`) ไปแล้วกับ DB นี้ก่อนหน้า session นี้ โดยไม่อัปเดตเอกสาร ตอนทำ migration ของ 3e ก็ใช้ pattern เดียวกันต่อ (เขียน SQL มือ + `resolve --applied`) ไม่ใช้ `migrate reset`
->
-> รายละเอียด → [ของค้าง #1](#1-dev-db-ไม่เคยถูก-migrate-เลย--บล็อก-phase-3e-และ-phase-123) (อัปเดตแล้ว)
+> ระหว่างทำ 3e พบว่า `.env`/`.env.local` ชี้ไปที่ DB คนละตัวจากที่เคยบันทึกไว้ (`nextjs_rfs`@`5432` แทน `next_rfs_master`@`5434` เดิม) และมี schema drift แบบเดียวกับที่เคยบล็อก 3e อยู่ — สืบสาเหตุจนจบแล้ว: root cause คือ 2 รอบของการแก้ `schema.prisma` ผ่าน `db push` ตรงๆ โดยไม่มี migration ตามมา (ก.พ.-มี.ค. 2026, ก่อน Phase 0 เริ่ม 5 เดือนกว่า) บวกกับ DB ปัจจุบันถูกสร้างด้วย `db push` เช่นกันแทนที่จะ replay migration history จริง ทำให้ full-text search index 4 ตัวหายไปโดยไม่มีใครรู้ (search รัน sequential scan มาตลอด) — เขียน migration ใหม่ปิดช่องว่างครบทุกจุดแล้ว ยืนยันด้วยการ replay migration ทั้งหมดใส่ shadow DB เทียบกับ DB จริง **ตรงกันเป๊ะทั้ง 25 ตาราง/239 คอลัมน์/69 index/30 FK** รายละเอียดเต็ม → [ของค้าง #1](#1-dev-db-drift--✅-ปิดแล้ว-2026-08-17-34468ff--root-cause-เจอครบ-db-จริงตรงกับ-migration-history-100)
 
 **ค้างอยู่:** ไม่มีงานเฟส 0-3 ค้างแล้ว — Phase 3e เสร็จใน `f27a1dc`
 
@@ -39,9 +33,8 @@
 > **Test fixtures ที่ verification สร้างไว้ — ลบออกหมดแล้ว** (user `TEST-user2`, reports `TEST-*` 7 รายงาน, `report_shares`/`favorites`/`notifications` ที่เกี่ยวข้อง, ไฟล์ upload บน disk) DB กลับสู่สภาพเดิมก่อน verification (reports=5, users=4, ทุกตาราง Phase 2/3 ว่างเหมือนก่อนหน้า)
 
 **งานถัดไปที่ควรทำ (เรียงตามลำดับ):**
-1. **ตัดสินใจ root cause ของของค้าง #1 ให้จบจริง** — ใครรัน Option B ไปแล้ว, ทำไม `menus_permissions`/`role_id`/`menu_id` ถึงเปลี่ยนแบบไม่มี migration — ไม่งั้น drift แบบเดิมจะเกิดซ้ำทุกครั้งที่แก้ schema
-2. **รีเฟรช `feature-list.md`** — refresh แล้วเฉพาะแถว 3e (FR-13 theme) ที่เหลือ Phase 1/2/3a-3c ยังมีจุดที่ค้าง ❌ ให้เช็คทั้งไฟล์ (ดู [ของค้าง #4](#4-feature-listmd-ค้าง))
-3. **วางแผน Phase 4** — ยังไม่มี `phase4-plan.md` เลย ทั้งที่ `feature-list.md` อ้างถึง Phase 4 อยู่หลายสิบแถว
+1. **รีเฟรช `feature-list.md`** — refresh แล้วเฉพาะแถว 3e (FR-13 theme) ที่เหลือ Phase 1/2/3a-3c ยังมีจุดที่ค้าง ❌ ให้เช็คทั้งไฟล์ (ดู [ของค้าง #4](#4-feature-listmd-ค้าง))
+2. **วางแผน Phase 4** — ยังไม่มี `phase4-plan.md` เลย ทั้งที่ `feature-list.md` อ้างถึง Phase 4 อยู่หลายสิบแถว
 
 ---
 
@@ -119,59 +112,25 @@
 
 รวมทุกอย่างที่ค้างไว้ที่เดียว — เดิมกระจายอยู่ใน `CLAUDE.md`, `phase3-plan.md`, และ commit message
 
-### 1. Dev DB drift — เดิมบล็อก Phase 3e, ตอนนี้ baseline ทับไปแล้วแต่ root cause ยังไม่จบ
-**พบเมื่อ:** 2026-08-16 ตอนรัน `npx prisma migrate dev --name add_user_theme_preference` · **หาสาเหตุเจอ:** 2026-08-17 · **อัปเดต 2026-08-17 (รอบทำ 3e):** `.env`/`.env.local` ถูกเปลี่ยนไปชี้ DB ใหม่ `nextjs_rfs`@`5432` (นอกรอบ conversation, ไฟล์ env ไม่ track ใน git) — ตรวจแล้วว่า DB ใหม่นี้มีตารางครบ 25 ตัวตรงกับ schema แล้ว แต่ **drift เดิมยังอยู่**: `npx prisma migrate dev` บน DB ใหม่ยัง report drift signature เดิมเป๊ะ และ `_prisma_migrations` ทุกแถวมี `applied_steps_count=0` (= ถูก `migrate resolve --applied` มาก่อน ไม่ได้ apply จริงผ่าน `migrate deploy`) สรุปคือ**มีคนรัน Option B (ด้านล่าง) ไปแล้วกับ DB ตัวนี้** ก่อน session นี้ โดยไม่ได้บันทึกไว้ที่นี่ — 3e's migration (`20260817182535_add_user_theme_preference`) ทำตาม pattern เดียวกันต่อ (SQL มือ + `resolve --applied`) เพื่อไม่ชนปัญหาเดิมซ้ำ **ของค้างนี้จึงยังไม่ปิด** แค่ไม่บล็อกงานแล้ว — ยังต้องหาว่าใคร/ทำไมถึง drift (`users.role_id`, `permissions.menu_id`, drop `menus_permissions`) แบบไม่มี migration record
+### 1. Dev DB drift — ✅ ปิดแล้ว (2026-08-17, `34468ff`) — root cause เจอครบ, DB จริงตรงกับ migration history 100%
 
-#### ต้นเหตุ
-`next_rfs_master` (localhost:5434) **ไม่มีตาราง `_prisma_migrations` อยู่เลย** — ไม่ใช่ว่ามีแล้วข้อมูลไม่ตรง แต่คือไม่เคยมี DB นี้ถูกสร้างด้วย `prisma db push` ล้วน ๆ ไม่เคยรัน `migrate dev`/`migrate deploy` สักครั้ง
+**Timeline:** พบเมื่อ 2026-08-16 ตอนรัน `npx prisma migrate dev --name add_user_theme_preference` · หาต้นตอ commit ที่ทำให้ schema เพี้ยนเจอ 2026-08-17 (ช่วงเช้า) · พบว่า DB เปลี่ยนไปเป็น `nextjs_rfs`@`5432` แล้ว (ช่วงบ่าย ตอนทำ 3e) แต่ drift เดิมยังอยู่ · **ปิดจบจริงตอนเย็น 2026-08-17** ด้วยการ diff DB จริงกับการ replay migration ทั้งหมดใส่ shadow DB สดๆ (ไม่ใช่แค่อ่าน `migrate diff --to-schema` ซึ่งมองไม่เห็น raw SQL ที่ schema DSL แทนไม่ได้) แล้วเขียน migration ใหม่ปิดช่องว่างที่เจอ
 
-```
-npx prisma migrate status
-→ 4 migrations found ... Following migrations have not yet been applied:
-   20260214094853_init                                          ← แม้แต่ init
-   20260220163341
-   20260813131434_add_report_search
-   20260813144536_report_files_queries_variables_permissions
-```
+**สรุปสุดท้าย — มี 3 ปัญหาซ้อนกันอยู่ ไม่ใช่ปัญหาเดียว:**
 
-Prisma จึงเจอ DB ที่มี 20 ตารางแต่ไม่มีบันทึกว่าอะไร apply ไปแล้ว → ทางเดียวที่มันเสนอได้คือ `reset`
+1. **`users.role_id` / `permissions.menu_id` มีจริงใน DB แต่ไม่มี migration รองรับ** — ต้นตอจาก commit `b5c6e7a` (22 ก.พ. 2026, "create user") และ `ccdc32d` (3 มี.ค. 2026, "add permission checkbox func") ซึ่งแก้ `schema.prisma` แล้วรัน `prisma db push` ตรงๆ **ไม่เคยรัน `migrate dev`** ทั้งคู่ — เหตุการณ์นี้เกิด**ก่อน Phase 0 เริ่ม 5 เดือนกว่า** (Phase 0 เริ่ม 13 ส.ค. 2026) ตอนนั้นยังไม่มี workflow ที่เข้มงวดเรื่อง migration เลย มีอีกครั้งที่ทำแบบเดียวกัน (`4cad847`, 15 ก.พ.) แต่รอบนั้นมีคน backfill migration ให้ทีหลัง 6 วัน (`82b3790`) — อีก 2 ครั้งไม่มีใคร backfill เลย
+2. **DB ปัจจุบัน (`nextjs_rfs`) ถูกสร้างด้วย `prisma db push` จาก `schema.prisma` โดยตรง ไม่ใช่ replay migration history** (ยืนยันได้จากรูปแบบที่ขาด/ไม่ขาด: field/index ที่ประกาศได้ผ่าน Prisma schema DSL เช่น `role_id`, `menu_id`, `search_vector` column, `@@index([department_id])` — มีอยู่ครบ แต่ **GIN/trigram index 4 ตัวของ full-text search ที่เขียนเป็น raw SQL ล้วนๆในไฟล์ migration (ไม่มีทางประกาศผ่าน schema DSL ได้) หายไปหมด** → **search รันแบบ sequential scan มาตลอดโดยไม่มีใครรู้** — เป็นบั๊ก perf จริงที่ไม่เคยถูกจับได้ก่อนหน้านี้ (เพราะ `migrate diff --to-schema` มองไม่เห็นสิ่งที่ schema DSL แทนไม่ได้)
+3. **Checksum ของ 2 migration (`20260813131434`, `20260813144536`) ใน `_prisma_migrations` ไม่ตรงกับไฟล์จริง** — ยืนยันด้วยการคำนวณ sha256 ของไฟล์เทียบกับ checksum ที่บันทึกไว้ไม่ตรงกันทั้งคู่ (เทียบกับ 2 migration ที่ resolve ผ่าน CLI ถูกต้องในรอบนี้ ซึ่ง checksum ตรงเป๊ะ) — แปลว่าตอน baseline DB นี้ มีคน **insert แถวลง `_prisma_migrations` เองแบบ manual** แทนที่จะใช้ `prisma migrate resolve --applied` ตัวจริง ทำให้ `migrate dev` ฟ้องว่า "migration ถูกแก้หลัง apply" ตลอดแม้ schema จะตรงกันแล้ว
 
-#### จุดที่ `db push` เกิดขึ้น (ยืนยันจาก git)
-`schema.prisma` ถูกแก้ 3 commit โดยไม่มี migration ตามมา:
+**Fix:** migration ใหม่ `20260817205217_reconcile_role_menu_drift_and_search_indexes` — เพิ่ม `role_id`/`menu_id`+FK และ drop `menus_permissions` แบบ idempotent (no-op บน DB ปัจจุบันเพราะมีอยู่แล้วจริง, แต่ทำให้ fresh `migrate deploy` ในอนาคตได้ผลลัพธ์ตรงกัน) + **สร้าง 4 search index ที่หายไปจริงๆ** (ผลจริง ไม่ใช่แค่เอกสาร) แล้วแก้ checksum ที่ผิดของอีก 2 migration ด้วย SQL ตรงๆ
 
-| Commit | แก้อะไร | migration |
-|---|---|---|
-| `4cad847` | เพิ่ม `menus`, `menus_permissions`, `can_view/create/update/delete` | ❌ (ตามเก็บทีหลังใน `82b3790`) |
-| `b5c6e7a` | เพิ่ม **`users.role_id`** | ❌ ไม่เคยมี |
-| `ccdc32d` | เพิ่ม **`permissions.menu_id`** + **ลบ model `menus_permissions`** (เปลี่ยน M2M join table → FK ตรง) | ❌ ไม่เคยมี |
+**ยืนยันปิดจบแล้ว:** replay migration ทั้ง 6 ตัวใส่ shadow DB ใหม่เอี่ยม เทียบกับ DB จริงด้วย `information_schema` — **ตาราง/คอลัมน์/index/FK เท่ากันเป๊ะทั้ง 4 มิติ (25/239/69/30)** ทดสอบ search จริงหลังเพิ่ม index แล้วผลลัพธ์ถูกต้องเหมือนเดิม
 
-ตรงกับที่ Prisma ฟ้องเป๊ะ — ยืนยันกับ DB จริงแล้ว: `users.role_id` เป็น `varchar(100)`, `permissions.menu_id` เป็น `uuid` มีอยู่จริงทั้งคู่ ส่วน `menus_permissions` กลับกัน คือ migration `20260220163341` สั่งสร้าง แต่ **DB ไม่มี** เพราะ `ccdc32d` ลบทิ้งแล้ว push ทับ
+#### ประวัติแบบย่อ (รายละเอียดเต็มดู commit message ของ `34468ff`)
 
-#### ผลกระทบที่ใหญ่กว่าตัว drift
-DB มี 20 ตาราง แต่ `schema.prisma` มี 25 model — **ที่ขาดคือของ Phase 1 และ 2a ทั้งหมด**:
-- ❌ `report_files`, `report_queries`, `report_query_versions`, `report_variables`, `report_permissions`
-- ❌ `reports.search_vector` + `reports_search_vector_idx` + trgm index ทั้ง 3 + `reports_department_id_idx` + `reports_status_category_id_idx` (มีแค่ index ชุด init เดิม 6 ตัว)
-- ❌ `reports.output_type`, `users.theme_preference`
+DB เก่า (`next_rfs_master`@`5434`) ไม่มี `_prisma_migrations` เลย → เจอว่า `schema.prisma` ถูกแก้ 3 ครั้ง (`4cad847`, `b5c6e7a`, `ccdc32d`, ก.พ.-มี.ค. 2026) ผ่าน `db push` โดยไม่มี migration ตามมา (ยกเว้นครั้งแรกที่ backfill ทีหลังใน `82b3790`) → ระหว่างสืบสาเหตุพบว่า `.env` ถูกเปลี่ยนไปชี้ DB ใหม่ `nextjs_rfs`@`5432` (นอกรอบ conversation) ซึ่งมีตารางครบแล้วแต่ **เกิด drift ซ้ำแบบเดียวกันอีกรอบ** เพราะถูกสร้างด้วย `db push` เช่นกัน ไม่ใช่ replay migration history → ทางแก้ B (เก็บข้อมูลเดิม + `migrate resolve --applied`) ถูกเลือกใช้โดยพฤตินัยสำหรับ DB ใหม่นี้ (ไม่มีบันทึกทางการ) ก่อนจะปิดจบจริงด้วย migration `34468ff` ที่ระบุไว้ข้างบน
 
-⇒ **Phase 1, 2b, 2c, 2d, 3a รันกับ DB นี้ไม่ได้เลย** ซึ่งขัดกับที่ phase plan บันทึกว่าทำ Verification list ครบแล้ว — ต้องถือว่า Verification ของเฟสเหล่านั้น **ยังไม่ได้ทำจริง** และต้องทำใหม่หลังแก้ DB
-
-ตรวจแล้วว่าไม่ใช่เรื่องต่อผิดฐาน: `.env` กับ `.env.local` ชี้ `postgresql://postgres@localhost:5434/next_rfs_master` เหมือนกันเป๊ะ และบนเซิร์ฟเวอร์มีแค่ `bd_init_db`, `neko_neko_master`, `next_rfs_master`, `postgres` — ไม่มี DB สำรองของ RFS
-
-#### ทางแก้ — เลือก 1 ใน 2
-
-> **อัปเดต 2026-08-17:** พบว่า DB ปัจจุบัน (`nextjs_rfs`@`5432`, เปลี่ยนมาจาก `.env` นอกรอบ conversation) ถูกทำ **ทางแก้ B ไปแล้ว** ก่อนหน้า session ที่ทำ 3e — `_prisma_migrations` มี `applied_steps_count=0` ทั้ง 4 แถวของ DB เดิม ยืนยันว่าถูก `migrate resolve --applied` มา ไม่ใช่ apply จริง **แต่ไม่มีใครบันทึกว่าทำ/ทำเมื่อไหร่/ใครทำ** — ของค้างที่เหลือคือเอกสารตามหลังความจริงไม่ทัน ไม่ใช่ต้องเลือกทางแก้ใหม่แล้ว (ทาง A `migrate reset` **ไม่ควรทำแล้วตอนนี้** เพราะจะลบข้อมูลบน DB ที่ถูกใช้งานจริงอยู่)
-
-**A. `migrate reset` + reseed** — ข้อมูลใน DB มีแค่ **users 4 / reports 3 / activity_logs 7** ซึ่ง seed กลับได้หมด ได้ ledger ที่ถูกต้องตั้งแต่ต้น ⚠️ ต้องเปิด comment `initSeed`/`rolesSeed`/`seedUsers` ใน `prisma/seed.ts` `main()` ก่อน ไม่งั้นได้ DB ที่ไม่มี user — **ตกไปแล้วสำหรับ DB ปัจจุบัน** เพราะ B ถูกเลือกไปแล้วโดยพฤตินัย
-
-**B. เก็บข้อมูลเดิม** — รัน SQL template แล้ว `migrate resolve --applied` ทั้ง 4 ตัว ⚠️ วิธีนี้จะกลบความจริงเรื่อง `menus_permissions` ไว้ในประวัติ — **นี่คือสิ่งที่เกิดขึ้นจริงกับ `nextjs_rfs`** (ยืนยันจาก `applied_steps_count=0`) แม้ไม่มีบันทึกอย่างเป็นทางการ
-
-📄 **SQL template พร้อมใช้:** [`prisma/manual/2026-08-17_reconcile-drift.template.sql`](../prisma/manual/2026-08-17_reconcile-drift.template.sql) — แจกแจงครบว่า **เพิ่ม** อะไร (3 enum, 2 คอลัมน์, 5 ตาราง, 10 index, 5 FK) **ลด** อะไร (ไม่มีเลย) **แก้** อะไร (`search_vector` ต้องเป็น generated column) พร้อมขั้นตอนของทั้งทาง A และ B
-
-> ⚠️ ไฟล์ template วางไว้ที่ `prisma/manual/` ไม่ใช่ `prisma/migrations/` เพื่อไม่ให้ Prisma หยิบไปรันเอง
->
-> ⚠️ `migrate diff` ที่ Prisma generate ให้ **ตกไป 5 รายการ** ที่ schema แทนไม่ได้ (extension `pg_trgm`/`unaccent`, generated column `search_vector`, GIN index, trgm index, partial unique `report_queries_one_main_per_report`) — template เติมมือให้แล้ว **อย่าใช้ output ดิบจาก `migrate diff` ตรง ๆ** จะได้ search ที่พังเงียบ ๆ
-
-> 📌 **ข้อสันนิษฐานเดิมตกไปแล้ว:** `phase3-plan.md` เขียนว่าสงสัยไฟล์ `app/api/auth/login/route.ts` / `lib/redis.ts` ที่ modified ค้าง เป็นต้นเหตุ — ไม่เกี่ยวเลย ไฟล์พวกนั้นไม่แตะ schema และ commit ไปแล้วใน `a9e9a27`
+📄 SQL template จากการสืบสาเหตุรอบแรก ([`prisma/manual/2026-08-17_reconcile-drift.template.sql`](../prisma/manual/2026-08-17_reconcile-drift.template.sql)) **ไม่ได้ใช้จริงแล้ว** — ทางแก้จริงคือ migration `34468ff` เก็บไว้เป็นหลักฐานการสืบสาเหตุเท่านั้น
 
 ### 2. Baseline TypeScript errors — เดิมเข้าใจว่า 6 ตัวเป็นหนี้เก่า ที่จริง 4 ตัวคือ regression จาก merge พังที่ถูกแก้แล้ว
 
