@@ -125,11 +125,13 @@ Remaining decision-free scope: max upload size per `file_kind` (config value + v
 
 **Resolved (user, 2026-08-17): self-hosted (`pino`), not a hosted vendor.** No external account/DSN to provision; works offline; simplest fit for an internal-only tool.
 
-### 1. `lib/logger.ts` — structured logger
+### 1. `lib/logger.ts` — structured logger ✅ implemented
 
-`pino` instance, pretty-printed in development (`pino-pretty`, dev dependency only) and plain JSON in production (so log aggregation tooling, if ever added, gets parseable lines). Replaces ad hoc `console.log`/`console.error` calls in route handlers over time — **not a mass find-and-replace across the whole codebase in this sub-phase** (that's a large, low-value mechanical sweep); wire it into new code going forward and the highest-value existing spots first: `logActivity`'s swallowed-error path (`lib/activity-log.ts`), `getCurrentUser`/`getAuthFromRequest`'s swallowed catches (`lib/auth.ts`) — these currently fail silently with zero trace, which is exactly what structured logging is for.
+`pino` instance, pretty-printed in development (`pino-pretty`, dev dependency only) and plain JSON in production (so log aggregation tooling, if ever added, gets parseable lines). Replaces ad hoc `console.log`/`console.error` calls in route handlers over time — **not a mass find-and-replace across the whole codebase in this sub-phase** (that's a large, low-value mechanical sweep); wired into the highest-value existing spot first: `logActivity`'s swallowed-error path (`lib/activity-log.ts`), which previously failed silently with zero trace.
 
-**Files**: `lib/logger.ts` (new), `lib/activity-log.ts` + `lib/auth.ts` (swap `console.error` → `logger.error` in the swallowed-catch paths only)
+**Scope correction found during implementation**: `getCurrentUser`/`getAuthFromRequest`'s swallowed catches in `lib/auth.ts` are **not** touched, on purpose — `middleware.ts` imports `getAuthFromRequest` and runs on the Edge runtime, which can't bundle `pino`'s worker-thread-based transports (confirmed: this is the exact same constraint documented in `lib/rate-limit.ts`'s own comment for why it's kept out of `lib/auth.ts` — `ioredis` can't bundle for Edge either). Importing `lib/logger.ts` into `lib/auth.ts` would break the middleware bundle. Left as `console.error` for now; revisit only alongside a real plan for Edge-safe logging (e.g. a fetch-based log shipper instead of pino's Node-only transports), not folded into this pass.
+
+**Files**: `lib/logger.ts` (new), `lib/activity-log.ts` (swap `console.error` → `logger.error`)
 
 ### 2. Dependency vulnerability scanning (CI)
 

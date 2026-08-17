@@ -2,6 +2,7 @@ import { NextRequest } from 'next/server';
 import { faker } from '@faker-js/faker';
 import prisma from '@/lib/prisma';
 import { getClientIp } from '@/lib/request-info';
+import logger from '@/lib/logger';
 
 export type ActivityAction = 'create' | 'update' | 'delete' | 'login' | 'login_failed' | 'logout' | 'favorite' | 'unfavorite' | 'download';
 export type ActivityEntity = 'report' | 'user' | 'department' | 'role' | 'auth';
@@ -37,6 +38,6 @@ export async function logActivity(req: NextRequest, params: LogActivityParams): 
             },
         });
     } catch (err) {
-        console.error('[logActivity] failed to write activity log:', err);
+        logger.error({ err, action: params.action, entity: params.entity, entityId: params.entityId }, 'logActivity failed to write activity log');
     }
 }
