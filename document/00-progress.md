@@ -1,6 +1,6 @@
 # ความคืบหน้าโครงการ — RFS Report Finder System
 
-> **อัปเดตล่าสุด:** 2026-08-17 · **Branch:** `feature/phase3` · **HEAD:** `be89ddf`
+> **อัปเดตล่าสุด:** 2026-08-17 · **Branch:** `feature/phase4` · **HEAD:** `e3e3978`
 >
 > ไฟล์นี้ตอบคำถามเดียว: **"ตอนนี้ถึงไหนแล้ว และเหลืออะไร"** สถานะทุกแถวอ้างอิง commit จริงใน git log เป็นหลักฐาน ไม่ใช่การอ่านโค้ดเดา
 >
@@ -16,18 +16,16 @@
 
 ## 👉 ตอนนี้อยู่ตรงไหน
 
-**โค้ดเสร็จแล้ว:** Phase 0 → 3e ทั้งหมด (14 sub-phase) — ครบวงจรตั้งแต่ค้นหา/ดาวน์โหลดฝั่งผู้ใช้ ไปจนถึง CRUD รายงาน + ไฟล์ + คิวรี่ + สิทธิ์รายรายงาน + version rollback + แชร์ + แจ้งเตือน + dashboard + persist ธีมต่อผู้ใช้ — **verified จริง 39/39 บน DB `nextjs_rfs`** (2026-08-17) **Phase 4**: 4a (security headers)/4b (Vitest)/4c (single-report view + per-file download/preview/print) เสร็จ, 4f เริ่มแล้วบางส่วน (structured logging), 4d/4e เหลือ overview
+**โค้ดเสร็จแล้ว:** Phase 0 → 3e ทั้งหมด (14 sub-phase, verified จริง 39/39 บน DB `nextjs_rfs`) + **Phase 4a/4b/4c/4d เสร็จ**, 4f เริ่มแล้วบางส่วน (structured logging), 4e เหลือ overview เท่านั้น
 
-**สรุปเหตุการณ์วันที่ 2026-08-17 แบบย่อ** (รายละเอียดเต็มอยู่ในตารางด้านล่าง + ของค้างแต่ละข้อ):
-- DB drift (ของค้าง #1) — ปิดจบแล้ว หา root cause ครบ ยืนยันด้วย shadow-DB replay ตรงกันเป๊ะ (`34468ff`)
-- Verification Phase 1/2a-2d/3a-3d รันจริงบน DB ปัจจุบัน ผ่าน 39/39, เจอ+แก้บั๊ก shares-fallback (`be5a772`)
-- `feature-list.md` รีเฟรชครบ 100 แถว (62✅/9⚠️/29❌), เจอ+แก้ regression `output_type` ไม่ persist (`abd3629`) — สาเหตุเดียวกับ `access_level` ที่แก้ไปก่อนหน้า (`1e1f05c`) คือ merge `abb4003` ที่ทำให้เกิด baseline TS error ปลอมด้วย (ดูของค้าง #2)
-- Phase 4 plan สร้างแล้ว (`8099419`), sub-phase 4a (security headers) เสร็จ (`dd98843`) — ยังไม่ได้ยืนยันด้วย `curl -I` จริงเพราะต้อง restart dev server ของผู้ใช้
+> หมายเหตุ branch: ย้ายมาทำงานบน `feature/phase4` แล้ว (เดิม `feature/phase3`) — commit ประวัติเดียวกัน ไม่มีอะไรหาย ดู git log ถ้าสงสัย
 
-**ค้างอยู่:** ไม่มีงานเฟส 0-3 ค้างแล้ว
+**ค้างอยู่:** ไม่มีงานเฟส 0-3 ค้างแล้ว — Phase 4d ทดสอบครบยกเว้น full login-flow กับ Redis (ดูรายละเอียดใน 4d ด้านล่าง)
 
 **งานถัดไปที่ควรทำ (เรียงตามลำดับ):**
-1. **ยืนยัน 4a ด้วย `curl -I` หลัง restart dev server** — ดู [Phase 4 sub-phase 4a](#phase-4--hardening--enterprise-features-🚧-เริ่มแล้ว)
+1. **ยืนยัน 4d's login flow แบบเต็มเมื่อ Redis reachable จริง** — enroll 2FA → login → `verify-2fa` → ได้ session จริง (ยังไม่เคยทดสอบ end-to-end)
+2. **ตัดสินใจสโคปของ 4e ที่เหลือ** (max upload size, department sharing, expiry/system notification) — ทั้งหมด decision-free แล้ว รอแค่หยิบมาทำ
+3. **4f ที่เหลือ**: dependency vulnerability scanning (ต้องตั้ง CI ก่อน — ยังไม่มี `.github/workflows/` เลย), abnormal-auth-pattern alerting, dashboard cache/precompute
 2. **ตัดสินใจ 3 คำถามเปิดของ Phase 4** ก่อนแตกแผนละเอียด 4b/4d/4f ต่อ — test framework (4b), ต้องการ auth-provider/storage-backend abstraction จริงไหม (4d/4e), vendor logging/error-tracking (4f) — ดู `phase4-plan.md`
 3. **พิจารณาช่องว่างเล็กๆที่ feature-list.md รีเฟรชเจอ** (ตอนนี้อยู่ใน scope ของ 4c overview แล้ว): ดาวน์โหลด `SAMPLE_FILLED_FORM`/ไฟล์ตาม `file_kind` แยกสำหรับ user ทั่วไป, PDF/Excel inline preview, print ฝั่ง client, `view_count` ที่ยังตายอยู่
 
@@ -94,7 +92,7 @@
 | **4a** | Security response headers (CSP/HSTS/X-Content-Type-Options/X-Frame-Options/Referrer-Policy/Permissions-Policy) | ✅ | `dd98843` |
 | **4b** | Automated test suite bootstrap — Vitest, first tests on `lib/report-acl.ts` | ✅ | `dad7014` |
 | **4c** | Upload/file-serving gaps — single-report view, per-`file_kind` download, PDF/Excel preview + print, `view_count` ✅ (AV scan deferred, no ClamAV confirmed) | ✅ | `be89ddf` |
-| 4d | Auth flexibility & policy (2FA, password policy — auth provider selection dropped, aspirational) | 📝 scope narrowed, รอ policy values | — |
+| **4d** | Auth flexibility & policy — TOTP 2FA + backup codes, password policy (8 ตัว+ตัวอักษร+ตัวเลข) ✅ (auth provider selection dropped, aspirational) | ✅ | `e3e3978` |
 | 4e | Settings ที่เหลือ + notification ที่ defer ไว้ (max upload size, department sharing, expiry/system notif — storage backend dropped, aspirational) | 📝 scope narrowed | — |
 | 4f | Observability & ops — structured logging ✅ (`lib/logger.ts`, pino), ที่เหลือ (dependency scanning, alert, dashboard cache) ยัง 📝 | 🚧 | `f222dca` |
 
@@ -116,6 +114,15 @@
 - [x] ยืนยันสดครบ: `view_count`/`download_count` เพิ่มจริงผ่าน SQL ตรง, ดาวน์โหลด `SAMPLE_FILLED_FORM` ได้ byte-identical, preview excel คืนค่าตรงกับไฟล์จริง, preview PDF ได้ 400 ถูกต้อง, หน้า report-list/favorites compile ผ่าน 200
 - ⚠️ `exceljs` ดึง advisory ระดับ moderate ผ่าน `uuid` (`GHSA-w5hq-g745-h8pq`) มาด้วย — ไม่ reachable จาก usage ของแอปนี้ (parse ไฟล์ server-side ไม่รับ buffer จาก client โดยตรง) ไม่ downgrade เพราะ fix เดียวที่มีคือ exceljs 3.4.0 ซึ่งเก่ากว่าที่ควร
 - AV scan (ClamAV) — deferred ตามที่ผู้ใช้ยืนยัน ไม่มี daemon ยืนยันในสภาพแวดล้อม deploy
+
+**4d ปิดจบแล้ว** (`e3e3978`):
+- [x] Schema: ตาราง `two_factor_backup_codes` ใหม่ + ประกาศ 4 index ค้นหา (`search_vector`/trgm) ใน `schema.prisma` ผ่าน `@@index(..., type: Gin, map: "...")` ของ Prisma 7 เพื่อปิดของค้างที่ `migrate dev` จะพยายาม drop index พวกนี้ทุกครั้ง (ดูรายละเอียดเหตุการณ์ที่เจอระหว่างทำใน `phase4-plan.md` 4d ข้อ 1 — migration รอบนี้ **เผลอลบ index ค้นหาทั้ง 4 ตัวไปจริง** ก่อนจะกู้คืน+แก้ต้นเหตุ)
+- [x] `lib/two-factor.ts` — TOTP (`otplib` **v12.0.1 ปักหมุดไว้** ไม่ใช่ v13 ที่ npm install มาให้ default เพราะ v13 เพิ่ง rewrite เป็น plugin architecture ใหม่หมดเมื่อไม่กี่สัปดาห์ก่อน ความเสี่ยงสูงกว่า v12 classic API ที่นิ่งมานาน), backup codes (bcrypt-hashed), pending-2FA token ผ่าน Redis (fail **closed** ถ้า Redis ล่ม ต่างจาก rate-limiter ที่ fail open โดยตั้งใจ)
+- [x] `app/api/auth/2fa/{setup,confirm,disable,status}` + `app/api/auth/login/verify-2fa` (ใหม่) + แก้ `login/route.ts` ให้ withhold session ถ้า `two_factor_enabled`
+- [x] `components/shared/twoFactorSettings.tsx` wire เข้า `profile/page.tsx` (แทนการ์ด placeholder เดิม) + แก้ `login/page.tsx` เป็น 2 ขั้นตอน
+- [x] `lib/password-policy.ts` (8 ตัว+ตัวอักษร+ตัวเลข, ใช้ร่วมกันทั้ง create/update user) + set `password_changed_at` ทั้งสองจุด (ไม่บังคับ rotate ตามที่ตัดสินใจไว้)
+- [x] ยืนยันสด: enroll 2FA จริงบน account ทดสอบ (คำนวณ TOTP code จาก secret ที่คืนมาด้วย `otplib` ตรงๆ), ได้ backup code 10 ชุด, DB ตรง; `disable` ปฏิเสธรหัสผ่านผิด (401) และสำเร็จด้วยรหัสถูก เคลียร์ secret/backup codes ครบ; password policy ปฏิเสธรหัสสั้น/ไม่มีตัวเลขทั้ง create/update, ผ่านรหัสที่ถูกต้อง, `password_changed_at` set/update ถูกต้อง
+- ⚠️ **ไม่ได้ทดสอบ login flow แบบเต็ม (2FA-enabled → verify-2fa → session)** — Redis ใน environment นี้เชื่อมต่อไม่ได้หลังจากลองหลายรอบ (ทั้ง `localhost:6379`/`:6380`, `netstat` ยืนยันว่าไม่มีอะไร listen จริง) ผู้ใช้ตัดสินใจข้ามการตรวจนี้ไปก่อน — ถ้าจะกลับมาทำ ให้ยืนยัน Redis reachable จริงจากเครื่องที่รัน dev server ก่อน (`redis-cli ping`)
 
 **4f — เริ่มแล้ว** (`f222dca`, ยังไม่จบทั้ง sub-phase):
 - [x] `lib/logger.ts` (pino, self-hosted ตามที่ผู้ใช้เลือก) + wire เข้า `logActivity`'s swallowed catch
