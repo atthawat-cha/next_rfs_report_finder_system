@@ -36,6 +36,8 @@ npx prisma db seed          # runs prisma/seed.ts (tsx prisma/seed.ts)
 
 `prisma/seed.ts` composes seed steps from `prisma/seeds/*.ts` (users, reports, menus, permissions, role_permissions, roles) — most are commented out in `main()` by default, so uncomment only the ones you need before reseeding.
 
+**Before letting any `npx prisma migrate dev` apply, check the generated `migration.sql` for an `ALTER TABLE "reports" ALTER COLUMN "search_vector" DROP DEFAULT` line and delete it if present.** `reports.search_vector` is a Postgres generated column (`GENERATED ALWAYS AS (...) STORED`) declared in schema.prisma as `Unsupported("tsvector")` — Prisma has no first-class generated-column support, so its shadow-DB diff engine periodically proposes dropping a "default" that isn't really one, and Postgres rejects it (`P3018`, generated columns can't have `DROP DEFAULT`). This isn't just a failed-and-nothing-happens error: a real incident during Phase 4d showed a failing migration does **not** roll back statements that ran earlier in the same file — `DROP INDEX` statements ahead of the bad `ALTER COLUMN` line committed for real, silently deleting the full-text search indexes, while the migration still reported failed. Use `npx prisma migrate dev --create-only` to inspect before applying whenever the diff might touch `reports`.
+
 Required env vars (`.env` / `.env.local`, not committed with real values): `DATABASE_URL`, `JWT_SECRET`, `NEXT_PUBLIC_API_URL`, `NEXT_PUBLIC_APP_URL`, `NODE_ENV`.
 
 ## Architecture

@@ -178,7 +178,15 @@ model two_factor_backup_codes {
   @@index([user_id])
 }
 ```
-Plus the inverse relation field on `model users`. New migration (`npx prisma migrate dev --name add_two_factor_backup_codes` — expect this to work cleanly now that ของค้าง #1's drift is closed and `migrate dev` no longer needs the hand-written-SQL-plus-`resolve --applied` workaround).
+Plus the inverse relation field on `model users`.
+
+> ⚠️ **Incident + standing gotcha found running this migration**: `npx prisma migrate dev --name add_two_factor_backup_codes` generated a migration that (correctly) created the new table, but **also** included `DROP INDEX` on all 4 of the Phase 1 search indexes (`reports_search_vector_idx` + 3 trigram) and `ALTER TABLE reports ALTER COLUMN search_vector DROP DEFAULT` — the latter failed (`P3018`, Postgres rejects dropping a default on a *generated* column), but by then **the DROP INDEX statements had already committed** (this migration did not run as a single all-or-nothing transaction). Root cause: `search_vector` is declared as `Unsupported("tsvector")` (Prisma has no first-class generated-column support), and the 4 indexes were declared only as raw SQL in an old migration file, never in the Prisma schema DSL — so every `migrate dev` shadow-DB diff sees schema.prisma as "wanting" to drop indexes it doesn't know exist. This is the exact same category of problem ของค้าง #1 root-caused, just triggered fresh by the next schema change instead of being a leftover from Feb-Mar 2026.
+>
+> **Fixed in two parts:**
+> 1. Recreated the 4 indexes via direct SQL immediately (verified restored, then re-verified search still returns correct results via the live `/api/reports/browse` endpoint) and manually corrected the generated migration.sql to contain only the real intended change (the `CREATE TABLE`/`CREATE INDEX`/`AddForeignKey` for `two_factor_backup_codes`), then `prisma migrate resolve --applied` on the corrected file.
+> 2. **Closed the recurring trigger for good**: added `@@index(..., type: Gin, map: "...")` declarations for all 4 indexes directly to `reports` in `schema.prisma` (Prisma 7's extended-index-types support, GA, no preview flag needed — `ops: raw("gin_trgm_ops")` for the trigram ones), using `map:` to match the exact existing index names so Prisma recognizes them as already-satisfied rather than proposing near-duplicates. Confirmed via `migrate diff --from-config-datasource --to-schema`: diff shrank from "drop 4 indexes + alter column" down to just the one cosmetic `DROP DEFAULT` line, which cannot be eliminated (Prisma limitation with `Unsupported()` + generated columns) but is at least now harmless-if-caught and easy to spot.
+>
+> **Standing rule for every future migration in this repo**: after `npx prisma migrate dev --name ...`, always check the generated `migration.sql` for a `search_vector` `ALTER COLUMN ... DROP DEFAULT` line before letting it apply (or use `--create-only` to inspect first) — strip that one line, since it always fails against a generated column and (as this incident showed) a failure partway through a migration does not necessarily roll back everything that ran before it in the same file.
 
 **Files**: `prisma/schema.prisma`, new migration
 

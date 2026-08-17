@@ -283,6 +283,10 @@ model reports {
   @@index([status])
   @@index([department_id])
   @@index([status, category_id])
+  @@index([search_vector], type: Gin, map: "reports_search_vector_idx")
+  @@index([name_th(ops: raw("gin_trgm_ops"))], type: Gin, map: "reports_name_th_trgm_idx")
+  @@index([name_en(ops: raw("gin_trgm_ops"))], type: Gin, map: "reports_name_en_trgm_idx")
+  @@index([code(ops: raw("gin_trgm_ops"))], type: Gin, map: "reports_code_trgm_idx")
 }
 
 model role_permissions {
@@ -408,9 +412,21 @@ model users {
   user_roles          user_roles[]
   user_sessions       user_sessions[]
   role_id             String            @db.VarChar(100)
+  two_factor_backup_codes two_factor_backup_codes[]
 
   roles       roles        @relation(fields: [role_id], references: [id], onDelete: Cascade)
   departments departments? @relation(fields: [department_id], references: [id])
+}
+
+model two_factor_backup_codes {
+  id         String    @id
+  user_id    String
+  code_hash  String
+  used_at    DateTime?
+  created_at DateTime  @default(now())
+  users      users     @relation(fields: [user_id], references: [id], onDelete: Cascade)
+
+  @@index([user_id])
 }
 
 model menus {
