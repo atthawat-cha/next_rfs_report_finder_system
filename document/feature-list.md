@@ -2,7 +2,9 @@
 
 > รวมฟีเจอร์ทั้งหมดของระบบ จัดกลุ่มตามโมดูล/บทบาทผู้ใช้ พร้อม priority (MoSCoW) และสถานะปัจจุบัน (✅ ทำงานได้จริง · ⚠️ มี UI/schema แต่ไม่สมบูรณ์/mock · ❌ ยังไม่มี) อ้างอิงจาก gap analysis ใน `document/new_requirement.md §3-4` แปลงเป็น checklist ที่ execute ได้ พร้อม mapping ไปยัง phase ใน [project-specification.md §6](./project-specification.md#6-development-methodology)
 >
-> เอกสารที่เกี่ยวข้อง: [system-design.md](01-system-design.md) · [workflow.md](./workflow.md) · [diagrams.md](./diagrams.md)
+> ⚠️ **คอลัมน์ "สถานะ" ในไฟล์นี้ค้างอยู่** — แถวของ Phase 1/2/3a-3c ยังขึ้น ❌ ทั้งที่ ship ไปแล้ว ถ้าอยากรู้ว่า**ตอนนี้ถึงไหนแล้ว** ให้ดู [**00-progress.md**](./00-progress.md) แทน (อ้างอิง commit จริง) ไฟล์นี้ใช้ดูว่า *ระบบต้องมีฟีเจอร์อะไรบ้าง* + priority
+>
+> เอกสารที่เกี่ยวข้อง: [00-progress.md](./00-progress.md) · [system-design.md](01-system-design.md) · [workflow.md](./workflow.md) · [diagrams.md](./diagrams.md)
 
 ---
 
