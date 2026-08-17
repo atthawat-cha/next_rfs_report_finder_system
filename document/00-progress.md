@@ -1,6 +1,6 @@
 # ความคืบหน้าโครงการ — RFS Report Finder System
 
-> **อัปเดตล่าสุด:** 2026-08-17 · **Branch:** `feature/phase3` · **HEAD:** `f27a1dc`
+> **อัปเดตล่าสุด:** 2026-08-17 · **Branch:** `feature/phase3` · **HEAD:** `1e1f05c`
 >
 > ไฟล์นี้ตอบคำถามเดียว: **"ตอนนี้ถึงไหนแล้ว และเหลืออะไร"** สถานะทุกแถวอ้างอิง commit จริงใน git log เป็นหลักฐาน ไม่ใช่การอ่านโค้ดเดา
 >
@@ -166,17 +166,24 @@ DB มี 20 ตาราง แต่ `schema.prisma` มี 25 model — **ท
 
 > 📌 **ข้อสันนิษฐานเดิมตกไปแล้ว:** `phase3-plan.md` เขียนว่าสงสัยไฟล์ `app/api/auth/login/route.ts` / `lib/redis.ts` ที่ modified ค้าง เป็นต้นเหตุ — ไม่เกี่ยวเลย ไฟล์พวกนั้นไม่แตะ schema และ commit ไปแล้วใน `a9e9a27`
 
-### 2. Baseline TypeScript errors — 6 ตัว (หนี้เก่า ไม่ใช่ของใหม่)
-`npx tsc --noEmit` มี error ค้าง 6 ตัวมาตั้งแต่ก่อน Phase 1 (แก้ล่าสุด `f8d7598`) **ไม่เกี่ยวกับงาน reports/versions/shares/notifications** — เวลา type-check ให้เทียบกับ baseline นี้ แล้วรายงานเฉพาะ error **ใหม่** เท่านั้นว่าเป็นตัวบล็อก:
+### 2. Baseline TypeScript errors — เดิมเข้าใจว่า 6 ตัวเป็นหนี้เก่า ที่จริง 4 ตัวคือ regression จาก merge พังที่ถูกแก้แล้ว
+
+**อัปเดต 2026-08-17:** ตอนไล่ verification ของ Phase 1/2/3 พบว่า "baseline 6 ตัว" ที่เอกสารนี้ (และ `CLAUDE.md`) เคยบอกว่า "เป็นหนี้เก่าตั้งแต่ก่อน Phase 1" ไม่จริงทั้งหมด — สืบจาก `git diff 7a099b8 HEAD` เจอว่า merge `abb4003` (merge branch `feature/report-environment` ที่ค้างมาตั้งแต่ก่อน Phase 1 เข้า `development`, เกิดระหว่าง Phase 2b→2c) resolve conflict บนไฟล์เหล่านี้โดยเลือกโค้ดฝั่งเก่า (pre-Phase-1) ทับของใหม่แบบเงียบๆ:
+- **`access_level` ไม่ persist กลับมาอีกครั้ง** (`app/api/reports/report/manage/route.ts`) — บั๊กเดียวกับที่ Phase 1 แก้ไปแล้วใน `7a099b8` แต่ merge เอาโค้ดเก่ากลับมาทับ ทุกรายงานที่สร้างหลัง `abb4003` (รวมถึงที่สร้างผ่าน Phase 2b/2c/2d/3x ทั้งหมด) ได้ `access_level=PUBLIC` เงียบๆไม่ว่าฟอร์มจะเลือกอะไร
+- **`ActivityAction` ขาด `'favorite'/'unfavorite'/'download'`** (`lib/activity-log.ts`) — Phase 1 เพิ่มไว้แล้ว merge เอาออกไปอีกที
+
+ทั้งสองจุด**แก้แล้วใน `1e1f05c`** (คืนโค้ดตาม `7a099b8` แต่ merge เข้ากับของที่เพิ่มมาทีหลัง เช่น `logActivity` call ที่ `f8d7598` เพิ่ม) ยืนยันด้วย curl: `access_level=RESTRICTED` persist ถูกต้องแล้ว, ค่า enum ผิดได้ 400 แทนที่จะรับมั่ว ๆ
+
+ส่วน `checkRateLimit`/`resetRateLimit` ก็ตกไปแล้วเช่นกัน (ไม่ใช่จาก merge นี้ — แก้แยกใน `a9e9a27` ไปแล้วก่อนหน้า แค่เอกสารไม่เคยอัปเดต baseline list ตาม)
+
+**Baseline ที่เหลือจริง ๆ ตอนนี้ — 2 ตัว:**
 
 | ไฟล์ | ปัญหา |
 |---|---|
-| `app/api/auth/login/route.ts` | ไม่มี export `checkRateLimit`/`resetRateLimit` จาก `lib/auth` |
-| `app/api/reports/[id]/download/route.ts` | `ActivityAction` ไม่มี `'download'` |
-| `app/api/reports/favorites/[reportId]/route.ts` | `ActivityAction` ไม่มี `'unfavorite'` |
-| `app/api/reports/favorites/route.ts` | `ActivityAction` ไม่มี `'favorite'` |
 | `app/api/reports/report/manage/route.ts` | `UploadServiceResponse`/`MultipleUploadResult` shape ไม่ตรง + `file_size` string vs `number\|bigint` |
 | `components/ui/combobox.tsx` | `"icon-xs"` ไม่ใช่ Button size ที่ถูกต้อง |
+
+⚠️ **บทเรียน**: อย่าเชื่อว่า baseline error ที่มีมานานเป็น "หนี้เก่าไม่เกี่ยวกัน" โดยไม่เช็ค `git log`/`git diff` ที่จุดเกิด error จริง — merge สามารถ revert ของเก่ากลับมาแบบเงียบๆแล้วถูกเข้าใจผิดว่า "เป็นแบบนี้มาตลอด" ได้
 
 ### 3. ตาราง `report_versions` = dead code (ตั้งใจไม่ลบ)
 ถูกแทนที่ด้วย `report_files.is_current` + `report_query_versions` แล้ว แต่ยัง**ไม่ drop** เพราะเป็น destructive migration ที่ **รอ sign-off จากผู้ใช้ก่อน** — นี่คือการตัดสินใจ ไม่ใช่ความหลงลืม
