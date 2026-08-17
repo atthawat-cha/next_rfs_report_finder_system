@@ -3,18 +3,20 @@ import Sidebar from "./sidebar";
 import { useSidebar } from "@/hook/useSidebars";
 import { useStore } from "@/hook/useStore";
 import { cn } from "@/lib/utils";
+import { ThemeSync } from "./theme-sync";
 
 export default function AuthenticationLayout({
     children
     }: {
     children: React.ReactNode;
     }) {
-    
+
     const sidebar = useStore(useSidebar, (x) => x);
     if (!sidebar) return null;
     const { getOpenState, settings } = sidebar;
     return (
         <>
+        <ThemeSync />
         <Sidebar />
         <main
             className={cn(
