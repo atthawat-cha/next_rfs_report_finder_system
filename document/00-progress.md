@@ -1,6 +1,6 @@
 # ความคืบหน้าโครงการ — RFS Report Finder System
 
-> **อัปเดตล่าสุด:** 2026-08-17 · **Branch:** `feature/phase3` · **HEAD:** `1e1f05c`
+> **อัปเดตล่าสุด:** 2026-08-17 · **Branch:** `feature/phase3` · **HEAD:** `be5a772`
 >
 > ไฟล์นี้ตอบคำถามเดียว: **"ตอนนี้ถึงไหนแล้ว และเหลืออะไร"** สถานะทุกแถวอ้างอิง commit จริงใน git log เป็นหลักฐาน ไม่ใช่การอ่านโค้ดเดา
 >
@@ -34,16 +34,14 @@
 >
 > ไล่ตาม bullet list ทุกข้อใน `phase1-plan.md`/`phase2-plan.md`/`phase3-plan.md` ด้วย curl/psql/tsx จริง (ไม่ใช่อ่านโค้ดเดา) — **ผ่านหมด 39/39** รวม `tsc --noEmit` ตรงกับ baseline ที่แก้ไว้ (ดูของค้าง #2)
 >
-> ระหว่างทางเจอบั๊กจริงเพิ่ม 1 ตัว (ไม่เกี่ยวกับของค้าง #2): **`app/api/shares/[token]/route.ts`** อ่านไฟล์สำหรับดาวน์โหลดจาก `report_files` (ตาราง Phase 2) เท่านั้น ไม่ fallback ไปที่ `reports.file_path`/`file_name` (cache column เดิม) เลย — รายงานที่สร้างก่อน Phase 2 หรือยังไม่เคยอัปโหลดไฟล์ผ่าน `/api/reports/[id]/files` จะได้ `files: []` จากลิงก์แชร์ ทั้งที่ดาวน์โหลดผ่าน endpoint ปกติได้ปกติ (ยืนยันซ้ำกับ `RPT-002`) — **ยังไม่ได้แก้**
+> ระหว่างทางเจอบั๊กจริงเพิ่ม 1 ตัว (ไม่เกี่ยวกับของค้าง #2): **`app/api/shares/[token]/route.ts`** อ่านไฟล์สำหรับดาวน์โหลดจาก `report_files` (ตาราง Phase 2) เท่านั้น ไม่ fallback ไปที่ `reports.file_path`/`file_name` (cache column เดิม) เลย — รายงานที่สร้างก่อน Phase 2 หรือยังไม่เคยอัปโหลดไฟล์ผ่าน `/api/reports/[id]/files` จะได้ `files: []` จากลิงก์แชร์ ทั้งที่ดาวน์โหลดผ่าน endpoint ปกติได้ปกติ (ยืนยันซ้ำกับ `RPT-002`) — **แก้แล้วใน `be5a772`** (fallback ไป `reports.file_path`/`file_name` เมื่อ `report_files` ว่าง, ยืนยันว่า `can_download=false` ไม่รั่ว path)
 >
-> **Test fixtures ที่เหลือค้างใน DB** (ยังไม่ลบ รอตัดสินใจ): user `TEST-user2`, reports `TEST-PRINT-001`/`TEST-DATA-001`/`TEST-NODOWNLOAD-001`/`TEST-ACL-PRIVATE`(ของเก่าก่อนแก้บั๊ก access_level, access_level ผิดเป็น PUBLIC)/`TEST-ACL-PUBLIC-v2`/`TEST-ACL-RESTRICTED-v2`/`TEST-ACL-PRIVATE-v2`, 2 `report_shares` บน `RPT-002`, 1 USER share บน `RPT-003`, favorites หลายแถว, notifications/activity_logs ที่เป็นผลพลอยได้ — ทั้งหมด marked ด้วย prefix `TEST-`/`TEST-user2` ให้หาเจอง่าย
+> **Test fixtures ที่ verification สร้างไว้ — ลบออกหมดแล้ว** (user `TEST-user2`, reports `TEST-*` 7 รายงาน, `report_shares`/`favorites`/`notifications` ที่เกี่ยวข้อง, ไฟล์ upload บน disk) DB กลับสู่สภาพเดิมก่อน verification (reports=5, users=4, ทุกตาราง Phase 2/3 ว่างเหมือนก่อนหน้า)
 
 **งานถัดไปที่ควรทำ (เรียงตามลำดับ):**
-1. **ตัดสินใจเรื่อง test fixtures ข้างบน** — ลบทิ้งหรือเก็บไว้เป็น dev fixture ต่อ
-2. **แก้บั๊ก share-endpoint fallback** ที่เจอระหว่าง verification (ข้างบน)
-3. **ตัดสินใจ root cause ของของค้าง #1 ให้จบจริง** — ใครรัน Option B ไปแล้ว, ทำไม `menus_permissions`/`role_id`/`menu_id` ถึงเปลี่ยนแบบไม่มี migration — ไม่งั้น drift แบบเดิมจะเกิดซ้ำทุกครั้งที่แก้ schema
-4. **รีเฟรช `feature-list.md`** — refresh แล้วเฉพาะแถว 3e (FR-13 theme) ที่เหลือ Phase 1/2/3a-3c ยังมีจุดที่ค้าง ❌ ให้เช็คทั้งไฟล์ (ดู [ของค้าง #4](#4-feature-listmd-ค้าง))
-5. **วางแผน Phase 4** — ยังไม่มี `phase4-plan.md` เลย ทั้งที่ `feature-list.md` อ้างถึง Phase 4 อยู่หลายสิบแถว
+1. **ตัดสินใจ root cause ของของค้าง #1 ให้จบจริง** — ใครรัน Option B ไปแล้ว, ทำไม `menus_permissions`/`role_id`/`menu_id` ถึงเปลี่ยนแบบไม่มี migration — ไม่งั้น drift แบบเดิมจะเกิดซ้ำทุกครั้งที่แก้ schema
+2. **รีเฟรช `feature-list.md`** — refresh แล้วเฉพาะแถว 3e (FR-13 theme) ที่เหลือ Phase 1/2/3a-3c ยังมีจุดที่ค้าง ❌ ให้เช็คทั้งไฟล์ (ดู [ของค้าง #4](#4-feature-listmd-ค้าง))
+3. **วางแผน Phase 4** — ยังไม่มี `phase4-plan.md` เลย ทั้งที่ `feature-list.md` อ้างถึง Phase 4 อยู่หลายสิบแถว
 
 ---
 
