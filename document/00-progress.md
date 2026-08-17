@@ -1,6 +1,6 @@
 # ความคืบหน้าโครงการ — RFS Report Finder System
 
-> **อัปเดตล่าสุด:** 2026-08-17 · **Branch:** `feature/phase3` · **HEAD:** `abd3629`
+> **อัปเดตล่าสุด:** 2026-08-17 · **Branch:** `feature/phase3` · **HEAD:** `dd98843`
 >
 > ไฟล์นี้ตอบคำถามเดียว: **"ตอนนี้ถึงไหนแล้ว และเหลืออะไร"** สถานะทุกแถวอ้างอิง commit จริงใน git log เป็นหลักฐาน ไม่ใช่การอ่านโค้ดเดา
 >
@@ -16,29 +16,20 @@
 
 ## 👉 ตอนนี้อยู่ตรงไหน
 
-**โค้ดเสร็จแล้ว:** Phase 0 → 3e ทั้งหมด (14 sub-phase) — ครบวงจรตั้งแต่ค้นหา/ดาวน์โหลดฝั่งผู้ใช้ ไปจนถึง CRUD รายงาน + ไฟล์ + คิวรี่ + สิทธิ์รายรายงาน + version rollback + แชร์ + แจ้งเตือน + dashboard + persist ธีมต่อผู้ใช้
+**โค้ดเสร็จแล้ว:** Phase 0 → 3e ทั้งหมด (14 sub-phase) — ครบวงจรตั้งแต่ค้นหา/ดาวน์โหลดฝั่งผู้ใช้ ไปจนถึง CRUD รายงาน + ไฟล์ + คิวรี่ + สิทธิ์รายรายงาน + version rollback + แชร์ + แจ้งเตือน + dashboard + persist ธีมต่อผู้ใช้ — **verified จริง 39/39 บน DB `nextjs_rfs`** (2026-08-17) **Phase 4 เริ่มแล้ว** (4a security headers ✅, 4b-4f เป็น overview รอ input)
 
-> ### ✅ DB drift (ของค้าง #1) ปิดจบแล้ว (2026-08-17, `34468ff`)
->
-> ระหว่างทำ 3e พบว่า `.env`/`.env.local` ชี้ไปที่ DB คนละตัวจากที่เคยบันทึกไว้ (`nextjs_rfs`@`5432` แทน `next_rfs_master`@`5434` เดิม) และมี schema drift แบบเดียวกับที่เคยบล็อก 3e อยู่ — สืบสาเหตุจนจบแล้ว: root cause คือ 2 รอบของการแก้ `schema.prisma` ผ่าน `db push` ตรงๆ โดยไม่มี migration ตามมา (ก.พ.-มี.ค. 2026, ก่อน Phase 0 เริ่ม 5 เดือนกว่า) บวกกับ DB ปัจจุบันถูกสร้างด้วย `db push` เช่นกันแทนที่จะ replay migration history จริง ทำให้ full-text search index 4 ตัวหายไปโดยไม่มีใครรู้ (search รัน sequential scan มาตลอด) — เขียน migration ใหม่ปิดช่องว่างครบทุกจุดแล้ว ยืนยันด้วยการ replay migration ทั้งหมดใส่ shadow DB เทียบกับ DB จริง **ตรงกันเป๊ะทั้ง 25 ตาราง/239 คอลัมน์/69 index/30 FK** รายละเอียดเต็ม → [ของค้าง #1](#1-dev-db-drift--✅-ปิดแล้ว-2026-08-17-34468ff--root-cause-เจอครบ-db-จริงตรงกับ-migration-history-100)
+**สรุปเหตุการณ์วันที่ 2026-08-17 แบบย่อ** (รายละเอียดเต็มอยู่ในตารางด้านล่าง + ของค้างแต่ละข้อ):
+- DB drift (ของค้าง #1) — ปิดจบแล้ว หา root cause ครบ ยืนยันด้วย shadow-DB replay ตรงกันเป๊ะ (`34468ff`)
+- Verification Phase 1/2a-2d/3a-3d รันจริงบน DB ปัจจุบัน ผ่าน 39/39, เจอ+แก้บั๊ก shares-fallback (`be5a772`)
+- `feature-list.md` รีเฟรชครบ 100 แถว (62✅/9⚠️/29❌), เจอ+แก้ regression `output_type` ไม่ persist (`abd3629`) — สาเหตุเดียวกับ `access_level` ที่แก้ไปก่อนหน้า (`1e1f05c`) คือ merge `abb4003` ที่ทำให้เกิด baseline TS error ปลอมด้วย (ดูของค้าง #2)
+- Phase 4 plan สร้างแล้ว (`8099419`), sub-phase 4a (security headers) เสร็จ (`dd98843`) — ยังไม่ได้ยืนยันด้วย `curl -I` จริงเพราะต้อง restart dev server ของผู้ใช้
 
-**ค้างอยู่:** ไม่มีงานเฟส 0-3 ค้างแล้ว — Phase 3e เสร็จใน `f27a1dc`
-
-> ### ✅ Verification ของ Phase 1/2a-2d/3a-3d รันจริงแล้วบน DB `nextjs_rfs` (2026-08-17) — ผ่านทั้งหมด 39/39
->
-> ไล่ตาม bullet list ทุกข้อใน `phase1-plan.md`/`phase2-plan.md`/`phase3-plan.md` ด้วย curl/psql/tsx จริง (ไม่ใช่อ่านโค้ดเดา) — **ผ่านหมด 39/39** รวม `tsc --noEmit` ตรงกับ baseline ที่แก้ไว้ (ดูของค้าง #2)
->
-> ระหว่างทางเจอบั๊กจริงเพิ่ม 1 ตัว (ไม่เกี่ยวกับของค้าง #2): **`app/api/shares/[token]/route.ts`** อ่านไฟล์สำหรับดาวน์โหลดจาก `report_files` (ตาราง Phase 2) เท่านั้น ไม่ fallback ไปที่ `reports.file_path`/`file_name` (cache column เดิม) เลย — รายงานที่สร้างก่อน Phase 2 หรือยังไม่เคยอัปโหลดไฟล์ผ่าน `/api/reports/[id]/files` จะได้ `files: []` จากลิงก์แชร์ ทั้งที่ดาวน์โหลดผ่าน endpoint ปกติได้ปกติ (ยืนยันซ้ำกับ `RPT-002`) — **แก้แล้วใน `be5a772`** (fallback ไป `reports.file_path`/`file_name` เมื่อ `report_files` ว่าง, ยืนยันว่า `can_download=false` ไม่รั่ว path)
->
-> **Test fixtures ที่ verification สร้างไว้ — ลบออกหมดแล้ว** (user `TEST-user2`, reports `TEST-*` 7 รายงาน, `report_shares`/`favorites`/`notifications` ที่เกี่ยวข้อง, ไฟล์ upload บน disk) DB กลับสู่สภาพเดิมก่อน verification (reports=5, users=4, ทุกตาราง Phase 2/3 ว่างเหมือนก่อนหน้า)
-
-> ### ✅ `feature-list.md` รีเฟรชครบทุก phase แล้ว (2026-08-17, `abd3629`)
->
-> ไล่ทุก 100 แถวเทียบกับโค้ดจริง (ไม่ใช่แค่ 3e) — เดิม 62 ✅/9 ⚠️/29 ❌ ระหว่างไล่ตรวจ FR-3 (output_type) เจอ **regression ใหม่**: `output_type` ไม่ persist ตอนสร้างรายงาน — บั๊กแบบเดียวกับ `access_level` เป๊ะ (ฟอร์มมี field, validate ผ่าน แต่ไม่เคยเขียนลง `createParams`) สาเหตุเดียวกัน: merge `abb4003` เอาโค้ดเก่าทับ Phase 2b's `output_type` wiring ด้วย (ยืนยันจาก `git diff 02ee75d HEAD` ก่อนแก้) — **แก้แล้วในคอมมิตเดียวกับที่รีเฟรชไฟล์นี้** (`abd3629`) ยืนยันด้วย curl ว่า `output_type=PRINT_FORM` persist ถูกต้องแล้ว, `tsc --noEmit` ไม่มี error ใหม่ — diff `02ee75d HEAD` ตอนนี้เหลือแค่ความต่างเชิง format ล้วนๆ ไม่มี field ไหนหายอีกแล้ว
+**ค้างอยู่:** ไม่มีงานเฟส 0-3 ค้างแล้ว
 
 **งานถัดไปที่ควรทำ (เรียงตามลำดับ):**
-1. **วางแผน Phase 4** — ยังไม่มี `phase4-plan.md` เลย ทั้งที่ `feature-list.md` อ้างถึง Phase 4 อยู่หลายสิบแถว
-2. **พิจารณาช่องว่างเล็กๆที่ feature-list.md รีเฟรชรอบนี้เจอ** (ไม่บล็อกอะไร แต่ยังไม่ครบ): ดาวน์โหลด `SAMPLE_FILLED_FORM`/ไฟล์ตาม `file_kind` แยกสำหรับ user ทั่วไป (ตอนนี้มีแค่ไฟล์ primary ต่อรายงาน), PDF/Excel inline preview, print ฝั่ง client, `view_count` ที่ยังตายอยู่
+1. **ยืนยัน 4a ด้วย `curl -I` หลัง restart dev server** — ดู [Phase 4 sub-phase 4a](#phase-4--hardening--enterprise-features-🚧-เริ่มแล้ว)
+2. **ตัดสินใจ 3 คำถามเปิดของ Phase 4** ก่อนแตกแผนละเอียด 4b/4d/4f ต่อ — test framework (4b), ต้องการ auth-provider/storage-backend abstraction จริงไหม (4d/4e), vendor logging/error-tracking (4f) — ดู `phase4-plan.md`
+3. **พิจารณาช่องว่างเล็กๆที่ feature-list.md รีเฟรชเจอ** (ตอนนี้อยู่ใน scope ของ 4c overview แล้ว): ดาวน์โหลด `SAMPLE_FILLED_FORM`/ไฟล์ตาม `file_kind` แยกสำหรับ user ทั่วไป, PDF/Excel inline preview, print ฝั่ง client, `view_count` ที่ยังตายอยู่
 
 ---
 
@@ -95,20 +86,22 @@
 - [x] `components/layouts/theme-sync.tsx` (ใหม่) + แก้ `authenticationLayout.tsx` / `mode-toggle.tsx`
 - [x] Verified ด้วย curl: GET/PUT scoped ต่อ user (`user`→dark ไม่กระทบ `admin`→null), PUT ค่า invalid → 400, ไม่ login → 401. ไม่ได้ทดสอบผ่าน browser จริง (ไม่มี browser tool ใน session นี้)
 
-### Phase 4 — Hardening & Enterprise Features 📝
-**ยังไม่มี `phase4-plan.md`** — `feature-list.md` อ้างถึง Phase 4 ไว้หลายสิบแถว แต่ยังไม่เคยแตกเป็นแผนจริง งานที่ถูก defer มาที่นี่:
+### Phase 4 — Hardening & Enterprise Features 🚧 เริ่มแล้ว
+[แผนเต็ม →](./phase4-plan.md) — แบ่ง 6 sub-phase (4a-4f), แผนละเอียดเต็มมีแค่ 4a ตอนนี้ ที่เหลือเป็น overview รอคำตอบจากผู้ใช้ก่อนลงรายละเอียด (เลือก test framework, vendor error-tracking, ยืนยันความต้องการจริงของ storage backend/auth provider abstraction)
 
-| งาน | Priority (จาก feature-list) |
-|---|---|
-| Antivirus scan ไฟล์อัปโหลด (ClamAV) | Should |
-| Security headers (CSP, HSTS, X-Content-Type-Options) | Must |
-| Two-Factor Authentication (TOTP) — มีคอลัมน์ schema รอ logic แล้ว | Could |
-| ตั้งค่าวิธียืนยันตัวตนจากหน้า Settings (Local DB / External API / Email OTP) | Should |
-| Password policy / `password_changed_at` enforcement | Could |
-| Dependency vulnerability scanning (CI) | Should |
-| Structured logging + error tracking (pino/Sentry) | Should |
-| Automated test suite — **ยังไม่มี test runner ในโปรเจกต์เลย** เริ่มจาก `lib/report-acl.ts` ก่อน | Must |
-| i18n ไทย/อังกฤษเป็นระบบ (`next-intl`) — ตอนนี้ hardcode ปนกัน | Should |
+| Sub-phase | งาน | สถานะ | Commit |
+|---|---|---|---|
+| **4a** | Security response headers (CSP/HSTS/X-Content-Type-Options/X-Frame-Options/Referrer-Policy/Permissions-Policy) | ✅ | `dd98843` |
+| 4b | Automated test suite bootstrap (`lib/report-acl.ts` ก่อน) | 📝 รอเลือก framework | — |
+| 4c | Upload/file-serving gaps (AV scan, per-`file_kind` download, PDF/Excel preview + print, `view_count`) | 📝 overview | — |
+| 4d | Auth flexibility & policy (auth provider selection, 2FA, password policy) | 📝 รอยืนยัน scope | — |
+| 4e | Settings ที่เหลือ + notification ที่ defer ไว้ (storage backend, max upload size, department sharing, i18n) | 📝 รอยืนยัน scope | — |
+| 4f | Observability & ops (structured logging/error tracking, dependency scanning, alert, dashboard cache) | 📝 รอเลือก vendor | — |
+
+**4a ปิดจบแล้ว** (`dd98843`):
+- [x] `next.config.js` `headers()` — ครอบทุก route ทั้งหน้าเว็บและ `/api/*`
+- [x] ยืนยันโครงสร้าง header ถูกต้องด้วยการ `require()` ไฟล์ config ตรงๆใน Node + `tsc --noEmit`/`build` ไม่มี error ใหม่
+- [ ] **ยังไม่ได้ยืนยันด้วย `curl -I` บน server จริง** — ต้อง restart dev server เพื่อให้ `next.config.js` มีผล แต่ instance ที่รันอยู่ port 3501 เป็นของผู้ใช้ ไม่ได้แตะ — รอผู้ใช้ restart แล้วขอให้ช่วยเช็คให้ทีหลังได้
 
 ---
 
