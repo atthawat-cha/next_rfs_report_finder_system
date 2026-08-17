@@ -3,7 +3,7 @@ import { faker } from '@faker-js/faker';
 import prisma from '@/lib/prisma';
 import { getClientIp } from '@/lib/request-info';
 
-export type ActivityAction = 'create' | 'update' | 'delete' | 'login' | 'login_failed' | 'logout';
+export type ActivityAction = 'create' | 'update' | 'delete' | 'login' | 'login_failed' | 'logout' | 'favorite' | 'unfavorite' | 'download';
 export type ActivityEntity = 'report' | 'user' | 'department' | 'role' | 'auth';
 
 interface LogActivityParams {
