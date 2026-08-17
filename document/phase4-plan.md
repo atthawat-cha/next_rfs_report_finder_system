@@ -97,13 +97,59 @@ These need real Prisma calls against a database (the functions aren't pure — t
 - Re-run twice in a row → same result both times (fixtures clean up after themselves, no leftover `VITEST-` rows in `report_permissions`/`reports` after a run)
 - `npx tsc --noEmit` — no new errors vs baseline (the `.test.ts` file itself must type-check)
 
-## Sub-phase 4c — Upload/File-Serving Gaps (overview)
+## Sub-phase 4c — Upload/File-Serving Gaps
 
-No open decisions blocking this one — pure implementation once picked up:
-- Per-`file_kind` download endpoint (`GET /api/reports/[id]/files/[fileId]/download` or similar) so `SAMPLE_FILLED_FORM` and other non-primary `report_files` rows are reachable by non-admin users, not just the single cached primary file.
-- PDF inline preview (`<embed>`/`<iframe>` pointed at the download endpoint) and Excel-as-table preview (`exceljs` parse, new dependency - small and single-purpose, lower-risk than the 4b/4d/4e decisions).
-- Client-side print (`window.print()` + `@media print` stylesheet) for both the PDF preview and the data-table preview.
-- `reports.view_count` increment — needs a real "view" event distinct from "download" (currently doesn't exist for non-admin users; browse is list-only, no `GET /api/reports/[id]` single-report view endpoint for them) - smallest scope: increment on that new single-view endpoint if/when the preview work above creates one.
+**Resolved (user, 2026-08-17): AV scan (ClamAV) deferred — no daemon confirmed available.** Not wiring a scan-on-upload check against infrastructure that may not exist; revisit if/when a ClamAV instance is actually provisioned. Rest of 4c has no open decisions.
+
+Audit before detailing: there is currently **no single-report detail endpoint for non-admin users at all** — `GET /api/reports/browse` is list-only, and the only download path (`GET /api/reports/[id]/download`) serves just the one cached primary file (`reports.file_path`, synced from whichever `report_files` row `output_type` picks as primary — see `lib/report-file-cache.ts`). A `PRINT_FORM` report's `SAMPLE_FILLED_FORM` file, or any non-primary kind, is only reachable through the admin-only `report-edit` page. This is also why `reports.view_count` has never been incremented anywhere (per Phase 3d's own audit, `phase3-plan.md`) — there's no "view a single report" event to hang it on for a non-admin user.
+
+### 1. `GET /api/reports/[id]` — single-report detail (new)
+
+- Auth: `requireAuth` only (not admin-gated — this is the general "open a report" action every role needs)
+- Non-admin: `resolveReportAcl(id, user).can_view` must be true, else 404 (not 403 — matches the existing pattern in `download`/`favorites` of not confirming a restricted report's existence to someone without access)
+- Admin: bypass ACL (`routeAcceptted('admin')` check first, same pattern as every other endpoint)
+- Returns report metadata + `report_files` where `is_current=true` (all kinds, not just the primary) + the caller's resolved ACL flags (so the UI knows whether to show a print/download button without a second round-trip)
+- **Increments `reports.view_count`** atomically (`{ increment: 1 }`, same pattern as `download_count`) — the first real write to this column since it was added
+- Logs activity with a new `'view'` `ActivityAction` (additive to the union in `lib/activity-log.ts`, mirrors how `'download'`/`'favorite'`/`'unfavorite'` were each added when their endpoints shipped)
+
+**Files**: `app/api/reports/[id]/route.ts` (new, GET only), `lib/activity-log.ts` (add `'view'` to `ActivityAction`)
+
+### 2. `GET /api/reports/[id]/files/[fileId]/download` — per-`file_kind` download (new)
+
+Same shape as the existing single-report `download` endpoint, but scoped to one specific `report_files` row instead of the cached primary:
+- Auth + ACL: identical to `download` (`resolveReportAcl(...).can_export`, admin bypass, `reports.is_downloadable` check)
+- 404 if the `report_files` row doesn't exist, doesn't belong to `id`, or `is_current=false` (only ever serves the current version through this general-purpose path — historical versions stay admin-only via the existing version-history UI, which already has its own access)
+- Same side effects as `download`: atomic `download_count` increment, `downloads` row, `logActivity('download', ...)`
+
+**Files**: `app/api/reports/[id]/files/[fileId]/download/route.ts` (new, GET only)
+
+### 3. Excel-as-table preview — server-side parse, not client-bundled
+
+**Design decision**: parse `SAMPLE_DATA` files (`xlsx`/`xls`/`csv`) server-side with `exceljs` and return rows as JSON, rather than bundling `exceljs` into the client and parsing in-browser. `exceljs` is a Node-oriented library (its browser build has had bundling friction historically) and this repo already streams every other file server-side first — staying consistent, and it means the response size is controllable (cap rows returned) rather than shipping a whole workbook to the browser to parse client-side.
+
+`GET /api/reports/[id]/files/[fileId]/preview` — same auth/ACL as the download endpoint above (`can_export`, since "preview the data" and "download the data" are the same sensitivity level for a `DATA_REPORT`), 400 if the file's `file_type` isn't a spreadsheet kind. Reads the file from disk, parses the first worksheet (xlsx/xls) or splits lines (csv), returns `{ headers: string[], rows: string[][] }` capped at the first 200 data rows (large-sheet safety valve — this is a preview, not an export; full data still available via the existing download).
+
+**Files**: `app/api/reports/[id]/files/[fileId]/preview/route.ts` (new, GET only), `package.json` (add `exceljs`)
+
+### 4. UI — `ReportPreviewDialog` + wiring
+
+New shared component `components/shared/reportPreviewDialog.tsx` (shadcn `Dialog`, not the existing `right-drawer.tsx` template — that component is an unparameterized placeholder with hardcoded title/content, not actually reusable as-is):
+- Opens on a new "Preview" action, fetches `GET /api/reports/[id]` on open
+- Lists each current `report_files` row by kind with a "ดาวน์โหลด" button → the new per-file download endpoint
+- PDF kinds (`BLANK_FORM`/`SAMPLE_FILLED_FORM`): inline `<embed>` pointed at the download endpoint (browser's native PDF viewer, no library) inside a `.print-area` wrapper
+- `SAMPLE_DATA` kind: fetches the new `preview` endpoint, renders `{headers, rows}` via the existing `components/ui/table.tsx` primitives, also inside `.print-area`
+- "พิมพ์" button → `window.print()`, scoped to `.print-area` only via a `@media print` rule (`body * { visibility: hidden }`, `.print-area, .print-area * { visibility: visible }`, `.print-area { position: absolute; inset: 0 }`) so the dialog chrome/rest of the page doesn't print
+- Wired as a new "Preview" `DropdownMenuItem` in both `reportColumn.tsx` (report-list) and `favReportColumn.tsx` (favorites) — the two existing action-menu locations, alongside the current Download/Edit/Favorite items. Card view (`reportCards.tsx`) has no action menu at all today (pre-existing gap, not introduced here) - left alone, out of scope.
+
+**Files**: `components/shared/reportPreviewDialog.tsx` (new), `app/(auth)/reports/report-list/components/reportColumn.tsx` (add menu item), `app/(auth)/reports/favorites/components/favReportColumn.tsx` (add menu item)
+
+### Verification (4c)
+
+- `GET /api/reports/[id]` on a report the user can view → 200 with metadata + current files + acl flags; `view_count` +1; on one the user can't view → 404 (not 403); as admin on any report → 200 regardless of ACL
+- `GET /api/reports/[id]/files/[fileId]/download` on a `SAMPLE_FILLED_FORM` row of a `PRINT_FORM` report → correct PDF bytes, `download_count` +1, `downloads` row created; on a non-current (superseded) file id → 404
+- `GET /api/reports/[id]/files/[fileId]/preview` on a real `.xlsx` → `{headers, rows}` matches the file's actual content, capped at 200 rows on a larger sheet; on a PDF file id → 400
+- Open the Preview dialog in the browser on a `PRINT_FORM` report → PDF renders inline; on a `DATA_REPORT` → table renders with real data; click Print on both → only the preview content appears in the print dialog, not the rest of the page
+- `npx tsc --noEmit` — no new errors vs baseline (2 pre-existing)
 
 ## Sub-phase 4d — Auth Flexibility & Policy (overview, scope narrowed)
 
