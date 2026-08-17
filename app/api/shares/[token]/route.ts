@@ -20,7 +20,7 @@ export async function GET(_req: NextRequest, { params }: { params: { token: stri
             return NextResponse.json({ success: false, error: "Share link has expired" }, { status: 410 });
         }
 
-        const report = await prisma.reports.findUnique({
+        const reportRow = await prisma.reports.findUnique({
             where: { id: share.report_id },
             select: {
                 id: true,
@@ -29,19 +29,35 @@ export async function GET(_req: NextRequest, { params }: { params: { token: stri
                 name_en: true,
                 description: true,
                 output_type: true,
+                file_path: true,
+                file_name: true,
             },
         });
-        if (!report) {
+        if (!reportRow) {
             return NextResponse.json({ success: false, error: "Report not found" }, { status: 404 });
         }
+        // file_path/file_name are only for the fallback below - strip them from
+        // what's actually sent back so a can_download=false share never leaks a path.
+        const { file_path, file_name, ...report } = reportRow;
 
         let files: { file_kind: string; file_path: string; file_name: string }[] = [];
         if (share.can_download) {
-            const current = await prisma.report_files.findMany({
+            files = await prisma.report_files.findMany({
                 where: { report_id: share.report_id, is_current: true },
                 select: { file_kind: true, file_path: true, file_name: true },
             });
-            files = current;
+
+            // Reports created before report_files existed (or never had a file
+            // uploaded through it) have no rows here at all - fall back to the
+            // reports.file_path/file_name cache column the normal (authenticated)
+            // download endpoint reads, so old reports don't show as file-less.
+            if (files.length === 0 && file_path) {
+                files = [{
+                    file_kind: reportRow.output_type === 'PRINT_FORM' ? 'BLANK_FORM' : 'SAMPLE_DATA',
+                    file_path,
+                    file_name: file_name ?? '',
+                }];
+            }
         }
 
         return NextResponse.json(
