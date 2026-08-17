@@ -156,7 +156,7 @@
 | หน้า Settings อ่าน/เขียนตาราง `settings` จริง | Should | ❌ | 3/4 |
 | ตั้งค่าวิธี login (provider selection) | Should | ❌ | 4 |
 | ตั้งค่า storage backend (local/MinIO/S3) | Should | ❌ | 4 |
-| Persist ธีม (dark/light) ต่อผู้ใช้ฝั่ง server | Should | ⚠️ (มีฝั่ง client ผ่าน `next-themes` เท่านั้น) | 3 |
+| Persist ธีม (dark/light) ต่อผู้ใช้ฝั่ง server | Should | ✅ (`users.theme_preference` + `/api/settings/theme`) | 3 |
 | จำกัดขนาดไฟล์อัปโหลดสูงสุดต่อ `file_kind` แบบตั้งค่าได้ | Could | ❌ | 4 |
 
 ## 14. Support Ticket (FR-14 — Optional, ต้องตัดสินใจ scope)

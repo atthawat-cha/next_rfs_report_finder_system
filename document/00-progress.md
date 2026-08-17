@@ -1,6 +1,6 @@
 # ความคืบหน้าโครงการ — RFS Report Finder System
 
-> **อัปเดตล่าสุด:** 2026-08-17 · **Branch:** `feature/phase3` · **HEAD:** `781efaf`
+> **อัปเดตล่าสุด:** 2026-08-17 · **Branch:** `feature/phase3` · **HEAD:** `f27a1dc`
 >
 > ไฟล์นี้ตอบคำถามเดียว: **"ตอนนี้ถึงไหนแล้ว และเหลืออะไร"** สถานะทุกแถวอ้างอิง commit จริงใน git log เป็นหลักฐาน ไม่ใช่การอ่านโค้ดเดา
 >
@@ -16,24 +16,24 @@
 
 ## 👉 ตอนนี้อยู่ตรงไหน
 
-**โค้ดเสร็จแล้ว:** Phase 0 → 3d ทั้งหมด (13 sub-phase) — ครบวงจรตั้งแต่ค้นหา/ดาวน์โหลดฝั่งผู้ใช้ ไปจนถึง CRUD รายงาน + ไฟล์ + คิวรี่ + สิทธิ์รายรายงาน + version rollback + แชร์ + แจ้งเตือน + dashboard
+**โค้ดเสร็จแล้ว:** Phase 0 → 3e ทั้งหมด (14 sub-phase) — ครบวงจรตั้งแต่ค้นหา/ดาวน์โหลดฝั่งผู้ใช้ ไปจนถึง CRUD รายงาน + ไฟล์ + คิวรี่ + สิทธิ์รายรายงาน + version rollback + แชร์ + แจ้งเตือน + dashboard + persist ธีมต่อผู้ใช้
 
-> ### 🔴 แต่ DB ตามโค้ดไม่ทัน — อ่านก่อนรันโปรเจกต์
+> ### 🟡 DB คนละตัวกับที่เอกสารนี้เคยพูดถึง — อ่านก่อนรันโปรเจกต์
 >
-> จากการไล่หาสาเหตุ drift (2026-08-17) พบว่า **dev DB `next_rfs_master` ค้างอยู่ที่สภาพประมาณ ก.พ. 2026** ไม่มีตาราง `_prisma_migrations` เลย = ไม่เคยรัน migration สักครั้ง สร้างด้วย `prisma db push` ล้วน ๆ
+> ระหว่างทำ 3e (2026-08-17) พบว่า `.env`/`.env.local` ถูกชี้ไปที่ **DB คนละตัว** จากที่บันทึกไว้ก่อนหน้านี้: `nextjs_rfs`@`localhost:5432` แทน `next_rfs_master`@`5434` เดิม (เปลี่ยนนอกรอบ conversation นี้ — ไฟล์ `.env*` ไม่ได้ถูก track ใน git เลยหาต้นตอที่แน่ชัดไม่ได้)
 >
-> **ตารางของ Phase 2a ขาดไปทั้ง 5 ตัว** (`report_files`, `report_queries`, `report_query_versions`, `report_variables`, `report_permissions`) และ **ไม่มี `reports.search_vector` + index ค้นหาของ Phase 1 เลย**
+> **ข่าวดี:** DB ใหม่นี้มีครบทั้ง 25 ตาราง ตรงกับ `schema.prisma` ปัจจุบันแล้ว (`report_files`/`queries`/`variables`/`permissions`, `reports.search_vector`, `output_type` ครบ) — Phase 1/2/3 **น่าจะ**รันได้จริงบน DB นี้ (ยังไม่ได้ไล่ verification list ใหม่ทีละเฟส แค่ยืนยันว่าตารางที่ขาดหายไปก่อนหน้านี้กลับมาครบ)
 >
-> ⇒ สถานะ ✅ ในตารางข้างล่างหมายถึง **"โค้ดเขียนเสร็จและ commit แล้ว"** เท่านั้น — **Phase 1, 2b, 2c, 2d, 3a รันกับ DB ปัจจุบันไม่ได้** จะพังทันทีที่แตะ `report_files` หรือ full-text search (3b/3c ยังพอไปได้ เพราะ `report_shares`/`notifications` อยู่ใน init อยู่แล้ว)
+> **แต่ของค้าง #1 (drift) ยังไม่ได้แก้จริง แค่ย้ายไป DB ใหม่พร้อมกัน** — `npx prisma migrate dev` ยัง detect drift signature เดิมเป๊ะ (`menus_permissions` หาย, `users.role_id`/`permissions.menu_id` เพิ่มมาไม่มี migration รองรับ) และ `_prisma_migrations` มี `applied_steps_count=0` ทุกแถว → มีคนรัน **Option B** (`migrate resolve --applied`) ไปแล้วกับ DB นี้ก่อนหน้า session นี้ โดยไม่อัปเดตเอกสาร ตอนทำ migration ของ 3e ก็ใช้ pattern เดียวกันต่อ (เขียน SQL มือ + `resolve --applied`) ไม่ใช้ `migrate reset`
 >
-> รายละเอียด + ทางแก้ → [ของค้าง #1](#1-dev-db-ไม่เคยถูก-migrate-เลย--บล็อก-phase-3e-และ-phase-123)
+> รายละเอียด → [ของค้าง #1](#1-dev-db-ไม่เคยถูก-migrate-เลย--บล็อก-phase-3e-และ-phase-123) (อัปเดตแล้ว)
 
-**ค้างอยู่:** **Phase 3e** (persist ธีมต่อผู้ใช้) — 🚫 **blocked** ไม่ใช่เพราะงาน 3e เอง แต่เพราะชนปัญหา DB ข้างบนตอนจะรัน migration
+**ค้างอยู่:** ไม่มีงานเฟส 0-3 ค้างแล้ว — Phase 3e เสร็จใน `f27a1dc`
 
 **งานถัดไปที่ควรทำ (เรียงตามลำดับ):**
-1. **ทำ DB ให้ตรงกับ schema** — ตัดสินใจระหว่าง reset+reseed (แนะนำ) กับ baseline ของเดิม แล้วรันจริง + **ทำ Verification list ของ Phase 1/2/3a ใหม่** เพราะรอบแรกเป็นไปไม่ได้ที่จะผ่าน → ปลดบล็อก 3e ไปในตัว
-2. **ทำ 3e ให้จบ** — เหลือแค่ ~3 ไฟล์ ทำได้ในรอบเดียวเมื่อ migration ผ่าน
-3. **รีเฟรช `feature-list.md`** — ยังขึ้น ❌ ให้ Phase 1/2/3 ทั้งที่ ship แล้ว (ดู [ของค้าง #4](#4-feature-listmd-ค้าง))
+1. **ไล่ Verification list ของ Phase 1/2/3a-3d ใหม่บน DB `nextjs_rfs`** — ยังไม่เคยรันจริงบน DB ตัวนี้ทีละเฟส (แค่ยืนยันว่าตารางครบตอนทำ 3e) ควรทำก่อนเชื่อว่า Phase ก่อนหน้าใช้งานได้จริง
+2. **ตัดสินใจ root cause ของของค้าง #1 ให้จบจริง** — ใครรัน Option B ไปแล้ว, ทำไม `menus_permissions`/`role_id`/`menu_id` ถึงเปลี่ยนแบบไม่มี migration — ไม่งั้น drift แบบเดิมจะเกิดซ้ำทุกครั้งที่แก้ schema
+3. **รีเฟรช `feature-list.md`** — refresh แล้วเฉพาะแถว 3e (FR-13 theme) ที่เหลือ Phase 1/2/3a-3c ยังมีจุดที่ค้าง ❌ ให้เช็คทั้งไฟล์ (ดู [ของค้าง #4](#4-feature-listmd-ค้าง))
 4. **วางแผน Phase 4** — ยังไม่มี `phase4-plan.md` เลย ทั้งที่ `feature-list.md` อ้างถึง Phase 4 อยู่หลายสิบแถว
 
 ---
@@ -83,12 +83,13 @@
 | **3b** | Report Sharing — `report_shares` CRUD + public token-gated access | ✅ | `2f75a58` |
 | **3c** | Notifications — `lib/notifications.ts` + API + Notification Bell | ✅ | `66f553c` |
 | **3d** | Dashboard & Activity Log Analytics — 3 dashboard endpoints + `/api/activity-logs` + หน้า Dashboard + หน้า Activity Log | ✅ | `453cdf2` |
-| **3e** | Settings — persist ธีมต่อผู้ใช้ (`users.theme_preference`) | 🚫 **blocked** | แผน: `e2fc97e` |
+| **3e** | Settings — persist ธีมต่อผู้ใช้ (`users.theme_preference`) | ✅ | `f27a1dc` |
 
-**3e เหลืออะไรบ้าง** (แผนละเอียดพร้อมแล้ว รอปลดบล็อกอย่างเดียว):
-- [ ] Migration `add_user_theme_preference` — ⚠️ `theme_preference String?` **อยู่ใน `prisma/schema.prisma:398` แล้ว แต่ยังไม่มี migration file** (schema ล้ำหน้า DB อยู่)
-- [ ] `app/api/settings/theme/route.ts` (GET/PUT) — ยังไม่มีโฟลเดอร์ `app/api/settings/` เลย
-- [ ] `components/layouts/theme-sync.tsx` (ใหม่) + แก้ `authenticationLayout.tsx` / `mode-toggle.tsx`
+**3e ปิดจบแล้ว** (`f27a1dc`):
+- [x] Migration `20260817182535_add_user_theme_preference` — เขียน SQL มือ + `migrate resolve --applied` (ไม่ใช้ `migrate dev` ตรงๆ เพราะชน drift เดิมของของค้าง #1)
+- [x] `app/api/settings/theme/route.ts` (GET/PUT, `requireAuth` เท่านั้น ไม่ใช่ admin-only)
+- [x] `components/layouts/theme-sync.tsx` (ใหม่) + แก้ `authenticationLayout.tsx` / `mode-toggle.tsx`
+- [x] Verified ด้วย curl: GET/PUT scoped ต่อ user (`user`→dark ไม่กระทบ `admin`→null), PUT ค่า invalid → 400, ไม่ login → 401. ไม่ได้ทดสอบผ่าน browser จริง (ไม่มี browser tool ใน session นี้)
 
 ### Phase 4 — Hardening & Enterprise Features 📝
 **ยังไม่มี `phase4-plan.md`** — `feature-list.md` อ้างถึง Phase 4 ไว้หลายสิบแถว แต่ยังไม่เคยแตกเป็นแผนจริง งานที่ถูก defer มาที่นี่:
@@ -111,8 +112,8 @@
 
 รวมทุกอย่างที่ค้างไว้ที่เดียว — เดิมกระจายอยู่ใน `CLAUDE.md`, `phase3-plan.md`, และ commit message
 
-### 1. Dev DB ไม่เคยถูก migrate เลย — บล็อก Phase 3e (และ Phase 1/2/3)
-**พบเมื่อ:** 2026-08-16 ตอนรัน `npx prisma migrate dev --name add_user_theme_preference` · **หาสาเหตุเจอ:** 2026-08-17
+### 1. Dev DB drift — เดิมบล็อก Phase 3e, ตอนนี้ baseline ทับไปแล้วแต่ root cause ยังไม่จบ
+**พบเมื่อ:** 2026-08-16 ตอนรัน `npx prisma migrate dev --name add_user_theme_preference` · **หาสาเหตุเจอ:** 2026-08-17 · **อัปเดต 2026-08-17 (รอบทำ 3e):** `.env`/`.env.local` ถูกเปลี่ยนไปชี้ DB ใหม่ `nextjs_rfs`@`5432` (นอกรอบ conversation, ไฟล์ env ไม่ track ใน git) — ตรวจแล้วว่า DB ใหม่นี้มีตารางครบ 25 ตัวตรงกับ schema แล้ว แต่ **drift เดิมยังอยู่**: `npx prisma migrate dev` บน DB ใหม่ยัง report drift signature เดิมเป๊ะ และ `_prisma_migrations` ทุกแถวมี `applied_steps_count=0` (= ถูก `migrate resolve --applied` มาก่อน ไม่ได้ apply จริงผ่าน `migrate deploy`) สรุปคือ**มีคนรัน Option B (ด้านล่าง) ไปแล้วกับ DB ตัวนี้** ก่อน session นี้ โดยไม่ได้บันทึกไว้ที่นี่ — 3e's migration (`20260817182535_add_user_theme_preference`) ทำตาม pattern เดียวกันต่อ (SQL มือ + `resolve --applied`) เพื่อไม่ชนปัญหาเดิมซ้ำ **ของค้างนี้จึงยังไม่ปิด** แค่ไม่บล็อกงานแล้ว — ยังต้องหาว่าใคร/ทำไมถึง drift (`users.role_id`, `permissions.menu_id`, drop `menus_permissions`) แบบไม่มี migration record
 
 #### ต้นเหตุ
 `next_rfs_master` (localhost:5434) **ไม่มีตาราง `_prisma_migrations` อยู่เลย** — ไม่ใช่ว่ามีแล้วข้อมูลไม่ตรง แต่คือไม่เคยมี DB นี้ถูกสร้างด้วย `prisma db push` ล้วน ๆ ไม่เคยรัน `migrate dev`/`migrate deploy` สักครั้ง
@@ -149,10 +150,13 @@ DB มี 20 ตาราง แต่ `schema.prisma` มี 25 model — **ท
 
 ตรวจแล้วว่าไม่ใช่เรื่องต่อผิดฐาน: `.env` กับ `.env.local` ชี้ `postgresql://postgres@localhost:5434/next_rfs_master` เหมือนกันเป๊ะ และบนเซิร์ฟเวอร์มีแค่ `bd_init_db`, `neko_neko_master`, `next_rfs_master`, `postgres` — ไม่มี DB สำรองของ RFS
 
-#### ทางแก้ — เลือก 1 ใน 2 (ยังไม่ได้ลงมือ รอตัดสินใจ)
-**A. `migrate reset` + reseed** ⭐ แนะนำ — ข้อมูลใน DB มีแค่ **users 4 / reports 3 / activity_logs 7** ซึ่ง seed กลับได้หมด ได้ ledger ที่ถูกต้องตั้งแต่ต้น ⚠️ ต้องเปิด comment `initSeed`/`rolesSeed`/`seedUsers` ใน `prisma/seed.ts` `main()` ก่อน ไม่งั้นได้ DB ที่ไม่มี user
+#### ทางแก้ — เลือก 1 ใน 2
 
-**B. เก็บข้อมูลเดิม** — รัน SQL template แล้ว `migrate resolve --applied` ทั้ง 4 ตัว ⚠️ วิธีนี้จะกลบความจริงเรื่อง `menus_permissions` ไว้ในประวัติ
+> **อัปเดต 2026-08-17:** พบว่า DB ปัจจุบัน (`nextjs_rfs`@`5432`, เปลี่ยนมาจาก `.env` นอกรอบ conversation) ถูกทำ **ทางแก้ B ไปแล้ว** ก่อนหน้า session ที่ทำ 3e — `_prisma_migrations` มี `applied_steps_count=0` ทั้ง 4 แถวของ DB เดิม ยืนยันว่าถูก `migrate resolve --applied` มา ไม่ใช่ apply จริง **แต่ไม่มีใครบันทึกว่าทำ/ทำเมื่อไหร่/ใครทำ** — ของค้างที่เหลือคือเอกสารตามหลังความจริงไม่ทัน ไม่ใช่ต้องเลือกทางแก้ใหม่แล้ว (ทาง A `migrate reset` **ไม่ควรทำแล้วตอนนี้** เพราะจะลบข้อมูลบน DB ที่ถูกใช้งานจริงอยู่)
+
+**A. `migrate reset` + reseed** — ข้อมูลใน DB มีแค่ **users 4 / reports 3 / activity_logs 7** ซึ่ง seed กลับได้หมด ได้ ledger ที่ถูกต้องตั้งแต่ต้น ⚠️ ต้องเปิด comment `initSeed`/`rolesSeed`/`seedUsers` ใน `prisma/seed.ts` `main()` ก่อน ไม่งั้นได้ DB ที่ไม่มี user — **ตกไปแล้วสำหรับ DB ปัจจุบัน** เพราะ B ถูกเลือกไปแล้วโดยพฤตินัย
+
+**B. เก็บข้อมูลเดิม** — รัน SQL template แล้ว `migrate resolve --applied` ทั้ง 4 ตัว ⚠️ วิธีนี้จะกลบความจริงเรื่อง `menus_permissions` ไว้ในประวัติ — **นี่คือสิ่งที่เกิดขึ้นจริงกับ `nextjs_rfs`** (ยืนยันจาก `applied_steps_count=0`) แม้ไม่มีบันทึกอย่างเป็นทางการ
 
 📄 **SQL template พร้อมใช้:** [`prisma/manual/2026-08-17_reconcile-drift.template.sql`](../prisma/manual/2026-08-17_reconcile-drift.template.sql) — แจกแจงครบว่า **เพิ่ม** อะไร (3 enum, 2 คอลัมน์, 5 ตาราง, 10 index, 5 FK) **ลด** อะไร (ไม่มีเลย) **แก้** อะไร (`search_vector` ต้องเป็น generated column) พร้อมขั้นตอนของทั้งทาง A และ B
 
