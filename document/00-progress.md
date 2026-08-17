@@ -1,6 +1,6 @@
 # ความคืบหน้าโครงการ — RFS Report Finder System
 
-> **อัปเดตล่าสุด:** 2026-08-17 · **Branch:** `feature/phase3` · **HEAD:** `34468ff`
+> **อัปเดตล่าสุด:** 2026-08-17 · **Branch:** `feature/phase3` · **HEAD:** `abd3629`
 >
 > ไฟล์นี้ตอบคำถามเดียว: **"ตอนนี้ถึงไหนแล้ว และเหลืออะไร"** สถานะทุกแถวอ้างอิง commit จริงใน git log เป็นหลักฐาน ไม่ใช่การอ่านโค้ดเดา
 >
@@ -32,9 +32,13 @@
 >
 > **Test fixtures ที่ verification สร้างไว้ — ลบออกหมดแล้ว** (user `TEST-user2`, reports `TEST-*` 7 รายงาน, `report_shares`/`favorites`/`notifications` ที่เกี่ยวข้อง, ไฟล์ upload บน disk) DB กลับสู่สภาพเดิมก่อน verification (reports=5, users=4, ทุกตาราง Phase 2/3 ว่างเหมือนก่อนหน้า)
 
+> ### ✅ `feature-list.md` รีเฟรชครบทุก phase แล้ว (2026-08-17, `abd3629`)
+>
+> ไล่ทุก 100 แถวเทียบกับโค้ดจริง (ไม่ใช่แค่ 3e) — เดิม 62 ✅/9 ⚠️/29 ❌ ระหว่างไล่ตรวจ FR-3 (output_type) เจอ **regression ใหม่**: `output_type` ไม่ persist ตอนสร้างรายงาน — บั๊กแบบเดียวกับ `access_level` เป๊ะ (ฟอร์มมี field, validate ผ่าน แต่ไม่เคยเขียนลง `createParams`) สาเหตุเดียวกัน: merge `abb4003` เอาโค้ดเก่าทับ Phase 2b's `output_type` wiring ด้วย (ยืนยันจาก `git diff 02ee75d HEAD` ก่อนแก้) — **แก้แล้วในคอมมิตเดียวกับที่รีเฟรชไฟล์นี้** (`abd3629`) ยืนยันด้วย curl ว่า `output_type=PRINT_FORM` persist ถูกต้องแล้ว, `tsc --noEmit` ไม่มี error ใหม่ — diff `02ee75d HEAD` ตอนนี้เหลือแค่ความต่างเชิง format ล้วนๆ ไม่มี field ไหนหายอีกแล้ว
+
 **งานถัดไปที่ควรทำ (เรียงตามลำดับ):**
-1. **รีเฟรช `feature-list.md`** — refresh แล้วเฉพาะแถว 3e (FR-13 theme) ที่เหลือ Phase 1/2/3a-3c ยังมีจุดที่ค้าง ❌ ให้เช็คทั้งไฟล์ (ดู [ของค้าง #4](#4-feature-listmd-ค้าง))
-2. **วางแผน Phase 4** — ยังไม่มี `phase4-plan.md` เลย ทั้งที่ `feature-list.md` อ้างถึง Phase 4 อยู่หลายสิบแถว
+1. **วางแผน Phase 4** — ยังไม่มี `phase4-plan.md` เลย ทั้งที่ `feature-list.md` อ้างถึง Phase 4 อยู่หลายสิบแถว
+2. **พิจารณาช่องว่างเล็กๆที่ feature-list.md รีเฟรชรอบนี้เจอ** (ไม่บล็อกอะไร แต่ยังไม่ครบ): ดาวน์โหลด `SAMPLE_FILLED_FORM`/ไฟล์ตาม `file_kind` แยกสำหรับ user ทั่วไป (ตอนนี้มีแค่ไฟล์ primary ต่อรายงาน), PDF/Excel inline preview, print ฝั่ง client, `view_count` ที่ยังตายอยู่
 
 ---
 
@@ -154,8 +158,8 @@ DB เก่า (`next_rfs_master`@`5434`) ไม่มี `_prisma_migrations` 
 ### 3. ตาราง `report_versions` = dead code (ตั้งใจไม่ลบ)
 ถูกแทนที่ด้วย `report_files.is_current` + `report_query_versions` แล้ว แต่ยัง**ไม่ drop** เพราะเป็น destructive migration ที่ **รอ sign-off จากผู้ใช้ก่อน** — นี่คือการตัดสินใจ ไม่ใช่ความหลงลืม
 
-### 4. `feature-list.md` ค้าง
-ยังขึ้น ❌ ให้แถวของ Phase 1 / 2 / 3a-3c ทั้งที่ ship และ commit ไปหมดแล้ว (Phase 3d รีเฟรชแล้วบางส่วนใน `453cdf2`) → **Summary Counts ท้ายไฟล์นั้นเชื่อไม่ได้** ควรรีเฟรชทั้งไฟล์ในรอบเดียว
+### 4. `feature-list.md` ค้าง — ✅ ปิดแล้ว (2026-08-17, `abd3629`)
+รีเฟรชทั้งไฟล์ครบทุก 100 แถวในรอบเดียวตามที่แนะนำไว้ (ไม่ใช่รีเฟรชบางส่วนเหมือน Phase 3d ที่ทำใน `453cdf2`) — ผลสรุปใหม่: 62 ✅ / 9 ⚠️ / 29 ❌ (เดิมนับคร่าวๆไว้ ~18/~20/~55 ซึ่งไม่ตรงความจริงมานาน) รายละเอียดการนับ + regression ใหม่ที่เจอระหว่างไล่ตรวจ (`output_type` ไม่ persist) → ดูหัวข้อ "ตอนนี้อยู่ตรงไหน" ด้านบน
 
 ### 5. เอกสารระดับ repo ที่ stale
 `README.md` / `SETUP.md` ที่ root ยังบรรยายสภาพ "auth starter scaffold" ตอนเริ่มโปรเจกต์ — ไม่ตรงกับของจริงแล้ว **อย่าใช้เป็นแหล่งอ้างอิง**
