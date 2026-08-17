@@ -89,6 +89,7 @@ const reportZod = z.object({
     departments: z.string().min(1, "Departments is required"),
     status: z.string().min(1, "Status is required"),
     access_level: z.enum(["PUBLIC", "RESTRICTED", "PRIVATE"]),
+    output_type: z.enum(["PRINT_FORM", "DATA_REPORT"]),
     is_downloadable: z.boolean(),
     is_editable: z.boolean()
 })
@@ -129,6 +130,7 @@ export async function POST(req: NextRequest) {
             departments: data.get("departments") as string,
             status: data.get("status") as string,
             access_level: data.get("access_level") as string,
+            output_type: data.get("output_type") as string,
             is_downloadable: data.get("is_downloadable") === 'true' ? true : false,
             is_editable: data.get("is_editable") === 'true' ? true : false,
         });
@@ -175,6 +177,7 @@ export async function POST(req: NextRequest) {
             created_by_id: user?.id as string,
             status: data.get("status") as string,
             access_level: validate.data.access_level,
+            output_type: validate.data.output_type,
             is_downloadable: data.get("is_downloadable") === 'true' ? true : false,
             is_editable: data.get("is_editable") === 'true' ? true : false,
             created_at: new Date(),
