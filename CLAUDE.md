@@ -110,3 +110,13 @@ This project is built phase-by-phase (see `document/phase0-plan.md` … `phase3-
 7. **Extra care** (don't skip verification steps) when touching: auth/session (`lib/auth.ts`, `middleware.ts`), the ACL layer (`lib/report-acl.ts`, `report_permissions`), file upload/path handling (`lib/fileUploadServices.ts`), or any Prisma schema change (`prisma/schema.prisma` + migration) — these are the areas most likely to introduce a real security/data bug versus a cosmetic one.
 
 **Current status: read `document/00-progress.md`** — do not restate phase status here. That file is the one place tracking what is done (with commit hashes), what is left, and what is blocked; duplicating it into CLAUDE.md is how the two drifted apart before. As of 2026-08-17 the short version is: Phase 0 through 3e shipped and verified end-to-end against the live DB, the DB schema drift that had blocked 3e is fully root-caused and closed, Phase 4 not yet planned — but check the file, not this line.
+
+<!-- BEGIN:nextjs-agent-rules -->
+
+# This is NOT the Next.js you know
+
+This version has breaking changes — APIs, conventions, and file structure may all differ from your training data. Read the relevant guide in `node_modules/next/dist/docs/` (resolved from this file's directory; in monorepos the `next` package may not be visible from the repo root) before writing any code. Heed deprecation notices.
+
+This block is written and re-added by `next dev` — verify at `node_modules/next/dist/server/lib/generate-agent-files.js`. Removing it from a diff only re-creates the uncommitted change; committing it with your work keeps the tree clean.
+
+<!-- END:nextjs-agent-rules -->

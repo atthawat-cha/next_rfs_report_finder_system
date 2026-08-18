@@ -20,14 +20,15 @@
 
 > หมายเหตุ branch: ย้ายมาทำงานบน `feature/phase4` แล้ว (เดิม `feature/phase3`) — commit ประวัติเดียวกัน ไม่มีอะไรหาย ดู git log ถ้าสงสัย
 
-**ค้างอยู่:** ไม่มีงานเฟส 0-3 ค้างแล้ว — **Phase 4d ปิดจบสมบูรณ์แล้ว 100%** (ดูล่างนี้ — full login-flow ยืนยันสดแล้ว 2026-08-18 หลังแก้ Redis connectivity) — **`next`@14.2.18's critical advisory ปิดแล้ว** (Stage 2 ของ `dependency-upgrade-plan.md`, Next 15.5.23 + React 19.2.8) เหลือ Stage 3 (Next 15→16) เท่านั้นก่อนปิด CI audit step แบบ blocking ได้เต็มที่ — ระหว่าง Stage 2 เจอของค้างใหม่ 2 อย่าง (ของค้าง #8 `lucide-react` peer conflict แก้แล้ว, ของค้าง #9 `deepmerge-ts`/Prisma ยังไม่มีทางแก้) และปิดของค้าง #7 (pino-pretty) ไปด้วยเพราะมันกลายเป็น regression จริงภายใต้ Next 15
+**ค้างอยู่:** ไม่มีงานเฟส 0-3 ค้างแล้ว — **Phase 4d ปิดจบสมบูรณ์แล้ว 100%** (ดูล่างนี้ — full login-flow ยืนยันสดแล้ว 2026-08-18 หลังแก้ Redis connectivity) — **`dependency-upgrade-plan.md` ปิดครบทั้ง 4 stage แล้ว** (Next 14→16.3.1, React 18→19.2.8, sharp 0.34→0.35.3, postcss top-level 8.4→8.5.26) — `next`/`postcss`/`sharp` ทุก CVE ที่ตั้งใจปิดในแผนนี้หายหมดจริง เหลือแค่ 2 ของค้างที่ไม่เกี่ยวกับแผนนี้เลย (#9 `deepmerge-ts`/Prisma, `uuid`/`exceljs` เดิมตั้งแต่ 4c) — ระหว่าง Stage 2/3 เจอของค้างใหม่หลายอย่าง: ของค้าง #7 (pino-pretty) ปิดแล้วเพราะกลายเป็น regression จริงภายใต้ Next 15, #8 (`lucide-react` peer conflict) แก้แล้ว, #9 (`deepmerge-ts`/Prisma) ยังไม่มีทางแก้, #10 (`tw-animate-css` redundant, Turbopack build break) แก้แล้ว, #11 (lint baseline 228 ปัญหา, เพิ่งมี config จริงครั้งแรก) ยังไม่แก้ ไม่ใช่ scope ของแผนนี้, และพบว่า CI's Build step (`.github/workflows/ci.yml`) จะ fail จริงตั้งแต่ครั้งแรกที่ push เพราะ baseline TS error 2 ตัวเดิม (ปัญหานี้มีมาตั้งแต่ตั้ง CI ใน 4f ไม่เกี่ยวกับ dependency upgrade เลย)
 
 > **หมายเหตุ dev environment (2026-08-18):** Redis เดิมไม่มีอะไร listen ที่ `localhost:6380` เลย (root cause ของบล็อกเกอร์ 4d ที่ค้างมาตั้งแต่ `e3e3978`) แก้โดยเปิด Docker Desktop (ติดตั้งอยู่แล้วแต่ไม่ได้รัน) แล้วรัน `docker run -d --name rfs-verify-redis -p 6380:6379 redis:7-alpine` — คอนเทนเนอร์นี้ **ยังรันอยู่หลังจบ session นี้ตั้งใจทิ้งไว้** เพื่อให้ rate-limiting/2FA ใช้งานได้ต่อระหว่าง dev ปกติ (ไม่ใช่แค่ของทดสอบครั้งเดียว) — ถ้าไม่ต้องการแล้วสามารถ `docker stop rfs-verify-redis && docker rm rfs-verify-redis` ได้ทุกเมื่อ ไม่มีข้อมูลสำคัญเก็บอยู่ (เป็น cache/ephemeral state ล้วน)
 
 **งานถัดไปที่ควรทำ (เรียงตามลำดับ):**
-1. **Stage 3 ของ `dependency-upgrade-plan.md`** (Next 15→16) — งานใหญ่ที่สุดที่เหลือ มี 2 open decision รอคำตอบก่อนเริ่ม (`middleware.ts` vs `proxy.ts`, ยอมรับ Turbopack default หรือ pin `--webpack`) เมื่อปิดแล้ว flip CI audit step กลับเป็น blocking ได้
-2. **วางแผน i18n (`next-intl`) แยกเป็น phase ใหม่ของตัวเอง** — ถูก scope out จาก 4e ตั้งแต่ต้นเพราะเป็น all-or-nothing sweep ทั้งโปรเจกต์
-3. **ของค้าง #9** (`deepmerge-ts`/Prisma) — รอ Prisma ออก patch จริงหรือ Prisma 8 GA ไม่มีอะไรให้ทำตอนนี้
+1. **แก้ baseline TypeScript error 2 ตัวเดิมให้จบจริง** — ตอนนี้มีความสำคัญมากขึ้นกว่าก่อน เพราะทำให้ CI's Build step จะ fail จริงทุกครั้งที่ push (ของค้าง #12) ไม่ใช่แค่ debt เฉยๆอีกต่อไป
+2. **พิจารณา lint baseline 228 ปัญหา** (ของค้าง #11) — ไม่เร่งด่วน (`npm run lint` ไม่ได้อยู่ใน CI) แต่ควรมีแผนล้างค่อยๆ
+3. **วางแผน i18n (`next-intl`) แยกเป็น phase ใหม่ของตัวเอง** — ถูก scope out จาก 4e ตั้งแต่ต้นเพราะเป็น all-or-nothing sweep ทั้งโปรเจกต์
+4. **ของค้าง #9** (`deepmerge-ts`/Prisma) — รอ Prisma ออก patch จริงหรือ Prisma 8 GA ไม่มีอะไรให้ทำตอนนี้
 4. **พิจารณาว่าจะให้ Redis ตัวนี้เป็น dev dependency ถาวรไหม** (เช่น เพิ่ม `docker-compose.yml` ให้ทีมอื่นรันตามได้ง่ายๆ) แทนที่จะพึ่ง container เดี่ยวที่ตั้งด้วยมือ
 
 ---
@@ -208,12 +209,12 @@ DB เก่า (`next_rfs_master`@`5434`) ไม่มี `_prisma_migrations` 
 
 `.github/workflows/ci.yml` (ใหม่) รัน `npm audit --audit-level=high` เป็นครั้งแรกของ repo นี้ (ไม่เคยมี CI มาก่อน) แล้วเจอว่ามี high/critical advisory จริงอยู่ก่อนแล้ว ไม่เกี่ยวกับงาน Phase 4f เลย:
 
-- **`next@14.2.18` — critical — ✅ ปิดแล้ว (Stage 2, 2026-08-18)** — สะสมหลาย CVE จากหลาย Next.js version (DoS ผ่าน Server Actions/Server Components, cache poisoning, middleware auth bypass, SSRF ผ่าน rewrites, XSS ใน beforeInteractive scripts ฯลฯ) อัปเกรดเป็น `next@15.5.23` (+ React 19.2.8 ที่บังคับคู่กัน) แล้ว `npm audit` ยืนยัน critical advisory ตัวนี้หายไปทั้งหมด ไม่ใช่แค่ลดลง — เหลือ Stage 3 (15→16) เพื่อปิดสำเนา postcss/sharp ที่ฝังอยู่ใน `next` เอง (ดูข้อถัดไป) และ [`dependency-upgrade-plan.md`](./dependency-upgrade-plan.md) Stage 2 result สำหรับรายละเอียดเต็ม (codemod, regression ที่เจอ+แก้, ของค้างใหม่ #8/#9)
-- **`postcss` — high — ✅ ปิดแล้วบน top-level (Stage 0), สำเนาใน `next` ยังเหลือ (รอ Stage 3)** — top-level devDependency `postcss@8.4.33` vulnerable จริงด้วย (ไม่ใช่แค่สำเนาที่ฝังใน `next`) bump เป็น `^8.5.26` แล้ว `npm audit` ยืนยันปิดทั้ง 2 CVE บนสำเนา top-level; สำเนาที่ฝังอยู่ใน `node_modules/next/node_modules/postcss` ยังคงอยู่ตามคาดแม้หลัง Stage 2 (Next 15.5.23 ก็ยังฝัง postcss เก่าอยู่) รอ Stage 3 (Next 16) ถึงจะปิดได้จริง
-- **`sharp`/libvips — high — ✅ ปิดแล้วบน top-level (Stage 1), สำเนาใน `next` ยังเหลือ (รอ Stage 3)** (`CVE-2026-33327/33328/35590/35591`) — bump top-level เป็น `^0.35.3` แล้ว, resolve บน Windows dev machine สำเร็จไม่มีปัญหา native binary, ยืนยัน `convertToWebp()` ทำงานถูกต้องจริงด้วยการ encode/decode round-trip ตรง — แต่ `next` เองก็ฝัง sharp เวอร์ชันเก่าไว้ใช้ภายใน (image optimization pipeline) แยกต่างหากจาก top-level ของเรา ยังไม่ปิดจนกว่าจะ Stage 3
+- **`next@14.2.18` — critical — ✅ ปิดแล้ว (Stage 2, 2026-08-18)** — สะสมหลาย CVE จากหลาย Next.js version (DoS ผ่าน Server Actions/Server Components, cache poisoning, middleware auth bypass, SSRF ผ่าน rewrites, XSS ใน beforeInteractive scripts ฯลฯ) อัปเกรดเป็น `next@15.5.23` (+ React 19.2.8 ที่บังคับคู่กัน) แล้ว `npm audit` ยืนยัน critical advisory ตัวนี้หายไปทั้งหมด ไม่ใช่แค่ลดลง
+- **`postcss` — high — ✅ ปิดหมดแล้วทั้ง top-level และสำเนาใน `next` (Stage 0 + Stage 3, 2026-08-18)** — top-level devDependency `postcss@8.4.33` vulnerable จริงด้วย (ไม่ใช่แค่สำเนาที่ฝังใน `next`) bump เป็น `^8.5.26` ตั้งแต่ Stage 0; สำเนาที่ฝังอยู่ใน `node_modules/next/node_modules/postcss` ปิดจริงหลัง Stage 3 (Next 16.3.1 ฝัง postcss เวอร์ชันใหม่กว่ามาให้เอง)
+- **`sharp`/libvips — high — ✅ ปิดหมดแล้วทั้ง top-level และสำเนาใน `next` (Stage 1 + Stage 3, 2026-08-18)** (`CVE-2026-33327/33328/35590/35591`) — bump top-level เป็น `^0.35.3` ตั้งแต่ Stage 1, resolve บน Windows dev machine สำเร็จไม่มีปัญหา native binary, ยืนยัน `convertToWebp()` ทำงานถูกต้องจริงด้วยการ encode/decode round-trip ตรง; สำเนาที่ฝังใน `next` (image optimization pipeline) ปิดจริงหลัง Stage 3 เช่นกัน
 - moderate 1 ตัว (`uuid` ผ่าน `exceljs`) — รู้อยู่แล้วตั้งแต่ 4c ไม่ reachable จาก usage ของแอปนี้ ไม่ปิดปัญหา ยังคงเป็น moderate ไม่ block ที่ threshold `high`
 
-**สถานะปัจจุบัน**: CI audit step ยังตั้งเป็น `continue-on-error: true` ต่อไป (รอ Stage 3 ปิดสำเนา postcss/sharp ที่ฝังใน `next` ก่อนถึง flip เป็น blocking ได้) — Stage 0/1/2 ปิดแล้วจริงทั้ง 3 (`npm audit`: 11 (2 moderate/8 high/1 critical) → หลัง 0/1 เหลือ 10 (2 moderate/7 high/1 critical) → หลัง Stage 2 เหลือ 8 (2 moderate/6 high) — **critical หายไปเกลี้ยง** แม้ total เพิ่มขึ้นมา 1 ในช่วงกลางทาง (ของค้าง #9, `deepmerge-ts`/Prisma ที่เจอใหม่ ไม่เกี่ยวกับ Next/React เลย) เห็นผลจริงจาก `npm install`/`npm audit`/ทดสอบสดทุกขั้น ไม่ใช่แค่เปลี่ยนเลขเวอร์ชันเฉยๆ **แผนอัปเกรดฉบับเต็ม: [`dependency-upgrade-plan.md`](./dependency-upgrade-plan.md)** — เหลือ Stage 3 (Next 15→16) เท่านั้น เป็นงานใหญ่ที่สุดที่เหลือ ต้องแยก session ของตัวเอง มี 2 open decision รอคำตอบก่อนเริ่ม
+**สถานะปัจจุบัน — ปิดครบทั้ง `dependency-upgrade-plan.md` แล้ว (2026-08-18)**: `npm audit`: 11 (2 moderate/8 high/1 critical) → Stage 0/1 → 10 (2 moderate/7 high/1 critical) → Stage 2 → 8 (2 moderate/6 high, **critical หายเกลี้ยง**) → Stage 3 → **5 (2 moderate/3 high)** — ที่เหลือทั้งหมดไม่เกี่ยวกับ Next/React/sharp/postcss เลยแม้แต่ตัวเดียว (ของค้าง #9 `deepmerge-ts`/Prisma 3 entry + `uuid`/`exceljs` เดิม 2 entry) CI audit step **ยังคง `continue-on-error: true` ต่อไป** แต่ตอนนี้เป็นเพราะของค้าง #9 เท่านั้น ไม่ใช่เพราะ Next แล้ว (แก้ comment ใน `ci.yml` ให้ตรงแล้ว) รายละเอียดเต็มทุก stage: [`dependency-upgrade-plan.md`](./dependency-upgrade-plan.md)
 
 ### 7. `lib/logger.ts` (pino) dev-transport worker thread เตือนเป็นระยะบน Windows — ✅ ปิดแล้ว (2026-08-18, ระหว่าง Stage 2 ของ `dependency-upgrade-plan.md`)
 
@@ -252,6 +253,28 @@ Error: Cannot find module 'D:\...\.next\server\vendor-chunks\lib\worker.js'
 **ยังไม่มีทางแก้ที่ยอมรับได้ตอนนี้**: เช็ค npm registry แล้วพบว่า `7.9.1` คือ stable เวอร์ชันล่าสุดจริงๆ (เวอร์ชันถัดไปที่มีคือ `7.10.0-dev.*` ซึ่งเป็น dev/prerelease ทั้งหมด แล้วกระโดดไป `8.0.0-rc.*`) `npm audit fix --force` เสนอให้ downgrade เป็น `prisma@6.12.0` ซึ่ง**รับไม่ได้**เพราะ repo นี้ใช้สถาปัตยกรรม config ของ Prisma 7 ทั้งหมด (`prisma.config.ts` แทน `package.json`, `@prisma/adapter-pg`) — downgrade กลับ Prisma 6 คือ regression ใหญ่กว่าที่ยอมรับได้มาก ไม่เกี่ยวกับ Next/React/sharp/postcss เลยด้วย
 
 **สถานะ**: ปล่อยไว้ที่ `prisma@7.9.1` (stable ล่าสุด) ไม่ downgrade ไม่ upgrade ไป Prisma 8 RC บันทึกไว้เป็นของค้างใหม่ รอ Prisma ออก patch เวอร์ชันจริงที่แก้ `deepmerge-ts` หรือ Prisma 8 GA เท่านั้น ไม่ใช่งานที่ควรทำแบบ drive-by ระหว่าง Next.js upgrade
+
+### 10. `tw-animate-css` ทำ Turbopack build พังจริง — ✅ ปิดแล้ว (Stage 3, 2026-08-18)
+
+`app/globals.css` มี `@import "tw-animate-css";` อยู่คู่กับ `tailwindcss-animate` (ตัวที่ใช้งานจริงผ่าน `tailwind.config.ts`'s `plugins`) — ตอนอัปเกรดเป็น Next 16 ซึ่งใช้ Turbopack เป็น default bundler ทั้ง `next dev`/`next build` แล้ว `next dev` compile หน้าแรกไม่ผ่านเลย: `Module not found: Can't resolve 'tw-animate-css'`
+
+**สาเหตุ**: `tw-animate-css`'s `package.json` ประกาศ `exports` field ไว้แค่ custom condition `"style"` (กลไกเฉพาะของ Tailwind v4's import resolution) ไม่มี `"default"` — webpack (ที่ Next 14/15 ใช้ตอน dev เดิม) resolve หลุดไปที่ `"main"` field แบบหลวมๆได้ แต่ Turbopack เข้มงวดกับ `exports` field ตรงตามสเปก resolve ไม่เจอจริง
+
+**ตรวจแล้วว่าไม่จำเป็นต้องมีเลย**: `tw-animate-css` เป็น "**replacement**" ของ `tailwindcss-animate` ตามคำอธิบายของแพ็กเกจเอง ไม่ใช่ตัวเสริม ส่วนโปรเจกต์นี้ยังอยู่ Tailwind v3 และมี `tailwindcss-animate` (ตัวที่ compatible กับ v3) ให้ utility class เดียวกันอยู่แล้วจริง — ลบ `@import` บรรทัดนั้นออกจาก `globals.css` และลบ dependency ออกจาก `package.json` เลย (ไม่ pin `--webpack` เพื่อเลี่ยงปัญหา) ยืนยันว่า `.animate-in`/`.fade-in`/`.zoom-in`/`accordion-down` ยังอยู่ครบใน compiled CSS หลังลบ
+
+### 11. Lint baseline 228 ปัญหา (36 error, 192 warning) — เจอครั้งแรกตอน migrate `next lint` → ESLint CLI (Stage 3, 2026-08-18)
+
+Next.js 16 ตัด `next lint` ออกทั้งหมด ต้อง migrate เป็น ESLint CLI ตรง (`npx @next/codemod@latest next-lint-to-eslint-cli .` สร้าง `eslint.config.mjs` แบบ flat config ให้อัตโนมัติ) พอรัน `npm run lint` (`eslint .`) ครั้งแรกในประวัติ repo นี้ (ไม่เคยมี `.eslintrc`/config จริงมาก่อนเลย ไม่ชัดว่า `next lint` เดิมเคย enforce อะไรจริงจังหรือเปล่า) เจอ **228 ปัญหา (36 error, 192 warning)** กระจายทั่ว repo (ส่วนใหญ่เป็น `@typescript-eslint/no-unused-vars`/`no-explicit-any` ใน `prisma/seeds/*.ts` กับไฟล์ทั่วไปบางไฟล์)
+
+**ยังไม่แก้** — ไม่ใช่ scope ของ dependency-upgrade-plan.md (เป้าหมายคือปิดช่องโหว่ ไม่ใช่ lint sweep) `.github/workflows/ci.yml` ไม่ได้รัน `npm run lint` เลย เลยไม่กระทบ CI ตอนนี้ แต่ควรมีแผนล้างทีหลัง (อาจทยอยแก้ทีละไฟล์ หรือตั้ง `--max-warnings` แบบ ratchet)
+
+### 12. CI's Build step จะ fail จริงตั้งแต่ push ครั้งแรก — เจอระหว่าง Stage 3, ไม่ใช่ของค้างจาก dependency upgrade (2026-08-18)
+
+`.github/workflows/ci.yml` (ตั้งจาก Phase 4f, `c0c0c48`) มี step `Build` (`npm run build`) ที่**ไม่มี** `continue-on-error` เลย — ยืนยันซ้ำหลายรอบระหว่าง Stage 0/2/3 ว่า `npm run build` fail จริงทุกครั้งด้วย baseline TypeScript error 2 ตัวเดิม (`app/api/reports/report/manage/route.ts`, `components/ui/combobox.tsx` — ดูของค้าง #2) ไม่เกี่ยวกับ dependency version เลยแม้แต่น้อย (fail เหมือนกันทั้งบน Next 14/15/16)
+
+**นัยสำคัญ**: workflow นี้ยังไม่เคย push ขึ้น GitHub จริงเลยสักครั้ง (แค่มีไฟล์ในเครื่อง) เมื่อ push จริงครั้งแรก **Build step จะ fail ทันที** ไม่เกี่ยวกับ dependency upgrade รอบนี้เลย เป็นช่องโหว่ในการตั้ง CI ตั้งแต่ 4f ที่ไม่มีใครสังเกตเพราะไม่เคย trigger จริง
+
+**ตั้งใจไม่แก้ตรงนี้**: การให้ CI fail ตอน build จริงพังคือพฤติกรรมที่ถูกต้อง ไม่ใช่บั๊กที่ควร route around ด้วย `continue-on-error` ทางแก้จริงคือไปแก้ baseline TS error 2 ตัวให้จบ (ของค้าง #2) ซึ่งอยู่นอก scope ของงานนี้ตามนโยบาย baseline เดิมของ `CLAUDE.md`
 
 ---
 
