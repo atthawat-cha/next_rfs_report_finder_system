@@ -6,7 +6,8 @@ import { logActivity } from '@/lib/activity-log';
 /**
  * DELETE /api/reports/favorites/[reportId] — remove a favorite for the current user
  */
-export async function DELETE(req: NextRequest, { params }: { params: { reportId: string } }) {
+export async function DELETE(req: NextRequest, props: { params: Promise<{ reportId: string }> }) {
+    const params = await props.params;
     try {
         const auth = getAuthFromRequest(req);
         if (!auth) {

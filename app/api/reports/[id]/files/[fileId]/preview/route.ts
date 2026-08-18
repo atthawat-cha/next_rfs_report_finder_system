@@ -23,7 +23,11 @@ interface PreviewTable {
  * response size bounded regardless of the real file's size (this is a
  * preview, not an export; the full file is still available via download).
  */
-export async function GET(req: NextRequest, { params }: { params: { id: string; fileId: string } }) {
+export async function GET(
+    req: NextRequest,
+    props: { params: Promise<{ id: string; fileId: string }> }
+) {
+    const params = await props.params;
     try {
         const auth = getAuthFromRequest(req);
         if (!auth) {

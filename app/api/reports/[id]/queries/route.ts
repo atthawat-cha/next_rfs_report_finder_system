@@ -10,7 +10,8 @@ import { z } from 'zod';
  * Reference/documentation only (system-design.md §5.2) — sql_text is never
  * executed by the app.
  */
-export async function GET(req: NextRequest, { params }: { params: { id: string } }) {
+export async function GET(req: NextRequest, props: { params: Promise<{ id: string }> }) {
+    const params = await props.params;
     try {
         const authResult = await requireRole(req, routeAcceptted('admin'));
         if (authResult instanceof NextResponse) return authResult;
@@ -38,7 +39,8 @@ const createZod = z.object({
  * another query on this report is already main, that one is auto-demoted in
  * the same transaction (mirrors report_files.is_current toggling).
  */
-export async function POST(req: NextRequest, { params }: { params: { id: string } }) {
+export async function POST(req: NextRequest, props: { params: Promise<{ id: string }> }) {
+    const params = await props.params;
     try {
         const authResult = await requireRole(req, routeAcceptted('admin'));
         if (authResult instanceof NextResponse) return authResult;
@@ -108,7 +110,8 @@ const updateZod = z.object({
  * snapshots the pre-change state into report_query_versions first, then
  * bumps version. Setting is_main=true auto-demotes the previous main query.
  */
-export async function PUT(req: NextRequest, { params }: { params: { id: string } }) {
+export async function PUT(req: NextRequest, props: { params: Promise<{ id: string }> }) {
+    const params = await props.params;
     try {
         const authResult = await requireRole(req, routeAcceptted('admin'));
         if (authResult instanceof NextResponse) return authResult;
@@ -186,7 +189,8 @@ export async function PUT(req: NextRequest, { params }: { params: { id: string }
  * to report_query_versions via schema. Not blocked even if it's the main
  * query (MVP, same stance as report_files DELETE).
  */
-export async function DELETE(req: NextRequest, { params }: { params: { id: string } }) {
+export async function DELETE(req: NextRequest, props: { params: Promise<{ id: string }> }) {
+    const params = await props.params;
     try {
         const authResult = await requireRole(req, routeAcceptted('admin'));
         if (authResult instanceof NextResponse) return authResult;

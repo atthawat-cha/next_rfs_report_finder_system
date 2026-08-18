@@ -20,14 +20,14 @@
 
 > หมายเหตุ branch: ย้ายมาทำงานบน `feature/phase4` แล้ว (เดิม `feature/phase3`) — commit ประวัติเดียวกัน ไม่มีอะไรหาย ดู git log ถ้าสงสัย
 
-**ค้างอยู่:** ไม่มีงานเฟส 0-3 ค้างแล้ว — **Phase 4d ปิดจบสมบูรณ์แล้ว 100%** (ดูล่างนี้ — full login-flow ยืนยันสดแล้ว 2026-08-18 หลังแก้ Redis connectivity) — **Phase 4f เจอของค้างใหม่ระหว่างทำ**: dependency vulnerability scan (`npm audit --audit-level=high`) เจอ pre-existing high/critical advisory จริงใน `next@14.2.18`/`postcss`/`sharp` ที่ CI ยังไม่ block ไว้ก่อน (ดูของค้าง #6 ด้านล่าง) — **Phase 4e เจอของค้างเล็กใหม่ระหว่างทำ**: `lib/logger.ts`'s pino-pretty dev-transport worker thread ล้มเหลวเป็นระยะบน dev server (Windows) ด้วย `MODULE_NOT_FOUND` (ดูของค้าง #7 ด้านล่าง — dev-only, ไม่กระทบ production, ไม่กระทบผลลัพธ์ request ใดๆที่ทดสอบ)
+**ค้างอยู่:** ไม่มีงานเฟส 0-3 ค้างแล้ว — **Phase 4d ปิดจบสมบูรณ์แล้ว 100%** (ดูล่างนี้ — full login-flow ยืนยันสดแล้ว 2026-08-18 หลังแก้ Redis connectivity) — **`next`@14.2.18's critical advisory ปิดแล้ว** (Stage 2 ของ `dependency-upgrade-plan.md`, Next 15.5.23 + React 19.2.8) เหลือ Stage 3 (Next 15→16) เท่านั้นก่อนปิด CI audit step แบบ blocking ได้เต็มที่ — ระหว่าง Stage 2 เจอของค้างใหม่ 2 อย่าง (ของค้าง #8 `lucide-react` peer conflict แก้แล้ว, ของค้าง #9 `deepmerge-ts`/Prisma ยังไม่มีทางแก้) และปิดของค้าง #7 (pino-pretty) ไปด้วยเพราะมันกลายเป็น regression จริงภายใต้ Next 15
 
 > **หมายเหตุ dev environment (2026-08-18):** Redis เดิมไม่มีอะไร listen ที่ `localhost:6380` เลย (root cause ของบล็อกเกอร์ 4d ที่ค้างมาตั้งแต่ `e3e3978`) แก้โดยเปิด Docker Desktop (ติดตั้งอยู่แล้วแต่ไม่ได้รัน) แล้วรัน `docker run -d --name rfs-verify-redis -p 6380:6379 redis:7-alpine` — คอนเทนเนอร์นี้ **ยังรันอยู่หลังจบ session นี้ตั้งใจทิ้งไว้** เพื่อให้ rate-limiting/2FA ใช้งานได้ต่อระหว่าง dev ปกติ (ไม่ใช่แค่ของทดสอบครั้งเดียว) — ถ้าไม่ต้องการแล้วสามารถ `docker stop rfs-verify-redis && docker rm rfs-verify-redis` ได้ทุกเมื่อ ไม่มีข้อมูลสำคัญเก็บอยู่ (เป็น cache/ephemeral state ล้วน)
 
 **งานถัดไปที่ควรทำ (เรียงตามลำดับ):**
-1. **เริ่ม implement `dependency-upgrade-plan.md`** — Stage 0 (postcss patch bump) ทำได้ทันทีแทบไม่มีความเสี่ยง, Stage 1 (sharp 0.35) ความเสี่ยงต่ำ-กลาง, Stage 2/3 (Next 14→15→16 + React 19) เป็นงานใหญ่ที่สุด ต้องแยก session ของตัวเอง — มี 2 open decision รอคำตอบก่อนเริ่ม Stage 3 (`middleware.ts` vs `proxy.ts`, ยอมรับ Turbopack default หรือ pin `--webpack`)
+1. **Stage 3 ของ `dependency-upgrade-plan.md`** (Next 15→16) — งานใหญ่ที่สุดที่เหลือ มี 2 open decision รอคำตอบก่อนเริ่ม (`middleware.ts` vs `proxy.ts`, ยอมรับ Turbopack default หรือ pin `--webpack`) เมื่อปิดแล้ว flip CI audit step กลับเป็น blocking ได้
 2. **วางแผน i18n (`next-intl`) แยกเป็น phase ใหม่ของตัวเอง** — ถูก scope out จาก 4e ตั้งแต่ต้นเพราะเป็น all-or-nothing sweep ทั้งโปรเจกต์
-3. **พิจารณาแก้ pino-pretty worker thread บน dev (ของค้าง #7)** — priority ต่ำ เพราะไม่กระทบ production และไม่กระทบผลลัพธ์จริง
+3. **ของค้าง #9** (`deepmerge-ts`/Prisma) — รอ Prisma ออก patch จริงหรือ Prisma 8 GA ไม่มีอะไรให้ทำตอนนี้
 4. **พิจารณาว่าจะให้ Redis ตัวนี้เป็น dev dependency ถาวรไหม** (เช่น เพิ่ม `docker-compose.yml` ให้ทีมอื่นรันตามได้ง่ายๆ) แทนที่จะพึ่ง container เดี่ยวที่ตั้งด้วยมือ
 
 ---
@@ -208,15 +208,14 @@ DB เก่า (`next_rfs_master`@`5434`) ไม่มี `_prisma_migrations` 
 
 `.github/workflows/ci.yml` (ใหม่) รัน `npm audit --audit-level=high` เป็นครั้งแรกของ repo นี้ (ไม่เคยมี CI มาก่อน) แล้วเจอว่ามี high/critical advisory จริงอยู่ก่อนแล้ว ไม่เกี่ยวกับงาน Phase 4f เลย:
 
-- **`next@14.2.18` — critical** — สะสมหลาย CVE จากหลาย Next.js version (DoS ผ่าน Server Actions/Server Components, cache poisoning, middleware auth bypass, SSRF ผ่าน rewrites, XSS ใน beforeInteractive scripts ฯลฯ — ดูรายละเอียดเต็มด้วย `npm audit --json`) fix ต้องอัปเกรดเป็น `next@16.x` (breaking — App Router มีการเปลี่ยนแปลงหลายจุด, ไม่ใช่แค่ `npm audit fix`)
-- **`postcss` — high — ✅ ปิดแล้ว (Stage 0, 2026-08-18)** — top-level devDependency `postcss@8.4.33` vulnerable จริงด้วย (ไม่ใช่แค่สำเนาที่ฝังใน `next`) bump เป็น `^8.5.26` แล้ว `npm audit` ยืนยันปิดทั้ง 2 CVE บนสำเนา top-level; สำเนาที่ฝังอยู่ใน `node_modules/next/node_modules/postcss` (`8.4.31`) ยังคงอยู่ตามคาด รอ Stage 2/3 (อัปเกรด `next`) ถึงจะปิดได้
-- **`sharp`/libvips — high — ✅ ปิดแล้ว (Stage 1, 2026-08-18)** (`CVE-2026-33327/33328/35590/35591`) — bump เป็น `^0.35.3` แล้ว, resolve บน Windows dev machine สำเร็จไม่มีปัญหา native binary, ยืนยัน `convertToWebp()` ทำงานถูกต้องจริงด้วยการ encode/decode round-trip ตรง, `npm audit` ยืนยันปิด CVE นี้แล้ว
+- **`next@14.2.18` — critical — ✅ ปิดแล้ว (Stage 2, 2026-08-18)** — สะสมหลาย CVE จากหลาย Next.js version (DoS ผ่าน Server Actions/Server Components, cache poisoning, middleware auth bypass, SSRF ผ่าน rewrites, XSS ใน beforeInteractive scripts ฯลฯ) อัปเกรดเป็น `next@15.5.23` (+ React 19.2.8 ที่บังคับคู่กัน) แล้ว `npm audit` ยืนยัน critical advisory ตัวนี้หายไปทั้งหมด ไม่ใช่แค่ลดลง — เหลือ Stage 3 (15→16) เพื่อปิดสำเนา postcss/sharp ที่ฝังอยู่ใน `next` เอง (ดูข้อถัดไป) และ [`dependency-upgrade-plan.md`](./dependency-upgrade-plan.md) Stage 2 result สำหรับรายละเอียดเต็ม (codemod, regression ที่เจอ+แก้, ของค้างใหม่ #8/#9)
+- **`postcss` — high — ✅ ปิดแล้วบน top-level (Stage 0), สำเนาใน `next` ยังเหลือ (รอ Stage 3)** — top-level devDependency `postcss@8.4.33` vulnerable จริงด้วย (ไม่ใช่แค่สำเนาที่ฝังใน `next`) bump เป็น `^8.5.26` แล้ว `npm audit` ยืนยันปิดทั้ง 2 CVE บนสำเนา top-level; สำเนาที่ฝังอยู่ใน `node_modules/next/node_modules/postcss` ยังคงอยู่ตามคาดแม้หลัง Stage 2 (Next 15.5.23 ก็ยังฝัง postcss เก่าอยู่) รอ Stage 3 (Next 16) ถึงจะปิดได้จริง
+- **`sharp`/libvips — high — ✅ ปิดแล้วบน top-level (Stage 1), สำเนาใน `next` ยังเหลือ (รอ Stage 3)** (`CVE-2026-33327/33328/35590/35591`) — bump top-level เป็น `^0.35.3` แล้ว, resolve บน Windows dev machine สำเร็จไม่มีปัญหา native binary, ยืนยัน `convertToWebp()` ทำงานถูกต้องจริงด้วยการ encode/decode round-trip ตรง — แต่ `next` เองก็ฝัง sharp เวอร์ชันเก่าไว้ใช้ภายใน (image optimization pipeline) แยกต่างหากจาก top-level ของเรา ยังไม่ปิดจนกว่าจะ Stage 3
 - moderate 1 ตัว (`uuid` ผ่าน `exceljs`) — รู้อยู่แล้วตั้งแต่ 4c ไม่ reachable จาก usage ของแอปนี้ ไม่ปิดปัญหา ยังคงเป็น moderate ไม่ block ที่ threshold `high`
-- **`next@14.2.18` — critical — ยังไม่ปิด** — เหลือ Stage 2 (14→15+React19) และ Stage 3 (15→16) ตาม [`dependency-upgrade-plan.md`](./dependency-upgrade-plan.md), เป็นงานใหญ่ที่สุดที่เหลือ
 
-**สถานะปัจจุบัน**: CI audit step ยังตั้งเป็น `continue-on-error: true` ต่อไป (ยังไม่ควร flip เป็น blocking จนกว่า Stage 2/3 จะปิด `next`'s critical advisory ด้วย) — Stage 0/1 ปิดแล้วจริงทั้งคู่ (`npm audit` ยืนยัน vulnerability count ลดจาก 11 (2 moderate/8 high/1 critical) → 10 (2 moderate/7 high/1 critical) — sharp's high หายไป 1 ตัวตามคาด, postcss เดิมนับรวมอยู่ใน "high" เดียวกันกับตัวที่ยังเหลือฝังใน `next` เลยตัวเลขรวมไม่ได้ลดจาก postcss แยกออกมาชัดเจน แต่ `npm audit` ยืนยันด้วย CVE ID ตรงว่า 2 ตัวของ top-level postcss ปิดแล้วจริง), เห็นผลจริงจาก `npm install`/`npm audit`/ทดสอบสด ไม่ใช่แค่เปลี่ยนเลขเวอร์ชันเฉยๆ **แผนอัปเกรดฉบับเต็ม: [`dependency-upgrade-plan.md`](./dependency-upgrade-plan.md)** — Stage 2/3 (Next 14→15→16 + React 19) ยังไม่เริ่ม เป็นงานใหญ่ที่สุด ต้องแยก session ของตัวเอง
+**สถานะปัจจุบัน**: CI audit step ยังตั้งเป็น `continue-on-error: true` ต่อไป (รอ Stage 3 ปิดสำเนา postcss/sharp ที่ฝังใน `next` ก่อนถึง flip เป็น blocking ได้) — Stage 0/1/2 ปิดแล้วจริงทั้ง 3 (`npm audit`: 11 (2 moderate/8 high/1 critical) → หลัง 0/1 เหลือ 10 (2 moderate/7 high/1 critical) → หลัง Stage 2 เหลือ 8 (2 moderate/6 high) — **critical หายไปเกลี้ยง** แม้ total เพิ่มขึ้นมา 1 ในช่วงกลางทาง (ของค้าง #9, `deepmerge-ts`/Prisma ที่เจอใหม่ ไม่เกี่ยวกับ Next/React เลย) เห็นผลจริงจาก `npm install`/`npm audit`/ทดสอบสดทุกขั้น ไม่ใช่แค่เปลี่ยนเลขเวอร์ชันเฉยๆ **แผนอัปเกรดฉบับเต็ม: [`dependency-upgrade-plan.md`](./dependency-upgrade-plan.md)** — เหลือ Stage 3 (Next 15→16) เท่านั้น เป็นงานใหญ่ที่สุดที่เหลือ ต้องแยก session ของตัวเอง มี 2 open decision รอคำตอบก่อนเริ่ม
 
-### 7. `lib/logger.ts` (pino) dev-transport worker thread เตือนเป็นระยะบน Windows — เจอครั้งแรกตอนยืนยัน Phase 4e สด (2026-08-18)
+### 7. `lib/logger.ts` (pino) dev-transport worker thread เตือนเป็นระยะบน Windows — ✅ ปิดแล้ว (2026-08-18, ระหว่าง Stage 2 ของ `dependency-upgrade-plan.md`)
 
 ระหว่างเปิด dev server เพื่อยืนยัน Phase 4e สด สังเกตว่าทุกครั้งที่มี request เข้า route ที่ (ทางอ้อมก็ตาม) import `lib/activity-log.ts` → `lib/logger.ts` เจอ log แบบนี้แทรกอยู่:
 
@@ -232,7 +231,27 @@ Error: Cannot find module 'D:\...\.next\server\vendor-chunks\lib\worker.js'
 
 **ผลกระทบจริง**: **ไม่กระทบผลลัพธ์ request ใดๆที่ทดสอบระหว่าง 4e** (ทุก endpoint ตอบค่าถูกต้องตามที่คาดหมายทั้งหมด แม้ log จะโชว์ error ปนอยู่) **ไม่กระทบ production** เพราะ `lib/logger.ts` set `transport: undefined` เมื่อ `NODE_ENV==='production'` (ไม่มี worker thread ให้ spawn เลยในโหมด production) เป็นปัญหาเฉพาะ dev-mode บน Windows ระหว่าง `pino-pretty`'s worker-thread transport กับ Next.js dev bundler
 
-**ยังไม่แก้** — priority ต่ำ (cosmetic บน dev log เท่านั้น) ถ้าจะแก้ ทางเลือกที่เป็นไปได้: (a) lazy-init logger เฉพาะตอนเรียกจริงแทน module-scope, (b) ปิด pino-pretty transport ใน dev ด้วย (เหลือ JSON ดิบทั้ง dev/prod), (c) หา workaround ให้ Next dev bundler ไม่ mangle worker script path ของ pino-pretty ยังไม่ได้ลองทางไหนจริง — บันทึกไว้เป็นของค้าง ไม่ใช่บั๊กที่ปิดจบแล้ว
+**อัปเดต (2026-08-18)**: ตอนแรกประเมินว่า "priority ต่ำ, cosmetic เท่านั้น" **ผิด** — ตอนทำ Stage 2 (Next 14→15+React19) เจอว่า `GET /api/reports/[id]/files` (และ route อื่นๆแบบไม่แน่นอน ขึ้นกับว่า Next dev child-process ไหนคอมไพล์ route นั้นก่อน) ตอบ 500 จริง ("Jest worker encountered 2 child process exceptions, exceeding retry limit") เพราะ Next.js 15 เปลี่ยนสถาปัตยกรรม dev mode ให้คอมไพล์แต่ละ route ใน child process แยก — uncaught exception จาก worker thread ตัวเดิมที่เคยแค่ log ทิ้งเฉยๆใน Next 14 กลับไป **ฆ่า child process ทั้งตัว** ใน Next 15 ทำให้ route นั้น 500 จริงหลัง retry ครบ 2 ครั้ง
+
+**Fix จริง** (ทางเลือก (b) ที่เขียนไว้แต่แรก): ลบ `pino-pretty` transport ออกทั้งหมด (เหลือ JSON ดิบทั้ง dev/prod, ไม่มี transport = ไม่มี worker thread = ไม่มีบั๊กชนิดนี้ได้อีกเลย) + ถอด `pino-pretty` ออกจาก devDependencies ที่ไม่ได้ใช้แล้ว ยืนยันสด: route ที่เคย 500 ตอบ 200 คงที่ 3/3 ครั้งรวมถึงหลัง restart dev server สดๆ, grep dev server log ทั้งช่วง smoke test ไม่เจอ `MODULE_NOT_FOUND`/worker thread error เหลืออยู่เลย
+
+### 8. `lucide-react@^0.344.0` peer-dependency conflict กับ React 19 — เจอระหว่าง Stage 2, แก้ด้วย `overrides` (2026-08-18)
+
+`lucide-react` เวอร์ชันที่ pin ไว้ (`^0.344.0`) ประกาศ `peerDependencies.react` ไว้แค่ `^16.5.1 || ^17.0.0 || ^18.0.0` (เก่ากว่าตอนที่เขาเพิ่ม `^19.0.0` เข้าไปใน 1.x line) ตอน `npm install` แบบ full re-resolve (ไม่ใช่ incremental) หลัง bump react เป็น 19 จะ **hard error ERESOLVE** ไม่ใช่แค่ warning เฉยๆ
+
+**ตัดสินใจ**: ไม่ bump `lucide-react` ขึ้น major เป็น 1.x (มีความเสี่ยงเรื่อง icon rename/API เปลี่ยนที่ต้องตรวจแยกต่างหาก ไม่เกี่ยวกับงาน Next/React upgrade) ใช้ `package.json`'s `overrides` แทน:
+```json
+"overrides": { "lucide-react": { "react": "$react" } }
+```
+บังคับ peer resolution โดยไม่แตะโค้ด/ไอคอนของ `lucide-react` เลย ยืนยันด้วย `npm ls` ว่าไม่มี invalid/unmet peer dependency เหลืออยู่ในทั้ง tree แล้ว
+
+### 9. `deepmerge-ts`/`@prisma/config` high-severity advisory — เจอใหม่ระหว่าง Stage 2, ยังไม่มีทางแก้ (2026-08-18)
+
+ระหว่างทำ Stage 2 npm install แบบ full re-resolve ทำให้ `prisma`/`@prisma/config` bump ตัวเองจาก `7.4.0` (pin เดิม, ยังอยู่ใน `^7.4.0` range) ขึ้นไปเป็น `7.9.1` (เวอร์ชัน stable ล่าสุดที่มีจริงตอนนี้) โดยไม่ได้ตั้งใจ (side effect ของ lockfile regeneration ไม่ใช่การเปลี่ยน `package.json` โดยตรง) แล้ว `npm audit` เจอว่า `@prisma/config`/`prisma` เวอร์ชันช่วง `6.13.0-dev.1` ถึง `7.10.0-integration-fix-prisma-publish-token.1` (ครอบคลุม `7.9.1` ที่ติดตั้งอยู่ตอนนี้) depends on `deepmerge-ts <8.0.0` ที่มี stack-exhaustion advisory (`GHSA-ggr8-5vv4-36mx`)
+
+**ยังไม่มีทางแก้ที่ยอมรับได้ตอนนี้**: เช็ค npm registry แล้วพบว่า `7.9.1` คือ stable เวอร์ชันล่าสุดจริงๆ (เวอร์ชันถัดไปที่มีคือ `7.10.0-dev.*` ซึ่งเป็น dev/prerelease ทั้งหมด แล้วกระโดดไป `8.0.0-rc.*`) `npm audit fix --force` เสนอให้ downgrade เป็น `prisma@6.12.0` ซึ่ง**รับไม่ได้**เพราะ repo นี้ใช้สถาปัตยกรรม config ของ Prisma 7 ทั้งหมด (`prisma.config.ts` แทน `package.json`, `@prisma/adapter-pg`) — downgrade กลับ Prisma 6 คือ regression ใหญ่กว่าที่ยอมรับได้มาก ไม่เกี่ยวกับ Next/React/sharp/postcss เลยด้วย
+
+**สถานะ**: ปล่อยไว้ที่ `prisma@7.9.1` (stable ล่าสุด) ไม่ downgrade ไม่ upgrade ไป Prisma 8 RC บันทึกไว้เป็นของค้างใหม่ รอ Prisma ออก patch เวอร์ชันจริงที่แก้ `deepmerge-ts` หรือ Prisma 8 GA เท่านั้น ไม่ใช่งานที่ควรทำแบบ drive-by ระหว่าง Next.js upgrade
 
 ---
 

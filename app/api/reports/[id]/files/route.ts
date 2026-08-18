@@ -15,7 +15,8 @@ const VALID_KINDS_BY_OUTPUT_TYPE: Record<string, string[]> = {
 /**
  * GET /api/reports/[id]/files — current report_files for this report
  */
-export async function GET(req: NextRequest, { params }: { params: { id: string } }) {
+export async function GET(req: NextRequest, props: { params: Promise<{ id: string }> }) {
+    const params = await props.params;
     try {
         const auth = getAuthFromRequest(req);
         if (!auth) {
@@ -47,7 +48,8 @@ const fileKindZod = z.enum(['BLANK_FORM', 'SAMPLE_FILLED_FORM', 'SAMPLE_DATA']);
  * file of the same kind (versioning: is_current toggle, no diff/rollback yet
  * — that's Phase 3).
  */
-export async function POST(req: NextRequest, { params }: { params: { id: string } }) {
+export async function POST(req: NextRequest, props: { params: Promise<{ id: string }> }) {
+    const params = await props.params;
     try {
         const auth = getAuthFromRequest(req);
         if (!auth) {
@@ -145,7 +147,8 @@ export async function POST(req: NextRequest, { params }: { params: { id: string 
  * requires — the report just shows "no file" in preview/download until a new
  * one is uploaded (MVP decision, see document/phase2-plan.md §Sub-phase 2b).
  */
-export async function DELETE(req: NextRequest, { params }: { params: { id: string } }) {
+export async function DELETE(req: NextRequest, props: { params: Promise<{ id: string }> }) {
+    const params = await props.params;
     try {
         const auth = getAuthFromRequest(req);
         if (!auth) {

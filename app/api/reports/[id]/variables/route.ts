@@ -10,7 +10,8 @@ const dataTypeZod = z.enum(['STRING', 'NUMBER', 'DATE', 'BOOLEAN']);
 /**
  * GET /api/reports/[id]/variables — list report_variables for this report.
  */
-export async function GET(req: NextRequest, { params }: { params: { id: string } }) {
+export async function GET(req: NextRequest, props: { params: Promise<{ id: string }> }) {
+    const params = await props.params;
     try {
         const authResult = await requireRole(req, routeAcceptted('admin'));
         if (authResult instanceof NextResponse) return authResult;
@@ -41,7 +42,8 @@ const createZod = z.object({
  * uniqueness is pre-checked so callers get a readable 409 instead of a raw
  * Prisma P2002.
  */
-export async function POST(req: NextRequest, { params }: { params: { id: string } }) {
+export async function POST(req: NextRequest, props: { params: Promise<{ id: string }> }) {
+    const params = await props.params;
     try {
         const authResult = await requireRole(req, routeAcceptted('admin'));
         if (authResult instanceof NextResponse) return authResult;
@@ -108,7 +110,8 @@ const updateZod = z.object({
  * PUT /api/reports/[id]/variables — update a variable. Renaming re-checks
  * (report_id, name) uniqueness against the other rows.
  */
-export async function PUT(req: NextRequest, { params }: { params: { id: string } }) {
+export async function PUT(req: NextRequest, props: { params: Promise<{ id: string }> }) {
+    const params = await props.params;
     try {
         const authResult = await requireRole(req, routeAcceptted('admin'));
         if (authResult instanceof NextResponse) return authResult;
@@ -160,7 +163,8 @@ export async function PUT(req: NextRequest, { params }: { params: { id: string }
 /**
  * DELETE /api/reports/[id]/variables?id=<variableId>
  */
-export async function DELETE(req: NextRequest, { params }: { params: { id: string } }) {
+export async function DELETE(req: NextRequest, props: { params: Promise<{ id: string }> }) {
+    const params = await props.params;
     try {
         const authResult = await requireRole(req, routeAcceptted('admin'));
         if (authResult instanceof NextResponse) return authResult;
