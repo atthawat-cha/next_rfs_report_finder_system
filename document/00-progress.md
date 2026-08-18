@@ -1,6 +1,6 @@
 # ความคืบหน้าโครงการ — RFS Report Finder System
 
-> **อัปเดตล่าสุด:** 2026-08-17 · **Branch:** `feature/phase4` · **HEAD:** `e3e3978`
+> **อัปเดตล่าสุด:** 2026-08-18 · **Branch:** `feature/phase4` · **HEAD:** (ดู `git log` หลัง commit นี้)
 >
 > ไฟล์นี้ตอบคำถามเดียว: **"ตอนนี้ถึงไหนแล้ว และเหลืออะไร"** สถานะทุกแถวอ้างอิง commit จริงใน git log เป็นหลักฐาน ไม่ใช่การอ่านโค้ดเดา
 >
@@ -16,18 +16,16 @@
 
 ## 👉 ตอนนี้อยู่ตรงไหน
 
-**โค้ดเสร็จแล้ว:** Phase 0 → 3e ทั้งหมด (14 sub-phase, verified จริง 39/39 บน DB `nextjs_rfs`) + **Phase 4a/4b/4c/4d เสร็จ**, 4f เริ่มแล้วบางส่วน (structured logging), 4e เหลือ overview เท่านั้น
+**โค้ดเสร็จแล้ว:** Phase 0 → 3e ทั้งหมด (14 sub-phase, verified จริง 39/39 บน DB `nextjs_rfs`) + **Phase 4a/4b/4c/4d/4f เสร็จ** (4f: dashboard cache/precompute deferred ตามแผนเดิม ไม่ใช่ของค้าง), 4e เหลือ overview เท่านั้น
 
 > หมายเหตุ branch: ย้ายมาทำงานบน `feature/phase4` แล้ว (เดิม `feature/phase3`) — commit ประวัติเดียวกัน ไม่มีอะไรหาย ดู git log ถ้าสงสัย
 
-**ค้างอยู่:** ไม่มีงานเฟส 0-3 ค้างแล้ว — Phase 4d ทดสอบครบยกเว้น full login-flow กับ Redis (ดูรายละเอียดใน 4d ด้านล่าง)
+**ค้างอยู่:** ไม่มีงานเฟส 0-3 ค้างแล้ว — Phase 4d ทดสอบครบยกเว้น full login-flow กับ Redis (ดูรายละเอียดใน 4d ด้านล่าง) — **Phase 4f เจอของค้างใหม่ระหว่างทำ**: dependency vulnerability scan (`npm audit --audit-level=high`) เจอ pre-existing high/critical advisory จริงใน `next@14.2.18`/`postcss`/`sharp` ที่ CI ยังไม่ block ไว้ก่อน (ดูของค้าง #6 ด้านล่าง)
 
 **งานถัดไปที่ควรทำ (เรียงตามลำดับ):**
-1. **ยืนยัน 4d's login flow แบบเต็มเมื่อ Redis reachable จริง** — enroll 2FA → login → `verify-2fa` → ได้ session จริง (ยังไม่เคยทดสอบ end-to-end)
-2. **ตัดสินใจสโคปของ 4e ที่เหลือ** (max upload size, department sharing, expiry/system notification) — ทั้งหมด decision-free แล้ว รอแค่หยิบมาทำ
-3. **4f ที่เหลือ**: dependency vulnerability scanning (ต้องตั้ง CI ก่อน — ยังไม่มี `.github/workflows/` เลย), abnormal-auth-pattern alerting, dashboard cache/precompute
-2. **ตัดสินใจ 3 คำถามเปิดของ Phase 4** ก่อนแตกแผนละเอียด 4b/4d/4f ต่อ — test framework (4b), ต้องการ auth-provider/storage-backend abstraction จริงไหม (4d/4e), vendor logging/error-tracking (4f) — ดู `phase4-plan.md`
-3. **พิจารณาช่องว่างเล็กๆที่ feature-list.md รีเฟรชเจอ** (ตอนนี้อยู่ใน scope ของ 4c overview แล้ว): ดาวน์โหลด `SAMPLE_FILLED_FORM`/ไฟล์ตาม `file_kind` แยกสำหรับ user ทั่วไป, PDF/Excel inline preview, print ฝั่ง client, `view_count` ที่ยังตายอยู่
+1. **ตัดสินใจแผนอัปเกรด `next`/`postcss`/`sharp`** เพื่อปิด high/critical advisory ที่ CI เจอ (ของค้าง #6) — ก่อนเปลี่ยน CI audit step จาก non-blocking เป็น blocking
+2. **ยืนยัน 4d's login flow แบบเต็มเมื่อ Redis reachable จริง** — enroll 2FA → login → `verify-2fa` → ได้ session จริง (ยังไม่เคยทดสอบ end-to-end)
+3. **ตัดสินใจสโคปของ 4e ที่เหลือ** (max upload size, department sharing, expiry/system notification) — ทั้งหมด decision-free แล้ว รอแค่หยิบมาทำ
 
 ---
 
@@ -94,7 +92,7 @@
 | **4c** | Upload/file-serving gaps — single-report view, per-`file_kind` download, PDF/Excel preview + print, `view_count` ✅ (AV scan deferred, no ClamAV confirmed) | ✅ | `be89ddf` |
 | **4d** | Auth flexibility & policy — TOTP 2FA + backup codes, password policy (8 ตัว+ตัวอักษร+ตัวเลข) ✅ (auth provider selection dropped, aspirational) | ✅ | `e3e3978` |
 | 4e | Settings ที่เหลือ + notification ที่ defer ไว้ (max upload size, department sharing, expiry/system notif — storage backend dropped, aspirational) | 📝 scope narrowed | — |
-| 4f | Observability & ops — structured logging ✅ (`lib/logger.ts`, pino), ที่เหลือ (dependency scanning, alert, dashboard cache) ยัง 📝 | 🚧 | `f222dca` |
+| **4f** | Observability & ops — structured logging (`lib/logger.ts`, pino), CI + dependency vulnerability scanning, abnormal-auth-pattern alerting dashboard card ✅ (dashboard stat cache/precompute stays deferred, no perf problem measured yet) | ✅ | `f222dca` + (this commit) |
 
 **4a ปิดจบแล้ว** (`dd98843`, ยืนยันสดแล้ว):
 - [x] `next.config.js` `headers()` — ครอบทุก route ทั้งหน้าเว็บและ `/api/*`
@@ -124,10 +122,14 @@
 - [x] ยืนยันสด: enroll 2FA จริงบน account ทดสอบ (คำนวณ TOTP code จาก secret ที่คืนมาด้วย `otplib` ตรงๆ), ได้ backup code 10 ชุด, DB ตรง; `disable` ปฏิเสธรหัสผ่านผิด (401) และสำเร็จด้วยรหัสถูก เคลียร์ secret/backup codes ครบ; password policy ปฏิเสธรหัสสั้น/ไม่มีตัวเลขทั้ง create/update, ผ่านรหัสที่ถูกต้อง, `password_changed_at` set/update ถูกต้อง
 - ⚠️ **ไม่ได้ทดสอบ login flow แบบเต็ม (2FA-enabled → verify-2fa → session)** — Redis ใน environment นี้เชื่อมต่อไม่ได้หลังจากลองหลายรอบ (ทั้ง `localhost:6379`/`:6380`, `netstat` ยืนยันว่าไม่มีอะไร listen จริง) ผู้ใช้ตัดสินใจข้ามการตรวจนี้ไปก่อน — ถ้าจะกลับมาทำ ให้ยืนยัน Redis reachable จริงจากเครื่องที่รัน dev server ก่อน (`redis-cli ping`)
 
-**4f — เริ่มแล้ว** (`f222dca`, ยังไม่จบทั้ง sub-phase):
+**4f ปิดจบแล้ว** (`f222dca` + this commit):
 - [x] `lib/logger.ts` (pino, self-hosted ตามที่ผู้ใช้เลือก) + wire เข้า `logActivity`'s swallowed catch
 - [x] **ไม่แตะ** `lib/auth.ts`'s swallowed catches ตามที่ระบุใน plan เดิม — เจอว่า `middleware.ts` import `getAuthFromRequest` จากไฟล์นี้และรันบน Edge runtime ซึ่ง bundle worker-thread ของ pino ไม่ได้ (ปัญหาเดียวกับที่ `lib/rate-limit.ts`/`ioredis` ต้องแยกออกจาก `lib/auth.ts` อยู่แล้ว)
-- [ ] Dependency vulnerability scanning (CI), abnormal-auth-pattern alerting, dashboard cache/precompute — ยังไม่ทำ
+- [x] **CI (ใหม่ของ repo นี้)** — `.github/workflows/ci.yml`: `npm ci` → `prisma generate` → `prisma migrate deploy` ต่อ Postgres 16 service container → `prisma/seed-ci.ts` (ใหม่ — seed ขั้นต่ำเฉพาะที่ `lib/report-acl.test.ts` ต้องการ: role `USER` 1 แถว + category 1 แถว + user 1 แถว, idempotent, แยกจาก `prisma/seed.ts` เดิมที่เปราะบางและออกแบบมาสำหรับ DB dev ถาวรไม่ใช่ CI สด) → `tsc --noEmit` → `next build` → `npm test` → `npm audit --audit-level=high`
+- [x] **`GET /api/dashboard/auth-alerts`** (ใหม่) — abnormal-auth-pattern alerting แบบที่เล็กที่สุดที่มีประโยชน์ตามแผน: group `activity_logs` ที่ `action='login_failed'` ตาม `ip_address` ในหน้าต่างเวลา (default 24 ชม.), แจ้งเฉพาะ IP ที่ ≥5 ครั้ง, ไม่มี external delivery channel (แค่ dashboard card) ตามที่ตกลงไว้ — ต่อเข้า `DashboardAnalytics.tsx` เป็นการ์ดใหม่ท้ายหน้า
+- [x] dashboard stat cache/precompute — คงสถานะ deferred ตามแผนเดิม (ยังไม่เจอปัญหา perf จริงบน dataset ขนาดนี้), ไม่ใช่ของค้างที่ถูกข้าม
+- [x] ยืนยันสด: mint JWT ตรงผ่าน `lib/auth.ts`'s `createToken` ให้ user role `SUPER_ADMIN` จริงในDB, curl `/api/dashboard/auth-alerts` ไม่มี cookie → 401, ใส่ `login_failed` 6 แถวปลอมสำหรับ IP ทดสอบแล้ว curl พร้อม cookie → เห็น IP นั้นพร้อม `attempts:6` ถูกต้อง, ลบแถวทดสอบแล้ว; หน้า `/dashboard` compile ผ่าน 200 ด้วย token เดียวกัน, เช็ค `.next/server`/`.next/static` bundle มี reference ถึง `auth-alerts` endpoint จริง (ยืนยันว่า card ถูก wire เข้า build จริง ไม่ใช่แค่ syntax ผ่าน); `npm test` ผ่านครบ 7/7 เหมือนเดิม; `npx tsc --noEmit` ไม่มี error ใหม่นอกเหนือ baseline 2 ตัว
+- ⚠️ **เจอของค้างใหม่ระหว่างรัน `npm audit --audit-level=high` จริงครั้งแรก**: มี high/critical advisory จริงอยู่ก่อนแล้วใน `next@14.2.18` (critical, ~30 CVE สะสมจากหลาย Next.js version รวมกัน), `postcss` (high, ผ่าน dependency ของ `next`), `sharp`/libvips (high) — ทั้งหมด fix ต้อง breaking upgrade (`next@16.x`, `sharp@0.35.x`) ซึ่งเกินสโคปของงานนี้ (แค่ "ตั้ง CI") ตั้ง audit step เป็น `continue-on-error: true` ชั่วคราวเพื่อให้ CI เขียวได้ก่อน ไม่ block PR ด้วยหนี้เก่าที่ยังไม่มีแผน แต่ log ยังโชว์ทุกรอบไม่ให้เงียบหาย ดูของค้าง #6 ด้านล่าง
 
 > ⚠️ **เหตุการณ์ระหว่างทำ 4a**: รัน `npm run build` เพื่อตรวจ header เจอ EPERM ชน `.next/trace` เพราะ dev server ของผู้ใช้ (port 3501) ใช้โฟลเดอร์ `.next` เดียวกันอยู่พร้อมกัน — build ที่ fail กลางคันไปลบ `.next/server/middleware-manifest.json` ทำให้ dev server ตอบ 500 ทุก request ล้างแคช `.next` แล้วขอให้ผู้ใช้ restart dev server เอง (ไม่แตะ process ของผู้ใช้ตรงๆ) กลับมาใช้งานได้ปกติ **บทเรียน**: ห้ามรัน `npm run build`/`next build` ขณะ dev server กำลังรันอยู่ ให้ตรวจด้วย `tsc --noEmit` + verify สดผ่าน dev server ที่รันอยู่แล้วแทน
 - [x] เจอ+แก้ BigInt literal (`0n`) ไม่รองรับที่ ES2017 target ระหว่างทำ ใช้ `BigInt(0)` แทน
@@ -185,6 +187,17 @@ DB เก่า (`next_rfs_master`@`5434`) ไม่มี `_prisma_migrations` 
 
 ### 5. เอกสารระดับ repo ที่ stale
 `README.md` / `SETUP.md` ที่ root ยังบรรยายสภาพ "auth starter scaffold" ตอนเริ่มโปรเจกต์ — ไม่ตรงกับของจริงแล้ว **อย่าใช้เป็นแหล่งอ้างอิง**
+
+### 6. Pre-existing high/critical dependency advisories — เจอครั้งแรกตอนตั้ง CI (Phase 4f, 2026-08-18)
+
+`.github/workflows/ci.yml` (ใหม่) รัน `npm audit --audit-level=high` เป็นครั้งแรกของ repo นี้ (ไม่เคยมี CI มาก่อน) แล้วเจอว่ามี high/critical advisory จริงอยู่ก่อนแล้ว ไม่เกี่ยวกับงาน Phase 4f เลย:
+
+- **`next@14.2.18` — critical** — สะสมหลาย CVE จากหลาย Next.js version (DoS ผ่าน Server Actions/Server Components, cache poisoning, middleware auth bypass, SSRF ผ่าน rewrites, XSS ใน beforeInteractive scripts ฯลฯ — ดูรายละเอียดเต็มด้วย `npm audit --json`) fix ต้องอัปเกรดเป็น `next@16.x` (breaking — App Router มีการเปลี่ยนแปลงหลายจุด, ไม่ใช่แค่ `npm audit fix`)
+- **`postcss` — high** (ผ่าน `next`'s bundled dependency) — XSS/arbitrary file read ผ่าน sourceMappingURL ใน CSS comment, fix มาพร้อมกับการอัปเกรด `next`
+- **`sharp`/libvips — high** (`CVE-2026-33327/33328/35590/35591`) — ใช้ตรงใน `lib/imageConvert.ts` สำหรับแปลงรูปเป็น WebP ตอนอัปโหลด fix ต้อง `sharp@0.35.x` (breaking)
+- moderate 1 ตัว (`uuid` ผ่าน `exceljs`) — รู้อยู่แล้วตั้งแต่ 4c ไม่ reachable จาก usage ของแอปนี้ ไม่ปิดปัญหา ยังคงเป็น moderate ไม่ block ที่ threshold `high`
+
+**สถานะปัจจุบัน**: CI audit step ตั้งเป็น `continue-on-error: true` ชั่วคราว — ตั้งใจเพื่อไม่ให้ CI แดงตั้งแต่วันแรกด้วยหนี้เก่าที่ยังไม่มีแผน (ไม่ใช่การซ่อนปัญหา — log ยัง print เต็มทุกรอบ) **ต้องตัดสินใจแผนอัปเกรด `next`/`sharp` เป็นงานแยกต่างหาก** ก่อนเปลี่ยน step นี้กลับเป็น blocking — งานนี้ใหญ่กว่าการเพิ่ม CI มาก (Next.js major bump กระทบทั้งแอป) ไม่ใช่สิ่งที่ควรทำแบบ drive-by ระหว่างตั้ง CI ครั้งแรก
 
 ---
 

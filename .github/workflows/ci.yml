@@ -1,0 +1,71 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+jobs:
+  build-test:
+    runs-on: ubuntu-latest
+
+    services:
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: postgres
+          POSTGRES_DB: nextjs_rfs_ci
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U postgres"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+
+    env:
+      DATABASE_URL: postgresql://postgres:postgres@localhost:5432/nextjs_rfs_ci?schema=public
+      JWT_SECRET: ci-only-secret-not-for-real-use
+      REDIS_URL: redis://localhost:6379
+      NEXT_PUBLIC_APP_URL: http://localhost:3501
+      NEXT_PUBLIC_API_URL: http://localhost:3501/api
+      NODE_ENV: test
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Generate Prisma client
+        run: npx prisma generate
+
+      - name: Apply migrations
+        run: npx prisma migrate deploy
+
+      - name: Seed minimal CI fixtures
+        run: npx tsx prisma/seed-ci.ts
+
+      - name: Type check
+        run: npx tsc --noEmit
+
+      - name: Build
+        run: npm run build
+
+      - name: Test
+        run: npm test
+
+      # continue-on-error: this repo currently has pre-existing high/critical advisories
+      # (next@14.2.18 has multiple upstream CVEs, postcss/sharp transitive deps) that predate
+      # this CI setup and need their own deliberate upgrade plan (Next major version bump),
+      # not a drive-by fix here. Non-blocking for now so CI can go green; still visible in
+      # logs on every run so it isn't silently ignored. Flip to blocking once addressed.
+      - name: Audit dependencies (high+ severity)
+        run: npm audit --audit-level=high
+        continue-on-error: true

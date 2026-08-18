@@ -274,22 +274,27 @@ Remaining decision-free scope: max upload size per `file_kind` (config value + v
 
 **Files**: `lib/logger.ts` (new), `lib/activity-log.ts` (swap `console.error` → `logger.error`)
 
-### 2. Dependency vulnerability scanning (CI)
+### 2. Dependency vulnerability scanning (CI) ✅ implemented
 
-**No CI exists in this repo at all** (`.github/workflows/` doesn't exist) — this item needs a CI pipeline stood up before "scanning in CI" means anything, which is a bigger scope decision (what else should CI run? just `npm audit`, or also `tsc --noEmit`/`npm run build`/the new `npm test` from 4b?) than this one line originally implied. Splitting it out: propose a minimal `.github/workflows/ci.yml` that runs `tsc --noEmit` + `npm run build` + `npm test` + `npm audit --audit-level=high` on push/PR — confirm with the user before adding (first CI config for this repo, worth a deliberate look rather than folding into a drive-by commit).
+**Resolved (user, 2026-08-18): yes, stand up CI + this item together.** `.github/workflows/ci.yml` (new — first CI config for this repo): on push to `main`/PR, spins up a `postgres:16` service container, `npm ci` → `prisma generate` → `prisma migrate deploy` → `prisma/seed-ci.ts` (new — minimal idempotent seed of just the role/category/user row `lib/report-acl.test.ts` needs via `findFirstOrThrow`, kept separate from the fragile, mostly-commented-out `prisma/seed.ts` rather than trying to make that script CI-safe) → `tsc --noEmit` → `npm run build` → `npm test` → `npm audit --audit-level=high`.
 
-### 3. Abnormal auth-pattern alerting
+**Scope correction found during implementation**: running `npm audit --audit-level=high` for real (first time this repo has ever run it in CI) surfaced pre-existing high/critical advisories unrelated to this task — `next@14.2.18` (critical, multiple accumulated CVEs), `postcss` (high, via `next`), `sharp`/libvips (high, `CVE-2026-33327/33328/35590/35591`). Fixing any of these means a breaking major-version bump (`next@16.x`, `sharp@0.35.x`), which is a materially bigger and riskier change than "add a CI config" and needs its own deliberate plan. The audit step is `continue-on-error: true` for now (still runs and logs full output every run, just doesn't fail the build) — see `document/00-progress.md` ของค้าง #6 for the full advisory list and the standing decision to flip this to blocking once a Next upgrade is planned.
 
-Query over `activity_logs` (already has everything needed: `action`, `ip_address`, `created_at`) — e.g. N `login_failed` from the same `ip_address` within a window. "Alerting" needs a delivery channel (email/Slack/just a dashboard widget?) — smallest useful version: a dashboard card showing recent spikes, no external delivery channel yet (matches 4f's self-hosted, no-new-external-service resolution above).
+### 3. Abnormal auth-pattern alerting ✅ implemented
 
-### 4. Dashboard stat cache/precompute
+`GET /api/dashboard/auth-alerts?hours=24` (new, `routeAcceptted('admin')`-gated like the rest of `/api/dashboard/*`) — groups `activity_logs` where `action='login_failed'` by `ip_address` within the window (default 24h, max 168h), returns IPs with ≥5 attempts (`attempts`, `targeted_accounts` = distinct `user_id` count, `first_attempt_at`, `last_attempt_at`), capped at top 20 by attempt count. Smallest useful version per the resolved decision: a dashboard card, no external delivery channel. Wired into `DashboardAnalytics.tsx` as a new card after the top-reports table.
 
-Deferred from Phase 3d, revisit once real usage volume makes the live-query approach measurably slow — not measured to be a problem yet on this dataset size, so no action in this pass.
+### 4. Dashboard stat cache/precompute — still deferred
+
+No action this pass, per the original resolution: revisit once real usage volume makes the live-query approach measurably slow — not measured to be a problem yet on this dataset size.
 
 ### Verification (4f)
 
 - Trigger a swallowed-error path (e.g. temporarily point `DATABASE_URL` at an unreachable host, hit an endpoint that calls `logActivity`) → structured log line appears with level/timestamp/error detail instead of a bare `console.error` string
 - `npx tsc --noEmit` / `npm run build` — no new errors vs baseline
+- `GET /api/dashboard/auth-alerts` with no admin cookie → 401; insert ≥5 synthetic `login_failed` rows for one `ip_address`, hit the endpoint as admin → that IP appears with the correct `attempts` count; below-threshold IPs don't appear — done: minted a `SUPER_ADMIN` JWT directly via `lib/auth.ts`'s `createToken` against a real DB user, inserted 6 synthetic rows for a test IP, confirmed 401 with no cookie and the correct `attempts:6` with the cookie, cleaned up the rows after
+- `/dashboard` page renders the new card without breaking the existing ones — done: page compiled and returned 200 with the admin cookie; confirmed the `auth-alerts` fetch call and route are present in the built `.next/server`+`.next/static` bundles (raw-HTML grep is inconclusive for client-fetched content, so bundle presence was used instead)
+- CI: `npx prisma migrate deploy` + `prisma/seed-ci.ts` against a fresh Postgres, then `npm test` — done locally against the existing dev DB (idempotent re-run confirmed, finds existing rows rather than duplicating); the actual GitHub Actions run itself has not been observed yet (needs a real push to trigger)
 
 ---
 

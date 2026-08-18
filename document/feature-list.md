@@ -128,7 +128,7 @@
 | บันทึก log สำหรับ login/login_failed/logout | Must | ✅ | 0 |
 | บันทึก log สำหรับ CRUD รายงาน/ผู้ใช้/แผนก/บทบาท | Must | ✅ (รวม `favorite`/`unfavorite`/`download` ที่เคยหายไปจาก merge พังแล้วถูกกู้คืนใน `1e1f05c`) | 0/1 |
 | หน้า audit log filter ตาม user/entity/วันที่ | Should | ✅ (`GET /api/activity-logs` + `user-management/activity` page, filter user/entity/date range) | 0/3 |
-| Alert เมื่อพบ pattern ผิดปกติ (401/403/429 ถี่ผิดปกติ) | Could | ❌ | 4 |
+| Alert เมื่อพบ pattern ผิดปกติ (401/403/429 ถี่ผิดปกติ) | Could | ✅ (`GET /api/dashboard/auth-alerts` — dashboard card, IP ที่ `login_failed` ≥5 ครั้งใน 24 ชม., no external delivery channel ตามที่ตกลง) | 4f |
 
 ## 11. Dashboard & Usage Analytics (FR-11)
 
@@ -185,11 +185,11 @@
 | Password hashing (bcrypt) | Must | ✅ | — |
 | httpOnly, Secure, SameSite cookie | Must | ✅ (`secure: NODE_ENV==='production'`, `sameSite:'lax'`) | 0 |
 | Input validation ด้วย `zod` ทุก endpoint | Must | ✅ (ส่วนใหญ่), ⚠️ (ตรวจให้ครบทุก endpoint ใหม่) | ต่อเนื่อง |
-| Security headers (CSP, HSTS, X-Content-Type-Options) | Must | ❌ | 4 |
-| Antivirus scan ไฟล์อัปโหลด (ClamAV) | Should | ❌ | 4 |
-| Dependency vulnerability scanning (CI) | Should | ❌ | 4 |
-| Structured logging + error tracking (pino/Sentry) | Should | ❌ | 4 |
-| Automated test suite (unit/integration/E2E) | Must | ❌ (ยังไม่มี test runner ในโปรเจกต์เลย) | 0-4 (เริ่มจาก `lib/report-acl.ts` ก่อน) |
+| Security headers (CSP, HSTS, X-Content-Type-Options) | Must | ✅ (`next.config.js` `headers()`, ยืนยันสดทุก route ทั้งหน้าเว็บและ `/api/*`) | 4a |
+| Antivirus scan ไฟล์อัปโหลด (ClamAV) | Should | ❌ deferred — ไม่มี ClamAV daemon ยืนยันใน deploy environment | 4c (dropped) |
+| Dependency vulnerability scanning (CI) | Should | ⚠️ (`.github/workflows/ci.yml` — `npm audit --audit-level=high`, non-blocking ชั่วคราวเพราะเจอ pre-existing high/critical advisories ใน `next@14.2.18`/`postcss`/`sharp` ที่ต้องวางแผนอัปเกรดแยกต่างหาก — ดู `00-progress.md` ของค้าง) | 4f |
+| Structured logging + error tracking (pino/Sentry) | Should | ⚠️ (`lib/logger.ts`, pino self-hosted — wire เข้า `logActivity`'s swallowed catch เท่านั้น ยังไม่ mass-replace `console.*` ทั้งโปรเจกต์, ตั้งใจไม่แตะ `lib/auth.ts`/Edge runtime) | 4f |
+| Automated test suite (unit/integration/E2E) | Must | ✅ (Vitest, `lib/report-acl.test.ts` 7 test — integration ต่อ dev DB จริง; E2E ยังไม่ทำ) | 4b |
 
 ---
 
