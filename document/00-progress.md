@@ -16,16 +16,17 @@
 
 ## 👉 ตอนนี้อยู่ตรงไหน
 
-**โค้ดเสร็จแล้ว:** Phase 0 → 3e ทั้งหมด (14 sub-phase, verified จริง 39/39 บน DB `nextjs_rfs`) + **Phase 4a/4b/4c/4d/4f เสร็จ** (4f: dashboard cache/precompute deferred ตามแผนเดิม ไม่ใช่ของค้าง), 4e เหลือ overview เท่านั้น
+**โค้ดเสร็จแล้ว:** Phase 0 → 3e ทั้งหมด (14 sub-phase, verified จริง 39/39 บน DB `nextjs_rfs`) + **Phase 4a/4b/4c/4d/4e/4f เสร็จหมดแล้ว** (4e: i18n แยกเป็นแผนของตัวเองในอนาคต ไม่ใช่ของค้าง; 4f: dashboard cache/precompute deferred ตามแผนเดิม ไม่ใช่ของค้าง) — **Phase 4 ปิดครบทุก sub-phase**
 
 > หมายเหตุ branch: ย้ายมาทำงานบน `feature/phase4` แล้ว (เดิม `feature/phase3`) — commit ประวัติเดียวกัน ไม่มีอะไรหาย ดู git log ถ้าสงสัย
 
-**ค้างอยู่:** ไม่มีงานเฟส 0-3 ค้างแล้ว — Phase 4d ทดสอบครบยกเว้น full login-flow กับ Redis (ดูรายละเอียดใน 4d ด้านล่าง) — **Phase 4f เจอของค้างใหม่ระหว่างทำ**: dependency vulnerability scan (`npm audit --audit-level=high`) เจอ pre-existing high/critical advisory จริงใน `next@14.2.18`/`postcss`/`sharp` ที่ CI ยังไม่ block ไว้ก่อน (ดูของค้าง #6 ด้านล่าง)
+**ค้างอยู่:** ไม่มีงานเฟส 0-3 ค้างแล้ว — Phase 4d ทดสอบครบยกเว้น full login-flow กับ Redis (ดูรายละเอียดใน 4d ด้านล่าง, Redis ยัง unreachable จาก dev environment นี้ ยืนยันอีกครั้ง 2026-08-18) — **Phase 4f เจอของค้างใหม่ระหว่างทำ**: dependency vulnerability scan (`npm audit --audit-level=high`) เจอ pre-existing high/critical advisory จริงใน `next@14.2.18`/`postcss`/`sharp` ที่ CI ยังไม่ block ไว้ก่อน (ดูของค้าง #6 ด้านล่าง) — **Phase 4e เจอของค้างเล็กใหม่ระหว่างทำ**: `lib/logger.ts`'s pino-pretty dev-transport worker thread ล้มเหลวเป็นระยะบน dev server (Windows) ด้วย `MODULE_NOT_FOUND` (ดูของค้าง #7 ด้านล่าง — dev-only, ไม่กระทบ production, ไม่กระทบผลลัพธ์ request ใดๆที่ทดสอบ)
 
 **งานถัดไปที่ควรทำ (เรียงตามลำดับ):**
 1. **ตัดสินใจแผนอัปเกรด `next`/`postcss`/`sharp`** เพื่อปิด high/critical advisory ที่ CI เจอ (ของค้าง #6) — ก่อนเปลี่ยน CI audit step จาก non-blocking เป็น blocking
 2. **ยืนยัน 4d's login flow แบบเต็มเมื่อ Redis reachable จริง** — enroll 2FA → login → `verify-2fa` → ได้ session จริง (ยังไม่เคยทดสอบ end-to-end)
-3. **ตัดสินใจสโคปของ 4e ที่เหลือ** (max upload size, department sharing, expiry/system notification) — ทั้งหมด decision-free แล้ว รอแค่หยิบมาทำ
+3. **วางแผน i18n (`next-intl`) แยกเป็น phase ใหม่ของตัวเอง** — ถูก scope out จาก 4e ตั้งแต่ต้นเพราะเป็น all-or-nothing sweep ทั้งโปรเจกต์
+4. **พิจารณาแก้ pino-pretty worker thread บน dev (ของค้าง #7)** — priority ต่ำ เพราะไม่กระทบ production และไม่กระทบผลลัพธ์จริง
 
 ---
 
@@ -91,7 +92,7 @@
 | **4b** | Automated test suite bootstrap — Vitest, first tests on `lib/report-acl.ts` | ✅ | `dad7014` |
 | **4c** | Upload/file-serving gaps — single-report view, per-`file_kind` download, PDF/Excel preview + print, `view_count` ✅ (AV scan deferred, no ClamAV confirmed) | ✅ | `be89ddf` |
 | **4d** | Auth flexibility & policy — TOTP 2FA + backup codes, password policy (8 ตัว+ตัวอักษร+ตัวเลข) ✅ (auth provider selection dropped, aspirational) | ✅ | `e3e3978` |
-| 4e | Settings ที่เหลือ + notification ที่ defer ไว้ (max upload size, department sharing, expiry/system notif — storage backend dropped, aspirational) | 📝 scope narrowed | — |
+| **4e** | Settings ที่เหลือ + notification ที่ defer ไว้ — per-`file_kind` max upload size, `DEPARTMENT` share fan-out, expiry/system notification jobs ✅ (storage backend + i18n dropped/deferred, aspirational หรือ scope แยกต่างหาก) | ✅ | (this commit) |
 | **4f** | Observability & ops — structured logging (`lib/logger.ts`, pino), CI + dependency vulnerability scanning, abnormal-auth-pattern alerting dashboard card ✅ (dashboard stat cache/precompute stays deferred, no perf problem measured yet) | ✅ | `f222dca`, `c0c0c48` |
 
 **4a ปิดจบแล้ว** (`dd98843`, ยืนยันสดแล้ว):
@@ -120,7 +121,19 @@
 - [x] `components/shared/twoFactorSettings.tsx` wire เข้า `profile/page.tsx` (แทนการ์ด placeholder เดิม) + แก้ `login/page.tsx` เป็น 2 ขั้นตอน
 - [x] `lib/password-policy.ts` (8 ตัว+ตัวอักษร+ตัวเลข, ใช้ร่วมกันทั้ง create/update user) + set `password_changed_at` ทั้งสองจุด (ไม่บังคับ rotate ตามที่ตัดสินใจไว้)
 - [x] ยืนยันสด: enroll 2FA จริงบน account ทดสอบ (คำนวณ TOTP code จาก secret ที่คืนมาด้วย `otplib` ตรงๆ), ได้ backup code 10 ชุด, DB ตรง; `disable` ปฏิเสธรหัสผ่านผิด (401) และสำเร็จด้วยรหัสถูก เคลียร์ secret/backup codes ครบ; password policy ปฏิเสธรหัสสั้น/ไม่มีตัวเลขทั้ง create/update, ผ่านรหัสที่ถูกต้อง, `password_changed_at` set/update ถูกต้อง
-- ⚠️ **ไม่ได้ทดสอบ login flow แบบเต็ม (2FA-enabled → verify-2fa → session)** — Redis ใน environment นี้เชื่อมต่อไม่ได้หลังจากลองหลายรอบ (ทั้ง `localhost:6379`/`:6380`, `netstat` ยืนยันว่าไม่มีอะไร listen จริง) ผู้ใช้ตัดสินใจข้ามการตรวจนี้ไปก่อน — ถ้าจะกลับมาทำ ให้ยืนยัน Redis reachable จริงจากเครื่องที่รัน dev server ก่อน (`redis-cli ping`)
+- ⚠️ **ไม่ได้ทดสอบ login flow แบบเต็ม (2FA-enabled → verify-2fa → session)** — Redis ใน environment นี้เชื่อมต่อไม่ได้หลังจากลองหลายรอบ (ทั้ง `localhost:6379`/`:6380`, `netstat` ยืนยันว่าไม่มีอะไร listen จริง) ผู้ใช้ตัดสินใจข้ามการตรวจนี้ไปก่อน — ถ้าจะกลับมาทำ ให้ยืนยัน Redis reachable จริงจากเครื่องที่รัน dev server ก่อน (`redis-cli ping`) — ยืนยันอีกครั้ง 2026-08-18 ระหว่างทำ 4e ว่ายัง unreachable เหมือนเดิม
+
+**4e ปิดจบแล้ว** (this commit):
+- [x] Schema: `report_shares.expiry_notified_at DateTime?` (nullable, ใหม่) — migration `20260818115514_add_report_shares_expiry_notified_at`, ตรวจ+ตัด `ALTER COLUMN reports.search_vector DROP DEFAULT` ออกจาก migration.sql ตาม standing rule ของค้าง #1 ก่อน apply — สร้างผ่าน `prisma migrate dev` (ค้าง non-interactive shell หลัง apply สำเร็จ เพราะรอ prompt ต่อ ใช้ `TaskStop` ยกเลิก process ที่ค้างแล้วยืนยันด้วย `prisma migrate status`/`information_schema` ว่า apply จริงแล้วแทน) + เพิ่ม `'system'` เข้า `lib/activity-log.ts`'s `ActivityEntity` (additive, pattern เดียวกับ `'view'` ใน 4c)
+- [x] Per-`file_kind` max upload size — `lib/reportFileUploadServices.ts`: `MAX_SIZE_BY_KIND` (`BLANK_FORM`/`SAMPLE_FILLED_FORM` 10 MB, `SAMPLE_DATA` 20 MB) แทน flat `DEFAULT_MAX_SIZE` เดิม, ใช้ default-parameter อ้างอิง `fileKind` ที่ผ่านมาก่อนหน้าในลายเซ็นเดียวกัน ทำให้ **ไม่ต้องแก้ call site เลย** (`app/api/reports/[id]/files/route.ts` เดิมยังเรียก 2-arg เหมือนเดิม แต่ได้ limit ตาม kind อัตโนมัติ)
+- [x] `DEPARTMENT` share fan-out — `app/api/reports/[id]/shares/route.ts` POST: เพิ่ม branch คู่กับ `USER` เดิม, query สมาชิกแผนกยกเว้นผู้แชร์เอง แล้ว `createNotification` วนทุกคน
+- [x] `POST /api/system/jobs/check-report-expiry` (ใหม่) — ไม่มี cron ในระบบ จึงเป็น manually-invokable endpoint (admin-only) ที่ตั้งใจให้ผูกกับ external scheduler ภายหลัง; หน้าต่างเตือนล่วงหน้า 3 วัน, de-dupe ด้วย `expiry_notified_at`
+- [x] `GET`/`PUT /api/settings/system` (ใหม่) — **ตัวใช้งานจริงตัวแรกของตาราง `settings`** (เดิมมีแค่ 1 แถว seed ไว้ ไม่มีโค้ดอ่าน/เขียนเลย) เก็บ `STORAGE_LIMIT_BYTES`/`MAINTENANCE_MODE`; `PUT` broadcast `SYSTEM_MAINTENANCE` ให้ทุก user เมื่อค่า maintenance เปลี่ยนสถานะ (ทั้งสองทิศทาง เปิด/ปิด)
+- [x] `POST /api/system/jobs/check-storage` (ใหม่) — เทียบผลรวม `report_files.file_size` กับ `STORAGE_LIMIT_BYTES`, ข้ามถ้ายังไม่ตั้งค่า threshold, de-dupe ด้วยการเช็ค unread `SYSTEM_STORAGE_LOW` notification ของ admin ในช่วง 24 ชม.ที่ผ่านมา (คนละวิธีกับ expiry เพราะเป็นเงื่อนไขที่เกิดซ้ำได้จนกว่าจะแก้ ไม่ใช่ event ครั้งเดียว)
+- [x] `app/(auth)/settings/general/page.tsx` (ใหม่) — เข้าถึงได้จาก nav "System Settings → General Settings" ที่มีอยู่แล้วใน `lib/menu-list.ts` (เดิมชี้ไปหน้าที่ไม่มีจริง) ไม่มี client-side role gate ตาม pattern เดิมของ repo (พึ่ง API 403 เป็นตัวกันจริง)
+- [x] ยืนยันสดครบทุกจุดผ่าน curl + JWT ที่ mint ตรงด้วย `createToken` (เทคนิคเดียวกับ 4f): `DEPARTMENT` share แจ้งเตือนสมาชิก 2 คนไม่รวม admin ที่แชร์เอง (ยืนยันด้วย DB query ตรง); `check-report-expiry` แจ้ง share ที่เหลือ 2 วันแต่ไม่แจ้ง share ที่เหลือ 10 วัน (นอกหน้าต่าง 3 วัน), เรียกซ้ำแล้วไม่แจ้งซ้ำ + `expiry_notified_at` ถูก set; `check-storage` ตั้ง threshold=0 ไบต์แล้วได้ `over_threshold:true` + แจ้งเตือน 1 ครั้ง, เรียกซ้ำไม่แจ้งซ้ำ; `PUT /api/settings/system` flip maintenance false→true → broadcast จริงเข้า inbox ของ admin; upload ทดสอบตรงผ่าน `uploadReportFile()`: ไฟล์ 11MB kind `BLANK_FORM` → ปฏิเสธด้วยข้อความ "10 MB" ถูกต้อง, ไฟล์ 15MB kind `SAMPLE_DATA` → ผ่าน (อยู่ใต้ limit 20MB เดิม); non-admin (user role จริงจาก DB) ยิงทั้ง 3 endpoint ใหม่ → 403 ครบ; unauthenticated → 401; `/settings/general` compile 200 ยืนยันจาก bundle ว่า wire เข้า `/api/settings/system` จริง; ลบ fixture ทดสอบทั้งหมดหลังจบ (report/shares/users/notifications/settings)
+- [x] i18n (`next-intl`) ยังคงถูก scope out ตามแผนเดิม — ต้องมี phase ใหม่ของตัวเอง ไม่ทำใน sub-phase นี้
+- ⚠️ **เจอของค้างใหม่ระหว่างเปิด dev server ยืนยัน**: `lib/logger.ts`'s pino-pretty dev-transport worker thread โยน `MODULE_NOT_FOUND`/`uncaughtException` เป็นระยะในล็อก dev server บน Windows (`Cannot find module '.next/server/vendor-chunks/lib/worker.js'`) ทุกครั้งที่มี route ที่ import `lib/activity-log.ts` ถูกเรียก (เกิดจาก pino สร้าง worker thread ตอน import module ไม่ใช่ตอนเรียก `.error()`) **ไม่กระทบผลลัพธ์ request จริง** (ทุก endpoint ที่ทดสอบตอบถูกต้องปกติ) และ **ไม่กระทบ production** (`lib/logger.ts` ปิด transport เมื่อ `NODE_ENV==='production'`) — เป็นปัญหา dev-only บน Windows ระหว่าง pino-pretty กับ Next.js dev bundler ดูของค้าง #7 ด้านล่าง
 
 **4f ปิดจบแล้ว** (`f222dca`, `c0c0c48`):
 - [x] `lib/logger.ts` (pino, self-hosted ตามที่ผู้ใช้เลือก) + wire เข้า `logActivity`'s swallowed catch
@@ -198,6 +211,24 @@ DB เก่า (`next_rfs_master`@`5434`) ไม่มี `_prisma_migrations` 
 - moderate 1 ตัว (`uuid` ผ่าน `exceljs`) — รู้อยู่แล้วตั้งแต่ 4c ไม่ reachable จาก usage ของแอปนี้ ไม่ปิดปัญหา ยังคงเป็น moderate ไม่ block ที่ threshold `high`
 
 **สถานะปัจจุบัน**: CI audit step ตั้งเป็น `continue-on-error: true` ชั่วคราว — ตั้งใจเพื่อไม่ให้ CI แดงตั้งแต่วันแรกด้วยหนี้เก่าที่ยังไม่มีแผน (ไม่ใช่การซ่อนปัญหา — log ยัง print เต็มทุกรอบ) **ต้องตัดสินใจแผนอัปเกรด `next`/`sharp` เป็นงานแยกต่างหาก** ก่อนเปลี่ยน step นี้กลับเป็น blocking — งานนี้ใหญ่กว่าการเพิ่ม CI มาก (Next.js major bump กระทบทั้งแอป) ไม่ใช่สิ่งที่ควรทำแบบ drive-by ระหว่างตั้ง CI ครั้งแรก
+
+### 7. `lib/logger.ts` (pino) dev-transport worker thread เตือนเป็นระยะบน Windows — เจอครั้งแรกตอนยืนยัน Phase 4e สด (2026-08-18)
+
+ระหว่างเปิด dev server เพื่อยืนยัน Phase 4e สด สังเกตว่าทุกครั้งที่มี request เข้า route ที่ (ทางอ้อมก็ตาม) import `lib/activity-log.ts` → `lib/logger.ts` เจอ log แบบนี้แทรกอยู่:
+
+```
+Error: Cannot find module 'D:\...\.next\server\vendor-chunks\lib\worker.js'
+    at Module._resolveFilename (node:internal/modules/cjs/loader:1207:15)
+    ...
+ ⨯ uncaughtException: Error: Cannot find module '...\worker.js'
+  code: 'MODULE_NOT_FOUND',
+```
+
+**สาเหตุที่น่าจะเป็น**: `lib/logger.ts` สร้าง instance `pino({ transport: { target: 'pino-pretty', ... } })` ที่ module scope — ทุกครั้งที่ module ถูก import (รวมถึงตอน Next dev server compile/HMR ใหม่) pino จะ spawn worker thread สำหรับ `pino-pretty` transport ทันที ไม่ใช่ตอนเรียก `.error()`/`.info()` จริง เมื่อ Next.js dev bundler ย้าย/แปลง path ของ worker script ไปเป็น `.next/server/vendor-chunks/lib/worker.js` ซึ่งไม่มีอยู่จริงในโครงสร้างที่ webpack dev bundle สร้าง worker thread เลย resolve ไม่เจอ
+
+**ผลกระทบจริง**: **ไม่กระทบผลลัพธ์ request ใดๆที่ทดสอบระหว่าง 4e** (ทุก endpoint ตอบค่าถูกต้องตามที่คาดหมายทั้งหมด แม้ log จะโชว์ error ปนอยู่) **ไม่กระทบ production** เพราะ `lib/logger.ts` set `transport: undefined` เมื่อ `NODE_ENV==='production'` (ไม่มี worker thread ให้ spawn เลยในโหมด production) เป็นปัญหาเฉพาะ dev-mode บน Windows ระหว่าง `pino-pretty`'s worker-thread transport กับ Next.js dev bundler
+
+**ยังไม่แก้** — priority ต่ำ (cosmetic บน dev log เท่านั้น) ถ้าจะแก้ ทางเลือกที่เป็นไปได้: (a) lazy-init logger เฉพาะตอนเรียกจริงแทน module-scope, (b) ปิด pino-pretty transport ใน dev ด้วย (เหลือ JSON ดิบทั้ง dev/prod), (c) หา workaround ให้ Next dev bundler ไม่ mangle worker script path ของ pino-pretty ยังไม่ได้ลองทางไหนจริง — บันทึกไว้เป็นของค้าง ไม่ใช่บั๊กที่ปิดจบแล้ว
 
 ---
 

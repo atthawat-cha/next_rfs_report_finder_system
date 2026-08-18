@@ -138,6 +138,21 @@ export async function POST(req: NextRequest, { params }: { params: { id: string 
                 'มีรายงานถูกแชร์ให้คุณ',
                 `รายงาน "${report.name_th}" ถูกแชร์ให้คุณ`
             );
+        } else if (data.share_type === 'DEPARTMENT' && sharedWith) {
+            const members = await prisma.users.findMany({
+                where: { department_id: sharedWith, id: { not: user?.id } },
+                select: { id: true },
+            });
+            await Promise.all(
+                members.map((m) =>
+                    createNotification(
+                        m.id,
+                        'REPORT_SHARED',
+                        'มีรายงานถูกแชร์ให้แผนกของคุณ',
+                        `รายงาน "${report.name_th}" ถูกแชร์ให้แผนกของคุณ`
+                    )
+                )
+            );
         }
 
         return NextResponse.json({ success: true, data: created }, { status: 200 });

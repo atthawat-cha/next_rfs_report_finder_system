@@ -31,7 +31,15 @@ export type ReportFileUploadResponse =
 
 const PUBLIC_DIR = path.join(process.cwd(), "public");
 const UPLOAD_FOLDER = "assest/report-files";
-const DEFAULT_MAX_SIZE = 20 * 1024 * 1024; // 20 MB
+const FALLBACK_MAX_SIZE = 20 * 1024 * 1024; // 20 MB — used only if fileKind isn't in the map below
+
+// Per-file_kind max upload size (Phase 4e). PDF form templates shouldn't need to be
+// large; SAMPLE_DATA keeps the old flat limit since spreadsheets legitimately run bigger.
+const MAX_SIZE_BY_KIND: Record<string, number> = {
+  BLANK_FORM: 10 * 1024 * 1024, // 10 MB
+  SAMPLE_FILLED_FORM: 10 * 1024 * 1024, // 10 MB
+  SAMPLE_DATA: 20 * 1024 * 1024, // 20 MB
+};
 
 const ALLOWED_EXT_BY_KIND: Record<string, string[]> = {
   BLANK_FORM: ["pdf"],
@@ -67,7 +75,7 @@ function toPublicPath(absolutePath: string): string {
 export async function uploadReportFile(
   file: File,
   fileKind: string,
-  maxFileSizeBytes = DEFAULT_MAX_SIZE
+  maxFileSizeBytes = MAX_SIZE_BY_KIND[fileKind] ?? FALLBACK_MAX_SIZE
 ): Promise<ReportFileUploadResponse> {
   try {
     if (!file || file.size === 0) {

@@ -103,7 +103,7 @@
 | Feature | Priority | สถานะ | Phase |
 |---|---|---|---|
 | แชร์รายงานให้ user รายบุคคล | Should | ✅ (`share_type=USER`) | 3 |
-| แชร์รายงานให้ทั้งแผนก | Should | ❌ (ตัดสินใจแล้วว่าไม่ wire ใน 3b — fan-out แจ้งเตือนทั้งแผนกต้องออกแบบเพิ่ม) | 3 |
+| แชร์รายงานให้ทั้งแผนก | Should | ✅ (`share_type=DEPARTMENT` มีอยู่แล้วตั้งแต่ 3b, เพิ่ม fan-out แจ้งเตือนให้ทุกคนในแผนกยกเว้นผู้แชร์เอง) | 4e |
 | สร้างลิงก์แชร์ (share token) พร้อมวันหมดอายุ | Should | ✅ (`share_type=LINK`, `expires_at` optional) | 3 |
 | กำหนดสิทธิ์ download/edit บนการแชร์แต่ละครั้ง | Should | ⚠️ (`can_download` บังคับใช้จริง; `can_edit` เก็บใน schema แต่ยังไม่มี anonymous-edit flow ให้ enforce เลย — ตัดสินใจไว้แล้วว่าเป็นการตัดสินใจ ไม่ใช่ของค้าง) | 3 |
 | Cleanup job ลบ/ปิดใช้งานลิงก์ที่หมดอายุอัตโนมัติ | Should | ❌ (เช็ค lazy ตอน query เท่านั้น ไม่มี cron — ยังไม่มี job scheduler ในระบบ) | 3 |
@@ -115,8 +115,8 @@
 | แจ้งเตือนรายงานใหม่ที่เกี่ยวข้อง | Should | ❌ (ตัดสินใจแล้วว่าไม่ wire — ไม่มี concept "subscribe" ในระบบให้เดา fan-out ได้อย่างมีเหตุผล) | 3 |
 | แจ้งเตือนเมื่อถูกแชร์รายงาน | Should | ✅ (`REPORT_SHARED`, เฉพาะ `share_type=USER`) | 3 |
 | แจ้งเตือนเมื่อรายงานที่ติดตามถูกแก้ไข | Should | ✅ (`REPORT_UPDATED`, แจ้งทุกคนที่ favorite ไว้ ยกเว้นคนที่แก้เอง) | 3 |
-| แจ้งเตือนรายงาน/ลิงก์ใกล้หมดอายุ | Should | ❌ | 3 |
-| แจ้งเตือนระบบ (พื้นที่จัดเก็บใกล้เต็ม, ปิดปรับปรุง) | Could | ❌ | 3/4 |
+| แจ้งเตือนรายงาน/ลิงก์ใกล้หมดอายุ | Should | ✅ (`POST /api/system/jobs/check-report-expiry` — ไม่มี cron ในระบบ จึงเป็น endpoint ที่ต้อง invoke เอง/ผูกกับ scheduler ภายนอก, de-dupe ด้วย `report_shares.expiry_notified_at`) | 4e |
+| แจ้งเตือนระบบ (พื้นที่จัดเก็บใกล้เต็ม, ปิดปรับปรุง) | Could | ✅ (`POST /api/system/jobs/check-storage` + `PUT /api/settings/system` toggle maintenance mode — broadcast เท่านั้น ไม่ได้ enforce การปิดกั้นจริง) | 4e |
 | กระดิ่งแจ้งเตือนใน UI (unread count, mark-as-read) | Should | ✅ (`NotificationBell`, poll ทุก 30s, mark-read ทีละรายการ) | 3 |
 | ส่งอีเมลสำหรับ notification severity สูง | Could | ❌ | 3/4 |
 
@@ -157,7 +157,7 @@
 | ตั้งค่าวิธี login (provider selection) | Should | ❌ | 4 |
 | ตั้งค่า storage backend (local/MinIO/S3) | Should | ❌ | 4 |
 | Persist ธีม (dark/light) ต่อผู้ใช้ฝั่ง server | Should | ✅ (`users.theme_preference` + `/api/settings/theme`, ไม่ใช้ตาราง `settings` เดิมตามที่ตัดสินใจไว้) | 3 |
-| จำกัดขนาดไฟล์อัปโหลดสูงสุดต่อ `file_kind` แบบตั้งค่าได้ | Could | ❌ | 4 |
+| จำกัดขนาดไฟล์อัปโหลดสูงสุดต่อ `file_kind` แบบตั้งค่าได้ | Could | ⚠️ (จำกัดจริงแล้ว — `BLANK_FORM`/`SAMPLE_FILLED_FORM` 10 MB, `SAMPLE_DATA` 20 MB — แต่เป็นค่าคงที่ในโค้ด ไม่ใช่ "ตั้งค่าได้" ผ่าน UI ตามชื่อ feature เป๊ะ ๆ) | 4e |
 
 ## 14. Support Ticket (FR-14 — Optional, ต้องตัดสินใจ scope)
 
@@ -197,8 +197,8 @@
 
 | สถานะ | จำนวน feature (จาก 100 รายการ) |
 |---|---|
-| ✅ ทำงานได้จริง | 62 |
-| ⚠️ มีบางส่วน/mock/schema เฉย ๆ | 9 |
-| ❌ ยังไม่มีเลย | 29 |
+| ✅ ทำงานได้จริง | 68 |
+| ⚠️ มีบางส่วน/mock/schema เฉย ๆ | 12 |
+| ❌ ยังไม่มีเลย | 20 |
 
-> ตัวเลขนับจากตารางด้านบนจริง (รวมทุกแถว feature ไม่รวมแถวหมายเหตุ/ดีไซน์โน้ต) ไม่ใช่ story-point estimation — ใช้สื่อสารสัดส่วนงานที่เหลือ ไม่ใช่ใช้วางแผน timeline โดยตรง งานที่เหลือส่วนใหญ่กระจุกอยู่ที่ Phase 4 (security hardening, i18n, test suite, settings ที่เหลือ) และช่องว่างเล็กๆที่ระบุไว้ในแต่ละหมวด (PDF/Excel inline preview, print, sharing ทั้งแผนก, notification บางประเภท)
+> ตัวเลขนับจากตารางด้านบนจริง (รวมทุกแถว feature ไม่รวมแถวหมายเหตุ/ดีไซน์โน้ต, นับซ้ำล่าสุด 2026-08-18 หลัง Phase 4e/4f) ไม่ใช่ story-point estimation — ใช้สื่อสารสัดส่วนงานที่เหลือ ไม่ใช่ใช้วางแผน timeline โดยตรง งานที่เหลือส่วนใหญ่กระจุกอยู่ที่ i18n, E2E test, storage/auth-provider abstraction (dropped, aspirational), และ ClamAV AV scan (deferred)

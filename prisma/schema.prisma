@@ -197,18 +197,19 @@ model report_permissions {
 }
 
 model report_shares {
-  id           String    @id
-  report_id    String
-  shared_by    String
-  shared_with  String?
-  share_token  String?   @unique
-  share_type   ShareType
-  can_download Boolean   @default(true)
-  can_edit     Boolean   @default(false)
-  expires_at   DateTime?
-  created_at   DateTime  @default(now())
-  reports      reports   @relation(fields: [report_id], references: [id], onDelete: Cascade)
-  users        users     @relation(fields: [shared_by], references: [id], onDelete: Cascade)
+  id                 String    @id
+  report_id          String
+  shared_by          String
+  shared_with        String?
+  share_token        String?   @unique
+  share_type         ShareType
+  can_download       Boolean   @default(true)
+  can_edit           Boolean   @default(false)
+  expires_at         DateTime?
+  expiry_notified_at DateTime?
+  created_at         DateTime  @default(now())
+  reports            reports   @relation(fields: [report_id], references: [id], onDelete: Cascade)
+  users              users     @relation(fields: [shared_by], references: [id], onDelete: Cascade)
 }
 
 model report_tags {
