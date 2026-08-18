@@ -1,6 +1,6 @@
 # ความคืบหน้าโครงการ — RFS Report Finder System
 
-> **อัปเดตล่าสุด:** 2026-08-18 · **Branch:** `feature/phase4` · **HEAD:** (ดู `git log` หลัง commit นี้)
+> **อัปเดตล่าสุด:** 2026-08-18 · **Branch:** `feature/phase4` · **HEAD:** `c0c0c48`
 >
 > ไฟล์นี้ตอบคำถามเดียว: **"ตอนนี้ถึงไหนแล้ว และเหลืออะไร"** สถานะทุกแถวอ้างอิง commit จริงใน git log เป็นหลักฐาน ไม่ใช่การอ่านโค้ดเดา
 >
@@ -92,7 +92,7 @@
 | **4c** | Upload/file-serving gaps — single-report view, per-`file_kind` download, PDF/Excel preview + print, `view_count` ✅ (AV scan deferred, no ClamAV confirmed) | ✅ | `be89ddf` |
 | **4d** | Auth flexibility & policy — TOTP 2FA + backup codes, password policy (8 ตัว+ตัวอักษร+ตัวเลข) ✅ (auth provider selection dropped, aspirational) | ✅ | `e3e3978` |
 | 4e | Settings ที่เหลือ + notification ที่ defer ไว้ (max upload size, department sharing, expiry/system notif — storage backend dropped, aspirational) | 📝 scope narrowed | — |
-| **4f** | Observability & ops — structured logging (`lib/logger.ts`, pino), CI + dependency vulnerability scanning, abnormal-auth-pattern alerting dashboard card ✅ (dashboard stat cache/precompute stays deferred, no perf problem measured yet) | ✅ | `f222dca` + (this commit) |
+| **4f** | Observability & ops — structured logging (`lib/logger.ts`, pino), CI + dependency vulnerability scanning, abnormal-auth-pattern alerting dashboard card ✅ (dashboard stat cache/precompute stays deferred, no perf problem measured yet) | ✅ | `f222dca`, `c0c0c48` |
 
 **4a ปิดจบแล้ว** (`dd98843`, ยืนยันสดแล้ว):
 - [x] `next.config.js` `headers()` — ครอบทุก route ทั้งหน้าเว็บและ `/api/*`
@@ -122,7 +122,7 @@
 - [x] ยืนยันสด: enroll 2FA จริงบน account ทดสอบ (คำนวณ TOTP code จาก secret ที่คืนมาด้วย `otplib` ตรงๆ), ได้ backup code 10 ชุด, DB ตรง; `disable` ปฏิเสธรหัสผ่านผิด (401) และสำเร็จด้วยรหัสถูก เคลียร์ secret/backup codes ครบ; password policy ปฏิเสธรหัสสั้น/ไม่มีตัวเลขทั้ง create/update, ผ่านรหัสที่ถูกต้อง, `password_changed_at` set/update ถูกต้อง
 - ⚠️ **ไม่ได้ทดสอบ login flow แบบเต็ม (2FA-enabled → verify-2fa → session)** — Redis ใน environment นี้เชื่อมต่อไม่ได้หลังจากลองหลายรอบ (ทั้ง `localhost:6379`/`:6380`, `netstat` ยืนยันว่าไม่มีอะไร listen จริง) ผู้ใช้ตัดสินใจข้ามการตรวจนี้ไปก่อน — ถ้าจะกลับมาทำ ให้ยืนยัน Redis reachable จริงจากเครื่องที่รัน dev server ก่อน (`redis-cli ping`)
 
-**4f ปิดจบแล้ว** (`f222dca` + this commit):
+**4f ปิดจบแล้ว** (`f222dca`, `c0c0c48`):
 - [x] `lib/logger.ts` (pino, self-hosted ตามที่ผู้ใช้เลือก) + wire เข้า `logActivity`'s swallowed catch
 - [x] **ไม่แตะ** `lib/auth.ts`'s swallowed catches ตามที่ระบุใน plan เดิม — เจอว่า `middleware.ts` import `getAuthFromRequest` จากไฟล์นี้และรันบน Edge runtime ซึ่ง bundle worker-thread ของ pino ไม่ได้ (ปัญหาเดียวกับที่ `lib/rate-limit.ts`/`ioredis` ต้องแยกออกจาก `lib/auth.ts` อยู่แล้ว)
 - [x] **CI (ใหม่ของ repo นี้)** — `.github/workflows/ci.yml`: `npm ci` → `prisma generate` → `prisma migrate deploy` ต่อ Postgres 16 service container → `prisma/seed-ci.ts` (ใหม่ — seed ขั้นต่ำเฉพาะที่ `lib/report-acl.test.ts` ต้องการ: role `USER` 1 แถว + category 1 แถว + user 1 แถว, idempotent, แยกจาก `prisma/seed.ts` เดิมที่เปราะบางและออกแบบมาสำหรับ DB dev ถาวรไม่ใช่ CI สด) → `tsc --noEmit` → `next build` → `npm test` → `npm audit --audit-level=high`
