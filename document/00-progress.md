@@ -1,6 +1,6 @@
 # ความคืบหน้าโครงการ — RFS Report Finder System
 
-> **อัปเดตล่าสุด:** 2026-08-18 · **Branch:** `feature/phase4` · **HEAD:** `c0c0c48`
+> **อัปเดตล่าสุด:** 2026-08-18 · **Branch:** `feature/phase4` · **HEAD:** `63e6af4`
 >
 > ไฟล์นี้ตอบคำถามเดียว: **"ตอนนี้ถึงไหนแล้ว และเหลืออะไร"** สถานะทุกแถวอ้างอิง commit จริงใน git log เป็นหลักฐาน ไม่ใช่การอ่านโค้ดเดา
 >
@@ -92,7 +92,7 @@
 | **4b** | Automated test suite bootstrap — Vitest, first tests on `lib/report-acl.ts` | ✅ | `dad7014` |
 | **4c** | Upload/file-serving gaps — single-report view, per-`file_kind` download, PDF/Excel preview + print, `view_count` ✅ (AV scan deferred, no ClamAV confirmed) | ✅ | `be89ddf` |
 | **4d** | Auth flexibility & policy — TOTP 2FA + backup codes, password policy (8 ตัว+ตัวอักษร+ตัวเลข) ✅ (auth provider selection dropped, aspirational) | ✅ | `e3e3978` |
-| **4e** | Settings ที่เหลือ + notification ที่ defer ไว้ — per-`file_kind` max upload size, `DEPARTMENT` share fan-out, expiry/system notification jobs ✅ (storage backend + i18n dropped/deferred, aspirational หรือ scope แยกต่างหาก) | ✅ | (this commit) |
+| **4e** | Settings ที่เหลือ + notification ที่ defer ไว้ — per-`file_kind` max upload size, `DEPARTMENT` share fan-out, expiry/system notification jobs ✅ (storage backend + i18n dropped/deferred, aspirational หรือ scope แยกต่างหาก) | ✅ | `63e6af4` |
 | **4f** | Observability & ops — structured logging (`lib/logger.ts`, pino), CI + dependency vulnerability scanning, abnormal-auth-pattern alerting dashboard card ✅ (dashboard stat cache/precompute stays deferred, no perf problem measured yet) | ✅ | `f222dca`, `c0c0c48` |
 
 **4a ปิดจบแล้ว** (`dd98843`, ยืนยันสดแล้ว):
@@ -123,7 +123,7 @@
 - [x] ยืนยันสด: enroll 2FA จริงบน account ทดสอบ (คำนวณ TOTP code จาก secret ที่คืนมาด้วย `otplib` ตรงๆ), ได้ backup code 10 ชุด, DB ตรง; `disable` ปฏิเสธรหัสผ่านผิด (401) และสำเร็จด้วยรหัสถูก เคลียร์ secret/backup codes ครบ; password policy ปฏิเสธรหัสสั้น/ไม่มีตัวเลขทั้ง create/update, ผ่านรหัสที่ถูกต้อง, `password_changed_at` set/update ถูกต้อง
 - ⚠️ **ไม่ได้ทดสอบ login flow แบบเต็ม (2FA-enabled → verify-2fa → session)** — Redis ใน environment นี้เชื่อมต่อไม่ได้หลังจากลองหลายรอบ (ทั้ง `localhost:6379`/`:6380`, `netstat` ยืนยันว่าไม่มีอะไร listen จริง) ผู้ใช้ตัดสินใจข้ามการตรวจนี้ไปก่อน — ถ้าจะกลับมาทำ ให้ยืนยัน Redis reachable จริงจากเครื่องที่รัน dev server ก่อน (`redis-cli ping`) — ยืนยันอีกครั้ง 2026-08-18 ระหว่างทำ 4e ว่ายัง unreachable เหมือนเดิม
 
-**4e ปิดจบแล้ว** (this commit):
+**4e ปิดจบแล้ว** (`63e6af4`):
 - [x] Schema: `report_shares.expiry_notified_at DateTime?` (nullable, ใหม่) — migration `20260818115514_add_report_shares_expiry_notified_at`, ตรวจ+ตัด `ALTER COLUMN reports.search_vector DROP DEFAULT` ออกจาก migration.sql ตาม standing rule ของค้าง #1 ก่อน apply — สร้างผ่าน `prisma migrate dev` (ค้าง non-interactive shell หลัง apply สำเร็จ เพราะรอ prompt ต่อ ใช้ `TaskStop` ยกเลิก process ที่ค้างแล้วยืนยันด้วย `prisma migrate status`/`information_schema` ว่า apply จริงแล้วแทน) + เพิ่ม `'system'` เข้า `lib/activity-log.ts`'s `ActivityEntity` (additive, pattern เดียวกับ `'view'` ใน 4c)
 - [x] Per-`file_kind` max upload size — `lib/reportFileUploadServices.ts`: `MAX_SIZE_BY_KIND` (`BLANK_FORM`/`SAMPLE_FILLED_FORM` 10 MB, `SAMPLE_DATA` 20 MB) แทน flat `DEFAULT_MAX_SIZE` เดิม, ใช้ default-parameter อ้างอิง `fileKind` ที่ผ่านมาก่อนหน้าในลายเซ็นเดียวกัน ทำให้ **ไม่ต้องแก้ call site เลย** (`app/api/reports/[id]/files/route.ts` เดิมยังเรียก 2-arg เหมือนเดิม แต่ได้ limit ตาม kind อัตโนมัติ)
 - [x] `DEPARTMENT` share fan-out — `app/api/reports/[id]/shares/route.ts` POST: เพิ่ม branch คู่กับ `USER` เดิม, query สมาชิกแผนกยกเว้นผู้แชร์เอง แล้ว `createNotification` วนทุกคน
