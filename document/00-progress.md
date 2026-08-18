@@ -25,7 +25,7 @@
 > **หมายเหตุ dev environment (2026-08-18):** Redis เดิมไม่มีอะไร listen ที่ `localhost:6380` เลย (root cause ของบล็อกเกอร์ 4d ที่ค้างมาตั้งแต่ `e3e3978`) แก้โดยเปิด Docker Desktop (ติดตั้งอยู่แล้วแต่ไม่ได้รัน) แล้วรัน `docker run -d --name rfs-verify-redis -p 6380:6379 redis:7-alpine` — คอนเทนเนอร์นี้ **ยังรันอยู่หลังจบ session นี้ตั้งใจทิ้งไว้** เพื่อให้ rate-limiting/2FA ใช้งานได้ต่อระหว่าง dev ปกติ (ไม่ใช่แค่ของทดสอบครั้งเดียว) — ถ้าไม่ต้องการแล้วสามารถ `docker stop rfs-verify-redis && docker rm rfs-verify-redis` ได้ทุกเมื่อ ไม่มีข้อมูลสำคัญเก็บอยู่ (เป็น cache/ephemeral state ล้วน)
 
 **งานถัดไปที่ควรทำ (เรียงตามลำดับ):**
-1. **ตัดสินใจแผนอัปเกรด `next`/`postcss`/`sharp`** เพื่อปิด high/critical advisory ที่ CI เจอ (ของค้าง #6) — ก่อนเปลี่ยน CI audit step จาก non-blocking เป็น blocking
+1. **เริ่ม implement `dependency-upgrade-plan.md`** — Stage 0 (postcss patch bump) ทำได้ทันทีแทบไม่มีความเสี่ยง, Stage 1 (sharp 0.35) ความเสี่ยงต่ำ-กลาง, Stage 2/3 (Next 14→15→16 + React 19) เป็นงานใหญ่ที่สุด ต้องแยก session ของตัวเอง — มี 2 open decision รอคำตอบก่อนเริ่ม Stage 3 (`middleware.ts` vs `proxy.ts`, ยอมรับ Turbopack default หรือ pin `--webpack`)
 2. **วางแผน i18n (`next-intl`) แยกเป็น phase ใหม่ของตัวเอง** — ถูก scope out จาก 4e ตั้งแต่ต้นเพราะเป็น all-or-nothing sweep ทั้งโปรเจกต์
 3. **พิจารณาแก้ pino-pretty worker thread บน dev (ของค้าง #7)** — priority ต่ำ เพราะไม่กระทบ production และไม่กระทบผลลัพธ์จริง
 4. **พิจารณาว่าจะให้ Redis ตัวนี้เป็น dev dependency ถาวรไหม** (เช่น เพิ่ม `docker-compose.yml` ให้ทีมอื่นรันตามได้ง่ายๆ) แทนที่จะพึ่ง container เดี่ยวที่ตั้งด้วยมือ
@@ -209,11 +209,11 @@ DB เก่า (`next_rfs_master`@`5434`) ไม่มี `_prisma_migrations` 
 `.github/workflows/ci.yml` (ใหม่) รัน `npm audit --audit-level=high` เป็นครั้งแรกของ repo นี้ (ไม่เคยมี CI มาก่อน) แล้วเจอว่ามี high/critical advisory จริงอยู่ก่อนแล้ว ไม่เกี่ยวกับงาน Phase 4f เลย:
 
 - **`next@14.2.18` — critical** — สะสมหลาย CVE จากหลาย Next.js version (DoS ผ่าน Server Actions/Server Components, cache poisoning, middleware auth bypass, SSRF ผ่าน rewrites, XSS ใน beforeInteractive scripts ฯลฯ — ดูรายละเอียดเต็มด้วย `npm audit --json`) fix ต้องอัปเกรดเป็น `next@16.x` (breaking — App Router มีการเปลี่ยนแปลงหลายจุด, ไม่ใช่แค่ `npm audit fix`)
-- **`postcss` — high** (ผ่าน `next`'s bundled dependency) — XSS/arbitrary file read ผ่าน sourceMappingURL ใน CSS comment, fix มาพร้อมกับการอัปเกรด `next`
-- **`sharp`/libvips — high** (`CVE-2026-33327/33328/35590/35591`) — ใช้ตรงใน `lib/imageConvert.ts` สำหรับแปลงรูปเป็น WebP ตอนอัปโหลด fix ต้อง `sharp@0.35.x` (breaking)
+- **`postcss` — high** — **แก้ไขความเข้าใจ (2026-08-18)**: ไม่ใช่แค่ผ่าน `next`'s bundled dependency อย่างเดียวตามที่เข้าใจไว้ตอนแรก — top-level devDependency `postcss@8.4.33` ของ repo นี้เอง **ก็ vulnerable จริงด้วย** (เก่ากว่าทั้ง `GHSA-qx2v-qp2m-jg93` ที่แก้ใน 8.5.10 และ `GHSA-6g55-p6wh-862q`/CVE-2026-45623 ที่แก้ใน 8.5.12) แก้ได้ทันทีด้วย patch bump ธรรมดา (`^8.5.26`) ไม่ต้องรอ `next` อัปเกรด — ส่วนสำเนาที่ฝังอยู่ใน `node_modules/next/node_modules/postcss` ยังต้องรออัปเกรด `next` เหมือนเดิม
+- **`sharp`/libvips — high** (`CVE-2026-33327/33328/35590/35591`) — ใช้ตรงใน `lib/imageConvert.ts` สำหรับแปลงรูปเป็น WebP ตอนอัปโหลด fix ต้อง `sharp@0.35.x` (breaking — ดูรายละเอียด Windows install-script removal ใน `dependency-upgrade-plan.md` Stage 1)
 - moderate 1 ตัว (`uuid` ผ่าน `exceljs`) — รู้อยู่แล้วตั้งแต่ 4c ไม่ reachable จาก usage ของแอปนี้ ไม่ปิดปัญหา ยังคงเป็น moderate ไม่ block ที่ threshold `high`
 
-**สถานะปัจจุบัน**: CI audit step ตั้งเป็น `continue-on-error: true` ชั่วคราว — ตั้งใจเพื่อไม่ให้ CI แดงตั้งแต่วันแรกด้วยหนี้เก่าที่ยังไม่มีแผน (ไม่ใช่การซ่อนปัญหา — log ยัง print เต็มทุกรอบ) **ต้องตัดสินใจแผนอัปเกรด `next`/`sharp` เป็นงานแยกต่างหาก** ก่อนเปลี่ยน step นี้กลับเป็น blocking — งานนี้ใหญ่กว่าการเพิ่ม CI มาก (Next.js major bump กระทบทั้งแอป) ไม่ใช่สิ่งที่ควรทำแบบ drive-by ระหว่างตั้ง CI ครั้งแรก
+**สถานะปัจจุบัน**: CI audit step ตั้งเป็น `continue-on-error: true` ชั่วคราว — ตั้งใจเพื่อไม่ให้ CI แดงตั้งแต่วันแรกด้วยหนี้เก่าที่ยังไม่มีแผน (ไม่ใช่การซ่อนปัญหา — log ยัง print เต็มทุกรอบ) **แผนอัปเกรดฉบับเต็มเขียนเสร็จแล้ว: [`dependency-upgrade-plan.md`](./dependency-upgrade-plan.md)** (2026-08-18) — แบ่งเป็น 4 stage (postcss patch bump ทำได้ทันที → sharp bump → Next 14→15+React19 → Next 15→16), audit codebase เจอว่า route handler 31 ตัวใน 16 ไฟล์ต้องแก้ params เป็น async แต่ zero-risk อีกหลายจุด (cookies()/headers()/Server Actions/server fetch ไม่ต้องแก้เลย) รอเริ่ม implement ตามแผน
 
 ### 7. `lib/logger.ts` (pino) dev-transport worker thread เตือนเป็นระยะบน Windows — เจอครั้งแรกตอนยืนยัน Phase 4e สด (2026-08-18)
 
