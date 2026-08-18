@@ -61,11 +61,13 @@ jobs:
       - name: Test
         run: npm test
 
-      # continue-on-error: this repo currently has pre-existing high/critical advisories
-      # (next@14.2.18 has multiple upstream CVEs, postcss/sharp transitive deps) that predate
-      # this CI setup and need their own deliberate upgrade plan (Next major version bump),
-      # not a drive-by fix here. Non-blocking for now so CI can go green; still visible in
-      # logs on every run so it isn't silently ignored. Flip to blocking once addressed.
+      # continue-on-error: next/react/sharp/postcss are all fully upgraded now
+      # (see document/dependency-upgrade-plan.md, Stages 0-3) and no longer carry any
+      # advisory. What's left is unrelated: @prisma/config/prisma depend on a vulnerable
+      # deepmerge-ts (GHSA-ggr8-5vv4-36mx) with no fix available on the stable channel
+      # (only a Prisma 6 downgrade or an unreleased Prisma 8 RC clear it - see
+      # 00-progress.md ของค้าง #9). Kept non-blocking until Prisma ships a real fix;
+      # still visible in logs on every run so it isn't silently ignored.
       - name: Audit dependencies (high+ severity)
         run: npm audit --audit-level=high
         continue-on-error: true
