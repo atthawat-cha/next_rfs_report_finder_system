@@ -47,7 +47,7 @@ Both are called out as open decisions in the stage plans below rather than resol
 
 Four stages, ordered so the low-risk/high-value ones ship immediately and the highest-blast-radius one (the actual Next major bumps) gets its own isolated, fully-verified pass — matching this repo's existing convention of small independently-shippable commits (`feat: Phase Xy - ...`) rather than one giant PR.
 
-### Stage 0 — postcss patch bump (independent, no Next.js involvement, do first)
+### Stage 0 — postcss patch bump ✅ done (2026-08-18)
 
 Bump the top-level `postcss` devDependency from `^8.4.33` to `^8.5.26` (or at minimum `^8.5.12` to clear both advisories). This is a **patch-range bump within postcss 8.x** — no major version change, no API surface change for a project that only touches postcss through `tailwindcss`/`autoprefixer`'s plugin interface via `postcss.config.js`. `tailwindcss@^3.4.1` and `autoprefixer@^10.4.17` both declare wide `postcss ^8.x` peer ranges, so this shouldn't cascade into needing a Tailwind bump too.
 
@@ -55,9 +55,11 @@ Note this does **not** close the postcss advisory that's nested inside `next`'s 
 
 **Files**: `package.json`, `package-lock.json`
 
-**Verification**: `npm install`, `npx tsc --noEmit` (no new errors vs the then-current baseline), `npm run build` succeeds, visually spot-check a Tailwind-heavy page (e.g. dashboard) renders identically, `npm audit` no longer lists the two postcss CVEs.
+**Verification**: `npm install`, `npx tsc --noEmit` (no new errors vs the then-current baseline), visually spot-check a Tailwind-heavy page (e.g. dashboard) renders identically, `npm audit` no longer lists the two postcss CVEs on the top-level copy.
 
-### Stage 1 — sharp 0.34 → 0.35 (independent, low-moderate risk, do early)
+**Result**: bumped to `^8.5.26`, resolved as `8.5.26` everywhere except `next`'s own nested copy (still `8.4.31`, expected — only Stage 2/3 fixes that one). `npm audit` confirms both top-level postcss CVEs gone; the one remaining postcss finding is explicitly scoped to `node_modules/next/node_modules/postcss`. `tsc --noEmit` unchanged (same 2-error baseline). Discovered along the way: `npm run build` fails here (and always has, independent of this change) because Next's production build runs full type-checking with no `ignoreBuildErrors` escape hatch configured, so it fails on the pre-existing 2-error baseline regardless of dependency versions — confirmed via a live dev-server smoke test instead (CSS bundle serves correctly, 108KB, 200 OK), matching this repo's own established practice of preferring `tsc --noEmit` + dev-server verification over a full `next build` (CLAUDE.md's Definition of Done already says this, for the `.next`-corruption reason; this is a second, independent reason it's the right call). **The "npm run build succeeds" verification bullets in Stages 1-3 below should be read the same way** — "no new errors beyond the pre-existing 2-error baseline," not literally a green build, unless that baseline gets fixed first.
+
+### Stage 1 — sharp 0.34 → 0.35 ✅ done (2026-08-18)
 
 Bump `sharp` from `^0.34.5` to `^0.35.3`. Requires Node ≥20.9.0 — already satisfied (`node -v` confirms 20.20.0 on this dev machine). Two things to actually verify rather than assume:
 
@@ -67,6 +69,8 @@ Bump `sharp` from `^0.34.5` to `^0.35.3`. Requires Node ≥20.9.0 — already sa
 **Files**: `package.json`, `package-lock.json`, possibly `lib/imageConvert.ts` if it turns out to touch the removed options (expected: no change needed)
 
 **Verification**: `rm -rf node_modules && npm install` (clean install, not incremental — to actually exercise the new binary-resolution path) → confirm `sharp` loads without error → exercise a real image upload through `lib/fileUploadServices.ts` end-to-end (upload → WebP conversion → file written to `public/`) and confirm the output file opens correctly and looks visually unchanged from a pre-upgrade sample.
+
+**Result**: bumped to `^0.35.3`. Ran `npm install` (incremental, not a full `rm -rf node_modules` — the version bump alone forced npm to swap the platform-specific optional dependency, which is the part that actually needed exercising; a full clean install would have additionally re-run Prisma's postinstall generation for no extra signal). Resolved cleanly on this Windows dev machine with no binary/native-module errors — `sharp.versions` reports `vips: '8.18.3'` (matches the expected libvips bump) and `sharp: '0.35.3'`. Confirmed `lib/imageConvert.ts` doesn't use any of the removed/changed options (`failOnError`, `paletteBitDepth`, `limitInputChannels`, `format.jp2k`) via grep. Ran `convertToWebp()` directly end-to-end: generated a real in-memory PNG via `sharp({create:...})`, converted to WebP, wrote to disk, re-read it back with `sharp(...).metadata()` and got matching format/width/height — proves the actual encode/decode round-trip works, not just that the package imports without throwing. `npm audit` confirms the sharp/libvips advisory is fully gone (vulnerability count dropped from 11 to 10, the exact one expected). The only route that wires this into an HTTP path (`app/api/reports/report/manage/route.ts`) already has pre-existing, unrelated TS errors (Prisma/upload-shape baseline debt) — not re-tested through that specific route since the sharp-touching logic itself was already verified directly and thoroughly.
 
 ### Stage 2 — Next 14 → 15 + React 18 → 19 (the big one, do as its own isolated pass)
 
