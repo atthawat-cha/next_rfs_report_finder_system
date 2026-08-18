@@ -254,13 +254,82 @@ All `requireAuth`-gated (self-service, any role):
 - Update a user's password through the admin update route → `password_changed_at` refreshes to now
 - `npx tsc --noEmit` — no new errors vs baseline (2 pre-existing)
 
-## Sub-phase 4e — Remaining Settings + Deferred Notifications (overview, scope narrowed)
+## Sub-phase 4e — Remaining Settings + Deferred Notifications
 
 **Resolved (user, 2026-08-17): storage backend selection (local/MinIO/S3) is aspirational, not real near-term demand — dropped from scope entirely.** Not designing a storage abstraction with only the local filesystem to validate it against.
 
 i18n (`next-intl`) is a large, all-or-nothing UI sweep (every hardcoded Thai/English string in every component) — worth scoping as its own dedicated pass rather than folding into a mixed sub-phase; flagged here as needing its own future plan doc, not detailed further in this one.
 
-Remaining decision-free scope: max upload size per `file_kind` (config value + validation, no new infra), department-wide share fan-out (`share_type=DEPARTMENT` notifications, deferred from 3b/3c specifically pending this call), expiry-approaching notifications (share links — nothing else currently has an expiry), system notifications (storage-threshold / maintenance-mode).
+Audit before detailing (2026-08-18): `ShareType.DEPARTMENT` and the `NotificationType` values `REPORT_EXPIRING`/`SYSTEM_STORAGE_LOW`/`SYSTEM_MAINTENANCE` **already exist in `schema.prisma`, unused** — same shape as `report_shares`/`notifications` themselves before 3b/3c (schema-ready, code-empty). `lib/reportFileUploadServices.ts`'s `uploadReportFile()` already accepts a `maxFileSizeBytes` param (added in 4c, never actually passed by its one caller). Grepped repo-wide for any cron/scheduler mechanism (`cron`, `node-cron`, `setInterval`, `scheduled`) — confirmed **there is truly none**, not even a stub; the only `setInterval` in the codebase is `notification-bell.tsx`'s client-side 30s poll. `lib/menu-list.ts` (the real, rendered sidebar source — not the DB `menus` table) already has a static "System Settings" group with `/settings/general` and `/settings/storage` entries pointing at pages that don't exist yet.
+
+**Decisions made while detailing this sub-phase (no open questions left for the user — these are implementation-detail choices, not product trade-offs):**
+1. **Per-kind max size stays a hardcoded const map in `lib/reportFileUploadServices.ts`, not a `settings`-table-backed value.** The plan's own wording ("config value") is satisfied by a named constant; a DB-editable value would need an admin UI for a single-number setting with no near-term reason to change it at runtime — same "don't build an abstraction with only one real use" reasoning already applied to auth-provider/storage-backend in 4d/4e's opening decisions.
+2. **Expiry/storage checks are exposed as manually-invokable admin-only endpoints (`POST /api/system/jobs/*`), not a lazy check-on-read.** Unlike 3b's expired-link check (a read that only needs to be correct at the moment it's read), firing a *notification* on every matching request would either spam (no de-dupe) or need de-dupe state anyway — so the job-endpoint shape ends up simpler, and doubles as the hook this repo will eventually wire to whatever external scheduler the deploy environment actually has (Windows Task Scheduler / cron / Vercel Cron — not decided, and not this repo's concern to decide, hence "no new infra": we don't stand up a scheduler ourselves, just provide the endpoint).
+3. **De-dupe for `REPORT_EXPIRING`**: new nullable `report_shares.expiry_notified_at` column — set once notified, checked on the next job run so the same share never re-notifies. This is the one schema change in this sub-phase (small, additive, same shape as 4d's `used_at` on backup codes).
+4. **De-dupe for `SYSTEM_STORAGE_LOW`**: no new column — check for an existing unread `SYSTEM_STORAGE_LOW` notification for any admin within the last 24h before creating another, since this is a recurring-until-acknowledged condition rather than a one-time event like a specific share expiring.
+5. **Storage threshold + maintenance-mode flag live in the existing `settings` table** (`STORAGE_LIMIT_BYTES`, `MAINTENANCE_MODE` keys) — this table has exactly one seeded row and zero real consumers today; this is its first real use, for exactly the global-config use case it was already shaped for.
+6. **Maintenance-mode is notification-only, not enforced.** Toggling the `MAINTENANCE_MODE` setting broadcasts a `SYSTEM_MAINTENANCE` notification to every user on both the on→off and off→on transition; it does **not** gate traffic, show a banner, or block writes anywhere. Actually enforcing maintenance mode (middleware-level write-blocking, a global banner) is a separate, larger feature not implied by "system notifications" and not built here.
+7. **DEPARTMENT share fan-out excludes the acting admin** if they happen to belong to the target department (mirrors the `REPORT_UPDATED` favorites fan-out precedent from Phase 3c — the actor doesn't get notified about their own action).
+
+### 1. Schema — `report_shares.expiry_notified_at`
+
+```prisma
+model report_shares {
+  ...
+  expiry_notified_at DateTime?
+  ...
+}
+```
+Nullable, no default — `NULL` means "not yet warned." Also add `'system'` to `lib/activity-log.ts`'s `ActivityEntity` union (additive, same pattern as 4c's `'view'` on `ActivityAction`) so settings changes and job runs can be logged meaningfully instead of misfiled under `'report'`/`'user'`.
+
+**Files**: `prisma/schema.prisma`, new migration, `lib/activity-log.ts`
+
+### 2. Per-`file_kind` max upload size
+
+`lib/reportFileUploadServices.ts`: replace the flat `DEFAULT_MAX_SIZE = 20 * 1024 * 1024` with a `MAX_SIZE_BY_KIND` map (`BLANK_FORM`/`SAMPLE_FILLED_FORM` → 10 MB, PDF form templates shouldn't need more; `SAMPLE_DATA` → 20 MB, keeps today's effective limit since spreadsheets legitimately run larger). `uploadReportFile`'s existing `maxFileSizeBytes` parameter defaults to `MAX_SIZE_BY_KIND[fileKind]` instead of a flat constant — since default parameter expressions can reference an earlier parameter in the same signature, **no call site needs to change** (`app/api/reports/[id]/files/route.ts`'s 2-arg call now gets a kind-specific limit automatically).
+
+**Files**: `lib/reportFileUploadServices.ts`
+
+### 3. Department-wide share fan-out
+
+`app/api/reports/[id]/shares/route.ts` POST handler: add an `else if (data.share_type === 'DEPARTMENT' && sharedWith)` branch alongside the existing `USER` branch — `prisma.users.findMany({ where: { department_id: sharedWith, id: { not: user?.id } } })`, then `createNotification(u.id, 'REPORT_SHARED', ...)` per member (same title/message shape as the USER case, department name substituted in). No new helper needed — this is the only two-branch fan-out in the codebase, doesn't justify a `notifyUsers()` abstraction yet.
+
+**Files**: `app/api/reports/[id]/shares/route.ts`
+
+### 4. `POST /api/system/jobs/check-report-expiry` (new)
+
+Admin-only (`routeAcceptted('admin')`). Finds `report_shares` where `expires_at` is between now and now+3 days (`EXPIRY_WARNING_DAYS = 3`, const) and `expiry_notified_at IS NULL`. For each: `createNotification(shared_by, 'REPORT_EXPIRING', ...)` (notifies whoever created the share, not the recipient — they're the one who can renew/extend it), then set `expiry_notified_at = now()`. Returns `{ notified: number }`. `logActivity('update', 'system', ...)` summarizing the run.
+
+**Files**: `app/api/system/jobs/check-report-expiry/route.ts` (new)
+
+### 5. `GET`/`PUT /api/settings/system` (new)
+
+Admin-only. `GET` reads (or lazily creates with defaults if missing) the `STORAGE_LIMIT_BYTES` and `MAINTENANCE_MODE` rows in `settings`. `PUT` upserts both (zod-validated: positive integer bytes, boolean), and if `MAINTENANCE_MODE` actually changes value, broadcasts `SYSTEM_MAINTENANCE` to every user (`prisma.users.findMany({ select: { id: true } })`, loop `createNotification`) with a message reflecting which direction the transition went. `logActivity('update', 'system', ...)` on every successful `PUT`.
+
+**Files**: `app/api/settings/system/route.ts` (new)
+
+### 6. `POST /api/system/jobs/check-storage` (new)
+
+Admin-only. Reuses the same `report_files.aggregate({ _sum: { file_size: true } })` pattern as `GET /api/dashboard/summary`, compares against `STORAGE_LIMIT_BYTES` from `settings` (skip entirely if unset — no threshold configured yet means nothing to compare against). If over threshold: check for an existing unread `SYSTEM_STORAGE_LOW` notification for any admin created in the last 24h; if none, `createNotification` to every `ADMIN`/`SUPER_ADMIN` user. Returns `{ over_threshold: boolean, current_bytes, limit_bytes }`.
+
+**Files**: `app/api/system/jobs/check-storage/route.ts` (new)
+
+### 7. UI — `/settings/general` (new)
+
+`lib/menu-list.ts` already links here (dead until now). New page `app/(auth)/settings/general/page.tsx` (client component, same fetch-on-mount/PUT-on-save shape as `twoFactorSettings.tsx`/`DashboardAnalytics.tsx`): storage limit input (MB, converted to/from bytes), maintenance-mode switch, save button. No client-side role gate (matches this repo's existing pattern — e.g. `role-management/roles/page.tsx` has none either; the API's `routeAcceptted('admin')` check is the actual boundary, a non-admin just sees a failed fetch).
+
+**Files**: `app/(auth)/settings/general/page.tsx` (new)
+
+### Verification (4e)
+
+- Upload a `SAMPLE_FILLED_FORM` PDF just over 10 MB → 400 with the correct "Maximum allowed size is 10 MB" message; a `SAMPLE_DATA` `.xlsx` at 15 MB (under its 20 MB limit) → succeeds
+- Create a `DEPARTMENT` share targeting a department with 3 members (including the acting admin) → exactly 2 `notifications` rows created (admin excluded), not 3
+- Create a `LINK` share with `expires_at` 2 days out, then hit `check-report-expiry` → 1 notification to `shared_by`, `expiry_notified_at` set; hit it again immediately → 0 new notifications (already notified); a share expiring in 10 days → not notified (outside the 3-day window)
+- `PUT /api/settings/system` with `MAINTENANCE_MODE` flipped false→true → every user gets a `SYSTEM_MAINTENANCE` notification; flip back true→false → another round for the "ended" message
+- Push total `report_files` size over a manually-set low `STORAGE_LIMIT_BYTES`, hit `check-storage` → admins get `SYSTEM_STORAGE_LOW`; hit it again within 24h → no duplicate; below threshold → `over_threshold: false`, no notification
+- Non-admin hitting any of the 3 new job/settings endpoints → 403; unauthenticated → 401
+- `/settings/general` page loads, shows current values, save round-trips correctly
+- `npx tsc --noEmit` — no new errors vs baseline (2 pre-existing)
 
 ## Sub-phase 4f — Observability & Ops
 
