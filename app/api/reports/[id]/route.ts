@@ -12,7 +12,8 @@ import { logActivity } from '@/lib/activity-log';
  * real write to that column - it's been dead since it was added) and logs
  * a 'view' activity.
  */
-export async function GET(req: NextRequest, { params }: { params: { id: string } }) {
+export async function GET(req: NextRequest, props: { params: Promise<{ id: string }> }) {
+    const params = await props.params;
     try {
         const authResult = await requireAuth(req);
         if (authResult instanceof NextResponse) return authResult;

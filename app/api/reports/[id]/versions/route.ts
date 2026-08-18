@@ -9,7 +9,8 @@ import { requireRole, routeAcceptted } from '@/lib/auth';
  * and query history already lives in report_query_versions (since Phase 2c).
  * See document/phase3-plan.md sub-phase 3a.
  */
-export async function GET(req: NextRequest, { params }: { params: { id: string } }) {
+export async function GET(req: NextRequest, props: { params: Promise<{ id: string }> }) {
+    const params = await props.params;
     try {
         const authResult = await requireRole(req, routeAcceptted('admin'));
         if (authResult instanceof NextResponse) return authResult;

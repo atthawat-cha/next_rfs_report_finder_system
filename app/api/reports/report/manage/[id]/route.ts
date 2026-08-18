@@ -9,7 +9,8 @@ import { z } from 'zod';
  * GET /api/reports/report/manage/[id] — single report + current files, for
  * preloading the edit page.
  */
-export async function GET(req: NextRequest, { params }: { params: { id: string } }) {
+export async function GET(req: NextRequest, props: { params: Promise<{ id: string }> }) {
+    const params = await props.params;
     try {
         const auth = getAuthFromRequest(req);
         if (!auth) {
@@ -75,7 +76,8 @@ const updateZod = z.object({
  * Files are managed separately via /api/reports/[id]/files; output_type is
  * immutable after creation (system-design.md §3.9) and not accepted here.
  */
-export async function PUT(req: NextRequest, { params }: { params: { id: string } }) {
+export async function PUT(req: NextRequest, props: { params: Promise<{ id: string }> }) {
+    const params = await props.params;
     try {
         const auth = getAuthFromRequest(req);
         if (!auth) {
@@ -135,7 +137,8 @@ export async function PUT(req: NextRequest, { params }: { params: { id: string }
  * report_queries/report_variables/report_permissions/favorites/downloads/etc
  * via onDelete: Cascade already declared in schema.prisma.
  */
-export async function DELETE(req: NextRequest, { params }: { params: { id: string } }) {
+export async function DELETE(req: NextRequest, props: { params: Promise<{ id: string }> }) {
+    const params = await props.params;
     try {
         const auth = getAuthFromRequest(req);
         if (!auth) {

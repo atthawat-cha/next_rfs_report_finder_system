@@ -26,7 +26,8 @@ const MIME_TYPES: Record<string, string> = {
  * Checks visibility + is_downloadable, streams the file through the server
  * (never a direct static link) so the ACL check + downloads log always happen first.
  */
-export async function GET(req: NextRequest, { params }: { params: { id: string } }) {
+export async function GET(req: NextRequest, props: { params: Promise<{ id: string }> }) {
+    const params = await props.params;
     try {
         const auth = getAuthFromRequest(req);
         if (!auth) {

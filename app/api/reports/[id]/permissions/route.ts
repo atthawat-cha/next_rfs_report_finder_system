@@ -11,7 +11,8 @@ import { z } from 'zod';
  * FK'd to users/roles (can't do a conditional FK across two tables), so the
  * join happens here in application code instead of via Prisma include.
  */
-export async function GET(req: NextRequest, { params }: { params: { id: string } }) {
+export async function GET(req: NextRequest, props: { params: Promise<{ id: string }> }) {
+    const params = await props.params;
     try {
         const authResult = await requireRole(req, routeAcceptted('admin'));
         if (authResult instanceof NextResponse) return authResult;
@@ -69,7 +70,8 @@ const createZod = z.object({
  * A second grant for the same (report, subject_type, subject_id) is
  * rejected with a readable 409 — edit the existing one via PUT instead.
  */
-export async function POST(req: NextRequest, { params }: { params: { id: string } }) {
+export async function POST(req: NextRequest, props: { params: Promise<{ id: string }> }) {
+    const params = await props.params;
     try {
         const authResult = await requireRole(req, routeAcceptted('admin'));
         if (authResult instanceof NextResponse) return authResult;
@@ -137,7 +139,8 @@ const updateZod = z.object({ id: z.string().min(1) }).merge(flagsZod.partial());
  * grant to a different subject, delete and re-create it (avoids silently
  * colliding with another existing grant outside the unique-constraint path).
  */
-export async function PUT(req: NextRequest, { params }: { params: { id: string } }) {
+export async function PUT(req: NextRequest, props: { params: Promise<{ id: string }> }) {
+    const params = await props.params;
     try {
         const authResult = await requireRole(req, routeAcceptted('admin'));
         if (authResult instanceof NextResponse) return authResult;
@@ -178,7 +181,8 @@ export async function PUT(req: NextRequest, { params }: { params: { id: string }
 /**
  * DELETE /api/reports/[id]/permissions?id=<grantId>
  */
-export async function DELETE(req: NextRequest, { params }: { params: { id: string } }) {
+export async function DELETE(req: NextRequest, props: { params: Promise<{ id: string }> }) {
+    const params = await props.params;
     try {
         const authResult = await requireRole(req, routeAcceptted('admin'));
         if (authResult instanceof NextResponse) return authResult;

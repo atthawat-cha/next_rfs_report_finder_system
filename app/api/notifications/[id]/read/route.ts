@@ -7,7 +7,8 @@ import { requireAuth } from '@/lib/auth';
  * to the current user's own notifications (404 for anyone else's id, not
  * just a permission error — avoids confirming the id exists at all).
  */
-export async function POST(req: NextRequest, { params }: { params: { id: string } }) {
+export async function POST(req: NextRequest, props: { params: Promise<{ id: string }> }) {
+    const params = await props.params;
     try {
         const authResult = await requireAuth(req);
         if (authResult instanceof NextResponse) return authResult;

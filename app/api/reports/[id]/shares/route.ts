@@ -13,7 +13,8 @@ import { z } from 'zod';
  * to join — the token is returned as-is so the client can build the full
  * /shares/<token> URL.
  */
-export async function GET(req: NextRequest, { params }: { params: { id: string } }) {
+export async function GET(req: NextRequest, props: { params: Promise<{ id: string }> }) {
+    const params = await props.params;
     try {
         const authResult = await requireRole(req, routeAcceptted('admin'));
         if (authResult instanceof NextResponse) return authResult;
@@ -71,7 +72,8 @@ const createZod = z.discriminatedUnion('share_type', [
  * are validated to actually exist; LINK generates a server-side random
  * token (never accepted from the client).
  */
-export async function POST(req: NextRequest, { params }: { params: { id: string } }) {
+export async function POST(req: NextRequest, props: { params: Promise<{ id: string }> }) {
+    const params = await props.params;
     try {
         const authResult = await requireRole(req, routeAcceptted('admin'));
         if (authResult instanceof NextResponse) return authResult;
@@ -165,7 +167,8 @@ export async function POST(req: NextRequest, { params }: { params: { id: string 
 /**
  * DELETE /api/reports/[id]/shares?id=<shareId> — revoke a share.
  */
-export async function DELETE(req: NextRequest, { params }: { params: { id: string } }) {
+export async function DELETE(req: NextRequest, props: { params: Promise<{ id: string }> }) {
+    const params = await props.params;
     try {
         const authResult = await requireRole(req, routeAcceptted('admin'));
         if (authResult instanceof NextResponse) return authResult;

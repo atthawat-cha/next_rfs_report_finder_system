@@ -20,7 +20,7 @@ export default function ReportList() {
   const [reportView, setReportView] = React.useState("table");
   const [reports, setReports] = React.useState<ReportGetDataType[]>([]);
   const [total, setTotal] = React.useState(0);
-  const searchDebounceRef = React.useRef<ReturnType<typeof setTimeout>>();
+  const searchDebounceRef = React.useRef<ReturnType<typeof setTimeout> | undefined>(undefined);
 
   const fetchReports = React.useCallback(async (query: string) => {
     try {

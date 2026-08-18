@@ -18,7 +18,8 @@ const bodyZod = z.discriminatedUnion('target', [
  * /files already uses); for queries it snapshots the pre-rollback state
  * first so rolling back never destroys history in the other direction.
  */
-export async function POST(req: NextRequest, { params }: { params: { id: string } }) {
+export async function POST(req: NextRequest, props: { params: Promise<{ id: string }> }) {
+    const params = await props.params;
     try {
         const authResult = await requireRole(req, routeAcceptted('admin'));
         if (authResult instanceof NextResponse) return authResult;

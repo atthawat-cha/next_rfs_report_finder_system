@@ -29,7 +29,11 @@ const MIME_TYPES: Record<string, string> = {
  * than the primary - e.g. SAMPLE_FILLED_FORM on a PRINT_FORM report - had no
  * user-facing download path at all).
  */
-export async function GET(req: NextRequest, { params }: { params: { id: string; fileId: string } }) {
+export async function GET(
+    req: NextRequest,
+    props: { params: Promise<{ id: string; fileId: string }> }
+) {
+    const params = await props.params;
     try {
         const auth = getAuthFromRequest(req);
         if (!auth) {

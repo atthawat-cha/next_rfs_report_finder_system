@@ -8,7 +8,8 @@ import { NextRequest, NextResponse } from 'next/server';
  * can_edit is intentionally never consulted here — there's no anonymous
  * edit flow for a share link.
  */
-export async function GET(_req: NextRequest, { params }: { params: { token: string } }) {
+export async function GET(_req: NextRequest, props: { params: Promise<{ token: string }> }) {
+    const params = await props.params;
     try {
         const share = await prisma.report_shares.findUnique({
             where: { share_token: params.token },
