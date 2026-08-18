@@ -20,15 +20,15 @@
 
 > หมายเหตุ branch: ย้ายมาทำงานบน `feature/phase4` แล้ว (เดิม `feature/phase3`) — commit ประวัติเดียวกัน ไม่มีอะไรหาย ดู git log ถ้าสงสัย
 
-**ค้างอยู่:** ไม่มีงานเฟส 0-3 ค้างแล้ว — **Phase 4d ปิดจบสมบูรณ์แล้ว 100%** (ดูล่างนี้ — full login-flow ยืนยันสดแล้ว 2026-08-18 หลังแก้ Redis connectivity) — **`dependency-upgrade-plan.md` ปิดครบทั้ง 4 stage แล้ว** (Next 14→16.3.1, React 18→19.2.8, sharp 0.34→0.35.3, postcss top-level 8.4→8.5.26) — `next`/`postcss`/`sharp` ทุก CVE ที่ตั้งใจปิดในแผนนี้หายหมดจริง เหลือแค่ 2 ของค้างที่ไม่เกี่ยวกับแผนนี้เลย (#9 `deepmerge-ts`/Prisma, `uuid`/`exceljs` เดิมตั้งแต่ 4c) — ระหว่าง Stage 2/3 เจอของค้างใหม่หลายอย่าง: ของค้าง #7 (pino-pretty) ปิดแล้วเพราะกลายเป็น regression จริงภายใต้ Next 15, #8 (`lucide-react` peer conflict) แก้แล้ว, #9 (`deepmerge-ts`/Prisma) ยังไม่มีทางแก้, #10 (`tw-animate-css` redundant, Turbopack build break) แก้แล้ว, #11 (lint baseline 228 ปัญหา, เพิ่งมี config จริงครั้งแรก) ยังไม่แก้ ไม่ใช่ scope ของแผนนี้, และพบว่า CI's Build step (`.github/workflows/ci.yml`) จะ fail จริงตั้งแต่ครั้งแรกที่ push เพราะ baseline TS error 2 ตัวเดิม (ปัญหานี้มีมาตั้งแต่ตั้ง CI ใน 4f ไม่เกี่ยวกับ dependency upgrade เลย)
+**ค้างอยู่:** ไม่มีงานเฟส 0-3 ค้างแล้ว — **Phase 4d ปิดจบสมบูรณ์แล้ว 100%** (ดูล่างนี้ — full login-flow ยืนยันสดแล้ว 2026-08-18 หลังแก้ Redis connectivity) — **`dependency-upgrade-plan.md` ปิดครบทั้ง 4 stage แล้ว** (Next 14→16.3.1, React 18→19.2.8, sharp 0.34→0.35.3, postcss top-level 8.4→8.5.26) — `next`/`postcss`/`sharp` ทุก CVE ที่ตั้งใจปิดในแผนนี้หายหมดจริง เหลือแค่ 2 ของค้างที่ไม่เกี่ยวกับแผนนี้เลย (#9 `deepmerge-ts`/Prisma, `uuid`/`exceljs` เดิมตั้งแต่ 4c) — **baseline TypeScript error 2 ตัวสุดท้ายก็แก้จบแล้วเช่นกัน (2026-08-18)** ระหว่างทางเจอบั๊ก runtime จริงที่ยังไม่เคยมีใครเจอมาก่อน (multi-file upload พังเงียบๆมาตลอด, `status` field ไม่มี enum validation) แก้พร้อมกันหมด — `npx tsc --noEmit` = 0 error, `npm run build` = exit 0 สำเร็จเต็มรูปแบบเป็นครั้งแรกของ repo นี้ ปิดของค้าง #2/#12 ไปด้วย
 
 > **หมายเหตุ dev environment (2026-08-18):** Redis เดิมไม่มีอะไร listen ที่ `localhost:6380` เลย (root cause ของบล็อกเกอร์ 4d ที่ค้างมาตั้งแต่ `e3e3978`) แก้โดยเปิด Docker Desktop (ติดตั้งอยู่แล้วแต่ไม่ได้รัน) แล้วรัน `docker run -d --name rfs-verify-redis -p 6380:6379 redis:7-alpine` — คอนเทนเนอร์นี้ **ยังรันอยู่หลังจบ session นี้ตั้งใจทิ้งไว้** เพื่อให้ rate-limiting/2FA ใช้งานได้ต่อระหว่าง dev ปกติ (ไม่ใช่แค่ของทดสอบครั้งเดียว) — ถ้าไม่ต้องการแล้วสามารถ `docker stop rfs-verify-redis && docker rm rfs-verify-redis` ได้ทุกเมื่อ ไม่มีข้อมูลสำคัญเก็บอยู่ (เป็น cache/ephemeral state ล้วน)
 
 **งานถัดไปที่ควรทำ (เรียงตามลำดับ):**
-1. **แก้ baseline TypeScript error 2 ตัวเดิมให้จบจริง** — ตอนนี้มีความสำคัญมากขึ้นกว่าก่อน เพราะทำให้ CI's Build step จะ fail จริงทุกครั้งที่ push (ของค้าง #12) ไม่ใช่แค่ debt เฉยๆอีกต่อไป
-2. **พิจารณา lint baseline 228 ปัญหา** (ของค้าง #11) — ไม่เร่งด่วน (`npm run lint` ไม่ได้อยู่ใน CI) แต่ควรมีแผนล้างค่อยๆ
-3. **วางแผน i18n (`next-intl`) แยกเป็น phase ใหม่ของตัวเอง** — ถูก scope out จาก 4e ตั้งแต่ต้นเพราะเป็น all-or-nothing sweep ทั้งโปรเจกต์
-4. **ของค้าง #9** (`deepmerge-ts`/Prisma) — รอ Prisma ออก patch จริงหรือ Prisma 8 GA ไม่มีอะไรให้ทำตอนนี้
+1. **พิจารณา lint baseline 228 ปัญหา** (ของค้าง #11) — ไม่เร่งด่วน (`npm run lint` ไม่ได้อยู่ใน CI) แต่ควรมีแผนล้างค่อยๆ
+2. **วางแผน i18n (`next-intl`) แยกเป็น phase ใหม่ของตัวเอง** — ถูก scope out จาก 4e ตั้งแต่ต้นเพราะเป็น all-or-nothing sweep ทั้งโปรเจกต์
+3. **ของค้าง #9** (`deepmerge-ts`/Prisma) — รอ Prisma ออก patch จริงหรือ Prisma 8 GA ไม่มีอะไรให้ทำตอนนี้
+4. **push branch นี้ขึ้น GitHub จริงเป็นครั้งแรก** เพื่อยืนยันว่า CI workflow ทำงานได้จริง (ยังไม่เคย trigger จริงเลยสักครั้งตลอด session นี้)
 4. **พิจารณาว่าจะให้ Redis ตัวนี้เป็น dev dependency ถาวรไหม** (เช่น เพิ่ม `docker-compose.yml` ให้ทีมอื่นรันตามได้ง่ายๆ) แทนที่จะพึ่ง container เดี่ยวที่ตั้งด้วยมือ
 
 ---
@@ -177,7 +177,7 @@ DB เก่า (`next_rfs_master`@`5434`) ไม่มี `_prisma_migrations` 
 
 📄 SQL template จากการสืบสาเหตุรอบแรก ([`prisma/manual/2026-08-17_reconcile-drift.template.sql`](../prisma/manual/2026-08-17_reconcile-drift.template.sql)) **ไม่ได้ใช้จริงแล้ว** — ทางแก้จริงคือ migration `34468ff` เก็บไว้เป็นหลักฐานการสืบสาเหตุเท่านั้น
 
-### 2. Baseline TypeScript errors — เดิมเข้าใจว่า 6 ตัวเป็นหนี้เก่า ที่จริง 4 ตัวคือ regression จาก merge พังที่ถูกแก้แล้ว
+### 2. Baseline TypeScript errors — ✅ ปิดครบแล้ว (2026-08-18) — เดิมเข้าใจว่า 6 ตัวเป็นหนี้เก่า ที่จริง 4 ตัวคือ regression จาก merge พังที่ถูกแก้แล้ว
 
 **อัปเดต 2026-08-17:** ตอนไล่ verification ของ Phase 1/2/3 พบว่า "baseline 6 ตัว" ที่เอกสารนี้ (และ `CLAUDE.md`) เคยบอกว่า "เป็นหนี้เก่าตั้งแต่ก่อน Phase 1" ไม่จริงทั้งหมด — สืบจาก `git diff 7a099b8 HEAD` เจอว่า merge `abb4003` (merge branch `feature/report-environment` ที่ค้างมาตั้งแต่ก่อน Phase 1 เข้า `development`, เกิดระหว่าง Phase 2b→2c) resolve conflict บนไฟล์เหล่านี้โดยเลือกโค้ดฝั่งเก่า (pre-Phase-1) ทับของใหม่แบบเงียบๆ:
 - **`access_level` ไม่ persist กลับมาอีกครั้ง** (`app/api/reports/report/manage/route.ts`) — บั๊กเดียวกับที่ Phase 1 แก้ไปแล้วใน `7a099b8` แต่ merge เอาโค้ดเก่ากลับมาทับ ทุกรายงานที่สร้างหลัง `abb4003` (รวมถึงที่สร้างผ่าน Phase 2b/2c/2d/3x ทั้งหมด) ได้ `access_level=PUBLIC` เงียบๆไม่ว่าฟอร์มจะเลือกอะไร
@@ -187,14 +187,16 @@ DB เก่า (`next_rfs_master`@`5434`) ไม่มี `_prisma_migrations` 
 
 ส่วน `checkRateLimit`/`resetRateLimit` ก็ตกไปแล้วเช่นกัน (ไม่ใช่จาก merge นี้ — แก้แยกใน `a9e9a27` ไปแล้วก่อนหน้า แค่เอกสารไม่เคยอัปเดต baseline list ตาม)
 
-**Baseline ที่เหลือจริง ๆ ตอนนี้ — 2 ตัว:**
+**Baseline 2 ตัวสุดท้าย — แก้จบจริงแล้ว (2026-08-18, ปิดของค้าง #12 ไปด้วย):**
 
-| ไฟล์ | ปัญหา |
-|---|---|
-| `app/api/reports/report/manage/route.ts` | `UploadServiceResponse`/`MultipleUploadResult` shape ไม่ตรง + `file_size` string vs `number\|bigint` |
-| `components/ui/combobox.tsx` | `"icon-xs"` ไม่ใช่ Button size ที่ถูกต้อง |
+| ไฟล์ | ปัญหาเดิม | Fix |
+|---|---|---|
+| `app/api/reports/report/manage/route.ts` | `UploadServiceResponse`/`MultipleUploadResult` shape ไม่ตรง + `file_size` string vs `number\|bigint` | ไม่ใช่แค่ type error — เป็น**บั๊กจริงที่ยังไม่เคยมีใครเจอ**: multi-file upload เช็ค `if (!multipleFiles)` ซึ่งไม่มีทาง false (เป็น object เสมอ) แล้วอ่าน `.data.filePath` ที่ไม่มีอยู่จริงใน `MultipleUploadResult` (shape จริงคือ `{success: UploadResult[], failed: [...]}`) ทำให้ทุกรายงานที่สร้างด้วยไฟล์ ≥2 ไฟล์ได้ `file_path/file_name/file_size` เป็น `undefined` เงียบๆ — แก้โดยอ่าน `multipleFiles.success[0]` (ไฟล์แรกที่สำเร็จ) และเช็ค `!singleFile.success` แทน `!singleFile` ในเคส single-file ระหว่างแก้เจอบั๊กที่ 2 ซ้อนอยู่: `status` field ใน `reportZod` เป็น `z.string()` เฉยๆ ไม่ได้ validate เป็น enum เหมือน `access_level`/`output_type` (รับค่าอะไรก็ได้ผ่านไปสร้าง DB error) แก้เป็น `z.enum(["DRAFT","PUBLISHED","ARCHIVED"])` แล้วใช้ `validate.data.status` แทนการ cast จาก raw form data ตรงๆ ยืนยันสด: multi-file upload ได้ `file_path`/`file_size` จริงถูกต้อง (94 bytes, WebP ถูกต้อง), single-file + `status=PUBLISHED` ได้ `published_at` set จริง, ส่ง `status` ค่ามั่วๆ ได้ 400 ตามคาด (ปิดช่องโหว่ validation จริง ไม่ใช่แค่ปิด type error) |
+| `components/ui/combobox.tsx` | `"icon-xs"` ไม่ใช่ Button size ที่ถูกต้อง | `InputGroupButton` (component พี่น้อง) มี size `"icon-xs"` (`size-6`) อยู่แล้วจริง แต่ `Button` (component หลัก) ไม่มี — เพิ่ม `"icon-xs": "size-6"` เข้า `buttonVariants` ใน `button.tsx` ให้ตรงกับของ `InputGroupButton` (ยังไม่มีหน้าไหนใช้ `Combobox` จริงในแอปตอนนี้ เป็นแค่ shadcn primitive ที่ scaffold ไว้ล่วงหน้า ยืนยันผ่าน build ผ่านสำเร็จเท่านั้น ไม่มี UI จริงให้ทดสอบ) |
 
-⚠️ **บทเรียน**: อย่าเชื่อว่า baseline error ที่มีมานานเป็น "หนี้เก่าไม่เกี่ยวกัน" โดยไม่เช็ค `git log`/`git diff` ที่จุดเกิด error จริง — merge สามารถ revert ของเก่ากลับมาแบบเงียบๆแล้วถูกเข้าใจผิดว่า "เป็นแบบนี้มาตลอด" ได้
+**ผลลัพธ์: `npx tsc --noEmit` = 0 error, `npm run build` = exit 0 สำเร็จเต็มรูปแบบเป็นครั้งแรก** (ก่อนหน้านี้ build fail มาตลอดตั้งแต่ก่อนมี CI ด้วยซ้ำ) ซึ่งปิดของค้าง #12 (CI's Build step จะ fail ตั้งแต่ push ครั้งแรก) ไปโดยอัตโนมัติ — ไม่มี baseline TypeScript error เหลืออยู่ในโปรเจกต์นี้อีกแล้ว บรรทัดอ้างอิง "baseline 2 ตัว" ใน `CLAUDE.md`'s Definition of Done ควรลบทิ้งด้วย (ดูหมายเหตุใน CLAUDE.md)
+
+⚠️ **บทเรียน**: อย่าเชื่อว่า baseline error ที่มีมานานเป็น "หนี้เก่าไม่เกี่ยวกัน" โดยไม่เช็ค `git log`/`git diff` ที่จุดเกิด error จริง — merge สามารถ revert ของเก่ากลับมาแบบเงียบๆแล้วถูกเข้าใจผิดว่า "เป็นแบบนี้มาตลอด" ได้ และครั้งนี้ยืนยันอีกบทเรียน: "type error ที่ปิด" อาจไม่ใช่แค่ type-level เฉยๆ — การตามรอย type error จนสุดทางเจอบั๊ก runtime จริงที่ไม่เคยมีใครสังเกตมาก่อน (multi-file upload พังเงียบๆมาตลอด)
 
 ### 3. ตาราง `report_versions` = dead code (ตั้งใจไม่ลบ)
 ถูกแทนที่ด้วย `report_files.is_current` + `report_query_versions` แล้ว แต่ยัง**ไม่ drop** เพราะเป็น destructive migration ที่ **รอ sign-off จากผู้ใช้ก่อน** — นี่คือการตัดสินใจ ไม่ใช่ความหลงลืม
@@ -268,13 +270,11 @@ Next.js 16 ตัด `next lint` ออกทั้งหมด ต้อง mig
 
 **ยังไม่แก้** — ไม่ใช่ scope ของ dependency-upgrade-plan.md (เป้าหมายคือปิดช่องโหว่ ไม่ใช่ lint sweep) `.github/workflows/ci.yml` ไม่ได้รัน `npm run lint` เลย เลยไม่กระทบ CI ตอนนี้ แต่ควรมีแผนล้างทีหลัง (อาจทยอยแก้ทีละไฟล์ หรือตั้ง `--max-warnings` แบบ ratchet)
 
-### 12. CI's Build step จะ fail จริงตั้งแต่ push ครั้งแรก — เจอระหว่าง Stage 3, ไม่ใช่ของค้างจาก dependency upgrade (2026-08-18)
+### 12. CI's Build step จะ fail จริงตั้งแต่ push ครั้งแรก — ✅ ปิดแล้ว (2026-08-18)
 
-`.github/workflows/ci.yml` (ตั้งจาก Phase 4f, `c0c0c48`) มี step `Build` (`npm run build`) ที่**ไม่มี** `continue-on-error` เลย — ยืนยันซ้ำหลายรอบระหว่าง Stage 0/2/3 ว่า `npm run build` fail จริงทุกครั้งด้วย baseline TypeScript error 2 ตัวเดิม (`app/api/reports/report/manage/route.ts`, `components/ui/combobox.tsx` — ดูของค้าง #2) ไม่เกี่ยวกับ dependency version เลยแม้แต่น้อย (fail เหมือนกันทั้งบน Next 14/15/16)
+`.github/workflows/ci.yml` (ตั้งจาก Phase 4f, `c0c0c48`) มี step `Build` (`npm run build`) ที่**ไม่มี** `continue-on-error` เลย — ยืนยันซ้ำหลายรอบระหว่าง Stage 0/2/3 ว่า `npm run build` fail จริงทุกครั้งด้วย baseline TypeScript error 2 ตัวเดิม (`app/api/reports/report/manage/route.ts`, `components/ui/combobox.tsx`) ไม่เกี่ยวกับ dependency version เลยแม้แต่น้อย (fail เหมือนกันทั้งบน Next 14/15/16)
 
-**นัยสำคัญ**: workflow นี้ยังไม่เคย push ขึ้น GitHub จริงเลยสักครั้ง (แค่มีไฟล์ในเครื่อง) เมื่อ push จริงครั้งแรก **Build step จะ fail ทันที** ไม่เกี่ยวกับ dependency upgrade รอบนี้เลย เป็นช่องโหว่ในการตั้ง CI ตั้งแต่ 4f ที่ไม่มีใครสังเกตเพราะไม่เคย trigger จริง
-
-**ตั้งใจไม่แก้ตรงนี้**: การให้ CI fail ตอน build จริงพังคือพฤติกรรมที่ถูกต้อง ไม่ใช่บั๊กที่ควร route around ด้วย `continue-on-error` ทางแก้จริงคือไปแก้ baseline TS error 2 ตัวให้จบ (ของค้าง #2) ซึ่งอยู่นอก scope ของงานนี้ตามนโยบาย baseline เดิมของ `CLAUDE.md`
+**ปิดจริงแล้ว**: แก้ baseline TS error ทั้ง 2 ตัวจบ (ดูของค้าง #2) → `npm run build` exit 0 สำเร็จเต็มรูปแบบเป็นครั้งแรกของ repo นี้ — CI's Build step จะผ่านจริงเมื่อ push ครั้งแรก
 
 ---
 

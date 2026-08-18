@@ -87,7 +87,7 @@ const reportZod = z.object({
     description: z.string().min(1, "Description is required"),
     categories: z.string().min(1, "Categories is required"),
     departments: z.string().min(1, "Departments is required"),
-    status: z.string().min(1, "Status is required"),
+    status: z.enum(["DRAFT", "PUBLISHED", "ARCHIVED"]),
     access_level: z.enum(["PUBLIC", "RESTRICTED", "PRIVATE"]),
     output_type: z.enum(["PRINT_FORM", "DATA_REPORT"]),
     is_downloadable: z.boolean(),
@@ -99,7 +99,7 @@ export async function POST(req: NextRequest) {
         file_path: "",
         file_name: "",
         file_type: "",
-        file_size: "",
+        file_size: 0,
     }
     try {
         const acceptedRoles = routeAcceptted('admin');
@@ -138,23 +138,29 @@ export async function POST(req: NextRequest) {
             return NextResponse.json({ success: false, error: validate.error.errors }, { status: 400 });
         }
 
-        // Multiple files
+        // Multiple files — only reports.file_path/file_name/file_size (one slot per
+        // report, pre-dates the report_files multi-file model from Phase 2) get
+        // populated from the first successfully uploaded file; any others that fail
+        // are reported back but don't block report creation.
         if (files.length > 1) {
-            const multipleFiles = await uploadMultipleImages(files)
-            if (!multipleFiles) {
-                return NextResponse.json({ success: false, error: "Failed to upload files" }, { status: 500 });
+            const multipleFiles = await uploadMultipleImages(files);
+            const primary = multipleFiles.success[0];
+            if (!primary) {
+                return NextResponse.json(
+                    { success: false, error: "Failed to upload files", failed: multipleFiles.failed },
+                    { status: 500 }
+                );
             }
-            fileDes.file_path = multipleFiles?.data?.filePath;
-            fileDes.file_name = multipleFiles?.data?.fileName;
+            fileDes.file_path = primary.filePath;
+            fileDes.file_name = primary.fileName;
             fileDes.file_type = '';
-            fileDes.file_size = multipleFiles?.data?.size;
+            fileDes.file_size = primary.size;
         } else {
             // Single file
             const file = files[0];
-            const singleFile = await uploadImageFile(file)
-            console.log(singleFile)
-            if (!singleFile) {
-                return NextResponse.json({ success: false, error: "Failed to upload file" }, { status: 500 });
+            const singleFile = await uploadImageFile(file);
+            if (!singleFile.success) {
+                return NextResponse.json({ success: false, error: singleFile.error }, { status: 500 });
             }
             fileDes.file_path = singleFile.data.filePath;
             fileDes.file_name = singleFile.data.fileName;
@@ -175,7 +181,7 @@ export async function POST(req: NextRequest) {
             category_id: data.get("categories") as string,
             department_id: data.get("departments") as string,
             created_by_id: user?.id as string,
-            status: data.get("status") as string,
+            status: validate.data.status,
             access_level: validate.data.access_level,
             output_type: validate.data.output_type,
             is_downloadable: data.get("is_downloadable") === 'true' ? true : false,
@@ -183,7 +189,7 @@ export async function POST(req: NextRequest) {
             created_at: new Date(),
             updated_at: new Date(),
             report_date: new Date(),
-            published_at: data.get("status") === 'PUBLISHED' ? new Date() : null,
+            published_at: validate.data.status === 'PUBLISHED' ? new Date() : null,
         }
 
         const report = await prisma.reports.create({
