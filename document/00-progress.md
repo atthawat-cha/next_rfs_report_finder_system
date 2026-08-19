@@ -1,6 +1,6 @@
 # ความคืบหน้าโครงการ — RFS Report Finder System
 
-> **อัปเดตล่าสุด:** 2026-08-19 · **Branch:** `feature/phase4` · **HEAD:** `beb62ee`
+> **อัปเดตล่าสุด:** 2026-08-19 · **Branch:** `feature/phase4` · **HEAD:** `8dea24c`
 >
 > ไฟล์นี้ตอบคำถามเดียว: **"ตอนนี้ถึงไหนแล้ว และเหลืออะไร"** สถานะทุกแถวอ้างอิง commit จริงใน git log เป็นหลักฐาน ไม่ใช่การอ่านโค้ดเดา
 >
@@ -160,14 +160,14 @@
 
 | Sub-phase | งาน | สถานะ | Commit |
 |---|---|---|---|
-| **5a** | หน้า report detail (`/reports/report-detail/[id]`) + `SqlBlock` code-snippet UI (tokenizer เขียนเอง zero-dep) + แยก `reportFilePreview` ออกจาก dialog | ✅ | *(pending — see below)* |
+| **5a** | หน้า report detail (`/reports/report-detail/[id]`) + `SqlBlock` code-snippet UI (tokenizer เขียนเอง zero-dep) + แยก `reportFilePreview` ออกจาก dialog | ✅ | `8dea24c` |
 | **5b** | Per-report ACL UI (drawer ต่อ `/api/reports/[id]/permissions` ที่มี API ครบตั้งแต่ 2a แต่ไม่มี UI เลย) | ⬜ | — |
 | **5c** | เติมหน้า `/permissions` ที่เป็น stub + implement `GET`/`PUT /api/users/roles/[id]` (ตอนนี้เป็น `Hello World` — แก้สิทธิ์ของ role เดิมไม่ได้เลย ทำได้แค่ตอนสร้าง role) | ⬜ | — |
 | **5d** | หน้า CRUD ตาราง `menus` + `/api/baseconfig/menus` (sidebar **ยังใช้** `lib/menu-list.ts` ตามเดิม — swap เป็น DB-driven เป็นเฟสแยก) | ⬜ | — |
 | **5e** | System settings ตั้งค่าได้จริง: `UPLOAD_BASE_PATH` (+ `lib/storage-path.ts` กัน path traversal), max upload size ต่อ `file_kind`, ค่าองค์กร (`ORG_NAME`/`ADMIN_EMAIL`/`DEFAULT_PAGE_SIZE`/`DEFAULT_SHARE_EXPIRY_DAYS`) + หน้า `/settings/storage` | ⬜ | — |
 | **5f** | Housekeeping: refresh `feature-list.md` (ค้างอีกรอบ), `docker-compose.yml` (Redis), แก้ lint error 36 ตัว + ใส่ `--max-warnings 192` ratchet เข้า CI | ⬜ | — |
 
-**5a ปิดจบแล้ว** (*(pending — see below)*):
+**5a ปิดจบแล้ว** (`8dea24c`):
 - [x] `lib/sql-highlight.ts` (ใหม่) — zero-dependency SQL tokenizer ด้วย regex alternation เดียว, คืน `{text, kind}[]` (`keyword|string|number|comment|punct|plain`); `lib/sql-highlight.test.ts` (ใหม่) — 8 test ครอบ round-trip byte-for-byte, keyword ใน string/comment ไม่ถูกจัดเป็น keyword, unterminated string/comment ที่ EOF ไม่ loop/throw, empty input — ผ่านทั้งหมด (`npx vitest run lib/sql-highlight.test.ts`)
 - [x] `components/shared/sqlBlock.tsx` (ใหม่) — `<SqlBlock sql maxHeight? />` แสดง token เป็น `<span>` สีตาม Tailwind theme token (`text-chart-1..4`, `text-muted-foreground`, `text-foreground/70`) ไม่มี hex ตายตัว จึงถูกทั้ง light/dark โดยไม่ต้องเขียนโค้ดแยกสองธีม, มี gutter เลขบรรทัด, ปุ่ม Copy (`navigator.clipboard`) พร้อม transient "Copied" — แทนที่ `<pre>` เดิมที่ `report-edit/[id]/page.tsx:951` (จุดเดียวที่เหลือในระบบที่ render `sql_text`)
 - [x] `components/shared/reportFilePreview.tsx` (ใหม่) — ดึง PDF `<embed>` / Excel-as-table ออกจาก `reportPreviewDialog.tsx` เดิม (4c) เป็น component กลาง; `reportPreviewDialog.tsx` แก้ให้เรียก component นี้แทนเขียนซ้ำ — ป้องกัน limit 200 แถว/`.report-print-area` drift ระหว่างสองที่ที่ใช้
