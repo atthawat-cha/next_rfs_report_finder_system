@@ -1,6 +1,6 @@
 # ความคืบหน้าโครงการ — RFS Report Finder System
 
-> **อัปเดตล่าสุด:** 2026-08-18 · **Branch:** `feature/phase4` · **HEAD:** `06e72f3`
+> **อัปเดตล่าสุด:** 2026-08-19 · **Branch:** `feature/phase4` · **HEAD:** `beb62ee`
 >
 > ไฟล์นี้ตอบคำถามเดียว: **"ตอนนี้ถึงไหนแล้ว และเหลืออะไร"** สถานะทุกแถวอ้างอิง commit จริงใน git log เป็นหลักฐาน ไม่ใช่การอ่านโค้ดเดา
 >
@@ -24,12 +24,15 @@
 
 > **หมายเหตุ dev environment (2026-08-18):** Redis เดิมไม่มีอะไร listen ที่ `localhost:6380` เลย (root cause ของบล็อกเกอร์ 4d ที่ค้างมาตั้งแต่ `e3e3978`) แก้โดยเปิด Docker Desktop (ติดตั้งอยู่แล้วแต่ไม่ได้รัน) แล้วรัน `docker run -d --name rfs-verify-redis -p 6380:6379 redis:7-alpine` — คอนเทนเนอร์นี้ **ยังรันอยู่หลังจบ session นี้ตั้งใจทิ้งไว้** เพื่อให้ rate-limiting/2FA ใช้งานได้ต่อระหว่าง dev ปกติ (ไม่ใช่แค่ของทดสอบครั้งเดียว) — ถ้าไม่ต้องการแล้วสามารถ `docker stop rfs-verify-redis && docker rm rfs-verify-redis` ได้ทุกเมื่อ ไม่มีข้อมูลสำคัญเก็บอยู่ (เป็น cache/ephemeral state ล้วน)
 
+**Phase 5 วางแผนแล้ว (2026-08-19)** — โจทย์มาจาก `document/diff_req.md` ที่ผู้ใช้ commit เข้ามาเอง (`beb62ee`) แผนเต็มอยู่ที่ [`phase5-plan.md`](./phase5-plan.md) แบ่ง 6 sub-phase (5a-5f) ตัดสินใจครบทุกข้อกับผู้ใช้แล้วก่อนเขียน (ดูหัวข้อ "Resolved decisions" ในแผน) — ยังไม่เริ่มเขียนโค้ด
+
 **งานถัดไปที่ควรทำ (เรียงตามลำดับ):**
-1. **พิจารณา lint baseline 228 ปัญหา** (ของค้าง #11) — ไม่เร่งด่วน (`npm run lint` ไม่ได้อยู่ใน CI) แต่ควรมีแผนล้างค่อยๆ
-2. **วางแผน i18n (`next-intl`) แยกเป็น phase ใหม่ของตัวเอง** — ถูก scope out จาก 4e ตั้งแต่ต้นเพราะเป็น all-or-nothing sweep ทั้งโปรเจกต์
-3. **ของค้าง #9** (`deepmerge-ts`/Prisma) — รอ Prisma ออก patch จริงหรือ Prisma 8 GA ไม่มีอะไรให้ทำตอนนี้
-4. **push branch นี้ขึ้น GitHub จริงเป็นครั้งแรก** เพื่อยืนยันว่า CI workflow ทำงานได้จริง (ยังไม่เคย trigger จริงเลยสักครั้งตลอด session นี้)
-4. **พิจารณาว่าจะให้ Redis ตัวนี้เป็น dev dependency ถาวรไหม** (เช่น เพิ่ม `docker-compose.yml` ให้ทีมอื่นรันตามได้ง่ายๆ) แทนที่จะพึ่ง container เดี่ยวที่ตั้งด้วยมือ
+1. **ลงมือ Phase 5a** (report detail page + SqlBlock) ตาม `phase5-plan.md`
+2. **ยืนยันว่า CI workflow รันจริงบน GitHub** — branch `feature/phase4` push ขึ้น origin แล้ว แต่ยังไม่เคยเห็นผลรัน (`.github/workflows/ci.yml` ตั้งไว้ตั้งแต่ 4f ยังไม่เคยยืนยันว่าเขียวจริงบน runner)
+3. **วางแผน i18n (`next-intl`) แยกเป็น phase ใหม่ของตัวเอง** — ถูก scope out จาก 4e และจาก Phase 5 ด้วย เพราะเป็น all-or-nothing sweep ทั้งโปรเจกต์
+4. **ของค้าง #9** (`deepmerge-ts`/Prisma) — รอ Prisma ออก patch จริงหรือ Prisma 8 GA ไม่มีอะไรให้ทำตอนนี้
+
+> lint baseline 228 ปัญหา (ของค้าง #11) และ `docker-compose.yml` สำหรับ Redis — **ย้ายเข้าไปเป็น 5f แล้ว** ไม่ใช่งานลอยอีกต่อไป
 
 ---
 
@@ -151,6 +154,20 @@
 > ⚠️ **เหตุการณ์ระหว่างทำ 4a**: รัน `npm run build` เพื่อตรวจ header เจอ EPERM ชน `.next/trace` เพราะ dev server ของผู้ใช้ (port 3501) ใช้โฟลเดอร์ `.next` เดียวกันอยู่พร้อมกัน — build ที่ fail กลางคันไปลบ `.next/server/middleware-manifest.json` ทำให้ dev server ตอบ 500 ทุก request ล้างแคช `.next` แล้วขอให้ผู้ใช้ restart dev server เอง (ไม่แตะ process ของผู้ใช้ตรงๆ) กลับมาใช้งานได้ปกติ **บทเรียน**: ห้ามรัน `npm run build`/`next build` ขณะ dev server กำลังรันอยู่ ให้ตรวจด้วย `tsc --noEmit` + verify สดผ่าน dev server ที่รันอยู่แล้วแทน
 - [x] เจอ+แก้ BigInt literal (`0n`) ไม่รองรับที่ ES2017 target ระหว่างทำ ใช้ `BigInt(0)` แทน
 
+### Phase 5 — Report Detail, Permission UI, Configurable Settings 📋 วางแผนแล้ว ยังไม่เริ่มโค้ด
+[แผนเต็ม →](./phase5-plan.md) — โจทย์จาก `document/diff_req.md` (`beb62ee`) 5 ข้อ, ตัดสินใจครบทุกข้อกับผู้ใช้ 2026-08-19 แล้ว (รวมถึงเรื่องที่ requirement เขียนกำกวม: ข้อ 1-2 ที่จริงคือ "ยังไม่มีหน้า report detail" ไม่ใช่ "ยังไม่มี preview/upload" ซึ่ง 4c/4e ทำ backend ไว้ครบแล้ว)
+
+| Sub-phase | งาน | สถานะ | Commit |
+|---|---|---|---|
+| **5a** | หน้า report detail (`/reports/report-detail/[id]`) + `SqlBlock` code-snippet UI (tokenizer เขียนเอง zero-dep) + แยก `reportFilePreview` ออกจาก dialog | ⬜ | — |
+| **5b** | Per-report ACL UI (drawer ต่อ `/api/reports/[id]/permissions` ที่มี API ครบตั้งแต่ 2a แต่ไม่มี UI เลย) | ⬜ | — |
+| **5c** | เติมหน้า `/permissions` ที่เป็น stub + implement `GET`/`PUT /api/users/roles/[id]` (ตอนนี้เป็น `Hello World` — แก้สิทธิ์ของ role เดิมไม่ได้เลย ทำได้แค่ตอนสร้าง role) | ⬜ | — |
+| **5d** | หน้า CRUD ตาราง `menus` + `/api/baseconfig/menus` (sidebar **ยังใช้** `lib/menu-list.ts` ตามเดิม — swap เป็น DB-driven เป็นเฟสแยก) | ⬜ | — |
+| **5e** | System settings ตั้งค่าได้จริง: `UPLOAD_BASE_PATH` (+ `lib/storage-path.ts` กัน path traversal), max upload size ต่อ `file_kind`, ค่าองค์กร (`ORG_NAME`/`ADMIN_EMAIL`/`DEFAULT_PAGE_SIZE`/`DEFAULT_SHARE_EXPIRY_DAYS`) + หน้า `/settings/storage` | ⬜ | — |
+| **5f** | Housekeeping: refresh `feature-list.md` (ค้างอีกรอบ), `docker-compose.yml` (Redis), แก้ lint error 36 ตัว + ใส่ `--max-warnings 192` ratchet เข้า CI | ⬜ | — |
+
+**สิ่งที่ scope out จาก Phase 5 โดยตั้งใจ** (ไม่ใช่ของค้างที่ลืม): ไม่ให้ `SAMPLE_DATA` รับ pdf, ไม่รื้อ upload UI ในหน้า create/edit, ไม่แตะ limit 200 แถวของ excel preview, ไม่เปลี่ยน PDF viewer, ไม่ใช้ CodeMirror/Monaco ในหน้า edit, ไม่ swap sidebar เป็น DB-driven, ไม่ทำ lint sweep ครบ 228
+
 ---
 
 ## 🚧 ของค้าง & หนี้ทางเทคนิค
@@ -268,7 +285,7 @@ Error: Cannot find module 'D:\...\.next\server\vendor-chunks\lib\worker.js'
 
 Next.js 16 ตัด `next lint` ออกทั้งหมด ต้อง migrate เป็น ESLint CLI ตรง (`npx @next/codemod@latest next-lint-to-eslint-cli .` สร้าง `eslint.config.mjs` แบบ flat config ให้อัตโนมัติ) พอรัน `npm run lint` (`eslint .`) ครั้งแรกในประวัติ repo นี้ (ไม่เคยมี `.eslintrc`/config จริงมาก่อนเลย ไม่ชัดว่า `next lint` เดิมเคย enforce อะไรจริงจังหรือเปล่า) เจอ **228 ปัญหา (36 error, 192 warning)** กระจายทั่ว repo (ส่วนใหญ่เป็น `@typescript-eslint/no-unused-vars`/`no-explicit-any` ใน `prisma/seeds/*.ts` กับไฟล์ทั่วไปบางไฟล์)
 
-**ยังไม่แก้** — ไม่ใช่ scope ของ dependency-upgrade-plan.md (เป้าหมายคือปิดช่องโหว่ ไม่ใช่ lint sweep) `.github/workflows/ci.yml` ไม่ได้รัน `npm run lint` เลย เลยไม่กระทบ CI ตอนนี้ แต่ควรมีแผนล้างทีหลัง (อาจทยอยแก้ทีละไฟล์ หรือตั้ง `--max-warnings` แบบ ratchet)
+**ยังไม่แก้ แต่มีเจ้าภาพแล้ว: Phase 5f** (ดู [`phase5-plan.md`](./phase5-plan.md) — แก้ error 36 ตัว + ใส่ `--max-warnings 192` ratchet เข้า CI, ไม่ล้าง warning ทั้ง 192 ในรอบเดียว) — ไม่ใช่ scope ของ dependency-upgrade-plan.md (เป้าหมายคือปิดช่องโหว่ ไม่ใช่ lint sweep) `.github/workflows/ci.yml` ไม่ได้รัน `npm run lint` เลย เลยไม่กระทบ CI ตอนนี้ แต่ควรมีแผนล้างทีหลัง (อาจทยอยแก้ทีละไฟล์ หรือตั้ง `--max-warnings` แบบ ratchet)
 
 ### 12. CI's Build step จะ fail จริงตั้งแต่ push ครั้งแรก — ✅ ปิดแล้ว (2026-08-18)
 
