@@ -26,6 +26,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Separator } from "@/components/ui/separator";
 import { Checkbox } from "@/components/ui/checkbox";
 import FileUpload, { AllowedFileType } from "@/components/shared/fileuploading";
+import { SqlBlock } from "@/components/shared/sqlBlock";
 import { Loader2, FileText, Layers, Database, Variable as VariableIcon, Shield, History, Share2, Copy } from "lucide-react";
 import toast from "react-hot-toast";
 
@@ -948,7 +949,7 @@ export default function ReportEdit() {
                         </Button>
                       </div>
                     </div>
-                    <pre className="text-xs bg-muted/40 rounded p-2 overflow-x-auto whitespace-pre-wrap">{q.sql_text}</pre>
+                    <SqlBlock sql={q.sql_text} maxHeight="16rem" />
                   </>
                 )}
               </div>

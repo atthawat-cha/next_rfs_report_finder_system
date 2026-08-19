@@ -24,13 +24,14 @@
 
 > **หมายเหตุ dev environment (2026-08-18):** Redis เดิมไม่มีอะไร listen ที่ `localhost:6380` เลย (root cause ของบล็อกเกอร์ 4d ที่ค้างมาตั้งแต่ `e3e3978`) แก้โดยเปิด Docker Desktop (ติดตั้งอยู่แล้วแต่ไม่ได้รัน) แล้วรัน `docker run -d --name rfs-verify-redis -p 6380:6379 redis:7-alpine` — คอนเทนเนอร์นี้ **ยังรันอยู่หลังจบ session นี้ตั้งใจทิ้งไว้** เพื่อให้ rate-limiting/2FA ใช้งานได้ต่อระหว่าง dev ปกติ (ไม่ใช่แค่ของทดสอบครั้งเดียว) — ถ้าไม่ต้องการแล้วสามารถ `docker stop rfs-verify-redis && docker rm rfs-verify-redis` ได้ทุกเมื่อ ไม่มีข้อมูลสำคัญเก็บอยู่ (เป็น cache/ephemeral state ล้วน)
 
-**Phase 5 วางแผนแล้ว (2026-08-19)** — โจทย์มาจาก `document/diff_req.md` ที่ผู้ใช้ commit เข้ามาเอง (`beb62ee`) แผนเต็มอยู่ที่ [`phase5-plan.md`](./phase5-plan.md) แบ่ง 6 sub-phase (5a-5f) ตัดสินใจครบทุกข้อกับผู้ใช้แล้วก่อนเขียน (ดูหัวข้อ "Resolved decisions" ในแผน) — ยังไม่เริ่มเขียนโค้ด
+**Phase 5 วางแผนแล้ว (2026-08-19), เริ่มลงมือแล้ว** — โจทย์มาจาก `document/diff_req.md` ที่ผู้ใช้ commit เข้ามาเอง (`beb62ee`) แผนเต็มอยู่ที่ [`phase5-plan.md`](./phase5-plan.md) แบ่ง 6 sub-phase (5a-5f) ตัดสินใจครบทุกข้อกับผู้ใช้แล้วก่อนเขียน (ดูหัวข้อ "Resolved decisions" ในแผน) — **5a ปิดจบแล้ว (2026-08-19)** ดูรายละเอียดใต้ตาราง Phase 5 ด้านล่าง
 
 **งานถัดไปที่ควรทำ (เรียงตามลำดับ):**
-1. **ลงมือ Phase 5a** (report detail page + SqlBlock) ตาม `phase5-plan.md`
+1. **ลงมือ Phase 5b** (per-report ACL UI drawer) ตาม `phase5-plan.md`
 2. **ยืนยันว่า CI workflow รันจริงบน GitHub** — branch `feature/phase4` push ขึ้น origin แล้ว แต่ยังไม่เคยเห็นผลรัน (`.github/workflows/ci.yml` ตั้งไว้ตั้งแต่ 4f ยังไม่เคยยืนยันว่าเขียวจริงบน runner)
 3. **วางแผน i18n (`next-intl`) แยกเป็น phase ใหม่ของตัวเอง** — ถูก scope out จาก 4e และจาก Phase 5 ด้วย เพราะเป็น all-or-nothing sweep ทั้งโปรเจกต์
 4. **ของค้าง #9** (`deepmerge-ts`/Prisma) — รอ Prisma ออก patch จริงหรือ Prisma 8 GA ไม่มีอะไรให้ทำตอนนี้
+5. **ของค้าง #13 (ใหม่)** — role `ADMIN` ธรรมดาดาวน์โหลด/พรีวิวไฟล์ไม่ได้เลย (403) เพราะ `routeAcceptted('user')` ไม่รวม `'admin'` — ไม่บล็อก 5b แต่ควรแก้ก่อนเปิดใช้งานจริงกับ role นี้
 
 > lint baseline 228 ปัญหา (ของค้าง #11) และ `docker-compose.yml` สำหรับ Redis — **ย้ายเข้าไปเป็น 5f แล้ว** ไม่ใช่งานลอยอีกต่อไป
 
@@ -159,12 +160,23 @@
 
 | Sub-phase | งาน | สถานะ | Commit |
 |---|---|---|---|
-| **5a** | หน้า report detail (`/reports/report-detail/[id]`) + `SqlBlock` code-snippet UI (tokenizer เขียนเอง zero-dep) + แยก `reportFilePreview` ออกจาก dialog | ⬜ | — |
+| **5a** | หน้า report detail (`/reports/report-detail/[id]`) + `SqlBlock` code-snippet UI (tokenizer เขียนเอง zero-dep) + แยก `reportFilePreview` ออกจาก dialog | ✅ | *(pending — see below)* |
 | **5b** | Per-report ACL UI (drawer ต่อ `/api/reports/[id]/permissions` ที่มี API ครบตั้งแต่ 2a แต่ไม่มี UI เลย) | ⬜ | — |
 | **5c** | เติมหน้า `/permissions` ที่เป็น stub + implement `GET`/`PUT /api/users/roles/[id]` (ตอนนี้เป็น `Hello World` — แก้สิทธิ์ของ role เดิมไม่ได้เลย ทำได้แค่ตอนสร้าง role) | ⬜ | — |
 | **5d** | หน้า CRUD ตาราง `menus` + `/api/baseconfig/menus` (sidebar **ยังใช้** `lib/menu-list.ts` ตามเดิม — swap เป็น DB-driven เป็นเฟสแยก) | ⬜ | — |
 | **5e** | System settings ตั้งค่าได้จริง: `UPLOAD_BASE_PATH` (+ `lib/storage-path.ts` กัน path traversal), max upload size ต่อ `file_kind`, ค่าองค์กร (`ORG_NAME`/`ADMIN_EMAIL`/`DEFAULT_PAGE_SIZE`/`DEFAULT_SHARE_EXPIRY_DAYS`) + หน้า `/settings/storage` | ⬜ | — |
 | **5f** | Housekeeping: refresh `feature-list.md` (ค้างอีกรอบ), `docker-compose.yml` (Redis), แก้ lint error 36 ตัว + ใส่ `--max-warnings 192` ratchet เข้า CI | ⬜ | — |
+
+**5a ปิดจบแล้ว** (*(pending — see below)*):
+- [x] `lib/sql-highlight.ts` (ใหม่) — zero-dependency SQL tokenizer ด้วย regex alternation เดียว, คืน `{text, kind}[]` (`keyword|string|number|comment|punct|plain`); `lib/sql-highlight.test.ts` (ใหม่) — 8 test ครอบ round-trip byte-for-byte, keyword ใน string/comment ไม่ถูกจัดเป็น keyword, unterminated string/comment ที่ EOF ไม่ loop/throw, empty input — ผ่านทั้งหมด (`npx vitest run lib/sql-highlight.test.ts`)
+- [x] `components/shared/sqlBlock.tsx` (ใหม่) — `<SqlBlock sql maxHeight? />` แสดง token เป็น `<span>` สีตาม Tailwind theme token (`text-chart-1..4`, `text-muted-foreground`, `text-foreground/70`) ไม่มี hex ตายตัว จึงถูกทั้ง light/dark โดยไม่ต้องเขียนโค้ดแยกสองธีม, มี gutter เลขบรรทัด, ปุ่ม Copy (`navigator.clipboard`) พร้อม transient "Copied" — แทนที่ `<pre>` เดิมที่ `report-edit/[id]/page.tsx:951` (จุดเดียวที่เหลือในระบบที่ render `sql_text`)
+- [x] `components/shared/reportFilePreview.tsx` (ใหม่) — ดึง PDF `<embed>` / Excel-as-table ออกจาก `reportPreviewDialog.tsx` เดิม (4c) เป็น component กลาง; `reportPreviewDialog.tsx` แก้ให้เรียก component นี้แทนเขียนซ้ำ — ป้องกัน limit 200 แถว/`.report-print-area` drift ระหว่างสองที่ที่ใช้
+- [x] `app/(auth)/reports/report-detail/[id]/page.tsx` (ใหม่, server component เรียก `getCurrentUser()` ตาม pattern เดียวกับ `dashboard/page.tsx` เพื่อคำนวณ `isAdmin` ก่อนส่งให้ client) + `components/reportDetailView.tsx` (ใหม่, client) — header (badge สถานะ/access_level, หมวดหมู่/แผนก, view/download count, วันที่), description, ไฟล์แยกกลุ่มตาม `file_kind` พร้อม label ไทย (แต่ละแถวมี Preview/Download(`can_export`)/Print(`can_print`+PDF only)), preview แถวแรกที่เป็น PDF โหลดอัตโนมัติ, Queries เฉพาะ admin (`isAdmin` จาก server ตัดสินใจว่าจะยิง `/queries` เลยหรือไม่ ไม่ใช่รอ 403), not-found state เมื่อ API ตอบ 404 — ป้องกัน view_count นับซ้ำจาก React StrictMode ด้วย `useRef` guard
+- [x] entry point: `reportColumn.tsx`/`favReportColumn.tsx` เพิ่ม dropdown item "View" + ทำให้ชื่อรายงาน (`name_th` cell) เป็นลิงก์ไปหน้า detail
+- [x] ยืนยันสดครบผ่าน curl + JWT ที่ mint ตรงด้วย `createToken` (สร้าง report/files/query/permission grant ทดสอบด้วย prefix `VITEST-5A-`, ลบทิ้งหมดหลังจบ): `view_count` เพิ่ม +1 ต่อการเรียก `GET /api/reports/[id]` หนึ่งครั้งไม่ว่าจะเรียกกี่รอบ (ตรงตามที่ endpoint ทำมาตั้งแต่ 4c ไม่มี double-count จาก StrictMode guard); admin (role `ADMIN`) เห็น `/queries` สำเร็จ (200), non-admin (`USER`) ได้ 403 ตรงตาม `requireRole(admin)` เดิม; user ที่มี grant `can_view=true, can_export=false` → หน้า detail (`/reports/report-detail/{id}`) ยัง render 200 (แสดง not-found ก็ไม่ใช่ — เห็นรายงานจริงเพราะ `can_view=true`), แต่ download/preview ผ่าน API ตรงได้ 404 ตามที่ ACL กำหนด; flip `can_export=true` แล้ว download (200, `download_count` เพิ่มจริง)/preview (คืนตารางตรงกับไฟล์ xlsx จริง) สำเร็จทั้งคู่; report ที่ไม่มี grant เลย (`access_level=PRIVATE`, ไม่มี `report_permissions` แถวใด) → API 404, หน้า detail ยัง 200 (แสดง "ไม่พบรายงาน" ใน body); unauthenticated → หน้า detail redirect 307 ไป `/login`; `report-edit/[id]` (ใช้ `SqlBlock` ตัวใหม่) และ `report-list`/`favorites` (ใช้ `ReportPreviewDialog`/column ที่แก้แล้ว) ยัง compile 200 ทั้งหมด; ลบ fixture ทดสอบทั้งหมดหลังจบ (report/files/queries/permissions/downloads/activity_logs + ไฟล์บนดิสก์ `public/uploads/vitest-5a/`)
+- [x] `npx tsc --noEmit` = 0 error (baseline คงเดิม), `npm test` = 15/15 ผ่าน (7 เดิม + 8 ใหม่ของ `sql-highlight.test.ts`), `npx eslint .` = 228 ปัญหา (36 error/192 warning) **เท่าเดิมกับ baseline ที่บันทึกไว้ในของค้าง #11 พอดี** (การแยก `reportFilePreview.tsx` ย้าย `react-hooks/set-state-in-effect` error 1 ตัวจาก `reportPreviewDialog.tsx` ไปที่ไฟล์ใหม่ ไม่ใช่ error ใหม่ที่เพิ่มขึ้น — เป็น refactor ที่ behavior-preserving จริงตามที่ตั้งใจ)
+- ⚠️ **พบของค้างใหม่ที่ไม่เกี่ยวกับ 5a โดยตรงระหว่างยืนยันสด**: บทบาท `ADMIN` (ธรรมดา ไม่ใช่ `SUPER_ADMIN`) เรียก `GET /api/reports/[id]/files/[fileId]/download` และ `.../preview` (ทั้งคู่มาจาก 4c) ได้ 403 เสมอ เพราะสอง endpoint นี้ gate ด้วย `requireRole(req, routeAcceptted('user'))` ซึ่ง `routeAcceptted('user')` คืนแค่ `['user','super_admin']` — **ไม่รวม `'admin'` เลย** ทั้งที่ endpoint เดียวกันมี logic bypass ACL สำหรับ `isAdmin` (เช็คด้วย `routeAcceptted('admin')` ที่รวม `'admin'`) อยู่ข้างใน แปลว่าปัจจุบัน user role `ADMIN` เข้าดูรายละเอียดรายงานได้ (`GET /api/reports/[id]` ใช้ `requireAuth` เฉยๆ ไม่ผ่าน role-tier gate) และ ACL ที่ endpoint นั้นคืนมาบอกว่า `can_export/can_print: true` (เพราะ isAdmin bypass) แต่กด Download/Print จริงจะ 403 เสมอ — บั๊กนี้มีอยู่แล้วตั้งแต่ 4c ไม่ใช่ regression จาก 5a (หน้า dialog เดิมก็มีปัญหาเดียวกัน) หน้า report-detail ใหม่แค่ทำให้เห็นชัดขึ้นเพราะโชว์ปุ่ม Download/Print ตามค่า acl ที่ endpoint ส่งมาให้ตรงๆ ไม่ใช่ของค้างที่ scope ของ 5a จะแก้ (ไม่แตะ auth-tier logic) แต่บันทึกไว้เป็นของค้างใหม่รอแก้แยก
+- ไม่ได้ทดสอบผ่าน browser จริงด้วยสายตา (ผู้ใช้ปฏิเสธการติดตั้ง Claude in Chrome ระหว่าง session นี้) — สีของ `SqlBlock` ใน light/dark theme และการ layout จริงบนหน้าเว็บยังไม่ได้ยืนยันด้วยภาพ ยืนยันได้แค่ HTTP 200 จาก curl ว่าหน้า compile/render สำเร็จ + logic สีอ้างอิง Tailwind theme token เดียวกับส่วนอื่นของระบบที่ยืนยันแล้วว่าถูกทั้งสองธีม (เช่น dashboard chart)
 
 **สิ่งที่ scope out จาก Phase 5 โดยตั้งใจ** (ไม่ใช่ของค้างที่ลืม): ไม่ให้ `SAMPLE_DATA` รับ pdf, ไม่รื้อ upload UI ในหน้า create/edit, ไม่แตะ limit 200 แถวของ excel preview, ไม่เปลี่ยน PDF viewer, ไม่ใช้ CodeMirror/Monaco ในหน้า edit, ไม่ swap sidebar เป็น DB-driven, ไม่ทำ lint sweep ครบ 228
 
@@ -292,6 +304,14 @@ Next.js 16 ตัด `next lint` ออกทั้งหมด ต้อง mig
 `.github/workflows/ci.yml` (ตั้งจาก Phase 4f, `c0c0c48`) มี step `Build` (`npm run build`) ที่**ไม่มี** `continue-on-error` เลย — ยืนยันซ้ำหลายรอบระหว่าง Stage 0/2/3 ว่า `npm run build` fail จริงทุกครั้งด้วย baseline TypeScript error 2 ตัวเดิม (`app/api/reports/report/manage/route.ts`, `components/ui/combobox.tsx`) ไม่เกี่ยวกับ dependency version เลยแม้แต่น้อย (fail เหมือนกันทั้งบน Next 14/15/16)
 
 **ปิดจริงแล้ว**: แก้ baseline TS error ทั้ง 2 ตัวจบ (ดูของค้าง #2) → `npm run build` exit 0 สำเร็จเต็มรูปแบบเป็นครั้งแรกของ repo นี้ — CI's Build step จะผ่านจริงเมื่อ push ครั้งแรก
+
+### 13. Role `ADMIN` (ธรรมดา ไม่ใช่ `SUPER_ADMIN`) โหลด/พรีวิวไฟล์รายงานไม่ได้เลย — เจอระหว่างยืนยันสด Phase 5a (2026-08-19)
+
+`GET /api/reports/[id]/files/[fileId]/download` และ `.../preview` (ทั้งคู่มาจาก 4c) gate ด้วย `requireRole(req, routeAcceptted('user'))` ก่อนเช็ค ACL/isAdmin ข้างใน — แต่ `routeAcceptted('user')` (`lib/auth.ts`) คืนแค่ `['user', 'super_admin']`, **ไม่มี `'admin'` อยู่ในรายการนี้เลย** ทั้งที่ endpoint เดียวกันมี logic bypass ACL สำหรับ isAdmin ที่เช็คด้วย `routeAcceptted('admin')` (`['admin','super_admin']`) อยู่ข้างในอีกที
+
+ผลคือ: user ที่มี role `ADMIN` เข้าดู `GET /api/reports/[id]` ได้ปกติ (endpoint นั้นใช้ `requireAuth` เฉยๆ ไม่มี role-tier gate) และได้ `acl.can_export/can_print: true` กลับมา (เพราะ isAdmin bypass) แต่พอกด Download/Print จริงจะโดน **403 เสมอ** เพราะ role-tier gate ของสอง endpoint ไฟล์กันไว้ก่อนถึง ACL logic เลย มีมาตั้งแต่ 4c ไม่ใช่ regression จาก 5a — เพิ่งสังเกตเห็นชัดตอนหน้า report-detail (5a) ใหม่โชว์ปุ่ม Download/Print ตรงตาม `acl` ที่ endpoint ส่งมา
+
+**สถานะ**: ยังไม่แก้ — ไม่ใช่ scope ของ 5a (ไม่แตะ auth-tier logic) ตัวเลือกแก้ตอนที่จะทำจริง: เพิ่ม `'admin'` เข้า `routeAcceptted('user')`, หรือเปลี่ยนสอง endpoint นี้ให้เช็ค `routeAcceptted('admin')` แทนตอนตัดสินว่าจะบายพาส role-tier gate เข้าไปเจอ ACL logic เลย (ต้องดูให้ทั่วว่ามี endpoint อื่นที่เจอ pattern เดียวกันหรือไม่ก่อนแก้)
 
 ---
 

@@ -9,23 +9,9 @@ import {
   DialogDescription,
   DialogFooter,
 } from "@/components/ui/dialog";
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@/components/ui/table";
 import { Button } from "@/components/ui/button";
 import { Printer, Download, Loader2 } from "lucide-react";
-
-interface ReportFileRow {
-  id: string;
-  file_kind: string;
-  file_name: string;
-  file_type: string;
-}
+import { ReportFilePreview, type ReportFilePreviewFile } from "@/components/shared/reportFilePreview";
 
 interface ReportDetail {
   id: string;
@@ -33,28 +19,14 @@ interface ReportDetail {
   name_th: string;
   name_en: string | null;
   description: string | null;
-  files: ReportFileRow[];
-}
-
-interface PreviewTable {
-  headers: string[];
-  rows: string[][];
-}
-
-function isPdf(file: ReportFileRow): boolean {
-  return file.file_name?.toLowerCase().endsWith(".pdf") ?? false;
-}
-
-function isSpreadsheet(file: ReportFileRow): boolean {
-  const name = file.file_name?.toLowerCase() ?? "";
-  return name.endsWith(".xlsx") || name.endsWith(".xls") || name.endsWith(".csv");
+  files: ReportFilePreviewFile[];
 }
 
 /**
- * Preview dialog for a report's current files - inline PDF viewer (native
- * browser embed, no library), Excel-as-table preview (parsed server-side,
- * see app/api/reports/[id]/files/[fileId]/preview), and a print button
- * scoped to just the preview content via the .report-print-area rule below.
+ * Preview dialog for a report's current files - the actual PDF/Excel
+ * rendering lives in components/shared/reportFilePreview.tsx (shared with
+ * the report detail page, Phase 5a), this component owns file selection,
+ * the dialog chrome, and the print/download footer actions.
  *
  * Controlled (open/onOpenChange from the caller) rather than owning an
  * internal DialogTrigger - nesting a Radix DialogTrigger inside a
@@ -75,8 +47,6 @@ export function ReportPreviewDialog({
   const [loading, setLoading] = React.useState(false);
   const [report, setReport] = React.useState<ReportDetail | null>(null);
   const [activeFileId, setActiveFileId] = React.useState<string | null>(null);
-  const [table, setTable] = React.useState<PreviewTable | null>(null);
-  const [tableLoading, setTableLoading] = React.useState(false);
 
   React.useEffect(() => {
     if (!open || !reportId) {
@@ -90,7 +60,7 @@ export function ReportPreviewDialog({
       .then((json) => {
         if (json?.success) {
           setReport(json.data);
-          const firstFile = json.data.files?.[0] as ReportFileRow | undefined;
+          const firstFile = json.data.files?.[0] as ReportFilePreviewFile | undefined;
           setActiveFileId(firstFile?.id ?? null);
         }
       })
@@ -98,20 +68,6 @@ export function ReportPreviewDialog({
   }, [open, reportId]);
 
   const activeFile = report?.files.find((f) => f.id === activeFileId) ?? null;
-
-  React.useEffect(() => {
-    if (!activeFile || !isSpreadsheet(activeFile)) {
-      setTable(null);
-      return;
-    }
-    setTableLoading(true);
-    fetch(`/api/reports/${reportId}/files/${activeFile.id}/preview`, { credentials: "include" })
-      .then((res) => res.json())
-      .then((json) => {
-        if (json?.success) setTable(json.data);
-      })
-      .finally(() => setTableLoading(false));
-  }, [activeFile, reportId]);
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -147,49 +103,7 @@ export function ReportPreviewDialog({
             </div>
 
             <div className="report-print-area flex-1 overflow-auto">
-              {activeFile && isPdf(activeFile) && (
-                <embed
-                  src={`/api/reports/${reportId}/files/${activeFile.id}/download`}
-                  type="application/pdf"
-                  className="w-full h-[60vh]"
-                />
-              )}
-
-              {activeFile && isSpreadsheet(activeFile) && (
-                <>
-                  {tableLoading && (
-                    <div className="flex items-center justify-center py-12 text-muted-foreground">
-                      <Loader2 className="h-5 w-5 animate-spin mr-2" /> กำลังโหลดตาราง...
-                    </div>
-                  )}
-                  {!tableLoading && table && (
-                    <Table>
-                      <TableHeader>
-                        <TableRow>
-                          {table.headers.map((h, i) => (
-                            <TableHead key={i}>{h}</TableHead>
-                          ))}
-                        </TableRow>
-                      </TableHeader>
-                      <TableBody>
-                        {table.rows.map((row, ri) => (
-                          <TableRow key={ri}>
-                            {row.map((cell, ci) => (
-                              <TableCell key={ci}>{cell}</TableCell>
-                            ))}
-                          </TableRow>
-                        ))}
-                      </TableBody>
-                    </Table>
-                  )}
-                </>
-              )}
-
-              {activeFile && !isPdf(activeFile) && !isSpreadsheet(activeFile) && (
-                <p className="py-8 text-center text-muted-foreground">
-                  ไฟล์ประเภทนี้ไม่รองรับการแสดงตัวอย่าง — ดาวน์โหลดเพื่อเปิดไฟล์
-                </p>
-              )}
+              {activeFile && <ReportFilePreview reportId={reportId as string} file={activeFile} />}
             </div>
           </>
         )}

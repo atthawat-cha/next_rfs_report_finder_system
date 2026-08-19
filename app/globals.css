@@ -71,7 +71,8 @@
 }
 
 /* Scopes window.print() to just a .report-print-area (used by
-   ReportPreviewDialog) instead of the whole page/dialog chrome. */
+   ReportPreviewDialog and the report detail page) instead of the whole
+   page/dialog chrome. */
 @media print {
   body * {
     visibility: hidden;

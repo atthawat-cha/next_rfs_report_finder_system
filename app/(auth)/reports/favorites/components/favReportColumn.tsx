@@ -15,6 +15,16 @@ export function getFavReportColumn(onUnfavorite: (reportId: string) => void, onP
     {
         accessorKey: 'name_th',
         header: 'Name',
+        cell: ({ row }) => {
+            const id = row.original.id
+            const name = row.original.name_th
+            if (!id) return name
+            return (
+                <a href={`/reports/report-detail/${id}`} className="text-primary underline-offset-4 hover:underline">
+                    {name}
+                </a>
+            )
+        },
     },
     {
         accessorKey: 'description',
@@ -53,6 +63,9 @@ export function getFavReportColumn(onUnfavorite: (reportId: string) => void, onP
                     </DropdownMenuTrigger>
                     <DropdownMenuContent align="end">
                         <DropdownMenuLabel>Actions</DropdownMenuLabel>
+                        <DropdownMenuItem asChild>
+                            <a href={`/reports/report-detail/${id}`}>View</a>
+                        </DropdownMenuItem>
                         <DropdownMenuItem onClick={() => onPreview(id)}>
                             Preview
                         </DropdownMenuItem>
