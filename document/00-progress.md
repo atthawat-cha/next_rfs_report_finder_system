@@ -1,6 +1,6 @@
 # ความคืบหน้าโครงการ — RFS Report Finder System
 
-> **อัปเดตล่าสุด:** 2026-08-19 · **Branch:** `feature/phase4` · **HEAD:** `9823aa8`
+> **อัปเดตล่าสุด:** 2026-08-19 · **Branch:** `feature/phase4` · **HEAD:** `1d7dfd4`
 >
 > ไฟล์นี้ตอบคำถามเดียว: **"ตอนนี้ถึงไหนแล้ว และเหลืออะไร"** สถานะทุกแถวอ้างอิง commit จริงใน git log เป็นหลักฐาน ไม่ใช่การอ่านโค้ดเดา
 >
@@ -165,7 +165,7 @@
 | **5c** | เติมหน้า `/permissions` ที่เป็น stub + implement `GET`/`PUT /api/users/roles/[id]` | ✅ | `dfb0d35` |
 | **5d** | หน้า CRUD ตาราง `menus` + `/api/baseconfig/menus` (sidebar **ยังใช้** `lib/menu-list.ts` ตามเดิม — swap เป็น DB-driven เป็นเฟสแยก) | ✅ | `732fe94` |
 | **5e** | System settings ตั้งค่าได้จริง: `UPLOAD_BASE_PATH` (+ `lib/storage-path.ts` กัน path traversal), max upload size ต่อ `file_kind`, ค่าองค์กร (`ORG_NAME`/`ADMIN_EMAIL`/`DEFAULT_PAGE_SIZE`/`DEFAULT_SHARE_EXPIRY_DAYS`) + หน้า `/settings/storage` | ✅ | `9823aa8` |
-| **5f** | Housekeeping: refresh `feature-list.md` (ค้างอีกรอบ), `docker-compose.yml` (Redis), แก้ lint error ทั้งหมด (41 ตัว ณ หลัง 5e — ดูของค้าง #11) + ใส่ `--max-warnings` ratchet เข้า CI | ✅ | `(pending)` |
+| **5f** | Housekeeping: refresh `feature-list.md` (ค้างอีกรอบ), `docker-compose.yml` (Redis), แก้ lint error ทั้งหมด (41 ตัว ณ หลัง 5e — ดูของค้าง #11) + ใส่ `--max-warnings` ratchet เข้า CI | ✅ | `1d7dfd4` |
 
 **5a ปิดจบแล้ว** (`8dea24c`):
 - [x] `lib/sql-highlight.ts` (ใหม่) — zero-dependency SQL tokenizer ด้วย regex alternation เดียว, คืน `{text, kind}[]` (`keyword|string|number|comment|punct|plain`); `lib/sql-highlight.test.ts` (ใหม่) — 8 test ครอบ round-trip byte-for-byte, keyword ใน string/comment ไม่ถูกจัดเป็น keyword, unterminated string/comment ที่ EOF ไม่ loop/throw, empty input — ผ่านทั้งหมด (`npx vitest run lib/sql-highlight.test.ts`)
@@ -237,7 +237,7 @@
 - ⚠️ `npx eslint .` = **240 ปัญหา (41 error/199 warning) — เพิ่มจาก baseline 238 (41/197) อีก 2 warning เท่านั้น ไม่มี error ใหม่เลย**: `no-unused-expressions` จาก idiom เดิมที่ใช้ทั่ว repo ใน route ใหม่ 2 ไฟล์ (`settings/public`, `shares/[token]/files/[fileId]/download`) — ส่วนที่แก้ได้ถูกๆ (unused `_req` param ที่ไม่จำเป็นเลย) แก้ก่อน commit แล้ว
 - ไม่ได้ทดสอบผ่าน browser จริงด้วยสายตา (เหตุผลเดียวกับ 5a-5d) — เฉพาะการ render ORG_NAME บนหน้า login และ ADMIN_EMAIL บน not-found state เป็น client-side conditional render ธรรมดาที่ยืนยันได้แค่ผ่าน API ถูกต้อง ไม่ได้เห็นผลจริงบนเบราว์เซอร์
 
-**5f ปิดจบแล้ว** (`(pending)`) — **Phase 5 ปิดครบทั้ง 6 sub-phase แล้ว**:
+**5f ปิดจบแล้ว** (`1d7dfd4`) — **Phase 5 ปิดครบทั้ง 6 sub-phase แล้ว**:
 - [x] **แก้ lint error ทั้งหมด 18 ตัวจาก 41 ตัว เป็นการแก้จริง (ไม่ใช่ suppress)**: `no-explicit-any` × 11 (`app/(auth)/user-management/user-form/page.tsx` 3 จุด — เพิ่ม `SelectOption`/`UserFormBaseConfig` interface; `components/shared/permissions-form.tsx` 1 จุด — `setParams` เปลี่ยนเป็น `RolePermissionsType` ตรง; `lib/user-management.ts` 4 จุด — เพิ่ม `PermissionsWithMenuRow`/reuse `MenuStructureGroup` ที่มีอยู่แล้วจาก 5c; `prisma/seeds/menus.seed.ts` 2 จุด — เพิ่ม `MenuSeedRow`; `app/api/users/user/update/route.ts` 1 จุด — ดูบั๊กจริงด้านล่าง), `react-hooks/rules-of-hooks` × 2 (`permissions-form.tsx` — ย้าย hook ทั้งหมดมาก่อน early-return `if (!template) return null`), `react/jsx-key` × 2 (`permissions-form.tsx` — missing `key` บน `template.map`/`item.menu.map` สองจุด), `react/no-unescaped-entities` × 1 (`role-form/page.tsx`), `no-non-null-asserted-optional-chain` × 1 (`lib/auth.ts` — ดูบั๊กจริงด้านล่าง), `no-require-imports` × 1 (`tailwind.config.ts` — `require("tailwindcss-animate")` → `import`, ยืนยันแล้วว่า compiled CSS ยังมี `.animate-in`/`accordion-down` ครบหลังเปลี่ยน)
 - ⚠️ **เจอบั๊กจริง 2 ตัวระหว่างแก้ lint (ตรงกับบทเรียนของค้าง #2 — type/lint complaint อาจ standing guard บั๊กจริง)**:
   1. `lib/auth.ts`'s `requireRole()`: `const userRoles: string = user?.roles?.name!` — non-null assertion บน optional chain ที่คืน `undefined` ได้จริงถ้า user ไม่มี role (roles เป็น null) จะทำให้ `.toLowerCase()` throw runtime error ที่ไม่ได้ catch (ไม่ใช่ 403 สวยๆตามที่ตั้งใจ) แก้เป็นเช็ค `!userRole` ก่อนแล้ว 403 ตามปกติ
