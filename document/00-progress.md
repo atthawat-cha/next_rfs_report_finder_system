@@ -1,6 +1,6 @@
 # ความคืบหน้าโครงการ — RFS Report Finder System
 
-> **อัปเดตล่าสุด:** 2026-08-19 · **Branch:** `feature/phase4` · **HEAD:** `dfb0d35`
+> **อัปเดตล่าสุด:** 2026-08-19 · **Branch:** `feature/phase4` · **HEAD:** `732fe94`
 >
 > ไฟล์นี้ตอบคำถามเดียว: **"ตอนนี้ถึงไหนแล้ว และเหลืออะไร"** สถานะทุกแถวอ้างอิง commit จริงใน git log เป็นหลักฐาน ไม่ใช่การอ่านโค้ดเดา
 >
@@ -163,7 +163,7 @@
 | **5a** | หน้า report detail (`/reports/report-detail/[id]`) + `SqlBlock` code-snippet UI (tokenizer เขียนเอง zero-dep) + แยก `reportFilePreview` ออกจาก dialog | ✅ | `8dea24c` |
 | **5b** | Per-report ACL UI (drawer ต่อ `/api/reports/[id]/permissions`) | ✅ | `e710490` |
 | **5c** | เติมหน้า `/permissions` ที่เป็น stub + implement `GET`/`PUT /api/users/roles/[id]` | ✅ | `dfb0d35` |
-| **5d** | หน้า CRUD ตาราง `menus` + `/api/baseconfig/menus` (sidebar **ยังใช้** `lib/menu-list.ts` ตามเดิม — swap เป็น DB-driven เป็นเฟสแยก) | ✅ | `(pending)` |
+| **5d** | หน้า CRUD ตาราง `menus` + `/api/baseconfig/menus` (sidebar **ยังใช้** `lib/menu-list.ts` ตามเดิม — swap เป็น DB-driven เป็นเฟสแยก) | ✅ | `732fe94` |
 | **5e** | System settings ตั้งค่าได้จริง: `UPLOAD_BASE_PATH` (+ `lib/storage-path.ts` กัน path traversal), max upload size ต่อ `file_kind`, ค่าองค์กร (`ORG_NAME`/`ADMIN_EMAIL`/`DEFAULT_PAGE_SIZE`/`DEFAULT_SHARE_EXPIRY_DAYS`) + หน้า `/settings/storage` | ⬜ | — |
 | **5f** | Housekeeping: refresh `feature-list.md` (ค้างอีกรอบ), `docker-compose.yml` (Redis), แก้ lint error ทั้งหมด (41 ตัว ณ หลัง 5d — ดูของค้าง #11) + ใส่ `--max-warnings 197` ratchet เข้า CI | ⬜ | — |
 
@@ -206,7 +206,7 @@
 - ⚠️ `npx eslint .` = **231 ปัญหา (38 error/193 warning) — เพิ่มจาก baseline 229 (37/192) อีก 1 error + 1 warning**: `app/(auth)/permissions/page.tsx`'s data-loading effect โดน `react-hooks/set-state-in-effect` (pattern เดียวกับที่มีอยู่แล้วซ้ำๆทั่ว repo — ของค้าง #11) +1 error; `app/api/users/roles/[id]/route.ts`'s สอง catch block ใช้ idiom เดียวกับทุก route handler ในระบบ (`process.env.NODE_ENV==='development' && console.log(error)`) ซึ่งโดน `no-unused-expressions` 2 จุด แทนที่ warning เดิม 1 จุดของ stub เก่า (unused `request` param) → net +1 warning — ทั้งสองจุดเป็น pattern ที่ทั่วทั้ง repo ใช้อยู่แล้วซ้ำๆ ตั้งใจไม่บิดโค้ดหนีกฎเพื่อความสม่ำเสมอ ปล่อยให้ 5f จัดการรวมทีเดียว **ตัวเลขที่ 5f ต้องปิดให้ครบตอนนี้คือ 38 error ไม่ใช่ 37**
 - ไม่ได้ทดสอบผ่าน browser จริงด้วยสายตา (เหตุผลเดียวกับ 5a/5b)
 
-**5d ปิดจบแล้ว** (`(pending)`):
+**5d ปิดจบแล้ว** (`732fe94`):
 - [x] `app/api/baseconfig/menus/route.ts` (ใหม่) + `[id]/route.ts` (ใหม่) — admin-only CRUD เต็มรูปแบบบนตาราง `menus`
   - `GET` (list) — เรียงตาม `group_label`/`catagory_label`/`sort_order` ให้แถวกลุ่มเดียวกันอยู่ติดกัน (ตารางแบบ flat ที่ "ดูเป็นกลุ่ม" โดยไม่ต้องมี tree widget)
   - `POST` — **`menus.id` เป็นโมเดลเดียวในสคีมานี้ที่ไม่ generate id จากฝั่งแอป** (`@default(dbgenerated("gen_random_uuid()"))`) จึง omit `id` ตอน create ต่างจากทุก create path อื่นในระบบที่ใช้ `faker.string.uuid()` — สร้างแถว `permissions` คู่กันในทรานแซกชันเดียวกันทันที (`name = menu_label ?? catagory_label`, `category = group_label`) ตาม convention เดิมของ `prisma/seeds/permission.seed.ts` เพื่อให้เมนูใหม่ grant สิทธิ์ได้ทันทีจากหน้า `/permissions` (5c) โดยไม่ต้อง reseed
