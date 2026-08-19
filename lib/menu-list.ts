@@ -15,6 +15,7 @@
     Code,
     Palette,
     Gauge,
+    ListTree,
     BookOpen,
     HelpCircle,
     GraduationCap,
@@ -248,6 +249,12 @@
         href: "/settings/theme",
         label: "Theme & Appearance",
         icon: Palette,
+        submenus: []
+      },
+      {
+        href: "/settings/menus",
+        label: "Menu Management",
+        icon: ListTree,
         submenus: []
       },
       // {
