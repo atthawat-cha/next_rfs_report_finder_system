@@ -1,6 +1,6 @@
 # ความคืบหน้าโครงการ — RFS Report Finder System
 
-> **อัปเดตล่าสุด:** 2026-08-19 · **Branch:** `feature/phase4` · **HEAD:** `8dea24c`
+> **อัปเดตล่าสุด:** 2026-08-19 · **Branch:** `feature/phase4` · **HEAD:** `e710490`
 >
 > ไฟล์นี้ตอบคำถามเดียว: **"ตอนนี้ถึงไหนแล้ว และเหลืออะไร"** สถานะทุกแถวอ้างอิง commit จริงใน git log เป็นหลักฐาน ไม่ใช่การอ่านโค้ดเดา
 >
@@ -161,7 +161,7 @@
 | Sub-phase | งาน | สถานะ | Commit |
 |---|---|---|---|
 | **5a** | หน้า report detail (`/reports/report-detail/[id]`) + `SqlBlock` code-snippet UI (tokenizer เขียนเอง zero-dep) + แยก `reportFilePreview` ออกจาก dialog | ✅ | `8dea24c` |
-| **5b** | Per-report ACL UI (drawer ต่อ `/api/reports/[id]/permissions`) | ✅ | `(pending)` |
+| **5b** | Per-report ACL UI (drawer ต่อ `/api/reports/[id]/permissions`) | ✅ | `e710490` |
 | **5c** | เติมหน้า `/permissions` ที่เป็น stub + implement `GET`/`PUT /api/users/roles/[id]` (ตอนนี้เป็น `Hello World` — แก้สิทธิ์ของ role เดิมไม่ได้เลย ทำได้แค่ตอนสร้าง role) | ⬜ | — |
 | **5d** | หน้า CRUD ตาราง `menus` + `/api/baseconfig/menus` (sidebar **ยังใช้** `lib/menu-list.ts` ตามเดิม — swap เป็น DB-driven เป็นเฟสแยก) | ⬜ | — |
 | **5e** | System settings ตั้งค่าได้จริง: `UPLOAD_BASE_PATH` (+ `lib/storage-path.ts` กัน path traversal), max upload size ต่อ `file_kind`, ค่าองค์กร (`ORG_NAME`/`ADMIN_EMAIL`/`DEFAULT_PAGE_SIZE`/`DEFAULT_SHARE_EXPIRY_DAYS`) + หน้า `/settings/storage` | ⬜ | — |
@@ -178,7 +178,7 @@
 - ⚠️ **พบของค้างใหม่ที่ไม่เกี่ยวกับ 5a โดยตรงระหว่างยืนยันสด**: บทบาท `ADMIN` (ธรรมดา ไม่ใช่ `SUPER_ADMIN`) เรียก `GET /api/reports/[id]/files/[fileId]/download` และ `.../preview` (ทั้งคู่มาจาก 4c) ได้ 403 เสมอ เพราะสอง endpoint นี้ gate ด้วย `requireRole(req, routeAcceptted('user'))` ซึ่ง `routeAcceptted('user')` คืนแค่ `['user','super_admin']` — **ไม่รวม `'admin'` เลย** ทั้งที่ endpoint เดียวกันมี logic bypass ACL สำหรับ `isAdmin` (เช็คด้วย `routeAcceptted('admin')` ที่รวม `'admin'`) อยู่ข้างใน แปลว่าปัจจุบัน user role `ADMIN` เข้าดูรายละเอียดรายงานได้ (`GET /api/reports/[id]` ใช้ `requireAuth` เฉยๆ ไม่ผ่าน role-tier gate) และ ACL ที่ endpoint นั้นคืนมาบอกว่า `can_export/can_print: true` (เพราะ isAdmin bypass) แต่กด Download/Print จริงจะ 403 เสมอ — บั๊กนี้มีอยู่แล้วตั้งแต่ 4c ไม่ใช่ regression จาก 5a (หน้า dialog เดิมก็มีปัญหาเดียวกัน) หน้า report-detail ใหม่แค่ทำให้เห็นชัดขึ้นเพราะโชว์ปุ่ม Download/Print ตามค่า acl ที่ endpoint ส่งมาให้ตรงๆ ไม่ใช่ของค้างที่ scope ของ 5a จะแก้ (ไม่แตะ auth-tier logic) แต่บันทึกไว้เป็นของค้างใหม่รอแก้แยก
 - ไม่ได้ทดสอบผ่าน browser จริงด้วยสายตา (ผู้ใช้ปฏิเสธการติดตั้ง Claude in Chrome ระหว่าง session นี้) — สีของ `SqlBlock` ใน light/dark theme และการ layout จริงบนหน้าเว็บยังไม่ได้ยืนยันด้วยภาพ ยืนยันได้แค่ HTTP 200 จาก curl ว่าหน้า compile/render สำเร็จ + logic สีอ้างอิง Tailwind theme token เดียวกับส่วนอื่นของระบบที่ยืนยันแล้วว่าถูกทั้งสองธีม (เช่น dashboard chart)
 
-**5b ปิดจบแล้ว** (`(pending)`):
+**5b ปิดจบแล้ว** (`e710490`):
 - ⚠️ **แก้คำกล่าวอ้างของ `phase5-plan.md` ที่ผิด**: แผนบอกว่า per-report ACL "มี API ครบแต่ zero UI" และอ้าง `grep -rn "report_permissions|reportPermission" --include="*.tsx"` "returns nothing" — **ไม่จริง** ตอนลงมือจริงพบว่า `report-edit/[id]/page.tsx` มี Permission Editor UI แบบ inline เต็มรูปแบบอยู่แล้วจริง (matrix subject × 6 action, add/save/delete ต่อ endpoint ทั้ง 4 ตัวเดียวกันนี้) มาตั้งแต่ **Phase 2d** (`c9d640c`, ดูแถวในตาราง Phase 2) grep ของแผนพลาดเพราะโค้ดจริงใช้ชื่อตัวแปรอย่าง `permissions`/`newGrant`/`handleAddGrant` ไม่มีคำว่า "report_permissions"/"reportPermission" เป็น substring เลย — บทเรียนซ้ำแนวเดียวกับที่เคยเจอมาก่อน (00-progress.md's ของค้าง #2): **อย่าเชื่อผลของ grep เดียวว่าคือ "ไม่มี" โดยไม่เช็คว่าชื่อตัวแปร/pattern ที่คาดไว้ตรงกับของจริงหรือเปล่า**
 - [x] เพราะเจอ UI เดิมที่ใช้งานได้จริงอยู่แล้ว (ไม่ใช่ของที่ไม่มีเลยตามแผน) **ตัดสินใจรวมเป็นจุดเดียว** แทนปล่อยให้มี 2 implementation ของเรื่องเดียวกัน (เหตุผลเดียวกับที่ 5a แยก `reportFilePreview.tsx` ออกมาเพื่อกัน drift) — ลบ matrix UI เดิมใน `report-edit/[id]/page.tsx` ทิ้งทั้งหมด (state `permissions`/`newGrant`/`roleOptions`, handler `handleAddGrant`/`handleTogglePermissionFlag`/`handleSavePermission`/`handleDeleteGrant`, type `PermissionFlags`/`ReportPermissionRow`, การ fetch `permissionsRes`/`rolesRes` ใน `fetchAll`) แทนที่ด้วยปุ่ม "จัดการสิทธิ์" ที่หัวหน้าฟอร์มเปิด drawer ตัวใหม่ — `userOptions` เก็บไว้เพราะ Sharing section ยังใช้อยู่
 - [x] `components/shared/reportPermissionsDrawer.tsx` (ใหม่) — ใช้ `components/ui/sheet.tsx` (`side="right"`, Radix Dialog อยู่ข้างใน, มี real usage อยู่แล้วใน `sheet-menu.tsx`) **ไม่ใช่** `components/shared/right-drawer.tsx` ตามที่แผนเขียนไว้ — ไปดูโค้ดจริงแล้วพบว่า `right-drawer.tsx`'s `DrawerWithSides` เป็น demo scaffold ที่ uncontrolled, ปุ่ม trigger/เนื้อหาตายตัว (Lorem ipsum) และ `DrawerContent` (vaul-based bottom sheet) hardcode class `inset-x-0 bottom-0 rounded-t-[10px]` ไม่สนใจ prop `direction="right"` ที่ส่งเข้าไปเลย — ไม่ใช่ shell ที่เอามาใช้ต่อได้จริงตามชื่อไฟล์
