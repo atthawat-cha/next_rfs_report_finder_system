@@ -24,7 +24,7 @@ export async function GET(req: NextRequest) {
         }
 
         const searchParams = req.nextUrl.searchParams;
-        const { page, pageSize, skip, take } = parsePagination(searchParams);
+        const { page, pageSize, skip, take } = await parsePagination(searchParams);
         const q = searchParams.get('q')?.trim();
         const category = searchParams.get('category');
         const department = searchParams.get('department');

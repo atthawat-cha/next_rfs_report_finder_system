@@ -12,6 +12,7 @@
 import fs from "fs/promises";
 import path from "path";
 import { getFileExtension, isFileSizeAllowed } from "./imageConvert";
+import { getUploadRoot, getMaxUploadSize } from "./storage-path";
 
 export interface ReportFileUploadResult {
   filePath: string;
@@ -29,12 +30,13 @@ export type ReportFileUploadResponse =
   | { success: true; data: ReportFileUploadResult }
   | { success: false; error: string; validationErrors?: ReportFileUploadValidationError[] };
 
-const PUBLIC_DIR = path.join(process.cwd(), "public");
 const UPLOAD_FOLDER = "assest/report-files";
 const FALLBACK_MAX_SIZE = 20 * 1024 * 1024; // 20 MB — used only if fileKind isn't in the map below
 
-// Per-file_kind max upload size (Phase 4e). PDF form templates shouldn't need to be
-// large; SAMPLE_DATA keeps the old flat limit since spreadsheets legitimately run bigger.
+// Per-file_kind max upload size (Phase 4e, now backed by settings - Phase 5e).
+// These are just the fallback used when the setting is unset. PDF form
+// templates shouldn't need to be large; SAMPLE_DATA keeps the old flat limit
+// since spreadsheets legitimately run bigger.
 const MAX_SIZE_BY_KIND: Record<string, number> = {
   BLANK_FORM: 10 * 1024 * 1024, // 10 MB
   SAMPLE_FILLED_FORM: 10 * 1024 * 1024, // 10 MB
@@ -68,19 +70,25 @@ function generateUniqueFilename(originalName: string): string {
   return `rf_${Date.now()}_${base}.${ext}`;
 }
 
-function toPublicPath(absolutePath: string): string {
-  return absolutePath.replace(PUBLIC_DIR, "").replace(/\\/g, "/");
+function toRelativePath(absolutePath: string, root: string): string {
+  return absolutePath.replace(root, "").replace(/\\/g, "/");
 }
 
 export async function uploadReportFile(
   file: File,
   fileKind: string,
-  maxFileSizeBytes = MAX_SIZE_BY_KIND[fileKind] ?? FALLBACK_MAX_SIZE
+  maxFileSizeBytes?: number
 ): Promise<ReportFileUploadResponse> {
   try {
     if (!file || file.size === 0) {
       return { success: false, error: "No file provided or file is empty." };
     }
+
+    // Kept as an optional param rather than a sync default value (settings
+    // live in the DB, which a default expression can't await) - every
+    // existing call site still just calls uploadReportFile(file, fileKind)
+    // and gets the configured/fallback size either way.
+    const effectiveMaxSize = maxFileSizeBytes ?? (await getMaxUploadSize(fileKind, MAX_SIZE_BY_KIND[fileKind] ?? FALLBACK_MAX_SIZE));
 
     const allowedExt = ALLOWED_EXT_BY_KIND[fileKind];
     const allowedMime = ALLOWED_MIME_BY_KIND[fileKind];
@@ -105,8 +113,8 @@ export async function uploadReportFile(
       });
     }
 
-    if (!isFileSizeAllowed(file.size, maxFileSizeBytes)) {
-      const maxMB = (maxFileSizeBytes / 1024 / 1024).toFixed(0);
+    if (!isFileSizeAllowed(file.size, effectiveMaxSize)) {
+      const maxMB = (effectiveMaxSize / 1024 / 1024).toFixed(0);
       validationErrors.push({
         field: "file",
         message: `File too large. Maximum allowed size is ${maxMB} MB.`,
@@ -117,7 +125,8 @@ export async function uploadReportFile(
       return { success: false, error: "Validation failed.", validationErrors };
     }
 
-    const uploadDir = path.join(PUBLIC_DIR, UPLOAD_FOLDER);
+    const root = await getUploadRoot();
+    const uploadDir = path.join(root, UPLOAD_FOLDER);
     await fs.mkdir(uploadDir, { recursive: true });
 
     const fileName = generateUniqueFilename(file.name);
@@ -128,7 +137,7 @@ export async function uploadReportFile(
     return {
       success: true,
       data: {
-        filePath: toPublicPath(absolutePath),
+        filePath: toRelativePath(absolutePath, root),
         fileName,
         fileType: file.type,
         fileSize: file.size,
@@ -141,9 +150,11 @@ export async function uploadReportFile(
   }
 }
 
-export async function deleteReportFile(publicFilePath: string): Promise<void> {
+export async function deleteReportFile(relativeFilePath: string): Promise<void> {
   try {
-    await fs.unlink(path.join(PUBLIC_DIR, publicFilePath));
+    const root = await getUploadRoot();
+    const normalized = relativeFilePath.replace(/^[/\\]+/, "");
+    await fs.unlink(path.join(root, normalized));
   } catch (error) {
     console.error("[deleteReportFile] Error:", error);
   }

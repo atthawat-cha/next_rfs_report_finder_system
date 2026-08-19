@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, Suspense } from 'react';
+import { useState, useEffect, Suspense } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';
@@ -22,6 +22,19 @@ function LoginContent() {
 
   const [pendingToken, setPendingToken] = useState<string | null>(null);
   const [code, setCode] = useState('');
+  const [orgName, setOrgName] = useState('');
+
+  // ORG_NAME (Phase 5e) - GET /api/settings/system is admin-only, so
+  // branding on this pre-auth screen goes through the public settings
+  // endpoint instead (same no-auth stance as /api/shares/[token]).
+  useEffect(() => {
+    fetch('/api/settings/public')
+      .then((res) => (res.ok ? res.json() : null))
+      .then((json) => {
+        if (json?.success && json.data.org_name) setOrgName(json.data.org_name);
+      })
+      .catch(() => {});
+  }, []);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -152,6 +165,7 @@ function LoginContent() {
       <div className="flex items-center justify-center min-h-[calc(100vh-12rem)]">
         <Card className="w-full max-w-md">
           <CardHeader className="space-y-1">
+            {orgName && <p className="text-sm font-medium text-muted-foreground">{orgName}</p>}
             <CardTitle className="text-2xl font-bold">เข้าสู่ระบบ</CardTitle>
             <CardDescription>
               กรอกชื่อผู้ใช้และรหัสผ่านเพื่อเข้าสู่ระบบ

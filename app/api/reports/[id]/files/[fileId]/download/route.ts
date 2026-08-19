@@ -6,9 +6,8 @@ import { getAuthFromRequest, requireRole, routeAcceptted } from '@/lib/auth';
 import { logActivity } from '@/lib/activity-log';
 import { getClientIp } from '@/lib/request-info';
 import { resolveReportAcl } from '@/lib/report-acl';
+import { resolveStoredFile } from '@/lib/storage-path';
 import { faker } from '@faker-js/faker';
-
-const PUBLIC_DIR = path.join(process.cwd(), 'public');
 
 const MIME_TYPES: Record<string, string> = {
     pdf: 'application/pdf',
@@ -75,9 +74,9 @@ export async function GET(
             return NextResponse.json({ success: false, error: "File not found" }, { status: 404 });
         }
 
-        const absolutePath = path.join(PUBLIC_DIR, file.file_path);
         let fileBuffer: Buffer;
         try {
+            const absolutePath = await resolveStoredFile(file.file_path);
             fileBuffer = await fs.readFile(absolutePath);
         } catch {
             return NextResponse.json({ success: false, error: "File not found on server" }, { status: 404 });

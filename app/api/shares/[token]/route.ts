@@ -41,19 +41,25 @@ export async function GET(_req: NextRequest, props: { params: Promise<{ token: s
         // what's actually sent back so a can_download=false share never leaks a path.
         const { file_path, file_name, ...report } = reportRow;
 
-        let files: { file_kind: string; file_path: string; file_name: string }[] = [];
+        let files: { id: string | null; file_kind: string; file_path: string; file_name: string }[] = [];
         if (share.can_download) {
-            files = await prisma.report_files.findMany({
+            const reportFiles = await prisma.report_files.findMany({
                 where: { report_id: share.report_id, is_current: true },
-                select: { file_kind: true, file_path: true, file_name: true },
+                select: { id: true, file_kind: true, file_path: true, file_name: true },
             });
+            files = reportFiles;
 
             // Reports created before report_files existed (or never had a file
             // uploaded through it) have no rows here at all - fall back to the
             // reports.file_path/file_name cache column the normal (authenticated)
             // download endpoint reads, so old reports don't show as file-less.
+            // id: null marks this as the legacy path - always under public/
+            // regardless of UPLOAD_BASE_PATH (lib/fileUploadServices.ts, out of
+            // scope for Phase 5e), so the client links it directly rather than
+            // through the token-gated per-file download endpoint below.
             if (files.length === 0 && file_path) {
                 files = [{
+                    id: null,
                     file_kind: reportRow.output_type === 'PRINT_FORM' ? 'BLANK_FORM' : 'SAMPLE_DATA',
                     file_path,
                     file_name: file_name ?? '',

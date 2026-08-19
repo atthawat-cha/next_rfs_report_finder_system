@@ -15,6 +15,7 @@ interface SharedReport {
 }
 
 interface SharedFile {
+  id: string | null;
   file_kind: string;
   file_path: string;
   file_name: string;
@@ -79,8 +80,13 @@ export default function SharedReportPage() {
                   <div className="space-y-2">
                     {files.map((f) => (
                       <a
-                        key={f.file_path}
-                        href={f.file_path}
+                        key={f.id ?? f.file_path}
+                        // report_files-backed entries (id set) go through the
+                        // token-gated download endpoint so they still resolve
+                        // correctly regardless of UPLOAD_BASE_PATH; the legacy
+                        // reports.file_path fallback (id null) always lives
+                        // under public/ so a raw static link still works.
+                        href={f.id ? `/api/shares/${params.token}/files/${f.id}/download` : f.file_path}
                         target="_blank"
                         rel="noopener noreferrer"
                         className="flex items-center justify-between text-sm bg-muted/40 rounded px-3 py-2 hover:bg-muted"

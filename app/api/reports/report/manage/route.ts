@@ -32,7 +32,7 @@ export async function GET(req: NextRequest) {
 
         // NOTE: default pageSize = 100 — ฝั่ง frontend ยังไม่ส่ง page/pageSize (Phase 1 จะเพิ่ม UI)
         // ดังนั้นเมื่อจำนวนรายงานจริงเกิน 100 endpoint นี้จะตัดข้อมูลเงียบ ๆ จนกว่าจะทำ Phase 1
-        const { page, pageSize, skip, take } = parsePagination(req.nextUrl.searchParams);
+        const { page, pageSize, skip, take } = await parsePagination(req.nextUrl.searchParams);
 
         const [reports, total] = await Promise.all([
             prisma.reports.findMany({

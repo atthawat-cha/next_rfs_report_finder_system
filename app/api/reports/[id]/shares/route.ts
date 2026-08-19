@@ -3,6 +3,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { getCurrentUser, requireRole, routeAcceptted } from '@/lib/auth';
 import { logActivity } from '@/lib/activity-log';
 import { createNotification } from '@/lib/notifications';
+import { getSettingNumber } from '@/lib/system-settings';
 import { faker } from '@faker-js/faker';
 import crypto from 'crypto';
 import { z } from 'zod';
@@ -109,6 +110,19 @@ export async function POST(req: NextRequest, props: { params: Promise<{ id: stri
             shareToken = crypto.randomBytes(24).toString('hex');
         }
 
+        // expires_at omitted entirely (not sent) -> fall back to
+        // DEFAULT_SHARE_EXPIRY_DAYS (Phase 5e) if an admin configured one.
+        // An explicit null in the body still means "never expires" - the
+        // existing sharing UI always sends one or the other deliberately,
+        // so this only changes behavior for callers that omit the key.
+        let expiresAt: Date | null = data.expires_at ? new Date(data.expires_at) : null;
+        if (data.expires_at === undefined) {
+            const defaultDays = await getSettingNumber('DEFAULT_SHARE_EXPIRY_DAYS', 0);
+            if (defaultDays > 0) {
+                expiresAt = new Date(Date.now() + defaultDays * 24 * 60 * 60 * 1000);
+            }
+        }
+
         const user = await getCurrentUser();
         const created = await prisma.report_shares.create({
             data: {
@@ -120,7 +134,7 @@ export async function POST(req: NextRequest, props: { params: Promise<{ id: stri
                 share_type: data.share_type,
                 can_download: data.can_download,
                 can_edit: data.can_edit,
-                expires_at: data.expires_at ? new Date(data.expires_at) : null,
+                expires_at: expiresAt,
                 created_at: new Date(),
             },
         });

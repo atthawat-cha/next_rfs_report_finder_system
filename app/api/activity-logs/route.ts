@@ -23,7 +23,7 @@ export async function GET(req: NextRequest) {
         }
 
         const searchParams = req.nextUrl.searchParams;
-        const { page, pageSize, skip, take } = parsePagination(searchParams);
+        const { page, pageSize, skip, take } = await parsePagination(searchParams);
         const userId = searchParams.get('user_id');
         const entity = searchParams.get('entity');
         const from = searchParams.get('from');

@@ -89,6 +89,17 @@ export default function ReportDetailView({ reportId, isAdmin }: { reportId: stri
   const [previewFileId, setPreviewFileId] = React.useState<string | null>(null);
   const [pendingPrint, setPendingPrint] = React.useState(false);
   const [permissionsOpen, setPermissionsOpen] = React.useState(false);
+  const [adminEmail, setAdminEmail] = React.useState('');
+
+  // ADMIN_EMAIL (Phase 5e) - shown as a contact on the not-found state below.
+  React.useEffect(() => {
+    fetch('/api/settings/public', { credentials: 'include' })
+      .then((res) => (res.ok ? res.json() : null))
+      .then((json) => {
+        if (json?.success && json.data.admin_email) setAdminEmail(json.data.admin_email);
+      })
+      .catch(() => {});
+  }, []);
 
   // GET /api/reports/[id] increments view_count server-side on every call.
   // React StrictMode double-invokes effects in dev, so this guard is what
@@ -163,7 +174,10 @@ export default function ReportDetailView({ reportId, isAdmin }: { reportId: stri
   if (notFound || !report) {
     return (
       <ContentLayout title="รายละเอียดรายงาน">
-        <p className="py-24 text-center text-muted-foreground">ไม่พบรายงาน</p>
+        <div className="py-24 text-center text-muted-foreground space-y-1">
+          <p>ไม่พบรายงาน</p>
+          {adminEmail && <p className="text-sm">หากคิดว่านี่คือข้อผิดพลาด กรุณาติดต่อ {adminEmail}</p>}
+        </div>
       </ContentLayout>
     );
   }

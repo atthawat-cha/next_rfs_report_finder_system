@@ -5,8 +5,8 @@ import prisma from '@/lib/prisma';
 import { NextRequest, NextResponse } from 'next/server';
 import { getAuthFromRequest, requireRole, routeAcceptted } from '@/lib/auth';
 import { resolveReportAcl } from '@/lib/report-acl';
+import { resolveStoredFile } from '@/lib/storage-path';
 
-const PUBLIC_DIR = path.join(process.cwd(), 'public');
 const MAX_PREVIEW_ROWS = 200;
 const SPREADSHEET_EXTS = new Set(['xlsx', 'xls', 'csv']);
 
@@ -68,9 +68,9 @@ export async function GET(
             return NextResponse.json({ success: false, error: `File type ".${ext}" is not previewable as a table` }, { status: 400 });
         }
 
-        const absolutePath = path.join(PUBLIC_DIR, file.file_path);
         let fileBuffer: Buffer;
         try {
+            const absolutePath = await resolveStoredFile(file.file_path);
             fileBuffer = await fs.readFile(absolutePath);
         } catch {
             return NextResponse.json({ success: false, error: "File not found on server" }, { status: 404 });
