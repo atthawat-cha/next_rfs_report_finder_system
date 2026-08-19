@@ -1,6 +1,6 @@
 # ความคืบหน้าโครงการ — RFS Report Finder System
 
-> **อัปเดตล่าสุด:** 2026-08-19 · **Branch:** `feature/phase4` · **HEAD:** `e710490`
+> **อัปเดตล่าสุด:** 2026-08-19 · **Branch:** `feature/phase4` · **HEAD:** `dfb0d35`
 >
 > ไฟล์นี้ตอบคำถามเดียว: **"ตอนนี้ถึงไหนแล้ว และเหลืออะไร"** สถานะทุกแถวอ้างอิง commit จริงใน git log เป็นหลักฐาน ไม่ใช่การอ่านโค้ดเดา
 >
@@ -162,7 +162,7 @@
 |---|---|---|---|
 | **5a** | หน้า report detail (`/reports/report-detail/[id]`) + `SqlBlock` code-snippet UI (tokenizer เขียนเอง zero-dep) + แยก `reportFilePreview` ออกจาก dialog | ✅ | `8dea24c` |
 | **5b** | Per-report ACL UI (drawer ต่อ `/api/reports/[id]/permissions`) | ✅ | `e710490` |
-| **5c** | เติมหน้า `/permissions` ที่เป็น stub + implement `GET`/`PUT /api/users/roles/[id]` | ✅ | `(pending)` |
+| **5c** | เติมหน้า `/permissions` ที่เป็น stub + implement `GET`/`PUT /api/users/roles/[id]` | ✅ | `dfb0d35` |
 | **5d** | หน้า CRUD ตาราง `menus` + `/api/baseconfig/menus` (sidebar **ยังใช้** `lib/menu-list.ts` ตามเดิม — swap เป็น DB-driven เป็นเฟสแยก) | ⬜ | — |
 | **5e** | System settings ตั้งค่าได้จริง: `UPLOAD_BASE_PATH` (+ `lib/storage-path.ts` กัน path traversal), max upload size ต่อ `file_kind`, ค่าองค์กร (`ORG_NAME`/`ADMIN_EMAIL`/`DEFAULT_PAGE_SIZE`/`DEFAULT_SHARE_EXPIRY_DAYS`) + หน้า `/settings/storage` | ⬜ | — |
 | **5f** | Housekeeping: refresh `feature-list.md` (ค้างอีกรอบ), `docker-compose.yml` (Redis), แก้ lint error ทั้งหมด (38 ตัว ณ หลัง 5c — ดูของค้าง #11) + ใส่ `--max-warnings 193` ratchet เข้า CI | ⬜ | — |
@@ -191,7 +191,7 @@
 - ⚠️ `npx eslint .` = **229 ปัญหา (37 error/192 warning) — error เพิ่มขึ้น 1 ตัวจาก baseline 36** ของ `reportPermissionsDrawer.tsx`'s data-loading effect ที่ setState ทันทีในตัว effect (`react-hooks/set-state-in-effect`) — เป็น pattern เดียวกับที่มีอยู่แล้วซ้ำๆในโค้ดเดิม (`reportPreviewDialog.tsx`, `report-edit`'s `fetchAll` effect) ซึ่งเป็นของค้าง #11 ที่ตั้งใจพักไว้ให้ 5f จัดการทีเดียว ไม่ได้แก้เฉพาะจุดนี้เพื่อไม่ให้โค้ดบิดเบี้ยวหนีกฎ lint ที่เข้มเกินไปสำหรับ pattern fetch-in-effect ปกติ — 5f's ตัวเลข error ที่ต้องปิดให้ครบตอนนี้คือ 37 ไม่ใช่ 36
 - ไม่ได้ทดสอบผ่าน browser จริงด้วยสายตา (เหตุผลเดียวกับ 5a) — ยืนยันได้แค่ curl/HTTP 200 ว่า drawer wiring compile ผ่าน ไม่ได้เห็น Sheet เลื่อนจากขวาจริงด้วยตา หรือ Combobox filter ทำงานเป็น interaction จริงบนเบราว์เซอร์
 
-**5c ปิดจบแล้ว** (`(pending)`):
+**5c ปิดจบแล้ว** (`dfb0d35`):
 - [x] `app/api/users/roles/[id]/route.ts` — แทนที่ `Hello World` stub เดิมทั้งหมด
   - `GET` — คืน `{role, template}` โดย `template` มี shape เดียวกับ `/api/baseconfig/permissions` (`PermissionTemplateType[]`) แต่ `can_*` ตรงกับ `role_permissions` จริงของ role นั้น (ไม่ hardcode true เหมือนตอน create) — ทำได้โดยเพิ่ม `permission_id` เข้าไปใน object ที่ `buildMenuStructure` (`lib/user-management.ts`) สร้าง (additive, ไม่กระทบ consumer เดิม) แล้วเขียนฟังก์ชันใหม่ `buildMenusrenderWithGrants` (พี่น้องของ `buildMenusrender` เดิมที่ไม่แตะเลย) แทนที่ hardcoded true ด้วยค่าจริงจาก `Map<permission_id, flags>`
   - `PUT` — full replace: ลบ `role_permissions` ทั้งหมดของ role แล้วสร้างใหม่ทั้งชุดด้วย `buildRolePermissionInsert` ตัวเดียวกับที่ create-flow ใช้ (ไม่ diff แบบ selective) — รับประกัน "create-time กับ edit-time ได้แถวเหมือนกันทุกครั้ง" ได้ง่ายกว่าและปลอดภัยกว่า diff เอง เพราะ `buildRolePermissionInsert` สร้างแถวสำหรับ **ทุก** permission เสมอ (true/false ตามที่เลือก) ไม่ใช่แค่ตัวที่ถูกเลือก — ตรงกับพฤติกรรม `POST /api/users/roles` เดิมเป๊ะ
