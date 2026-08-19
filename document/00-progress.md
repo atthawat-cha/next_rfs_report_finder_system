@@ -1,6 +1,6 @@
 # ความคืบหน้าโครงการ — RFS Report Finder System
 
-> **อัปเดตล่าสุด:** 2026-08-19 · **Branch:** `feature/phase4` · **HEAD:** `732fe94`
+> **อัปเดตล่าสุด:** 2026-08-19 · **Branch:** `feature/phase4` · **HEAD:** `9823aa8`
 >
 > ไฟล์นี้ตอบคำถามเดียว: **"ตอนนี้ถึงไหนแล้ว และเหลืออะไร"** สถานะทุกแถวอ้างอิง commit จริงใน git log เป็นหลักฐาน ไม่ใช่การอ่านโค้ดเดา
 >
@@ -164,7 +164,7 @@
 | **5b** | Per-report ACL UI (drawer ต่อ `/api/reports/[id]/permissions`) | ✅ | `e710490` |
 | **5c** | เติมหน้า `/permissions` ที่เป็น stub + implement `GET`/`PUT /api/users/roles/[id]` | ✅ | `dfb0d35` |
 | **5d** | หน้า CRUD ตาราง `menus` + `/api/baseconfig/menus` (sidebar **ยังใช้** `lib/menu-list.ts` ตามเดิม — swap เป็น DB-driven เป็นเฟสแยก) | ✅ | `732fe94` |
-| **5e** | System settings ตั้งค่าได้จริง: `UPLOAD_BASE_PATH` (+ `lib/storage-path.ts` กัน path traversal), max upload size ต่อ `file_kind`, ค่าองค์กร (`ORG_NAME`/`ADMIN_EMAIL`/`DEFAULT_PAGE_SIZE`/`DEFAULT_SHARE_EXPIRY_DAYS`) + หน้า `/settings/storage` | ✅ | `(pending)` |
+| **5e** | System settings ตั้งค่าได้จริง: `UPLOAD_BASE_PATH` (+ `lib/storage-path.ts` กัน path traversal), max upload size ต่อ `file_kind`, ค่าองค์กร (`ORG_NAME`/`ADMIN_EMAIL`/`DEFAULT_PAGE_SIZE`/`DEFAULT_SHARE_EXPIRY_DAYS`) + หน้า `/settings/storage` | ✅ | `9823aa8` |
 | **5f** | Housekeeping: refresh `feature-list.md` (ค้างอีกรอบ), `docker-compose.yml` (Redis), แก้ lint error ทั้งหมด (41 ตัว ณ หลัง 5e — ดูของค้าง #11) + ใส่ `--max-warnings 199` ratchet เข้า CI | ⬜ | — |
 
 **5a ปิดจบแล้ว** (`8dea24c`):
@@ -222,7 +222,7 @@
 - ⚠️ `npx eslint .` = **238 ปัญหา (41 error/197 warning) — เพิ่มจาก baseline 231 (38/193) อีก 3 error + 4 warning**: หน้า/dialog ใหม่ 3 จุดโดน `react-hooks/set-state-in-effect` (pattern fetch-in-effect/reset-on-prop-change เดียวกับที่ยอมรับไว้แล้วซ้ำๆทั่ว repo ตั้งแต่ 5a-5c) และ route ใหม่ 2 ไฟล์โดน `no-unused-expressions` จาก idiom `process.env.NODE_ENV==='development' && console.log(error)` เดียวกับทุก route handler ในระบบ (2 จุดต่อไฟล์ = 4 จุดรวม) — ตั้งใจไม่บิดโค้ดหนีกฎเพื่อความสม่ำเสมอเหมือนเดิม ส่วนที่แก้ได้ถูกๆ (unescaped quote 2 จุด, `SortOrderCell`'s effect ที่ไม่จำเป็นจริงๆ, `useMemo` missing-dependency) แก้จบแล้วก่อน commit **ตัวเลขที่ 5f ต้องปิดให้ครบตอนนี้คือ 41 error ไม่ใช่ 38**
 - ไม่ได้ทดสอบผ่าน browser จริงด้วยสายตา (เหตุผลเดียวกับ 5a-5c)
 
-**5e ปิดจบแล้ว** (`(pending)`):
+**5e ปิดจบแล้ว** (`9823aa8`):
 - [x] `lib/system-settings.ts` (ใหม่) — cached settings reader กลาง (`getSettingString`/`getSettingNumber`, TTL 30s, `invalidateSettingsCache()` เรียกทันทีหลัง `PUT /api/settings/system` เพื่อไม่ต้องรอ TTL) ใช้ร่วมกันโดย `lib/storage-path.ts`, `lib/pagination.ts`, และ shares route — เลี่ยง DB read ทุกครั้งที่ upload/download/list แต่ก็ยังสะท้อนค่าใหม่ทันทีหลัง save
 - [x] `lib/storage-path.ts` (ใหม่) — resolver กลางจุดเดียวตามแผน: `getUploadRoot()`, `getMaxUploadSize(kind, fallback)`, `resolveStoredFile(relPath)` (ป้องกัน `..`/absolute-path override ด้วยการ strip leading slash ก่อน `path.resolve` แล้วเช็คว่าผลลัพธ์ยังอยู่ใต้ root จริง — ค่า `file_path` เก่าที่มี leading slash จาก `toPublicPath` เดิมยังใช้ได้ปกติ), `validateUploadBasePath(value)` (เช็ค `..`, มีไดเรกทอรีอยู่จริง, เขียนได้จริงด้วย probe write+unlink)
 - [x] `GET`/`PUT /api/settings/system` ขยายจาก 2 คีย์เป็น 10 คีย์ (STORAGE: `UPLOAD_BASE_PATH`/3 max-size; GENERAL: `ORG_NAME`/`ADMIN_EMAIL`/`DEFAULT_PAGE_SIZE`/`DEFAULT_SHARE_EXPIRY_DAYS`) ทุกฟิลด์ optional ในระดับ zod เพื่อให้ 2 หน้า (`/settings/general`, `/settings/storage`) เรียก PUT เฉพาะส่วนของตัวเองได้โดยไม่ชนกัน — `upload_base_path` ผ่าน `validateUploadBasePath` ก่อนเขียนเสมอ (ค่าพังต้อง fail ตอนบันทึก ไม่ใช่ตอนใช้งานจริงครั้งแรก)
