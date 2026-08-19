@@ -17,8 +17,9 @@ import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
 import { SqlBlock } from "@/components/shared/sqlBlock";
 import { ReportFilePreview, isPdfFile, type ReportFilePreviewFile } from "@/components/shared/reportFilePreview";
+import { ReportPermissionsDrawer } from "@/components/shared/reportPermissionsDrawer";
 import { formatDateTime } from "@/lib/utils";
-import { Loader2, Download, Printer, Eye, FileText } from "lucide-react";
+import { Loader2, Download, Printer, Eye, FileText, ShieldCheck } from "lucide-react";
 
 interface ReportDetailAcl {
   can_view: boolean;
@@ -87,6 +88,7 @@ export default function ReportDetailView({ reportId, isAdmin }: { reportId: stri
   const [queries, setQueries] = React.useState<ReportQuery[] | null>(null);
   const [previewFileId, setPreviewFileId] = React.useState<string | null>(null);
   const [pendingPrint, setPendingPrint] = React.useState(false);
+  const [permissionsOpen, setPermissionsOpen] = React.useState(false);
 
   // GET /api/reports/[id] increments view_count server-side on every call.
   // React StrictMode double-invokes effects in dev, so this guard is what
@@ -202,10 +204,15 @@ export default function ReportDetailView({ reportId, isAdmin }: { reportId: stri
                 <CardTitle className="text-2xl">{report.name_th}</CardTitle>
                 {report.name_en && <CardDescription>{report.name_en}</CardDescription>}
               </div>
-              <div className="flex flex-wrap gap-2">
+              <div className="flex flex-wrap items-center gap-2">
                 <Badge variant="outline">{report.code}</Badge>
                 <Badge>{STATUS_LABEL[report.status] ?? report.status}</Badge>
                 <Badge variant="secondary">{ACCESS_LABEL[report.access_level] ?? report.access_level}</Badge>
+                {isAdmin && (
+                  <Button size="sm" variant="outline" onClick={() => setPermissionsOpen(true)}>
+                    <ShieldCheck className="h-4 w-4 mr-1" /> จัดการสิทธิ์
+                  </Button>
+                )}
               </div>
             </div>
           </CardHeader>
@@ -327,6 +334,14 @@ export default function ReportDetailView({ reportId, isAdmin }: { reportId: stri
           </Card>
         )}
       </div>
+
+      {isAdmin && (
+        <ReportPermissionsDrawer
+          reportId={reportId}
+          open={permissionsOpen}
+          onOpenChange={setPermissionsOpen}
+        />
+      )}
     </ContentLayout>
   );
 }
