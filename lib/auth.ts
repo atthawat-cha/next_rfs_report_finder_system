@@ -178,10 +178,13 @@ export async function requireRole(req: NextRequest, allowedRoles: string[]): Pro
   const result = await requireAuth(req);
   if (result instanceof NextResponse) return result; // propagate 401
 
-  // Check if user has at least one of the allowed roles
+  // Check if user has at least one of the allowed roles. A user with no
+  // role assigned (roles missing/null) is denied rather than crashing the
+  // request on .toLowerCase() of undefined - the non-null assertion this
+  // replaced silenced the type error but not the runtime one.
   const { user } = result
-  const userRoles: string = user?.roles?.name!
-  if (!allowedRoles.includes(userRoles.toLowerCase())) {
+  const userRole = user?.roles?.name
+  if (!userRole || !allowedRoles.includes(userRole.toLowerCase())) {
     return NextResponse.json({ error: "Forbidden" }, { status: 403 });
   }
 

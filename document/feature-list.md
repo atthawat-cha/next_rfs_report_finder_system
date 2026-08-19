@@ -2,7 +2,9 @@
 
 > รวมฟีเจอร์ทั้งหมดของระบบ จัดกลุ่มตามโมดูล/บทบาทผู้ใช้ พร้อม priority (MoSCoW) และสถานะปัจจุบัน (✅ ทำงานได้จริง · ⚠️ มี UI/schema แต่ไม่สมบูรณ์/mock · ❌ ยังไม่มี) อ้างอิงจาก gap analysis ใน `document/new_requirement.md §3-4` แปลงเป็น checklist ที่ execute ได้ พร้อม mapping ไปยัง phase ใน [project-specification.md §6](./project-specification.md#6-development-methodology)
 >
-> **รีเฟรชล่าสุด: 2026-08-17** (ตรง commit `abd3629`) — ไล่ทุกแถวเทียบกับโค้ดจริง + [`00-progress.md`](./00-progress.md) (39/39 verification ผ่านจริงบน DB) ก่อนหน้านี้ไฟล์นี้ค้างมานาน ยังขึ้น ❌ ให้ Phase 1-3c ทั้งที่ ship ไปแล้ว — รอบนี้รีเฟรชทั้งไฟล์ ไม่ใช่แค่บางแถว ระหว่างไล่ตรวจ FR-3 เจอ regression ใหม่ (`output_type` ไม่ persist ตอนสร้างรายงาน จากปัญหา merge เดียวกับที่ทำให้ `access_level` เพี้ยน) แก้ไปพร้อมกันแล้วใน `abd3629`
+> **รีเฟรชล่าสุด: 2026-08-19** (ระหว่าง Phase 5f) — ไล่ทุกแถวเทียบกับโค้ดจริง + [`00-progress.md`](./00-progress.md) อีกรอบ ก่อนหน้านี้ (2026-08-17, `abd3629`) ค้างมาแล้วครั้งหนึ่ง รอบนี้พบว่าค้างซ้ำแบบเดิม — 2FA/TOTP, password policy, PDF inline preview, Excel-as-table preview, client-side print, การตั้งค่า `settings` table จริง ยังขึ้น ❌/⚠️ ทั้งที่ Phase 4c/4d/4e/5e ship ไปแล้ว รอบนี้รีเฟรชทั้งไฟล์ครบทุกแถวอีกครั้งตาม precedent เดิม ไม่ใช่แค่บางแถว
+>
+> **บทเรียนซ้ำ**: ไฟล์นี้ค้างเป็นรอบที่ 2 แล้วในรอบ ~2 วัน (17 → 19 ส.ค.) เพราะ workflow ปัจจุบันไม่มีการบังคับให้ sync ไฟล์นี้ทุก sub-phase (แค่ "ควร" ทำตาม Definition of Done) — ถ้าเกิดขึ้นรอบที่ 3 ควรพิจารณาย้าย mapping ไปเป็นอัตโนมัติมากขึ้น (เช่น derive จาก `00-progress.md` โดยตรง) แทนการไล่มืออีกครั้ง
 >
 > เอกสารที่เกี่ยวข้อง: [00-progress.md](./00-progress.md) (ถึงไหนแล้ว/commit จริง) · [system-design.md](01-system-design.md) · [workflow.md](./workflow.md) · [diagrams.md](./diagrams.md)
 
@@ -17,9 +19,9 @@
 | Logout เคลียร์ cookie | Must | ✅ | — |
 | Middleware auth guard ที่ redirect ถูกต้องตาม pathname จริง | Must | ✅ (`publicPaths` + matcher-based gate, `protectedPaths` bug เดิมแก้แล้ว) | 0 |
 | Rate limiting การ login ผิด (ข้ามได้หลาย instance) | Must | ✅ (Redis-backed, `lib/rate-limit.ts`) | 0 |
-| ตั้งค่าวิธียืนยันตัวตนได้จากหน้า Settings (Local DB / External API / Email OTP) | Should | ❌ | 4 |
-| Two-Factor Authentication (TOTP) | Could | ❌ (มีคอลัมน์ schema รอ logic) | 4 |
-| Password policy / `password_changed_at` enforcement | Could | ❌ | 4 |
+| ตั้งค่าวิธียืนยันตัวตนได้จากหน้า Settings (Local DB / External API / Email OTP) | Should | ❌ (ตัดสินใจตัดออกจากสโคปแล้ว — aspirational, ไม่ทำ) | 4d (dropped) |
+| Two-Factor Authentication (TOTP) | Could | ✅ (`lib/two-factor.ts`, TOTP+backup codes, ยืนยันสด full login-flow end-to-end ซ้ำ 2 ครั้งแล้วทั้ง 4d และ 5f) | 4d |
+| Password policy / `password_changed_at` enforcement | Could | ✅ (`lib/password-policy.ts`, 8 ตัว+ตัวอักษร+ตัวเลข, ใช้ทั้ง create/update user) | 4d |
 
 ## 2. Authorization / RBAC (FR-2)
 
@@ -43,13 +45,13 @@
 | ลบรายงาน | Must | ✅ (`DELETE .../manage/[id]`, cascade ผ่าน schema) | 2 |
 | กำหนดประเภทผลลัพธ์รายงาน (`output_type`): ใบพิมพ์ (`PRINT_FORM`) หรือ รายงานข้อมูล (`DATA_REPORT`) — กำหนดชุดไฟล์แนบที่ต้องอัปโหลด | Must | ✅ (ฟอร์มมี field, backend persist ได้ถูกต้องแล้ว — เพิ่งแก้ regression เดียวกับ `access_level` ใน `abd3629`) | 2 |
 | อัปโหลดฟอร์มเปล่า (pdf) — สำหรับรายงานประเภทใบพิมพ์ | Must | ✅ (`report_files`, kind `BLANK_FORM`) | 2 |
-| อัปโหลดฟอร์มตัวอย่างที่กรอกข้อมูลแล้ว (pdf) — สำหรับรายงานประเภทใบพิมพ์ | Must | ⚠️ (อัปโหลด/จัดการผ่านหน้า edit ได้ครบ แต่ยังไม่มี endpoint ดาวน์โหลดแยกตาม `file_kind` สำหรับ user ทั่วไป — endpoint ดาวน์โหลดหลักคืนแค่ไฟล์ primary ตัวเดียวต่อรายงาน) | 2 |
-| อัปโหลดไฟล์ตัวอย่างข้อมูล (excel) — สำหรับรายงานประเภทรายงานข้อมูล ใช้ทั้ง preview เป็นตารางและดาวน์โหลดตรง ๆ | Must | ⚠️ (อัปโหลด+ดาวน์โหลดตรงทำงานจริง, preview เป็นตาราง (`exceljs`) ยังไม่มี) | 2 / 1 (preview) |
+| อัปโหลดฟอร์มตัวอย่างที่กรอกข้อมูลแล้ว (pdf) — สำหรับรายงานประเภทใบพิมพ์ | Must | ✅ (`GET .../files/[fileId]/download` แยกตาม `file_kind` ชิปตั้งแต่ 4c, ต่อเข้าหน้า report-detail ใน 5a) | 2/4c/5a |
+| อัปโหลดไฟล์ตัวอย่างข้อมูล (excel) — สำหรับรายงานประเภทรายงานข้อมูล ใช้ทั้ง preview เป็นตารางและดาวน์โหลดตรง ๆ | Must | ✅ (preview เป็นตาราง `exceljs` ชิปใน 4c, `components/shared/reportFilePreview.tsx` แยกใช้ร่วมทั้ง dialog และหน้า report-detail ตั้งแต่ 5a) | 2/4c/5a |
 | **ไม่มี** การอัปโหลด/parse/render ไฟล์ `.jasper` หรือ source format ใด ๆ — ทุกไฟล์เป็นผลลัพธ์สำเร็จรูป | — | ✅ ตามออกแบบ (ตัดออกจาก scope แล้ว) | — |
 | เพิ่ม/แก้/ลบ ตัวแปรของรายงาน (`report_variables`, ข้อมูลอ้างอิง) | Should | ✅ | 2 |
-| เพิ่ม/แก้/ลบ คิวรี่ของรายงาน (`report_queries`, หลายชุด, ข้อมูลอ้างอิงเท่านั้น — แอปไม่ execute) | Should | ✅ | 2 |
+| เพิ่ม/แก้/ลบ คิวรี่ของรายงาน (`report_queries`, หลายชุด, ข้อมูลอ้างอิงเท่านั้น — แอปไม่ execute) | Should | ✅ (แสดงเป็น syntax-highlighted code block ผ่าน `SqlBlock` ตั้งแต่ 5a แทน `<pre>` ธรรมดา) | 2/5a |
 | กำหนดคิวรี่หลัก (`is_main`) ได้ 1 รายการต่อรายงานเท่านั้น (บังคับด้วย DB constraint) | Must | ✅ (partial unique index + auto-demote เมื่อ set ตัวใหม่) | 2 |
-| อัปโหลดไฟล์ผ่าน validation (MIME ตรงกับ `file_kind`/ขนาด/สแกนไวรัส) | Must | ⚠️ (MIME+ขนาด validate แล้ว, ยังไม่มี AV scan) | 2/4 |
+| อัปโหลดไฟล์ผ่าน validation (MIME ตรงกับ `file_kind`/ขนาด/สแกนไวรัส) | Must | ⚠️ (MIME+ขนาด validate แล้ว, ขนาดสูงสุดตั้งค่าได้ผ่าน UI ตั้งแต่ 5e; ยังไม่มี AV scan — deferred, ไม่มี ClamAV daemon ยืนยันใน deploy environment) | 2/4c/5e |
 | แปลงรูปภาพเป็น WebP อัตโนมัติ (thumbnail) | Must | ✅ (`lib/imageConvert.ts`) | — |
 
 ## 4. Versioning (FR-4)
@@ -70,8 +72,8 @@
 | กรองผลลัพธ์ตาม category/department/tag/status | Must | ✅ (status สำหรับ user ทั่วไป fix เป็น `PUBLISHED` เสมอตามการออกแบบ Phase 1 ไม่ใช่ตัวเลือกอิสระ) | 1 |
 | Pagination บนผลการค้นหา | Must | ✅ | 1 |
 | Endpoint ค้นหาแบบ ACL-filtered สำหรับ non-admin | Must | ✅ (`GET /api/reports/browse`) | 1/2 |
-| Preview ฟอร์ม (PDF) inline ในระบบ ก่อนดาวน์โหลด — รายงานประเภทใบพิมพ์ | Should | ❌ (ยังไม่มี `<iframe>`/`<embed>` เลย) | 1 |
-| Preview ตัวอย่างข้อมูลเป็นตาราง — รายงานประเภทรายงานข้อมูล (parse excel ด้วย `exceljs`) | Should | ❌ | 1/2 |
+| Preview ฟอร์ม (PDF) inline ในระบบ ก่อนดาวน์โหลด — รายงานประเภทใบพิมพ์ | Should | ✅ (`<embed>` ผ่าน `ReportFilePreview`, ใช้ทั้ง dialog เดิมและหน้า report-detail ใหม่) | 4c/5a |
+| Preview ตัวอย่างข้อมูลเป็นตาราง — รายงานประเภทรายงานข้อมูล (parse excel ด้วย `exceljs`) | Should | ✅ | 4c/5a |
 | ค้นหาแบบ fuzzy/typo-tolerant | Could | ❌ (ตอนนี้เป็น `ILIKE` substring match ผ่าน trigram index — ช่วยเรื่อง substring แต่ไม่ทนตัวสะกดผิดจริง) | 1+ (ประเมินความจำเป็นก่อน) |
 | Card view / Table view toggle สำหรับผลการค้นหา | Should | ✅ (`reportCards.tsx` เลิก hardcode, ผูก search จริงแล้ว) | 1 |
 
@@ -91,12 +93,12 @@
 | Feature | Priority | สถานะ | Phase |
 |---|---|---|---|
 | ดาวน์โหลดฟอร์มเปล่า (pdf) — ตรวจสิทธิ์ + `is_downloadable` | Must | ✅ | 1 |
-| ดาวน์โหลดฟอร์มตัวอย่างที่กรอกข้อมูลแล้ว (pdf) | Must | ⚠️ (เหมือนแถวอัปโหลดใน FR-3 — ไม่มี endpoint ดาวน์โหลดแยกตาม `file_kind` สำหรับ user ทั่วไป มีแค่ไฟล์ primary ของรายงาน) | 1/2 |
+| ดาวน์โหลดฟอร์มตัวอย่างที่กรอกข้อมูลแล้ว (pdf) | Must | ✅ (`GET .../files/[fileId]/download` แยกตาม `file_kind` ตั้งแต่ 4c, ผ่าน `lib/storage-path.ts` resolver ที่ยังใช้งานได้ถูกต้องหลัง `UPLOAD_BASE_PATH` ตั้งค่าได้ใน 5e) | 1/2/4c/5e |
 | ดาวน์โหลดไฟล์ Excel ตัวอย่างข้อมูล (สำหรับรายงานประเภทข้อมูล) | Must | ✅ (เป็นไฟล์ primary ของรายงานประเภท `DATA_REPORT` อยู่แล้ว ผ่าน endpoint หลักได้ปกติ) | 1 |
 | บันทึกทุกการดาวน์โหลดลงตาราง `downloads` | Must | ✅ | 1 |
-| สั่งพิมพ์ฟอร์ม ผ่าน browser PDF viewer ในตัว (ไม่ต้องมี backend เพิ่ม) | Must | ❌ (รอ PDF inline preview จาก FR-5 ก่อน) | 1 |
-| สั่งพิมพ์ตารางข้อมูลตัวอย่างที่ preview อยู่ (client-side `window.print()` + `@media print`) | Should | ❌ | 1/2 |
-| นับ `download_count`/`view_count` แบบ atomic increment | Should | ⚠️ (`download_count` increment แบบ atomic ยืนยันแล้วด้วย concurrent request test; `view_count` ยังไม่เคยถูก increment ที่ไหนเลย เป็น dead column) | 1 |
+| สั่งพิมพ์ฟอร์ม ผ่าน browser PDF viewer ในตัว (ไม่ต้องมี backend เพิ่ม) | Must | ✅ (`window.print()` scope ด้วย `.report-print-area`, ทั้งใน dialog เดิมและหน้า report-detail) | 4c/5a |
+| สั่งพิมพ์ตารางข้อมูลตัวอย่างที่ preview อยู่ (client-side `window.print()` + `@media print`) | Should | ✅ (กลไกเดียวกับแถวบน ครอบคลุมทั้ง PDF และตาราง excel) | 4c/5a |
+| นับ `download_count`/`view_count` แบบ atomic increment | Should | ✅ (`download_count` ยืนยันด้วย concurrent request test มาตั้งแต่ 1; `view_count` เริ่ม increment จริงครั้งแรกใน 4c ผ่าน `GET /api/reports/[id]`, มี `useRef` guard กัน double-count จาก React StrictMode ใน 5a) | 1/4c/5a |
 
 ## 8. Report Sharing (FR-8)
 
@@ -146,18 +148,18 @@
 |---|---|---|---|
 | CRUD ผู้ใช้ (list, form, table) | Must | ✅ | — |
 | CRUD แผนก (รองรับโครงสร้างลำดับชั้น parent/child) | Must | ✅ | — |
-| CRUD บทบาท + จัดการ permission ต่อบทบาท | Must | ✅ | — |
+| CRUD บทบาท + จัดการ permission ต่อบทบาท | Must | ✅ (แก้ permission ของ role ที่มีอยู่แล้วทำได้จริงตั้งแต่ 5c — ก่อนหน้านั้น `GET`/`PUT /api/users/roles/[id]` เป็น `Hello World` stub ทำได้แค่ตอนสร้าง role ใหม่เท่านั้น) | —/5c |
 | Activity ของผู้ใช้แต่ละคน (ประวัติการกระทำ) | Should | ✅ (`GET /api/activity-logs?user_id=` + หน้า filter) | 0/3 |
 
 ## 13. System Settings (FR-13)
 
 | Feature | Priority | สถานะ | Phase |
 |---|---|---|---|
-| หน้า Settings อ่าน/เขียนตาราง `settings` จริง | Should | ❌ (ตัดสินใจแล้วว่า theme ไม่ใช้ตารางนี้ — ดู FR-13 ธีมด้านล่าง — แต่ system settings อื่น (storage/auth) ยังไม่มี endpoint เลย) | 3/4 |
-| ตั้งค่าวิธี login (provider selection) | Should | ❌ | 4 |
-| ตั้งค่า storage backend (local/MinIO/S3) | Should | ❌ | 4 |
+| หน้า Settings อ่าน/เขียนตาราง `settings` จริง | Should | ✅ (`GET`/`PUT /api/settings/system` ตัวใช้งานจริงตัวแรกตั้งแต่ 4e เก็บแค่ 2 คีย์ ขยายเป็น 10 คีย์ครอบ storage+general ใน 5e; `GET /api/settings/public` ใหม่สำหรับค่าที่ต้องแสดงก่อน login เช่น `ORG_NAME`) | 4e/5e |
+| ตั้งค่าวิธี login (provider selection) | Should | ❌ (ตัดสินใจตัดออกจากสโคปแล้ว — aspirational, ไม่ทำ) | 4d (dropped) |
+| ตั้งค่า storage backend (local/MinIO/S3) | Should | ❌ (5e ทำให้ **path ของ local storage** ตั้งค่าได้ผ่าน `UPLOAD_BASE_PATH` + `lib/storage-path.ts` แล้ว แต่การสลับไป backend อื่น เช่น S3/MinIO ยังไม่มีเลย เป็นคนละเรื่องกัน) | 4/5e (partial ที่ path ไม่ใช่ backend) |
 | Persist ธีม (dark/light) ต่อผู้ใช้ฝั่ง server | Should | ✅ (`users.theme_preference` + `/api/settings/theme`, ไม่ใช้ตาราง `settings` เดิมตามที่ตัดสินใจไว้) | 3 |
-| จำกัดขนาดไฟล์อัปโหลดสูงสุดต่อ `file_kind` แบบตั้งค่าได้ | Could | ⚠️ (จำกัดจริงแล้ว — `BLANK_FORM`/`SAMPLE_FILLED_FORM` 10 MB, `SAMPLE_DATA` 20 MB — แต่เป็นค่าคงที่ในโค้ด ไม่ใช่ "ตั้งค่าได้" ผ่าน UI ตามชื่อ feature เป๊ะ ๆ) | 4e |
+| จำกัดขนาดไฟล์อัปโหลดสูงสุดต่อ `file_kind` แบบตั้งค่าได้ | Could | ✅ (ตั้งค่าได้จริงผ่านหน้า `/settings/storage` + `PUT /api/settings/system`, มี cache invalidation ทันทีหลัง save — ปิดของค้างที่ 4e ทำได้แค่ค่าคงที่ในโค้ด) | 4e/5e |
 
 ## 14. Support Ticket (FR-14 — Optional, ต้องตัดสินใจ scope)
 
@@ -197,8 +199,8 @@
 
 | สถานะ | จำนวน feature (จาก 100 รายการ) |
 |---|---|
-| ✅ ทำงานได้จริง | 68 |
-| ⚠️ มีบางส่วน/mock/schema เฉย ๆ | 12 |
-| ❌ ยังไม่มีเลย | 20 |
+| ✅ ทำงานได้จริง | 80 |
+| ⚠️ มีบางส่วน/mock/schema เฉย ๆ | 7 |
+| ❌ ยังไม่มีเลย | 13 |
 
-> ตัวเลขนับจากตารางด้านบนจริง (รวมทุกแถว feature ไม่รวมแถวหมายเหตุ/ดีไซน์โน้ต, นับซ้ำล่าสุด 2026-08-18 หลัง Phase 4e/4f) ไม่ใช่ story-point estimation — ใช้สื่อสารสัดส่วนงานที่เหลือ ไม่ใช่ใช้วางแผน timeline โดยตรง งานที่เหลือส่วนใหญ่กระจุกอยู่ที่ i18n, E2E test, storage/auth-provider abstraction (dropped, aspirational), และ ClamAV AV scan (deferred)
+> ตัวเลขนับจากตารางด้านบนจริง (รวมทุกแถว feature ไม่รวมแถวหมายเหตุ/ดีไซน์โน้ต, นับซ้ำล่าสุด 2026-08-19 หลัง Phase 5a-5f) ไม่ใช่ story-point estimation — ใช้สื่อสารสัดส่วนงานที่เหลือ ไม่ใช่ใช้วางแผน timeline โดยตรง งานที่เหลือส่วนใหญ่กระจุกอยู่ที่ i18n, E2E test, storage-backend abstraction (S3/MinIO — dropped, aspirational; แยกจาก `UPLOAD_BASE_PATH` ที่ตั้งค่าได้แล้ว), auth-provider selection (dropped), และ ClamAV AV scan (deferred)

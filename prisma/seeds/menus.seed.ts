@@ -4,6 +4,15 @@ import 'dotenv/config'
 import { faker } from "@faker-js/faker";
 import bcrypt from 'bcryptjs';
 
+interface MenuSeedRow {
+  group_label: string;
+  catagory_label: string;
+  menu_label?: string;
+  href: string;
+  icon?: string;
+  sort_order: number;
+}
+
 export async function seedMenus(prisma:PrismaClient) {
   const menus = [
     // ================= Dashboard =================
@@ -257,8 +266,8 @@ export async function seedMenus(prisma:PrismaClient) {
 }
 
 
-const menusSeedMapping =  (data: any[]) => {
-  return data.map((item: any) => {
+const menusSeedMapping =  (data: MenuSeedRow[]) => {
+  return data.map((item) => {
     return {
         id: faker.string.uuid(),
         group_label: item.group_label,

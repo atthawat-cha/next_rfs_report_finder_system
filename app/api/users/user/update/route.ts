@@ -1,5 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import prisma from "@/lib/prisma";
+import { Prisma } from "@/app/generated/prisma/client";
+import { UserStatus } from "@/app/generated/prisma/enums";
 import { z } from "zod";
 import bcrypt from "bcryptjs";
 import { getAuthFromRequest, requireRole, routeAcceptted } from "@/lib/auth";
@@ -11,13 +13,19 @@ export async function POST(req: NextRequest) {
     id: z.string(),
 
     username: z.string().min(3).optional(),
-    email: z.string().email().nullable().optional(),
+    // users.email is NOT NULL in the schema - was `.nullable()` here, which
+    // let a client send email: null through untouched (updateData was `any`
+    // so nothing caught it before hitting the DB's NOT NULL constraint).
+    email: z.string().email().optional(),
     password: passwordPolicySchema.optional(),
 
     first_name: z.string().optional(),
     last_name: z.string().optional(),
     department_id: z.string().optional(),
-    status: z.string().optional(),
+    // users.status is the UserStatus enum, not a free-form string - was
+    // z.string() here, so an invalid value only failed at the DB layer with
+    // a generic "Update failed" instead of a clean 400.
+    status: z.nativeEnum(UserStatus).optional(),
   });
 
   try {
@@ -52,8 +60,9 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    // build update object dynamically
-    const updateData: any = {
+    // build update object dynamically - Unchecked variant because
+    // department_id is set as a plain FK scalar here, not via a relation connect
+    const updateData: Prisma.usersUncheckedUpdateInput = {
       username: data.username,
       email: data.email,
       first_name: data.first_name,
@@ -64,9 +73,9 @@ export async function POST(req: NextRequest) {
     };
 
     // remove undefined fields
-    Object.keys(updateData).forEach(
-      (key) => updateData[key] === undefined && delete updateData[key]
-    );
+    (Object.keys(updateData) as (keyof typeof updateData)[]).forEach((key) => {
+      if (updateData[key] === undefined) delete updateData[key];
+    });
 
     // hash password if provided
     if (data.password) {

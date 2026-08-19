@@ -1,0 +1,16 @@
+# Redis only - rate limiting (lib/rate-limit.ts, fail-open) and the 2FA
+# pending-token store (lib/two-factor.ts, fail-closed). Both are purely
+# ephemeral state (see document/00-progress.md's dev-environment note from
+# Phase 4d), so no volume - a fresh, empty Redis on every `up` is correct,
+# not a data-loss risk.
+#
+# Postgres is deliberately NOT included here: the dev DB is an existing
+# external instance (see CLAUDE.md), and a compose-managed one would invite
+# two sources of truth for DATABASE_URL.
+services:
+  redis:
+    image: redis:7-alpine
+    container_name: rfs-redis
+    ports:
+      - "6380:6379"
+    restart: unless-stopped

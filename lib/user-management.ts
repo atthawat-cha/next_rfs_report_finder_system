@@ -7,9 +7,30 @@ import {
   PermissionTemplateType,
   PermissionType,
   RolesType,
+  SubmenuType,
   UserRolePermissionType,
 } from "./types";
 import _ from "lodash";
+
+/** Raw shape of a permissions row joined to its menu, as queried by
+ * /api/baseconfig/permissions and /api/users/roles/[id] - one row per
+ * menus record (prisma/seeds/permission.seed.ts's 1:1 convention). */
+export interface PermissionsWithMenuRow {
+  id: string;
+  name: string;
+  display_name: string;
+  category: string;
+  menus: {
+    id: string;
+    group_label: string | null;
+    catagory_label: string | null;
+    menu_label: string | null;
+    sub_menu_label: string | null;
+    sort_order: number | null;
+    href: string | null;
+    icon: string | null;
+  };
+}
 
 const actions = ["view", "create", "update", "delete"] as const;
 export const perConvertToCheckbox = (
@@ -26,7 +47,7 @@ export const perConvertToCheckbox = (
         });
 
         menu.submenus?.length > 0 &&
-          menu?.submenus?.forEach((submenu: any) => {
+          menu?.submenus?.forEach((submenu: SubmenuType) => {
             actions.forEach((action) => {
               if (submenu[`can_${action}`]) {
                 checkData.push(
@@ -45,8 +66,8 @@ export const perConvertToCheckbox = (
  *
  *
  */
-export function buildMenuStructure(data: any[]) {
-  const menuStructure: any[] = [];
+export function buildMenuStructure(data: PermissionsWithMenuRow[]): MenuStructureGroup[] {
+  const menuStructure: MenuStructureGroup[] = [];
 
   data.forEach((item) => {
     // console.log(item);
@@ -71,7 +92,7 @@ export function buildMenuStructure(data: any[]) {
     } else {
       if (item.menus.menu_label) {
         menuStructure.map((group) => {
-          group.menus.map((menu: any) => {
+          group.menus.map((menu: MenuStructureMenu) => {
             if (
               group.groupLabel === item.category &&
               menu.label === item.menus.catagory_label

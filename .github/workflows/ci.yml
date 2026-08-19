@@ -55,6 +55,13 @@ jobs:
       - name: Type check
         run: npx tsc --noEmit
 
+      # Phase 5f: 0 errors as of this commit. 222 pre-existing warnings stay
+      # as a ratchet ceiling - any *new* warning fails CI, the existing 222
+      # get paid down over time by lowering this number (00-progress.md
+      # ของค้าง #11).
+      - name: Lint
+        run: npx eslint . --max-warnings 222
+
       - name: Build
         run: npm run build
 

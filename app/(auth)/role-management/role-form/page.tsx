@@ -17,14 +17,14 @@ import { FieldDescription } from "@/components/ui/field";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Separator } from "@/components/ui/separator";
-import { PermissionTemplateType } from "@/lib/types";
+import { PermissionTemplateType, RolePermissionsType } from "@/lib/types";
 import toast from "react-hot-toast";
 import { useRouter } from "next/navigation";
 
 
 export default function RolesFormManage() {
   const [isLoading, setIsLoading] = React.useState(false);
-  const [params, setParams] = React.useState({role:{name:"", display_name:""}, permissions: []});
+  const [params, setParams] = React.useState<RolePermissionsType>({role:{name:"", display_name:""}, permissions: []});
   const [roleTemplate, setRoleTemplate] = React.useState<PermissionTemplateType[]>();
 
   const redirect = useRouter();
@@ -152,7 +152,7 @@ export default function RolesFormManage() {
                     disabled={isLoading}
                   />
                   <FieldDescription className="text-sm text-muted-foreground pl-2">
-                    Enter you're role name to above.
+                    Enter you&apos;re role name to above.
                   </FieldDescription>
                 </div>
 

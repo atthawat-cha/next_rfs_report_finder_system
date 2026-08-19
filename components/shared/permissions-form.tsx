@@ -24,14 +24,15 @@ export default function PermissionsFormCheckbox({
   initialSelected,
 }: {
   params: RolePermissionsType;
-  setParams: React.Dispatch<React.SetStateAction<any>>;
+  setParams: React.Dispatch<React.SetStateAction<RolePermissionsType>>;
   template: PermissionTemplateType[];
   /** Pre-checks these ids on mount (edit flow). Omit for the create flow, which starts blank. */
   initialSelected?: string[];
 }) {
-  if (!template) return null;
-
-  const converted = perConvertToCheckbox(template)
+  // Hooks must run unconditionally regardless of `template` (rules-of-hooks) -
+  // the null-check that used to sit above them is now below, right before
+  // the render branch that actually needs `template` to be present.
+  const converted = template ? perConvertToCheckbox(template) : []
   const [selectedRows, setSelectedRows] = React.useState<Set<string>>(
     () => new Set(initialSelected ?? [])
   )
@@ -94,8 +95,10 @@ export default function PermissionsFormCheckbox({
   useEffect(() => {
     const selectedArray = Array.from(selectedRows)
     setParams({...params, permissions: selectedArray})
-    
+
   }, [selectedRows, setParams])
+
+  if (!template) return null;
 
   return (
     <FieldSet>
@@ -118,7 +121,7 @@ export default function PermissionsFormCheckbox({
       <div className="flex-col item-center justify-space-between max-h-[450px] overflow-x-auto">
         {template &&
           template?.map((item: PermissionTemplateType) => (
-            <div id={item.menu_id}>
+            <div key={item.menu_id} id={item.menu_id}>
               <FieldGroup className="gap-2 mx-auto">
                 <Field orientation="horizontal" className="pl-5 align-item-end items-center">
                   <FieldLegend variant="label" className="mt-5 w-40">
@@ -166,7 +169,7 @@ export default function PermissionsFormCheckbox({
               <FieldGroup className="gap-2 mx-auto">
                 {item?.menu &&
                   item?.menu.map((menu: MenuType) => (
-                    <Field orientation="horizontal" className="pl-5 align-item-end">
+                    <Field key={`${item.group_label}-${menu.label}`} orientation="horizontal" className="pl-5 align-item-end">
                       <FieldLabel
                         htmlFor="terms-checkbox-basic"
                         className="pl-5 w-40 text-muted-foreground"

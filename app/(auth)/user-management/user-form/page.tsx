@@ -21,6 +21,16 @@ import { useRouter, useSearchParams } from "next/navigation";
 import React from "react";
 import toast from "react-hot-toast";
 
+interface SelectOption {
+  id: string;
+  name: string;
+}
+
+interface UserFormBaseConfig {
+  roles: SelectOption[];
+  departments: SelectOption[];
+  status: string[];
+}
 
 export default function UserFormData() {
 
@@ -40,7 +50,7 @@ export default function UserFormData() {
     status: "",
   });
   const [isLoading, setLoading] = React.useState(false);
-  const [baseCongig, setBaseConfig] = React.useState({roles: [], departments: [], status: []});
+  const [baseCongig, setBaseConfig] = React.useState<UserFormBaseConfig>({roles: [], departments: [], status: []});
 
   // Base Config
 const getConfigData = async () => {
@@ -198,7 +208,7 @@ const getConfigData = async () => {
                       </SelectTrigger>
                       <SelectContent>
                         <SelectGroup>
-                          {baseCongig?.roles?.map((item: any) => (
+                          {baseCongig?.roles?.map((item: SelectOption) => (
                             <SelectItem key={item.id} value={item.id}>
                               {item.name}
                             </SelectItem>
@@ -221,7 +231,7 @@ const getConfigData = async () => {
                       </SelectTrigger>
                       <SelectContent>
                         <SelectGroup>
-                          {baseCongig?.departments?.map((item: any) => (
+                          {baseCongig?.departments?.map((item: SelectOption) => (
                             <SelectItem key={item.id} value={item.id}>
                               {item.name}
                             </SelectItem>
@@ -246,7 +256,7 @@ const getConfigData = async () => {
                       </SelectTrigger>
                       <SelectContent>
                         <SelectGroup>
-                          {baseCongig?.status?.map((item: any) => (
+                          {baseCongig?.status?.map((item: string) => (
                             <SelectItem key={item} value={item}>
                               {item}
                             </SelectItem>

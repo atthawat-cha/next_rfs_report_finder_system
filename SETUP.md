@@ -42,6 +42,26 @@ JWT_SECRET=super-secret-development-key-please-change-in-production-12345
 NEXT_PUBLIC_APP_URL=http://localhost:3000
 ```
 
+> ⚠️ รายการนี้ไม่ครบ — ดู `CLAUDE.md`'s Commands section สำหรับ env var ที่ต้องมีจริงทั้งหมด (`DATABASE_URL`, `JWT_SECRET`, `NEXT_PUBLIC_API_URL`, `NEXT_PUBLIC_APP_URL`, `NODE_ENV`) และพอร์ตจริงของ dev server (3501 ไม่ใช่ 3000)
+
+### 2.1 Redis (สำหรับ rate limiting และ 2FA pending-token)
+
+โปรเจกต์นี้ต้องมี Redis รันอยู่ที่ `REDIS_URL` (ปกติ `redis://localhost:6380`) — ใช้ `docker-compose.yml` ที่ root:
+
+```bash
+docker compose up -d
+```
+
+ตรวจสอบว่า Redis รันอยู่:
+```bash
+docker compose ps
+```
+
+หยุด/ลบ container เมื่อไม่ใช้แล้ว:
+```bash
+docker compose down
+```
+
 ### 3. รัน Development Server
 
 ```bash
