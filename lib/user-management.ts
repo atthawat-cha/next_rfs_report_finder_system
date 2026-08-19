@@ -63,6 +63,7 @@ export function buildMenuStructure(data: any[]) {
             href: item.menus.href ?? "",
             label: item.menus.catagory_label ?? "",
             icon: item.menus.icon ?? "",
+            permission_id: item.id,
             submenus: [],
           },
         ],
@@ -78,6 +79,7 @@ export function buildMenuStructure(data: any[]) {
               menu.submenus.push({
                 href: item.menus.href ?? "",
                 label: item.menus.menu_label ?? "",
+                permission_id: item.id,
               });
           });
         });
@@ -86,6 +88,7 @@ export function buildMenuStructure(data: any[]) {
           href: item.menus.href ?? "",
           label: item.menus.catagory_label ?? "",
           icon: item.menus.icon ?? "",
+          permission_id: item.id,
           submenus: [],
         });
       }
@@ -118,6 +121,71 @@ export const buildMenusrender = (menus: MenusListType[]) => {
   }));
 };
 
+interface RoleGrantFlags {
+  can_view: boolean;
+  can_create: boolean;
+  can_update: boolean;
+  can_delete: boolean;
+}
+
+const NO_GRANT: RoleGrantFlags = {
+  can_view: false,
+  can_create: false,
+  can_update: false,
+  can_delete: false,
+};
+
+interface MenuStructureSubmenu {
+  href: string;
+  label: string;
+  permission_id: string;
+}
+
+interface MenuStructureMenu {
+  href: string;
+  label: string;
+  icon: string;
+  permission_id: string;
+  submenus: MenuStructureSubmenu[];
+}
+
+interface MenuStructureGroup {
+  menu_id: string;
+  groupLabel: string;
+  menus: MenuStructureMenu[];
+}
+
+/**
+ * Same shape as buildMenusrender's output, but can_* reflects a specific
+ * role's actual role_permissions grants (keyed by permission_id, added onto
+ * the menuStructure entries by buildMenuStructure) instead of hardcoding
+ * everything to true. Used by GET /api/users/roles/[id] so the edit screen
+ * can seed PermissionsFormCheckbox with the role's real selection - the
+ * create-flow's buildMenusrender is left untouched since it has no
+ * existing role to reflect.
+ */
+export const buildMenusrenderWithGrants = (
+  menus: MenuStructureGroup[],
+  grantsByPermissionId: Map<string, RoleGrantFlags>,
+) => {
+  const flagsFor = (permissionId: string) => grantsByPermissionId.get(permissionId) ?? NO_GRANT;
+
+  return menus.map((item) => ({
+    menu_id: item.menu_id,
+    group_label: item.groupLabel,
+    menu: item.menus.map((menu) => ({
+      label: menu.label,
+      ...flagsFor(menu.permission_id),
+      submenus:
+        menu.submenus.length > 0 &&
+        menu.submenus.map((submenu) => ({
+          label: submenu.label,
+          ...flagsFor(submenu.permission_id),
+        })),
+    })),
+  }));
+};
+
 export const buildRolePermissionInsert = (
   role: string,
   data: PermissionType[],
@@ -137,14 +205,24 @@ export const buildRolePermissionInsert = (
 
     const matched = perArr.filter((perId) => {
       const checked = perId.split("-");
-      
-      if(checked.length === 3 || checked.length === 4){
-        return (
-      (checked[1] === per.category && checked[2] === per.name) ||
-      (checked[1] === per.category && checked[3] === per.name)
-      );
+
+      // 4 segments = top-level menu id (p-group-menu-action), matched via checked[2].
+      // 5 segments = submenu id (p-group-menu-submenu-action, per the comment above),
+      // matched via checked[3]. Was `checked.length === 3 || checked.length === 4`
+      // with both position checks OR'd together regardless of length - that never
+      // matched a submenu id at all (5 segments was never accepted), so a role's
+      // submenu-level grants silently never persisted. Worse, checking a submenu
+      // action would (once 5-segment ids were accepted) also match the *parent*
+      // top-level permission, because its own label sits at checked[2] in both a
+      // 4-segment top-level id and a 5-segment submenu id under it - fixed by
+      // keying each length to its own position instead of OR'ing both together.
+      if (checked.length === 4) {
+        return checked[1] === per.category && checked[2] === per.name;
       }
-      
+      if (checked.length === 5) {
+        return checked[1] === per.category && checked[3] === per.name;
+      }
+      return false;
     });
     const actions = matched.map((m) => _.last(m.split("-")));
 

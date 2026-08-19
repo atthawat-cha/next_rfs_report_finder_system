@@ -1,6 +1,6 @@
 export const dynamic = 'force-dynamic';
 import mockmenus from "@/fakedata/permissionsmock";
-import { requireAuth, requireRole } from "@/lib/auth";
+import { requireAuth, requireRole, routeAcceptted } from "@/lib/auth";
 import prisma from "@/lib/prisma";
 import { buildMenusrender, buildMenuStructure } from "@/lib/user-management";
 import { NextRequest, NextResponse } from "next/server";
@@ -8,7 +8,7 @@ import { NextRequest, NextResponse } from "next/server";
 
 export async function GET(req:NextRequest){
     // Define accepted roles
-    const acceptedRoles = ['admin'];
+    const acceptedRoles = routeAcceptted('admin');
 
     try {
         // Check Auth

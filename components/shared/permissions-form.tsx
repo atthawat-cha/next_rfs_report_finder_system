@@ -21,16 +21,19 @@ export default function PermissionsFormCheckbox({
   params,
   setParams,
   template,
+  initialSelected,
 }: {
   params: RolePermissionsType;
   setParams: React.Dispatch<React.SetStateAction<any>>;
   template: PermissionTemplateType[];
+  /** Pre-checks these ids on mount (edit flow). Omit for the create flow, which starts blank. */
+  initialSelected?: string[];
 }) {
   if (!template) return null;
 
   const converted = perConvertToCheckbox(template)
   const [selectedRows, setSelectedRows] = React.useState<Set<string>>(
-    new Set([])
+    () => new Set(initialSelected ?? [])
   )
   const selectAll = selectedRows.size > converted.length
   // console.log(converted)
