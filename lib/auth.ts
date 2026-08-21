@@ -192,10 +192,24 @@ export async function requireRole(req: NextRequest, allowedRoles: string[]): Pro
 }
 
 
+/**
+ * Maps a coarse access tier to the role names allowed to call a route.
+ *
+ * The tiers are a *minimum* bar, not disjoint sets: every tier includes the
+ * roles above it. `'admin'` therefore appears in the `user` tier too - the
+ * six `routeAcceptted('user')` routes (browse, favorites x3, report download,
+ * report-file download/preview) are all either scoped to the caller's own rows
+ * or gated by lib/report-acl.ts inside the handler, and the two file routes
+ * additionally re-check `routeAcceptted('admin')` internally to bypass the ACL.
+ * Leaving `'admin'` out of this list (as it was until 2026-08-20) 403'd the
+ * plain ADMIN role out of every one of them *before* that inner logic could
+ * run, while GET /api/reports/[id] - which has no tier gate - kept telling the
+ * UI `can_export/can_print: true`. See 00-progress.md's ของค้าง #13.
+ */
 export function routeAcceptted(access: string): string[] {
   const acc = {
     admin: ['admin', 'super_admin'],
-    user: ['user', 'super_admin'],
+    user: ['user', 'admin', 'super_admin'],
     guest: ['guest'],
   }
 

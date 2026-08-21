@@ -79,9 +79,28 @@ export async function POST(req: NextRequest) {
             return NextResponse.json({ success: false, error: validate.error.errors }, { status: 400 });
         }
 
-        const acl = await resolveReportAcl(validate.data.report_id, authResult.user);
-        if (!acl.can_favorite) {
-            return NextResponse.json({ success: false, error: "Report not found or not favoritable" }, { status: 403 });
+        // Admin tier bypasses the per-report ACL here for the same reason the
+        // download/preview/detail routes do: GET /api/reports/[id] already hands
+        // an admin `can_favorite: true`, so gating the write on resolveReportAcl
+        // (which knows nothing about role tiers) would 403 a button the detail
+        // page was told to enable. See 00-progress.md's ของค้าง #13. The report
+        // has to be looked up explicitly on that path - resolveReportAcl's
+        // DENY_ALL used to double as the "no such report" answer, and the upsert
+        // below would otherwise fail on the FK with a 500 instead of a 403.
+        const isAdmin = routeAcceptted('admin').includes(authResult.user.roles?.name?.toLowerCase() ?? '');
+        if (isAdmin) {
+            const report = await prisma.reports.findUnique({
+                where: { id: validate.data.report_id },
+                select: { id: true },
+            });
+            if (!report) {
+                return NextResponse.json({ success: false, error: "Report not found or not favoritable" }, { status: 403 });
+            }
+        } else {
+            const acl = await resolveReportAcl(validate.data.report_id, authResult.user);
+            if (!acl.can_favorite) {
+                return NextResponse.json({ success: false, error: "Report not found or not favoritable" }, { status: 403 });
+            }
         }
 
         const favorite = await prisma.favorites.upsert({
