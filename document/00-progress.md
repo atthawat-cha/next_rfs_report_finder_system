@@ -1,6 +1,6 @@
 # ความคืบหน้าโครงการ — RFS Report Finder System
 
-> **อัปเดตล่าสุด:** 2026-08-21 · **Branch:** `feature/phase5` · **HEAD:** `345a665`
+> **อัปเดตล่าสุด:** 2026-08-21 · **Branch:** `feature/phase5` · **HEAD:** `3360f32`
 >
 > ไฟล์นี้ตอบคำถามเดียว: **"ตอนนี้ถึงไหนแล้ว และเหลืออะไร"** สถานะทุกแถวอ้างอิง commit จริงใน git log เป็นหลักฐาน ไม่ใช่การอ่านโค้ดเดา
 >
@@ -28,11 +28,11 @@
 
 **Phase 5 ปิดครบทั้ง 6 sub-phase แล้ว (2026-08-19)** — โจทย์มาจาก `document/diff_req.md` ที่ผู้ใช้ commit เข้ามาเอง (`beb62ee`) แผนเต็มอยู่ที่ [`phase5-plan.md`](./phase5-plan.md) ตัดสินใจครบทุกข้อกับผู้ใช้แล้วก่อนเขียน (ดูหัวข้อ "Resolved decisions" ในแผน) ดูรายละเอียดใต้ตาราง Phase 5 ด้านล่าง (5b เจอว่าแผนเดิมเข้าใจผิดว่า per-report ACL "zero UI" — ที่จริงมี inline UI มาตั้งแต่ 2d แล้ว; 5c เจอบั๊กจริง 2 ชั้นใน `buildRolePermissionInsert` ที่ทำให้ submenu-level permission grant ไม่เคยบันทึกได้เลยตั้งแต่ 2d แก้แล้ว; 5d เจอว่า `dialog-drawer.tsx`/`right-drawer.tsx` (ทั้งคู่) เป็น scaffold ที่ใช้งานจริงไม่ได้; 5e เจอ raw link ใน `/shares/[token]` ที่จะพังทันทีที่เปลี่ยน `UPLOAD_BASE_PATH` แก้แล้ว; 5f เจอบั๊กจริง 2 ตัวเพิ่มเติมระหว่างแก้ lint (`lib/auth.ts`, `app/api/users/user/update/route.ts`) แก้แล้ว — ดูรายละเอียดในหัวข้อของแต่ละ sub-phase)
 
-**อัปเดต 2026-08-21:** **Phase 6 = เคลียร์หนี้ทางเทคนิค — วางแผนครบแล้ว** ([`phase6-plan.md`](./phase6-plan.md), ตัดสินใจครบทุกข้อกับผู้ใช้ ดูหัวข้อ "Resolved decisions" ในแผน) 3 sub-phase: **6a** ลบโค้ดตาย + แก้เอกสารที่ขัดกับโค้ด (รวม `CLAUDE.md` เอง 4 จุด), **6b** เทสต์ auth/ACL ระดับ route handler (7 endpoint × ทุก role — ตัวจับบั๊กแบบ #13), **6c** lint sweep 222 → 0 warning + รัด CI เป็น `--max-warnings 0` เรียงลำดับตั้งใจให้เทสต์มาก่อน sweep เพราะ 6c แตะ route handler 38 ไฟล์ · **ของค้าง #13 แก้เสร็จแล้วในโค้ด รอ live verification** (ดูของค้าง #13 ด้านล่าง) · **เจอของค้างใหม่ #14: dev environment ไม่ reproduce ได้** (ดูด้านล่าง — เป็นเหตุผลหลักที่ 6a ต้องเขียนขั้นตอน setup ลง `CLAUDE.md`)
+**อัปเดต 2026-08-21:** **Phase 6 = เคลียร์หนี้ทางเทคนิค — วางแผนครบแล้ว** ([`phase6-plan.md`](./phase6-plan.md), ตัดสินใจครบทุกข้อกับผู้ใช้ ดูหัวข้อ "Resolved decisions" ในแผน) 3 sub-phase: **6a** ลบโค้ดตาย + แก้เอกสารที่ขัดกับโค้ด (รวม `CLAUDE.md` เอง 4 จุด), **6b** เทสต์ auth/ACL ระดับ route handler (7 endpoint × ทุก role — ตัวจับบั๊กแบบ #13), **6c** lint sweep 222 → 0 warning + รัด CI เป็น `--max-warnings 0` เรียงลำดับตั้งใจให้เทสต์มาก่อน sweep เพราะ 6c แตะ route handler 38 ไฟล์ · **ของค้าง #13 แก้แล้ว (`3360f32`) รอ live verification** (ดูของค้าง #13 ด้านล่าง) · **เจอของค้างใหม่ #14: dev environment ไม่ reproduce ได้** (ดูด้านล่าง — เป็นเหตุผลหลักที่ 6a ต้องเขียนขั้นตอน setup ลง `CLAUDE.md`)
 
 **งานถัดไปที่ควรทำ (เรียงตามลำดับ):**
 1. **กู้ dev DB กลับมาก่อน (ของค้าง #14)** — บล็อก live verification ของทั้ง #13, 6b และ 6c; ผู้ใช้รับไปดำเนินการเองแล้ว (2026-08-21)
-2. **ปิดของค้าง #13 ให้จบ** — โค้ดแก้เสร็จรออยู่ใน working tree ยังไม่ commit เพราะยังยืนยันสดไม่ได้
+2. **ยืนยันสดของค้าง #13 ให้จบ** — โค้ดแก้ commit ไปแล้ว (`3360f32`) แต่ยังไม่ได้ไล่ 6 endpoint × role บน DB จริง (Phase 6b จะเปลี่ยน matrix นี้เป็นเทสต์)
 3. **ลงมือ Phase 6a → 6b → 6c** ตาม [`phase6-plan.md`](./phase6-plan.md)
 4. **ยืนยันว่า CI workflow รันจริงบน GitHub** — branch `feature/phase5` push ขึ้น origin แล้ว แต่ยังไม่เคยเห็นผลรัน (`.github/workflows/ci.yml` ตั้งไว้ตั้งแต่ 4f, เพิ่ม Lint step ใน 5f แล้ว ยังไม่เคยยืนยันว่าเขียวจริงบน runner — เครื่องนี้ไม่มี `gh` ติดตั้ง ต้องดูจากหน้า Actions หรือติดตั้ง CLI ก่อน)
 5. **วางแผน i18n (`next-intl`) แยกเป็น phase ใหม่ของตัวเอง** — ถูก scope out จาก 4e, Phase 5 และ Phase 6 เพราะเป็น all-or-nothing sweep ทั้งโปรเจกต์
@@ -408,7 +408,7 @@ Next.js 16 ตัด `next lint` ออกทั้งหมด ต้อง mig
 
 ผลคือ: user ที่มี role `ADMIN` เข้าดู `GET /api/reports/[id]` ได้ปกติ (endpoint นั้นใช้ `requireAuth` เฉยๆ ไม่มี role-tier gate) และได้ `acl.can_export/can_print: true` กลับมา (เพราะ isAdmin bypass) แต่พอกด Download/Print จริงจะโดน **403 เสมอ** เพราะ role-tier gate ของสอง endpoint ไฟล์กันไว้ก่อนถึง ACL logic เลย มีมาตั้งแต่ 4c ไม่ใช่ regression จาก 5a — เพิ่งสังเกตเห็นชัดตอนหน้า report-detail (5a) ใหม่โชว์ปุ่ม Download/Print ตรงตาม `acl` ที่ endpoint ส่งมา
 
-**สถานะ (2026-08-21): แก้เสร็จในโค้ดแล้ว รอ live verification เท่านั้น — ยังไม่ commit**
+**สถานะ (2026-08-21): แก้แล้ว commit `3360f32` — เหลือแค่ live verification (บล็อกด้วยของค้าง #14)**
 
 ไล่ call site ของ `routeAcceptted` ทั้งหมดก่อนแก้ (ตามที่บันทึกไว้ว่าต้องทำ) พบว่า **ปัญหากว้างกว่าที่บันทึกไว้เดิม**: tier `user` ถูกใช้ 6 จุด ไม่ใช่แค่ 2 จุดที่เป็น download/preview — คือ `GET /api/reports/browse`, `GET`+`POST /api/reports/favorites`, `DELETE /api/reports/favorites/[reportId]`, `GET /api/reports/[id]/download`, `GET /api/reports/[id]/files/[fileId]/download`, `.../preview` แปลว่า role `ADMIN` ธรรมดา **เปิดหน้ารายการรายงานฝั่งผู้ใช้และกด favorite ไม่ได้เลยด้วย** ไม่ใช่แค่ดาวน์โหลด/พรีวิว
 
