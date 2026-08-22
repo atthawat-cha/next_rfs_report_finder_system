@@ -1,6 +1,6 @@
 # ความคืบหน้าโครงการ — RFS Report Finder System
 
-> **อัปเดตล่าสุด:** 2026-08-21 · **Branch:** `feature/phase5` · **HEAD:** `3360f32`
+> **อัปเดตล่าสุด:** 2026-08-22 · **Branch:** `feature/phase5` · **HEAD:** `0cebf29`
 >
 > ไฟล์นี้ตอบคำถามเดียว: **"ตอนนี้ถึงไหนแล้ว และเหลืออะไร"** สถานะทุกแถวอ้างอิง commit จริงใน git log เป็นหลักฐาน ไม่ใช่การอ่านโค้ดเดา
 >
@@ -28,15 +28,15 @@
 
 **Phase 5 ปิดครบทั้ง 6 sub-phase แล้ว (2026-08-19)** — โจทย์มาจาก `document/diff_req.md` ที่ผู้ใช้ commit เข้ามาเอง (`beb62ee`) แผนเต็มอยู่ที่ [`phase5-plan.md`](./phase5-plan.md) ตัดสินใจครบทุกข้อกับผู้ใช้แล้วก่อนเขียน (ดูหัวข้อ "Resolved decisions" ในแผน) ดูรายละเอียดใต้ตาราง Phase 5 ด้านล่าง (5b เจอว่าแผนเดิมเข้าใจผิดว่า per-report ACL "zero UI" — ที่จริงมี inline UI มาตั้งแต่ 2d แล้ว; 5c เจอบั๊กจริง 2 ชั้นใน `buildRolePermissionInsert` ที่ทำให้ submenu-level permission grant ไม่เคยบันทึกได้เลยตั้งแต่ 2d แก้แล้ว; 5d เจอว่า `dialog-drawer.tsx`/`right-drawer.tsx` (ทั้งคู่) เป็น scaffold ที่ใช้งานจริงไม่ได้; 5e เจอ raw link ใน `/shares/[token]` ที่จะพังทันทีที่เปลี่ยน `UPLOAD_BASE_PATH` แก้แล้ว; 5f เจอบั๊กจริง 2 ตัวเพิ่มเติมระหว่างแก้ lint (`lib/auth.ts`, `app/api/users/user/update/route.ts`) แก้แล้ว — ดูรายละเอียดในหัวข้อของแต่ละ sub-phase)
 
-**อัปเดต 2026-08-21:** **Phase 6 = เคลียร์หนี้ทางเทคนิค — วางแผนครบแล้ว** ([`phase6-plan.md`](./phase6-plan.md), ตัดสินใจครบทุกข้อกับผู้ใช้ ดูหัวข้อ "Resolved decisions" ในแผน) 3 sub-phase: **6a** ลบโค้ดตาย + แก้เอกสารที่ขัดกับโค้ด (รวม `CLAUDE.md` เอง 4 จุด), **6b** เทสต์ auth/ACL ระดับ route handler (7 endpoint × ทุก role — ตัวจับบั๊กแบบ #13), **6c** lint sweep 222 → 0 warning + รัด CI เป็น `--max-warnings 0` เรียงลำดับตั้งใจให้เทสต์มาก่อน sweep เพราะ 6c แตะ route handler 38 ไฟล์ · **ของค้าง #13 แก้แล้ว (`3360f32`) รอ live verification** (ดูของค้าง #13 ด้านล่าง) · **เจอของค้างใหม่ #14: dev environment ไม่ reproduce ได้** (ดูด้านล่าง — เป็นเหตุผลหลักที่ 6a ต้องเขียนขั้นตอน setup ลง `CLAUDE.md`)
+**อัปเดต 2026-08-22:** **ของค้าง #13 และ #14 ปิดจบสมบูรณ์แล้วทั้งคู่** — dev environment reproduce ได้ปกติอีกครั้ง (DB `nextjs_rfs@5432` ต่อได้+migration ครบ, Docker Desktop เปิด+`docker compose up -d` ได้ Redis, `tsc`/`npm test` เขียวหมด) และ live verification ของค้าง #13 ครบทั้ง 6 endpoint × role `ADMIN` จริงแล้ว (ดูรายละเอียดในหัวข้อของค้าง #13/#14 ด้านล่าง) — **พร้อมเริ่ม Phase 6a**
+
+**Phase 6 = เคลียร์หนี้ทางเทคนิค — วางแผนครบแล้ว** ([`phase6-plan.md`](./phase6-plan.md), ตัดสินใจครบทุกข้อกับผู้ใช้ ดูหัวข้อ "Resolved decisions" ในแผน) 3 sub-phase: **6a** ลบโค้ดตาย + แก้เอกสารที่ขัดกับโค้ด (รวม `CLAUDE.md` เอง 4 จุด), **6b** เทสต์ auth/ACL ระดับ route handler (7 endpoint × ทุก role — ตัวจับบั๊กแบบ #13), **6c** lint sweep 222 → 0 warning + รัด CI เป็น `--max-warnings 0` เรียงลำดับตั้งใจให้เทสต์มาก่อน sweep เพราะ 6c แตะ route handler 38 ไฟล์
 
 **งานถัดไปที่ควรทำ (เรียงตามลำดับ):**
-1. **กู้ dev DB กลับมาก่อน (ของค้าง #14)** — บล็อก live verification ของทั้ง #13, 6b และ 6c; ผู้ใช้รับไปดำเนินการเองแล้ว (2026-08-21)
-2. **ยืนยันสดของค้าง #13 ให้จบ** — โค้ดแก้ commit ไปแล้ว (`3360f32`) แต่ยังไม่ได้ไล่ 6 endpoint × role บน DB จริง (Phase 6b จะเปลี่ยน matrix นี้เป็นเทสต์)
-3. **ลงมือ Phase 6a → 6b → 6c** ตาม [`phase6-plan.md`](./phase6-plan.md)
-4. **ยืนยันว่า CI workflow รันจริงบน GitHub** — branch `feature/phase5` push ขึ้น origin แล้ว แต่ยังไม่เคยเห็นผลรัน (`.github/workflows/ci.yml` ตั้งไว้ตั้งแต่ 4f, เพิ่ม Lint step ใน 5f แล้ว ยังไม่เคยยืนยันว่าเขียวจริงบน runner — เครื่องนี้ไม่มี `gh` ติดตั้ง ต้องดูจากหน้า Actions หรือติดตั้ง CLI ก่อน)
-5. **วางแผน i18n (`next-intl`) แยกเป็น phase ใหม่ของตัวเอง** — ถูก scope out จาก 4e, Phase 5 และ Phase 6 เพราะเป็น all-or-nothing sweep ทั้งโปรเจกต์
-6. **ของค้าง #9** (`deepmerge-ts`/Prisma) — รอ Prisma ออก patch จริงหรือ Prisma 8 GA ไม่มีอะไรให้ทำตอนนี้
+1. **ลงมือ Phase 6a → 6b → 6c** ตาม [`phase6-plan.md`](./phase6-plan.md) — 6a ยังไม่เริ่ม
+2. **ยืนยันว่า CI workflow รันจริงบน GitHub** — branch `feature/phase5` push ขึ้น origin แล้ว แต่ยังไม่เคยเห็นผลรัน (`.github/workflows/ci.yml` ตั้งไว้ตั้งแต่ 4f, เพิ่ม Lint step ใน 5f แล้ว ยังไม่เคยยืนยันว่าเขียวจริงบน runner — เครื่องนี้ไม่มี `gh` ติดตั้ง ต้องดูจากหน้า Actions หรือติดตั้ง CLI ก่อน)
+3. **วางแผน i18n (`next-intl`) แยกเป็น phase ใหม่ของตัวเอง** — ถูก scope out จาก 4e, Phase 5 และ Phase 6 เพราะเป็น all-or-nothing sweep ทั้งโปรเจกต์
+4. **ของค้าง #9** (`deepmerge-ts`/Prisma) — รอ Prisma ออก patch จริงหรือ Prisma 8 GA ไม่มีอะไรให้ทำตอนนี้
 
 ---
 
@@ -408,7 +408,7 @@ Next.js 16 ตัด `next lint` ออกทั้งหมด ต้อง mig
 
 ผลคือ: user ที่มี role `ADMIN` เข้าดู `GET /api/reports/[id]` ได้ปกติ (endpoint นั้นใช้ `requireAuth` เฉยๆ ไม่มี role-tier gate) และได้ `acl.can_export/can_print: true` กลับมา (เพราะ isAdmin bypass) แต่พอกด Download/Print จริงจะโดน **403 เสมอ** เพราะ role-tier gate ของสอง endpoint ไฟล์กันไว้ก่อนถึง ACL logic เลย มีมาตั้งแต่ 4c ไม่ใช่ regression จาก 5a — เพิ่งสังเกตเห็นชัดตอนหน้า report-detail (5a) ใหม่โชว์ปุ่ม Download/Print ตรงตาม `acl` ที่ endpoint ส่งมา
 
-**สถานะ (2026-08-21): แก้แล้ว commit `3360f32` — เหลือแค่ live verification (บล็อกด้วยของค้าง #14)**
+**สถานะ (2026-08-22): ปิดจบสมบูรณ์แล้ว — โค้ด (`3360f32`) + live verification บน DB จริงทั้งคู่**
 
 ไล่ call site ของ `routeAcceptted` ทั้งหมดก่อนแก้ (ตามที่บันทึกไว้ว่าต้องทำ) พบว่า **ปัญหากว้างกว่าที่บันทึกไว้เดิม**: tier `user` ถูกใช้ 6 จุด ไม่ใช่แค่ 2 จุดที่เป็น download/preview — คือ `GET /api/reports/browse`, `GET`+`POST /api/reports/favorites`, `DELETE /api/reports/favorites/[reportId]`, `GET /api/reports/[id]/download`, `GET /api/reports/[id]/files/[fileId]/download`, `.../preview` แปลว่า role `ADMIN` ธรรมดา **เปิดหน้ารายการรายงานฝั่งผู้ใช้และกด favorite ไม่ได้เลยด้วย** ไม่ใช่แค่ดาวน์โหลด/พรีวิว
 
@@ -416,7 +416,9 @@ Next.js 16 ตัด `next lint` ออกทั้งหมด ต้อง mig
 
 **ระหว่างแก้เจอปัญหาที่ 2 ซ้อนอยู่**: `POST /api/reports/favorites` เป็น**จุดเดียว**ที่เรียก `resolveReportAcl` โดยไม่มี `isAdmin` bypass ทั้งที่ `GET /api/reports/[id]` ส่ง `can_favorite: true` ให้ admin ไปแล้ว → หน้า report detail จะโชว์ปุ่ม favorite ที่กดแล้ว 403 กับรายงาน RESTRICTED/PRIVATE ที่ admin ไม่มี grant — เพิ่ม bypass ให้ตรงกัน พร้อม lookup รายงานแยกในเส้นทาง admin เพราะเดิม `DENY_ALL` ของ `resolveReportAcl` ทำหน้าที่เป็นคำตอบ "ไม่มีรายงานนี้" ไปด้วย ถ้าบายพาสเฉยๆ `report_id` มั่วจะไปตายที่ FK เป็น 500 แทน 403
 
-**ยืนยันแล้ว**: `npx tsc --noEmit` = 0 error, `npx eslint .` = 0 error/222 warning (เท่าเดิม), `lib/auth.test.ts` (ใหม่) 6 เทสต์ผ่าน — pin ตาราง tier ทั้งหมดไว้ รวมเคส "ทุก role ใน tier admin ต้องอยู่ใน tier user ด้วย" เป็น regression guard **ยังค้าง**: live verification ทั้ง 6 endpoint × role (ต้องรอของค้าง #14) และเทสต์ระดับ route handler จริงตาม Phase 6b
+**ยืนยันแล้ว (จากก่อนหน้า)**: `npx tsc --noEmit` = 0 error, `npx eslint .` = 0 error/222 warning (เท่าเดิม), `lib/auth.test.ts` (ใหม่) 6 เทสต์ผ่าน — pin ตาราง tier ทั้งหมดไว้ รวมเคส "ทุก role ใน tier admin ต้องอยู่ใน tier user ด้วย" เป็น regression guard
+
+**Live verification ปิดจบแล้ว (2026-08-22, หลังของค้าง #14 หาย)**: mint JWT ตรงด้วย `createToken`'s signing scheme ให้ user role `ADMIN` ธรรมดาจริงจาก DB (`admin2`, ไม่ใช่ token synthetic ทดสอบ) ยิงครบทั้ง 6 endpoint ผ่าน dev server ที่รันจริง (`localhost:3501`) ด้วยรายงาน/ไฟล์จริงที่มีอยู่แล้วในdev DB (`35f794a4-...`, ไม่ต้องสร้าง fixture ใหม่): `GET /api/reports/browse` → 200, `GET /api/reports/favorites` → 200, `POST /api/reports/favorites` → 200 (สร้างจริงแล้วลบทิ้งหลังทดสอบ), `DELETE /api/reports/favorites/[reportId]` → 200, `GET /api/reports/[id]/download` → 200, `GET /api/reports/[id]/files/[fileId]/download` → 200 — **ไม่มี endpoint ไหน 403 เลย ตรงตามที่ตั้งใจแก้** `GET .../preview` ตอบ 500 แต่เป็นเพราะไฟล์ seed ตัวนั้นไม่ใช่ xlsx จริง (`exceljs`'s "Can't find end of central directory") ซึ่งพิสูจน์ว่า request **ผ่าน role gate ไปถึง handler logic แล้ว** เหมือนกับ download ไฟล์เดียวกันที่สำเร็จ ไม่ใช่ 403 จาก auth — ไม่ใช่ของค้างของ #13 ไม่บันทึกเป็นของค้างใหม่แยก (ปัญหา test fixture data ไม่ใช่โค้ด, ครอบคลุมอยู่แล้วโดย Phase 6b ที่จะเขียนไฟล์ fixture จริงเอง) **Phase 6b จะเปลี่ยนขั้นตอน manual นี้เป็นเทสต์ถาวรตามแผน**
 
 ### 14. Dev environment ไม่ reproduce ได้ — เจอตอนเปิด session 2026-08-21
 
@@ -428,7 +430,7 @@ Next.js 16 ตัด `next lint` ออกทั้งหมด ต้อง mig
 4. **Docker ไม่มีในเครื่องแล้ว** — `docker` ไม่อยู่ทั้ง PATH ของ PowerShell และ Git Bash, ไม่มี service ชื่อ docker → `docker compose up -d` (Redis 6380 ที่ 5f เพิ่งตั้งไว้) รันไม่ได้ ทำให้ rate-limit/2FA ทดสอบสดไม่ได้ด้วย
 5. `gh` ก็ไม่ได้ติดตั้ง → ยืนยัน CI บน GitHub จากเครื่องนี้ไม่ได้
 
-**สถานะ**: ข้อ 1-2 แก้แล้วในเครื่อง (ไม่มีไฟล์ที่ต้อง commit) · ข้อ 3-4 **ผู้ใช้รับไปกู้ DB เดิมกลับมาเอง** (ตัดสินใจ 2026-08-21 — ทางเลือก "สร้าง DB ทดสอบใหม่บน instance 5434 ด้วย `migrate deploy`" ถูกเสนอและไม่เลือก) · ข้อ 5 ยังค้าง · **6a รับหน้าที่เขียนลำดับ setup ที่ถูกต้องพร้อม failure signature ทั้ง 2 แบบลง `CLAUDE.md`** เพื่อไม่ให้ session ถัดไปต้องไล่หาใหม่
+**สถานะ (2026-08-22): ปิดแล้วเกือบหมด** — ข้อ 1-2 แก้แล้วในเครื่อง (ไม่มีไฟล์ที่ต้อง commit) · **ข้อ 3-4 ผู้ใช้กู้กลับมาเรียบร้อยแล้ว**: `.env`/`.env.local`'s `DATABASE_URL` ชี้ `nextjs_rfs@5432` ถูกต้องแล้ว ยืนยันด้วย `npx prisma migrate status` = "Database schema is up to date!" (8 migrations); Docker Desktop ติดตั้งอยู่แต่ยังต้อง `Start-Process` เองทุกครั้งที่เปิดเครื่องใหม่ (ไม่ auto-start) — เปิดแล้ว + `docker compose up -d` ได้ `rfs-redis` ที่ 6380 ตามปกติ; `npx tsc --noEmit` = 0 error, `npm test` = 21/21 ผ่าน (15 เดิม + 6 ของ `lib/auth.test.ts`) ยืนยันว่า environment ใช้งานได้เต็มรูปแบบอีกครั้ง · ข้อ 5 (`gh` ไม่มี) ยังค้าง ไม่บล็อกอะไรนอกจากการยืนยัน CI บนเครื่องนี้โดยตรง · **6a รับหน้าที่เขียนลำดับ setup ที่ถูกต้องพร้อม failure signature ทั้ง 2 แบบลง `CLAUDE.md`** เพื่อไม่ให้ session ถัดไปต้องไล่หาใหม่ (รวม note เรื่อง Docker Desktop ไม่ auto-start ด้วย)
 
 ---
 
