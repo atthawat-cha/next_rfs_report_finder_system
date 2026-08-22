@@ -74,7 +74,7 @@
 | Endpoint ค้นหาแบบ ACL-filtered สำหรับ non-admin | Must | ✅ (`GET /api/reports/browse`) | 1/2 |
 | Preview ฟอร์ม (PDF) inline ในระบบ ก่อนดาวน์โหลด — รายงานประเภทใบพิมพ์ | Should | ✅ (`<embed>` ผ่าน `ReportFilePreview`, ใช้ทั้ง dialog เดิมและหน้า report-detail ใหม่) | 4c/5a |
 | Preview ตัวอย่างข้อมูลเป็นตาราง — รายงานประเภทรายงานข้อมูล (parse excel ด้วย `exceljs`) | Should | ✅ | 4c/5a |
-| ค้นหาแบบ fuzzy/typo-tolerant | Could | ❌ (ตอนนี้เป็น `ILIKE` substring match ผ่าน trigram index — ช่วยเรื่อง substring แต่ไม่ทนตัวสะกดผิดจริง) | 1+ (ประเมินความจำเป็นก่อน) |
+| ค้นหาแบบ fuzzy/typo-tolerant | Could | ✅ (`pg_trgm` `similarity()` เพิ่มเข้า `reports/browse`'s WHERE พร้อม rank-aware pagination — ยืนยันแล้วว่าจับคำสะกดผิดสลับตัวอักษรได้จริง เช่น "RTP-003" เจอ "RPT-003") | 1/7d |
 | Card view / Table view toggle สำหรับผลการค้นหา | Should | ✅ (`reportCards.tsx` เลิก hardcode, ผูก search จริงแล้ว) | 1 |
 
 ## 6. Favorites (FR-6)
@@ -108,7 +108,7 @@
 | แชร์รายงานให้ทั้งแผนก | Should | ✅ (`share_type=DEPARTMENT` มีอยู่แล้วตั้งแต่ 3b, เพิ่ม fan-out แจ้งเตือนให้ทุกคนในแผนกยกเว้นผู้แชร์เอง) | 4e |
 | สร้างลิงก์แชร์ (share token) พร้อมวันหมดอายุ | Should | ✅ (`share_type=LINK`, `expires_at` optional) | 3 |
 | กำหนดสิทธิ์ download/edit บนการแชร์แต่ละครั้ง | Should | ⚠️ (`can_download` บังคับใช้จริง; `can_edit` เก็บใน schema แต่ยังไม่มี anonymous-edit flow ให้ enforce เลย — ตัดสินใจไว้แล้วว่าเป็นการตัดสินใจ ไม่ใช่ของค้าง) | 3 |
-| Cleanup job ลบ/ปิดใช้งานลิงก์ที่หมดอายุอัตโนมัติ | Should | ❌ (เช็ค lazy ตอน query เท่านั้น ไม่มี cron — ยังไม่มี job scheduler ในระบบ) | 3 |
+| Cleanup job ลบ/ปิดใช้งานลิงก์ที่หมดอายุอัตโนมัติ | Should | ⚠️ (job scheduler จริงมีแล้วตั้งแต่ 7a — `check-report-expiry` รันทุกวันจริง แต่ทำหน้าที่แค่ "แจ้งเตือนก่อนหมดอายุ" ไม่ได้ลบ/ปิดใช้งานลิงก์ที่หมดอายุแล้วจริง การบังคับหมดอายุยังเป็น lazy check ตอน query เหมือนเดิม) | 3/7a |
 
 ## 9. Notifications (FR-9)
 
@@ -139,8 +139,8 @@
 | สรุปจำนวนรายงานทั้งหมด แยกตามสถานะ/หมวดหมู่/แผนก | Must | ✅ (`GET /api/dashboard/summary`) | 3 |
 | รายงานที่ถูกดาวน์โหลด/เข้าชมมากสุด (top N) | Must | ✅ (`GET /api/dashboard/top-reports` — จัดอันดับด้วย `download_count`, ไม่ใช่ `view_count` ที่ยังไม่ถูก increment ที่ไหนเลย) | 3 |
 | พื้นที่จัดเก็บที่ใช้ไป | Should | ✅ (sum `report_files.file_size` ทุกแถวรวม version เก่า — ยืนยันด้วย SQL ตรงแล้วว่าตรงกับที่ API คืน) | 3 |
-| กราฟแนวโน้มการใช้งานรายวัน/รายเดือน | Should | ⚠️ (รายวันเท่านั้น, `GET /api/dashboard/trends`, ยังไม่มี toggle รายเดือน) | 3 |
-| Cache/precompute สถิติหนัก (ไม่คำนวณสดทุกครั้ง) | Should | ❌ | 3/4 |
+| กราฟแนวโน้มการใช้งานรายวัน/รายเดือน | Should | ✅ (`GET /api/dashboard/trends?granularity=day\|month` มี toggle จริงในหน้า dashboard) | 3/7c |
+| Cache/precompute สถิติหนัก (ไม่คำนวณสดทุกครั้ง) | Should | ✅ (Redis cache-aside ทั้ง 4 endpoint dashboard, TTL 60s, fail-open ยืนยันสดแล้วทั้ง cache-hit และตอน Redis ล่ม) | 3/7c |
 
 ## 12. User & Department Management (FR-12)
 
@@ -157,7 +157,7 @@
 |---|---|---|---|
 | หน้า Settings อ่าน/เขียนตาราง `settings` จริง | Should | ✅ (`GET`/`PUT /api/settings/system` ตัวใช้งานจริงตัวแรกตั้งแต่ 4e เก็บแค่ 2 คีย์ ขยายเป็น 10 คีย์ครอบ storage+general ใน 5e; `GET /api/settings/public` ใหม่สำหรับค่าที่ต้องแสดงก่อน login เช่น `ORG_NAME`) | 4e/5e |
 | ตั้งค่าวิธี login (provider selection) | Should | ❌ (ตัดสินใจตัดออกจากสโคปแล้ว — aspirational, ไม่ทำ) | 4d (dropped) |
-| ตั้งค่า storage backend (local/MinIO/S3) | Should | ❌ (5e ทำให้ **path ของ local storage** ตั้งค่าได้ผ่าน `UPLOAD_BASE_PATH` + `lib/storage-path.ts` แล้ว แต่การสลับไป backend อื่น เช่น S3/MinIO ยังไม่มีเลย เป็นคนละเรื่องกัน) | 4/5e (partial ที่ path ไม่ใช่ backend) |
+| ตั้งค่า storage backend (local/MinIO/S3) | Should | ⚠️ (7d เพิ่ม `StorageBackend` interface จริง — `local` ใช้งานได้เต็มรูปแบบ, `s3.ts` เป็น stub throw "not implemented" ตั้งใจเพราะไม่มี MinIO/S3 จริงให้ทดสอบ — ยังสลับ backend จริงไม่ได้ในทางปฏิบัติ) | 4/5e/7d |
 | Persist ธีม (dark/light) ต่อผู้ใช้ฝั่ง server | Should | ✅ (`users.theme_preference` + `/api/settings/theme`, ไม่ใช้ตาราง `settings` เดิมตามที่ตัดสินใจไว้) | 3 |
 | จำกัดขนาดไฟล์อัปโหลดสูงสุดต่อ `file_kind` แบบตั้งค่าได้ | Could | ✅ (ตั้งค่าได้จริงผ่านหน้า `/settings/storage` + `PUT /api/settings/system`, มี cache invalidation ทันทีหลัง save — ปิดของค้างที่ 4e ทำได้แค่ค่าคงที่ในโค้ด) | 4e/5e |
 
@@ -176,7 +176,7 @@
 | Sidebar/Navbar responsive layout | Must | ✅ | — |
 | Data table มาตรฐาน (`SharedDataTable`) พร้อม sort/pagination | Must | ⚠️ (client-side sort ใช้แพร่หลาย; server-side pagination ผ่าน `parsePagination` ตอนนี้ครอบ reports/browse, activity-logs, report/manage, favorites, departments, users/user, roles — 4 endpoint หลังเป็น opt-in คือคืน full list เหมือนเดิมถ้าไม่ส่ง `page`/`pageSize` มา เพราะมี combobox ที่พึ่ง full list อยู่ — `baseconfig/menus` ตั้งใจไม่ paginate เพราะพึ่ง full-list-adjacency ในการจัดกลุ่ม) | 0/1/7b |
 | i18n ไทย/อังกฤษเป็นระบบ (`next-intl`) | Should | ❌ (ปนกันแบบ hardcode) | 2+ |
-| Loading/skeleton state มาตรฐานทุกหน้า list | Should | ⚠️ (ไม่สม่ำเสมอ) | 1+ |
+| Loading/skeleton state มาตรฐานทุกหน้า list | Should | ⚠️ (7b เพิ่ม `SkeletonTable` ให้อีก 5 หน้าที่ไม่มีมาก่อน — `favorites`/`user-department`/`user-list`/`reports/categories`/`reports/tags` — แต่ยังไม่ครบทุกหน้า list ในระบบ ไม่สม่ำเสมอ 100%) | 1/7b |
 | Toast notification สำหรับผลลัพธ์ action (`react-hot-toast`) | Must | ✅ | — |
 
 ## 16. Security & Compliance Features
@@ -189,7 +189,7 @@
 | Security headers (CSP, HSTS, X-Content-Type-Options) | Must | ✅ (`next.config.js` `headers()`, ยืนยันสดทุก route ทั้งหน้าเว็บและ `/api/*`) | 4a |
 | Antivirus scan ไฟล์อัปโหลด (ClamAV) | Should | ❌ deferred — ไม่มี ClamAV daemon ยืนยันใน deploy environment | 4c (dropped) |
 | Dependency vulnerability scanning (CI) | Should | ⚠️ (`.github/workflows/ci.yml` — `npm audit --audit-level=high`, non-blocking ชั่วคราว — `next`/`postcss`/`sharp` advisories ที่เคยเป็นเหตุผลเดิมถูกปิดไปแล้วทั้งหมดโดย `dependency-upgrade-plan.md`, เหตุผลที่เหลือตอนนี้คือของค้าง #9 (`deepmerge-ts` ผ่าน `@prisma/config`) เท่านั้น — ตรงกับ comment ใน `ci.yml` เองแล้ว) | 4f |
-| Structured logging + error tracking (pino/Sentry) | Should | ⚠️ (`lib/logger.ts`, pino self-hosted — wire เข้า `logActivity`'s swallowed catch เท่านั้น ยังไม่ mass-replace `console.*` ทั้งโปรเจกต์, ตั้งใจไม่แตะ `lib/auth.ts`/Edge runtime) | 4f |
+| Structured logging + error tracking (pino/Sentry) | Should | ⚠️ (7a mass-replace `console.*` → `lib/logger.ts`'s pino จริงครบทุก API route handler + `lib/*` ที่เกี่ยวข้อง รวม `logDevError` เองก็ต่อ pino แล้วนอก dev — เหลือแค่ client component console.* ที่ตั้งใจไม่แตะเพราะ pino เป็น Node-only, และยังไม่มี error-tracking vendor เช่น Sentry ต่อจาก pino เลย ตัดสินใจไว้แล้วว่าไม่ทำรอบ 7a) | 4f/7a |
 | Automated test suite (unit/integration/E2E) | Must | ✅ (Vitest, `lib/report-acl.test.ts` 7 test — integration ต่อ dev DB จริง; E2E ยังไม่ทำ) | 4b |
 
 ---
@@ -198,8 +198,8 @@
 
 | สถานะ | จำนวน feature (จาก 100 รายการ) |
 |---|---|
-| ✅ ทำงานได้จริง | 82 |
-| ⚠️ มีบางส่วน/mock/schema เฉย ๆ | 7 |
-| ❌ ยังไม่มีเลย | 11 |
+| ✅ ทำงานได้จริง | 85 |
+| ⚠️ มีบางส่วน/mock/schema เฉย ๆ | 8 |
+| ❌ ยังไม่มีเลย | 7 |
 
-> ตัวเลขฐานนับจากตารางด้านบนจริงล่าสุด 2026-08-19 หลัง Phase 5a-5f (รวมทุกแถว feature ไม่รวมแถวหมายเหตุ/ดีไซน์โน้ต) แก้เพิ่มเฉพาะ 2 แถว ticket ที่ Phase 7e เปลี่ยนจาก ❌→✅ จริง — **ไม่ใช่การนับใหม่ทั้งตาราง** แถวอื่นที่ Phase 6/7 อาจแตะไปแล้วยังไม่ได้ไล่ตรวจซ้ำทั้งหมด ไม่ใช่ story-point estimation — ใช้สื่อสารสัดส่วนงานที่เหลือ ไม่ใช่ใช้วางแผน timeline โดยตรง งานที่เหลือส่วนใหญ่กระจุกอยู่ที่ i18n, E2E test, S3/MinIO backend จริง (interface มีแล้วตั้งแต่ 7d, ตัวจริงยังไม่มี), auth-provider selection (dropped), และ ClamAV AV scan (deferred)
+> ตัวเลขฐานนับจากตารางด้านบนจริงล่าสุด 2026-08-19 หลัง Phase 5a-5f (รวมทุกแถว feature ไม่รวมแถวหมายเหตุ/ดีไซน์โน้ต) รอบนี้ (2026-08-22) แก้เพิ่ม 7 แถวที่ Phase 7 เปลี่ยนสถานะจริง (ticket ×2, fuzzy search, cleanup job, monthly trend, dashboard cache, storage backend interface) — **ยังไม่ใช่การไล่ตรวจซ้ำทั้ง 100 แถว** แถวอื่นที่ Phase 6/7 อาจแตะไปแล้วบางส่วน (เช่น skeleton loading, structured logging) ปรับ justification text ให้ตรงแล้วแต่สัญลักษณ์ไม่เปลี่ยน ไม่ใช่ story-point estimation — ใช้สื่อสารสัดส่วนงานที่เหลือ ไม่ใช่ใช้วางแผน timeline โดยตรง งานที่เหลือส่วนใหญ่กระจุกอยู่ที่ i18n, E2E test, S3/MinIO backend จริง (interface มีแล้วตั้งแต่ 7d, ตัวจริงยังไม่มี), auth-provider selection (dropped), และ ClamAV AV scan (deferred)
