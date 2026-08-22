@@ -113,6 +113,17 @@ pages are real, concrete gaps:
 
 ## Sub-phase 8a — Migrate `middleware.ts` → `proxy.ts`
 
+**Closed 2026-08-22.** Built exactly as planned, with the full extra-rigor verification the runtime
+discovery called for. The codemod produced a clean rename (no stray `runtime` export, `config`/
+`matcher` byte-identical). All 3 stale runtime-justification comments and CLAUDE.md's 3 references
+were corrected, plus 2 more found during implementation that weren't in the original audit
+(`proxy.ts`'s own Thai comment mentioning "middleware", and `lib/auth.ts:127`'s generic docstring
+mention) — same class of finding, fixed the same way. The Node-runtime change was confirmed twice:
+once during the pre-plan audit (temporary `EdgeRuntime`/`process.version` log, Edge confirmed), and
+again after the migration (same technique, Node confirmed: `process.version` returned a real
+version string, `EdgeRuntime` was `undefined`). See `00-progress.md`'s Phase 8 section for the full
+live-verification log (every auth-gate path exercised, not just a build check).
+
 ### 1. The migration itself
 
 Run `npx @next/codemod@canary middleware-to-proxy .` (renames the file and the exported function

@@ -5,7 +5,7 @@ import { getAuthFromRequest } from './lib/auth';
 // หน้าที่ไม่ต้อง authentication
 const publicPaths = ['/login', '/'];
 
-export async function middleware(request: NextRequest) {
+export async function proxy(request: NextRequest) {
   const { pathname } = request.nextUrl;
 
   // ดึงข้อมูล user จาก token (cookie ชื่อ 'auth-token' ตาม COOKIE_NAME ใน lib/auth.ts)
@@ -41,7 +41,7 @@ export const config = {
      * - favicon.ico (favicon file)
      */
     '/app/:path*',
-    // ไม่ exclude '/login' ที่นี่ — middleware ต้องทำงานบน /login เพื่อ redirect
+    // ไม่ exclude '/login' ที่นี่ — proxy ต้องทำงานบน /login เพื่อ redirect
     // user ที่ login แล้วไปหน้า dashboard (ตัว /login เองอยู่ใน publicPaths อยู่แล้ว)
     '/((?!api|_next/static|_next/image|favicon.ico).*)',
   ],

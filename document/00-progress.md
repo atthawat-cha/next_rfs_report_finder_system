@@ -36,10 +36,10 @@
 
 **Phase 7 ปิดครบทั้ง 5 sub-phase แล้ว (2026-08-22)** ([`phase7-plan.md`](./phase7-plan.md)) — 7a = job scheduler จริงตัวแรกของระบบ + pino logging sweep + เจอบั๊กจริง 3 ตัว; 7b = pagination 4 endpoint (opt-in แทน unconditional — เจอ combobox 2 จุดที่พึ่ง full list) + categories/tags CRUD ตัวจริงตัวแรก (เดิมเป็น stub ไม่ทำงานเลย) + เจอบั๊กความปลอดภัยจริง (`password` hash หลุดใน `GET /api/users/user`) + บั๊ก UX จริง (department create ไม่เคย toast/redirect); 7c = dashboard monthly toggle + Redis cache 4 endpoint ยืนยัน fail-open จริงตอน Redis ล่ม + cache-hit จริงด้วย sentinel test; 7d = storage backend interface (local จริง/S3 stub) ย้าย 5 call site + fuzzy search จริงด้วย `pg_trgm` similarity พร้อม rank-aware pagination; 7e = support tickets CRUD+UI ตัวจริงตัวแรก + notification 3 ประเภทใหม่ (ต้อง migration จริงเพราะ `NotificationType` เป็น Postgres enum เจอของค้าง #1's `search_vector` false-diff อีกครั้ง) ดูรายละเอียดใต้ตาราง Phase 7 ด้านล่าง
 
-**Phase 8 มีแผนแล้ว ยังไม่มีโค้ด** ([`phase8-plan.md`](./phase8-plan.md), เขียน 2026-08-22, ทำงานบน branch `feature/phase8`) — 4 sub-phase: 8a proxy migration (เจอว่าเป็น runtime change จริง), 8b share cleanup job, 8c zod audit, 8d pagination/skeleton 2 หน้าสุดท้าย ดูรายละเอียดใต้ตาราง Phase 8 ด้านบน
+**Phase 8 เริ่มแล้ว** ([`phase8-plan.md`](./phase8-plan.md), เขียน 2026-08-22, ทำงานบน branch `feature/phase8`) **8a ปิดจบแล้ว (2026-08-22)**: migrate `middleware.ts`→`proxy.ts` จริง เจอว่าเป็น Edge→Node runtime change จริง (ไม่ใช่แค่ rename) ยืนยันสดครบทุก auth flow + ปิดของค้าง #15 ไปด้วย ดูรายละเอียดใต้ตาราง Phase 8 ด้านบน
 
 **งานถัดไปที่ควรทำ (เรียงตามลำดับ):**
-1. **เริ่ม Phase 8a** (migrate `middleware.ts` → `proxy.ts`) — แผนพร้อมแล้ว ([`phase8-plan.md`](./phase8-plan.md)) จะปิดของค้าง #15 ไปด้วยเมื่อเสร็จ
+1. **เริ่ม Phase 8b** (job cleanup ลบ `report_shares` ที่หมดอายุจริง) — แผนพร้อมแล้ว ([`phase8-plan.md`](./phase8-plan.md))
 2. **ยืนยันว่า CI workflow รันจริงบน GitHub** — พักไว้ตามที่ผู้ใช้เลือก (2026-08-22): เครื่องนี้ไม่มี `gh` CLI/token ให้สร้าง PR อัตโนมัติ, ให้ลิงก์ compare (`main...feature/phase5`) ไว้ให้ผู้ใช้เปิดเองแล้ว รอผู้ใช้เปิด PR หรือขอให้ลองติดตั้ง `gh`
 3. **วางแผน i18n (`next-intl`) แยกเป็น phase ใหม่ของตัวเอง** — ถูก scope out จาก 4e, Phase 5, Phase 6, Phase 7 และ Phase 8 เพราะเป็น all-or-nothing sweep ทั้งโปรเจกต์
 4. **ของค้าง #9** (`deepmerge-ts`/Prisma) — รอ Prisma ออก patch จริงหรือ Prisma 8 GA ไม่มีอะไรให้ทำตอนนี้
@@ -387,17 +387,24 @@
 
 ---
 
-### Phase 8 — Proxy Migration, Share Cleanup, Validation Audit, List Consistency 📝 มีแผนแล้ว ยังไม่มีโค้ด
+### Phase 8 — Proxy Migration, Share Cleanup, Validation Audit, List Consistency 🚧 เริ่มแล้ว
 [แผนเต็ม →](./phase8-plan.md) — ผู้ใช้เลือกจาก backlog ที่เหลือจริงและทำได้โดยไม่ต้องรอ infra ภายนอก (ตัดสินใจ 2026-08-22) แยกเป็น 4 sub-phase, ทำงานบน branch ใหม่ `feature/phase8`
 
 | Sub-phase | งาน | สถานะ |
 |---|---|---|
-| **8a** | Migrate `middleware.ts` → `proxy.ts` (Next.js 16 deprecation) — **เจอว่าไม่ใช่แค่ rename**: `middleware.ts` รันบน Edge runtime จริง (ยืนยันด้วย live test) แต่ `proxy.ts` บังคับใช้ Node.js runtime ตายตัว ไม่มีทาง override กลับ Edge | ❌ |
+| **8a** | Migrate `middleware.ts` → `proxy.ts` (Next.js 16 deprecation) — **เจอว่าไม่ใช่แค่ rename**: `middleware.ts` รันบน Edge runtime จริง (ยืนยันด้วย live test) แต่ `proxy.ts` บังคับใช้ Node.js runtime ตายตัว ไม่มีทาง override กลับ Edge | ✅ |
 | **8b** | Job cleanup ลบ `report_shares` ที่หมดอายุแล้วจริง (ต่างจาก `check-report-expiry` เดิมที่แค่เตือนล่วงหน้า) — schema ไม่มี soft-delete field เลยต้องลบจริง | ❌ |
 | **8c** | Audit zod validation ทุก endpoint — เจอแล้วว่า audit สะอาด (28/28 endpoint ที่รับ body validate ครบ) เหลือแค่ยืนยันซ้ำให้ครบ 100% | ❌ |
 | **8d** | Pagination/skeleton ให้ 2 หน้าที่เหลือจริง: `reports/report-list` (หน้าหลักค้นหารายงาน ไม่มีทั้ง skeleton และ pagination UI เลย) กับ `user-management/activity` (มี pagination แล้ว ขาดแค่ skeleton) | ❌ |
 
 **Resolved decisions (ผู้ใช้, 2026-08-22)**: ทำครบทั้ง 4 sub-phase ตามลำดับ 8a→8b→8c→8d, 8a ทำต่อแม้เจอว่าเป็น runtime change จริงแต่เพิ่มความเข้มงวดในการยืนยันสด (ไม่ใช่แค่ rename แล้วจบ), ไม่ย้าย rate-limit/pino เข้า proxy.ts ในรอบนี้ (บันทึกไว้เป็นตัวเลือกใหม่ที่เปิดขึ้นแต่ไม่ทำ), 8b ลบจริงไม่เพิ่ม soft-delete field
+
+**8a ปิดจบแล้ว** (2026-08-22) — **ปิดของค้าง #15 ไปด้วย**:
+- [x] รัน `npx @next/codemod@canary middleware-to-proxy .` จริง — เปลี่ยน `middleware.ts` → `proxy.ts` + ฟังก์ชัน `middleware()` → `proxy()` สำเร็จ ไม่มี `runtime` export หลุดมา (ตรงตามที่คาด เพราะ proxy.ts ไม่รองรับ), `config`/`matcher` เหมือนเดิมทุกตัวอักษร
+- [x] แก้ comment ที่อ้างเหตุผล "middleware.ts รันบน Edge" 3 จุด (`lib/rate-limit.ts`, `lib/logger.ts`, `lib/log-dev-error.ts`) ให้บอกความจริงใหม่ว่า `proxy.ts` รันบน Node แล้ว — เก็บการแยก ioredis/pino ออกจาก `lib/auth.ts` ไว้เหมือนเดิมแต่เปลี่ยนเหตุผลจาก "ทำไม่ได้ทางเทคนิค" เป็น "ตัดสินใจแยกไว้เฉยๆ" (ไม่ได้ย้ายจริงตามที่ตัดสินใจไว้)
+- [x] แก้ `CLAUDE.md` 3 จุด (บรรทัด 52, 56, 123 เดิม) — `middleware.ts`/`middleware()` → `proxy.ts`/`proxy()` พร้อมเพิ่มโน้ตอธิบาย Node runtime ใหม่ + แก้ comment ภายใน `proxy.ts` เองอีก 1 จุด และ `lib/auth.ts:127` อีก 1 จุด (generic mention "Route Handlers or middleware" → "...or proxy.ts")
+- [x] `app/page.tsx`'s marketing copy "middleware protection" และ `hook/useSidebars.ts`'s zustand `middleware` API (คนละเรื่องกันเลย ไม่ใช่ Next.js middleware) — ตัดสินใจไม่แตะตามแผน
+- [x] ยืนยันสดครบเข้มงวดตามที่ตัดสินใจไว้ (ไม่ใช่แค่ build ผ่าน): เปิด dev server จริง เห็น deprecation warning "middleware file convention is deprecated" ที่เคยขึ้นทุกครั้งตอน start **หายไปแล้ว**; ทดสอบ runtime ซ้ำด้วยวิธีเดิมที่ใช้ค้นพบปัญหา (`typeof EdgeRuntime`/`process.version` ชั่วคราวใน `proxy.ts`) → ยืนยัน `typeof EdgeRuntime === 'undefined'` + `process.version === 'v20.20.0'` จริง (เปลี่ยนจาก Edge เป็น Node จริงตามที่คาด) ลบโค้ดทดสอบออกหลังยืนยันเสร็จ; ทดสอบ auth gate ครบทุก flow: unauth→`/dashboard`→307 ไป `/login?redirect=%2Fdashboard`, unauth→`/login`→200, unauth→`/shares/[token]`→200 (bypass ทำงาน), auth (JWT admin จริง)→`/dashboard`→200, auth→`/login`→307 ไป `/dashboard`; ยืนยัน matcher exclusion จริงด้วย log (ไม่มี proxy log โผล่เลยสำหรับ `/api/*`, `/favicon.ico`, `/_next/*` — 7 request ที่ควรผ่าน proxy ก็เห็น log ครบ 7 บรรทัดพอดี ไม่มากไม่น้อย); `npx tsc --noEmit` = 0 error, `npx eslint .` = 0 warning, `npm test` = 32/32 ผ่าน, `npm run build` = exit 0 — build output เปลี่ยนป้ายเป็น **"ƒ Proxy (Middleware)"** เองด้วย ยืนยันว่า Next.js จำได้ว่าเป็น proxy จริง
 
 ---
 
@@ -564,9 +571,9 @@ Next.js 16 ตัด `next lint` ออกทั้งหมด ต้อง mig
 
 **สถานะ (2026-08-22): ปิดแล้วเกือบหมด** — ข้อ 1-2 แก้แล้วในเครื่อง (ไม่มีไฟล์ที่ต้อง commit) · **ข้อ 3-4 ผู้ใช้กู้กลับมาเรียบร้อยแล้ว**: `.env`/`.env.local`'s `DATABASE_URL` ชี้ `nextjs_rfs@5432` ถูกต้องแล้ว ยืนยันด้วย `npx prisma migrate status` = "Database schema is up to date!" (8 migrations); Docker Desktop ติดตั้งอยู่แต่ยังต้อง `Start-Process` เองทุกครั้งที่เปิดเครื่องใหม่ (ไม่ auto-start) — เปิดแล้ว + `docker compose up -d` ได้ `rfs-redis` ที่ 6380 ตามปกติ; `npx tsc --noEmit` = 0 error, `npm test` = 21/21 ผ่าน (15 เดิม + 6 ของ `lib/auth.test.ts`) ยืนยันว่า environment ใช้งานได้เต็มรูปแบบอีกครั้ง · ข้อ 5 (`gh` ไม่มี) ยังค้าง ไม่บล็อกอะไรนอกจากการยืนยัน CI บนเครื่องนี้โดยตรง · **6a รับหน้าที่เขียนลำดับ setup ที่ถูกต้องพร้อม failure signature ทั้ง 2 แบบลง `CLAUDE.md`** เพื่อไม่ให้ session ถัดไปต้องไล่หาใหม่ (รวม note เรื่อง Docker Desktop ไม่ auto-start ด้วย)
 
-### 15. `middleware.ts` file convention deprecated ใน Next.js 16 — เจอระหว่าง Phase 7a live check (2026-08-22)
+### 15. `middleware.ts` file convention deprecated ใน Next.js 16 — ✅ ปิดแล้ว (Phase 8a, 2026-08-22)
 
-`next dev` แจ้ง deprecation warning ใหม่ตอนสตาร์ท: `The "middleware" file convention is deprecated. Please use "proxy" instead.` พร้อม codemod (`npx @next/codemod@canary middleware-to-proxy`) ยังไม่กระทบ build/runtime (`next build`/`next dev` ยังทำงานได้ปกติ ไม่ใช่ error) และ 7a ไม่ได้แตะ `middleware.ts` เลย จึงไม่ได้แก้ในรอบนี้ — บันทึกไว้เป็นของค้างให้ phase ที่เหมาะสม (อาจเป็นตอนวางแผน Phase 7 ถัดๆไปหรือแยกเป็นงานเล็กเดี่ยวๆ) พิจารณา migrate ก่อน `middleware` convention ถูกถอดออกจริงในเวอร์ชันถัดไป
+`next dev` แจ้ง deprecation warning ใหม่ตอนสตาร์ท: `The "middleware" file convention is deprecated. Please use "proxy" instead.` พร้อม codemod (`npx @next/codemod@canary middleware-to-proxy`) ยังไม่กระทบ build/runtime (`next build`/`next dev` ยังทำงานได้ปกติ ไม่ใช่ error) และ 7a ไม่ได้แตะ `middleware.ts` เลย จึงไม่ได้แก้ในรอบนั้น — เจอตอน Phase 8a ว่าไม่ใช่แค่ rename เฉยๆ: `proxy.ts` บังคับใช้ Node.js runtime (ต่างจาก `middleware.ts` เดิมที่รันบน Edge จริง ยืนยันด้วย live test) migrate เสร็จแล้วพร้อมยืนยันสดครบทุก auth flow — ดูรายละเอียดเต็มใต้ตาราง Phase 8
 
 ---
 

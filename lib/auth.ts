@@ -124,7 +124,7 @@ export function getTokenFromCookie(req: NextRequest): string | undefined {
 
 /**
  * Validate token from cookie or Authorization header.
- * Use inside Next.js Route Handlers or middleware.
+ * Use inside Next.js Route Handlers or proxy.ts.
  *
  * @returns decoded payload or a 401 NextResponse
  */

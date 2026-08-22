@@ -16,10 +16,13 @@ import pino from "pino";
  * architecture. Plain JSON output has no transport, so no worker thread ever
  * spawns - trades away colorized dev log output for routes that don't 500.
  *
- * Node-runtime only - do NOT import this from middleware.ts or anything it
- * pulls in (lib/auth.ts). middleware.ts runs on the Edge runtime, which
- * can't bundle pino's transports at all, the same reason lib/rate-limit.ts
- * (ioredis) is kept out of lib/auth.ts.
+ * Node-runtime only - as of Phase 8, `proxy.ts` (formerly `middleware.ts`)
+ * actually runs on Node (Next.js 16's Proxy defaults to it, with no way to
+ * opt back into Edge), so importing this from there would technically work
+ * now. It's still kept out of `lib/auth.ts` on purpose: that file is
+ * imported by other Node-runtime call sites that don't need pino, so the
+ * separation stays as a deliberate choice, not an enforced one - same
+ * reasoning as lib/rate-limit.ts's ioredis usage.
  */
 const logger = pino({
   level: process.env.LOG_LEVEL ?? (process.env.NODE_ENV === "production" ? "info" : "debug"),
