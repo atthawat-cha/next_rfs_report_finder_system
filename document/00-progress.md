@@ -32,11 +32,13 @@
 
 **Phase 6 = เคลียร์หนี้ทางเทคนิค** ([`phase6-plan.md`](./phase6-plan.md), ตัดสินใจครบทุกข้อกับผู้ใช้ ดูหัวข้อ "Resolved decisions" ในแผน) — **ปิดครบทั้ง 3 sub-phase**: 6a ✅ ลบโค้ดตาย + แก้เอกสารที่ขัดกับโค้ด, 6b ✅ เทสต์ auth/ACL ระดับ route handler, 6c ✅ lint sweep 222 → 0 warning จริง + รัด CI เป็น `--max-warnings 0`
 
+**Phase 7 มีแผนแล้ว ยังไม่มีโค้ด** ([`phase7-plan.md`](./phase7-plan.md), เขียน 2026-08-22 — ผู้ใช้เลือกทำ backlog ที่เหลือทั้งหมด แยก 5 sub-phase 7a-7e) ดูรายละเอียดใต้ตาราง Phase 7 ด้านล่าง
+
 **งานถัดไปที่ควรทำ (เรียงตามลำดับ):**
-1. **ยืนยันว่า CI workflow รันจริงบน GitHub** — **เจอสาเหตุแล้ว (2026-08-22)**: เครื่องนี้ไม่มี `gh` แต่ repo เป็น public จริง ตรวจผ่าน `WebFetch` ตรงๆ ได้ — หน้า Actions ไม่มี run ให้เห็นเลยแม้แต่ครั้งเดียว และหน้า Pull Requests แสดง **0 Open / 0 Closed ตลอดกาล** ตรวจ `.github/workflows/ci.yml`'s trigger แล้วพบว่า `on: push: branches: [main]` + `on: pull_request` — งานทั้งหมดตั้งแต่ Phase 4f ทำบน `feature/phase5` ด้วย push ตรงล้วนๆ ไม่เคยเปิด PR เลยสักครั้ง จึงไม่มี event ไหนที่ตรงเงื่อนไข trigger เลย **นี่ไม่ใช่บั๊กของ workflow หรือ CI พัง เป็นเพราะไม่เคยมี event ที่ตรงเงื่อนไขเกิดขึ้นจริง** ทางแก้ (ยังไม่ได้ทำ รอผู้ใช้ตัดสินใจ): เปิด PR จาก `feature/phase5` → `main` เพื่อกระตุ้น `pull_request` event เป็นครั้งแรก
-2. **วางแผน i18n (`next-intl`) แยกเป็น phase ใหม่ของตัวเอง** — ถูก scope out จาก 4e, Phase 5 และ Phase 6 เพราะเป็น all-or-nothing sweep ทั้งโปรเจกต์
-3. **ของค้าง #9** (`deepmerge-ts`/Prisma) — รอ Prisma ออก patch จริงหรือ Prisma 8 GA ไม่มีอะไรให้ทำตอนนี้
-4. **วางแผน Phase 7** — Phase 6 ปิดครบแล้ว ไม่มีแผนของ phase ถัดไปที่ตัดสินใจไว้ล่วงหน้า ต้องคุยกับผู้ใช้ก่อนว่าจะไปทางไหนต่อ (production-readiness, feature backlog ที่เหลือ, หรืออื่นๆ)
+1. **เริ่ม Phase 7a** (job scheduler + logging sweep) — แผนพร้อมแล้ว ([`phase7-plan.md`](./phase7-plan.md))
+2. **ยืนยันว่า CI workflow รันจริงบน GitHub** — พักไว้ตามที่ผู้ใช้เลือก (2026-08-22): เครื่องนี้ไม่มี `gh` CLI/token ให้สร้าง PR อัตโนมัติ, ให้ลิงก์ compare (`main...feature/phase5`) ไว้ให้ผู้ใช้เปิดเองแล้ว รอผู้ใช้เปิด PR หรือขอให้ลองติดตั้ง `gh`
+3. **วางแผน i18n (`next-intl`) แยกเป็น phase ใหม่ของตัวเอง** — ถูก scope out จาก 4e, Phase 5, Phase 6 และ Phase 7 เพราะเป็น all-or-nothing sweep ทั้งโปรเจกต์
+4. **ของค้าง #9** (`deepmerge-ts`/Prisma) — รอ Prisma ออก patch จริงหรือ Prisma 8 GA ไม่มีอะไรให้ทำตอนนี้
 
 ---
 
@@ -309,6 +311,21 @@
 - ไม่ได้ตรวจด้วยตาจริงผ่าน browser ว่า `created_at` คอลัมน์ที่แก้บั๊กแสดงผลถูกต้องเป๊ะ (หน้า report-list/favorites fetch ข้อมูลผ่าน client-side effect หลัง mount ทำให้ initial HTML จาก curl ไม่มีข้อมูลตารางให้ตรวจ) — ยืนยันได้แค่ระดับ type-check + build ผ่าน + โค้ด `cell` renderer ตรงกับแพทเทิร์นที่ใช้งานจริงอยู่แล้วในไฟล์พี่น้อง (เหตุผลเดียวกับที่ Phase 5a-6a ไม่เคยตรวจ visual ผ่าน browser ได้ในทุก session)
 
 **สิ่งที่ scope out จาก Phase 6 โดยตั้งใจ**: drop ตาราง `report_versions` (เสนอแล้วผู้ใช้ไม่เลือก — ยังเป็นของค้าง #3), i18n, job scheduler, email delivery, S3/MinIO backend, support ticket, fuzzy search, dashboard cache, AV scan, sidebar DB-driven, สร้างหน้าที่ dead link 14 จุดชี้ไป, migrate 3 หน้าที่ใช้ `dialog-drawer.tsx` ไปใช้ pattern ใหม่, แก้/ลบ `role-management/manage` stub (เจอใหม่ระหว่าง 6a — ดูด้านบน)
+
+### Phase 7 — Production Hardening & Remaining Feature Backlog 📝 มีแผนแล้ว ยังไม่มีโค้ด
+[แผนเต็ม →](./phase7-plan.md) — ผู้ใช้เลือกทำ backlog ที่เหลือทั้งหมด (ตัดสินใจ 2026-08-22) แยกเป็น 5 sub-phase
+
+| Sub-phase | งาน | สถานะ |
+|---|---|---|
+| **7a** | Job scheduler (`node-cron` in-process ผ่าน `instrumentation.ts`) ผูก `check-report-expiry`/`check-storage` จริง + pino logging sweep | ❌ |
+| **7b** | Server-side pagination 5 endpoint ที่เหลือ + skeleton loading + **แก้บั๊กจริงที่เจอใหม่**: `reports/categories`/`reports/tags` เป็น stub ไม่ทำงานเลย (data={[]} hardcode, ไม่มี API, submit แค่ console.log) | ❌ |
+| **7c** | Dashboard: monthly trend toggle + Redis cache (fail-open ตาม pattern `lib/rate-limit.ts`) | ❌ |
+| **7d** | Storage backend abstraction (interface-only, local จริง/S3-MinIO เป็น stub) + fuzzy/typo-tolerant search ผ่าน `pg_trgm` similarity (index มีอยู่แล้ว ไม่ต้อง migration ใหม่) | ❌ |
+| **7e** | Support tickets — CRUD + UI จริงตัวแรกสำหรับ `support_tickets` (schema มีอยู่แล้วตั้งแต่ต้น ไม่มี endpoint/UI เลย) admin-tier gate (ไม่มี role ใหม่) | ❌ |
+
+**Resolved decisions (ผู้ใช้, 2026-08-22)**: ทำทุก sub-phase, node-cron in-process (ไม่ใช่ GitHub Actions/OS scheduler), ไม่ใช้ error-tracking vendor รอบนี้ (log-only), storage abstraction ออกแบบ interface เท่านั้น (ไม่มี MinIO/S3 จริงให้ทดสอบ), ticket management ใช้ admin tier เดิม (ไม่สร้าง role ใหม่)
+
+**เจอระหว่างวางแผน (ยังไม่แก้ — รอ 7b)**: `app/(auth)/reports/categories/page.tsx`/`tags/page.tsx` ทั้งคู่ pass `data={[]}` แบบ hardcode ไม่มี `fetch()` เลย และไม่มี API endpoint สำหรับ categories/tags CRUD อยู่จริงเลยสักตัว (`grep app/api/**` ไม่เจอ) — `catagoriesCreateForm.tsx`/`tagsCreateForm.tsx` submit แค่ `console.log(params)` ทั้งคู่ หน้าทั้งสองนี้ (ที่ `CLAUDE.md` เคยชี้ว่าเป็น "reference implementation ให้ copy") **ไม่เคยทำงานได้จริงเลยตั้งแต่ Phase 0** — ไม่มีอะไร catch ได้ก่อนหน้านี้เพราะข้อมูล category/tag ยังอ่านได้ปกติผ่าน `baseconfig/selections` (คนละ endpoint) ตัดสินใจไว้แล้วว่าแก้รวมใน 7b ไม่แยกเป็นด่วน เพราะเป็นงานเดียวกับที่ 7b ต้องทำอยู่แล้ว (ต่อ list page เข้า paginated endpoint จริง)
 
 ---
 
