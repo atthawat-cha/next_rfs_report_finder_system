@@ -1,6 +1,6 @@
 # ความคืบหน้าโครงการ — RFS Report Finder System
 
-> **อัปเดตล่าสุด:** 2026-08-22 · **Branch:** `feature/phase5` · **HEAD:** `9b87e29`
+> **อัปเดตล่าสุด:** 2026-08-22 · **Branch:** `feature/phase5` · **HEAD:** `361d53c`
 >
 > ไฟล์นี้ตอบคำถามเดียว: **"ตอนนี้ถึงไหนแล้ว และเหลืออะไร"** สถานะทุกแถวอ้างอิง commit จริงใน git log เป็นหลักฐาน ไม่ใช่การอ่านโค้ดเดา
 >
@@ -260,7 +260,7 @@
 | Sub-phase | งาน | สถานะ | Commit |
 |---|---|---|---|
 | **6a** | ลบโค้ดตาย (`page copy.tsx`, `lib/security_get/post.ts`, `right-drawer.tsx`) + ตัด dead link 14 จุด (+ 2 กลุ่มเต็ม) ใน sidebar + เทสต์กันซ้ำ (`lib/menu-list.test.ts`) + แก้ `CLAUDE.md` ที่ขัดกับโค้ดจริง + เขียน README/SETUP ใหม่ + เพิ่มขั้นตอน setup dev | ✅ | `9b87e29` |
-| **6b** | เทสต์ auth/ACL ระดับ route handler: 7 endpoint × role (`USER`/`ADMIN`/`SUPER_ADMIN`/role null/ไม่มี cookie) × visibility (PUBLIC/RESTRICTED/RESTRICTED+grant) เรียก handler จริงบน DB จริง + ขยาย `prisma/seed-ci.ts` ให้มี role `ADMIN`/`SUPER_ADMIN` | ✅ | `<pending>` |
+| **6b** | เทสต์ auth/ACL ระดับ route handler: 7 endpoint × role (`USER`/`ADMIN`/`SUPER_ADMIN`/role null/ไม่มี cookie) × visibility (PUBLIC/RESTRICTED/RESTRICTED+grant) เรียก handler จริงบน DB จริง + ขยาย `prisma/seed-ci.ts` ให้มี role `ADMIN`/`SUPER_ADMIN` | ✅ | `361d53c` |
 | **6c** | lint sweep 222 → 0 warning: `logDevError()` กลางแทน idiom 60 จุดใน 38 route handler, ไล่ `no-unused-vars` 128 ตัวทีละตัว (ไม่ลบมั่ว — precedent 5f/ของค้าง #2), narrow `set-state-in-effect` จาก warn ทั่ว repo เป็น `off` แบบระบุไฟล์, รัด CI เป็น `--max-warnings 0` | 📝 | — |
 
 **หมายเหตุลำดับ**: 6b ต้องมาก่อน 6c เพราะ 6c แตะ route handler 38 ไฟล์ — 6b คือหลักฐานว่า sweep นั้น behaviour-preserving จริง (ทางเลือก "sweep ก่อนเทสต์" ถูกเสนอและปฏิเสธไปแล้ว)
