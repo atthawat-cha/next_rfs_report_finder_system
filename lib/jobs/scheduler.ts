@@ -3,6 +3,7 @@ import { NextRequest } from 'next/server';
 import logger from '@/lib/logger';
 import { runCheckReportExpiry } from '@/lib/jobs/checkReportExpiry';
 import { runCheckStorage } from '@/lib/jobs/checkStorage';
+import { runCheckExpiredShares } from '@/lib/jobs/checkExpiredShares';
 
 /**
  * In-process job scheduler (Phase 7a) - registered from `instrumentation.ts`
@@ -53,5 +54,18 @@ export function startScheduledJobs(): void {
         { name: 'check-storage' }
     );
 
-    logger.info('scheduled jobs registered (check-report-expiry daily 02:00, check-storage hourly)');
+    cron.schedule(
+        '0 3 * * *',
+        async () => {
+            try {
+                const result = await runCheckExpiredShares(syntheticRequest('/internal/jobs/check-expired-shares'), null);
+                logger.info({ result }, 'scheduled check-expired-shares completed');
+            } catch (error) {
+                logger.error({ error }, 'scheduled check-expired-shares failed');
+            }
+        },
+        { name: 'check-expired-shares' }
+    );
+
+    logger.info('scheduled jobs registered (check-report-expiry daily 02:00, check-storage hourly, check-expired-shares daily 03:00)');
 }

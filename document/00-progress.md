@@ -36,10 +36,10 @@
 
 **Phase 7 ปิดครบทั้ง 5 sub-phase แล้ว (2026-08-22)** ([`phase7-plan.md`](./phase7-plan.md)) — 7a = job scheduler จริงตัวแรกของระบบ + pino logging sweep + เจอบั๊กจริง 3 ตัว; 7b = pagination 4 endpoint (opt-in แทน unconditional — เจอ combobox 2 จุดที่พึ่ง full list) + categories/tags CRUD ตัวจริงตัวแรก (เดิมเป็น stub ไม่ทำงานเลย) + เจอบั๊กความปลอดภัยจริง (`password` hash หลุดใน `GET /api/users/user`) + บั๊ก UX จริง (department create ไม่เคย toast/redirect); 7c = dashboard monthly toggle + Redis cache 4 endpoint ยืนยัน fail-open จริงตอน Redis ล่ม + cache-hit จริงด้วย sentinel test; 7d = storage backend interface (local จริง/S3 stub) ย้าย 5 call site + fuzzy search จริงด้วย `pg_trgm` similarity พร้อม rank-aware pagination; 7e = support tickets CRUD+UI ตัวจริงตัวแรก + notification 3 ประเภทใหม่ (ต้อง migration จริงเพราะ `NotificationType` เป็น Postgres enum เจอของค้าง #1's `search_vector` false-diff อีกครั้ง) ดูรายละเอียดใต้ตาราง Phase 7 ด้านล่าง
 
-**Phase 8 เริ่มแล้ว** ([`phase8-plan.md`](./phase8-plan.md), เขียน 2026-08-22, ทำงานบน branch `feature/phase8`) **8a ปิดจบแล้ว (2026-08-22)**: migrate `middleware.ts`→`proxy.ts` จริง เจอว่าเป็น Edge→Node runtime change จริง (ไม่ใช่แค่ rename) ยืนยันสดครบทุก auth flow + ปิดของค้าง #15 ไปด้วย ดูรายละเอียดใต้ตาราง Phase 8 ด้านบน
+**Phase 8 เริ่มแล้ว** ([`phase8-plan.md`](./phase8-plan.md), เขียน 2026-08-22, ทำงานบน branch `feature/phase8`) **8a+8b ปิดจบแล้ว (2026-08-22)**: 8a = migrate `middleware.ts`→`proxy.ts` จริง เจอว่าเป็น Edge→Node runtime change จริง (ไม่ใช่แค่ rename) ยืนยันสดครบทุก auth flow + ปิดของค้าง #15 ไปด้วย; 8b = job cleanup ลบ `report_shares` ที่หมดอายุจริง ยืนยันสด 410→404 behavior change ตามที่คาดไว้ ดูรายละเอียดใต้ตาราง Phase 8 ด้านบน
 
 **งานถัดไปที่ควรทำ (เรียงตามลำดับ):**
-1. **เริ่ม Phase 8b** (job cleanup ลบ `report_shares` ที่หมดอายุจริง) — แผนพร้อมแล้ว ([`phase8-plan.md`](./phase8-plan.md))
+1. **เริ่ม Phase 8c** (audit zod validation ทุก endpoint — คาดว่าจะปิดแบบ confirm-only เพราะ audit เบื้องต้นสะอาดแล้ว) — แผนพร้อมแล้ว ([`phase8-plan.md`](./phase8-plan.md))
 2. **ยืนยันว่า CI workflow รันจริงบน GitHub** — พักไว้ตามที่ผู้ใช้เลือก (2026-08-22): เครื่องนี้ไม่มี `gh` CLI/token ให้สร้าง PR อัตโนมัติ, ให้ลิงก์ compare (`main...feature/phase5`) ไว้ให้ผู้ใช้เปิดเองแล้ว รอผู้ใช้เปิด PR หรือขอให้ลองติดตั้ง `gh`
 3. **วางแผน i18n (`next-intl`) แยกเป็น phase ใหม่ของตัวเอง** — ถูก scope out จาก 4e, Phase 5, Phase 6, Phase 7 และ Phase 8 เพราะเป็น all-or-nothing sweep ทั้งโปรเจกต์
 4. **ของค้าง #9** (`deepmerge-ts`/Prisma) — รอ Prisma ออก patch จริงหรือ Prisma 8 GA ไม่มีอะไรให้ทำตอนนี้
@@ -393,7 +393,7 @@
 | Sub-phase | งาน | สถานะ |
 |---|---|---|
 | **8a** | Migrate `middleware.ts` → `proxy.ts` (Next.js 16 deprecation) — **เจอว่าไม่ใช่แค่ rename**: `middleware.ts` รันบน Edge runtime จริง (ยืนยันด้วย live test) แต่ `proxy.ts` บังคับใช้ Node.js runtime ตายตัว ไม่มีทาง override กลับ Edge | ✅ |
-| **8b** | Job cleanup ลบ `report_shares` ที่หมดอายุแล้วจริง (ต่างจาก `check-report-expiry` เดิมที่แค่เตือนล่วงหน้า) — schema ไม่มี soft-delete field เลยต้องลบจริง | ❌ |
+| **8b** | Job cleanup ลบ `report_shares` ที่หมดอายุแล้วจริง (ต่างจาก `check-report-expiry` เดิมที่แค่เตือนล่วงหน้า) — schema ไม่มี soft-delete field เลยต้องลบจริง | ✅ |
 | **8c** | Audit zod validation ทุก endpoint — เจอแล้วว่า audit สะอาด (28/28 endpoint ที่รับ body validate ครบ) เหลือแค่ยืนยันซ้ำให้ครบ 100% | ❌ |
 | **8d** | Pagination/skeleton ให้ 2 หน้าที่เหลือจริง: `reports/report-list` (หน้าหลักค้นหารายงาน ไม่มีทั้ง skeleton และ pagination UI เลย) กับ `user-management/activity` (มี pagination แล้ว ขาดแค่ skeleton) | ❌ |
 
@@ -405,6 +405,13 @@
 - [x] แก้ `CLAUDE.md` 3 จุด (บรรทัด 52, 56, 123 เดิม) — `middleware.ts`/`middleware()` → `proxy.ts`/`proxy()` พร้อมเพิ่มโน้ตอธิบาย Node runtime ใหม่ + แก้ comment ภายใน `proxy.ts` เองอีก 1 จุด และ `lib/auth.ts:127` อีก 1 จุด (generic mention "Route Handlers or middleware" → "...or proxy.ts")
 - [x] `app/page.tsx`'s marketing copy "middleware protection" และ `hook/useSidebars.ts`'s zustand `middleware` API (คนละเรื่องกันเลย ไม่ใช่ Next.js middleware) — ตัดสินใจไม่แตะตามแผน
 - [x] ยืนยันสดครบเข้มงวดตามที่ตัดสินใจไว้ (ไม่ใช่แค่ build ผ่าน): เปิด dev server จริง เห็น deprecation warning "middleware file convention is deprecated" ที่เคยขึ้นทุกครั้งตอน start **หายไปแล้ว**; ทดสอบ runtime ซ้ำด้วยวิธีเดิมที่ใช้ค้นพบปัญหา (`typeof EdgeRuntime`/`process.version` ชั่วคราวใน `proxy.ts`) → ยืนยัน `typeof EdgeRuntime === 'undefined'` + `process.version === 'v20.20.0'` จริง (เปลี่ยนจาก Edge เป็น Node จริงตามที่คาด) ลบโค้ดทดสอบออกหลังยืนยันเสร็จ; ทดสอบ auth gate ครบทุก flow: unauth→`/dashboard`→307 ไป `/login?redirect=%2Fdashboard`, unauth→`/login`→200, unauth→`/shares/[token]`→200 (bypass ทำงาน), auth (JWT admin จริง)→`/dashboard`→200, auth→`/login`→307 ไป `/dashboard`; ยืนยัน matcher exclusion จริงด้วย log (ไม่มี proxy log โผล่เลยสำหรับ `/api/*`, `/favicon.ico`, `/_next/*` — 7 request ที่ควรผ่าน proxy ก็เห็น log ครบ 7 บรรทัดพอดี ไม่มากไม่น้อย); `npx tsc --noEmit` = 0 error, `npx eslint .` = 0 warning, `npm test` = 32/32 ผ่าน, `npm run build` = exit 0 — build output เปลี่ยนป้ายเป็น **"ƒ Proxy (Middleware)"** เองด้วย ยืนยันว่า Next.js จำได้ว่าเป็น proxy จริง
+
+**8b ปิดจบแล้ว** (2026-08-22):
+- [x] `lib/jobs/checkExpiredShares.ts` (ใหม่) — `runCheckExpiredShares(req, triggeredByUserId)` pattern เดียวกับ `checkReportExpiry.ts`/`checkStorage.ts` เป๊ะ — ลบ `report_shares` ที่ `expires_at < now()` จริง (ไม่มี soft-delete field ให้ใช้) แล้ว log activity (`entity: 'system'`, `action: 'delete'`)
+- [x] `app/api/system/jobs/check-expired-shares/route.ts` (ใหม่) — thin wrapper เดียวกับ 2 endpoint เดิม (`requireRole('admin')` → เรียกฟังก์ชัน → คืน JSON)
+- [x] `lib/jobs/scheduler.ts` เพิ่ม cron ตัวที่ 3 (`0 3 * * *` daily 03:00 ต่อจาก check-report-expiry 02:00) — pattern เดียวกับ 2 ตัวเดิมทุกประการ
+- [x] ยืนยันสดครบตามที่แผนกำหนด: สร้าง test share หมดอายุจริง (`expires_at` เมื่อวาน) กับ test share ที่ยังไม่หมดอายุ (`expires_at` พรุ่งนี้) — ยืนยัน **ก่อน** รัน job: token หมดอายุ → `410 Gone`, token ยังไม่หมด → `200`; รัน job ผ่าน HTTP endpoint (admin JWT จริง) → `{deleted:1}`; ยืนยัน **หลัง** รัน job: token หมดอายุ (แถวถูกลบจริง) → เปลี่ยนเป็น `404 Not Found` ตรงตามที่บันทึกไว้ในแผนว่าจะเปลี่ยนจาก 410→404 (ไม่ใช่ regression), token ที่ยังไม่หมดอายุยังคง `200` เหมือนเดิม (ไม่โดนลบผิดตัว), `GET /api/reports/[id]/shares` ไม่แสดง token ที่ถูกลบแล้วอีกต่อไป (เหลือแค่ token ที่ยังไม่หมดอายุ); ตรวจ DB ตรงๆ ว่า `activity_logs` ถูกเขียนจริง (`"check-expired-shares job: deleted 1 expired share(s)"`); ยืนยัน `POST` ไม่มี auth → 401; `npx tsc --noEmit` = 0 error, `npx eslint .` = 0 warning, `npm test` = 32/32 ผ่าน, `npm run build` = exit 0 (route ใหม่ขึ้นในรายการ build จริง); ลบ fixture ทดสอบทั้งหมดออกจาก DB หลังตรวจ
+- ไม่ได้ทำ standalone cron-fire live test ซ้ำแบบ 7a (รัน `node-cron` จริงด้วย interval สั้นๆ 2 นาที) เพราะ mechanism (`cron.schedule` ใน `scheduler.ts`) ไม่เปลี่ยนเลยจาก 7a ที่พิสูจน์แล้วว่าทำงานจริง — ตามที่แผนอนุญาตไว้ให้ reuse หลักฐานเดิมได้ถ้า mechanism ไม่เปลี่ยน ยืนยันแค่ตัว business logic ใหม่ผ่าน HTTP endpoint แทน
 
 ---
 

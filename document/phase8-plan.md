@@ -165,6 +165,14 @@ CLAUDE.md's "extra care" list exists for:
 
 ## Sub-phase 8b — Expired share-link cleanup job
 
+**Closed 2026-08-22.** Built exactly as planned - no deviations. Live-verified both documented
+behavior changes for real: created one already-expired and one still-live test share, confirmed
+the pre-cleanup 410-vs-200 split, ran the job, and confirmed the expired token flipped to 404 (row
+physically gone) while the live one stayed untouched at 200, and the admin share list stopped
+listing the deleted row. Skipped re-running Phase 7a's standalone cron-fire proof since the
+scheduler mechanism itself didn't change - only the business-logic function being registered is
+new, and that was verified directly via the HTTP endpoint instead.
+
 ### 1. `lib/jobs/checkExpiredShares.ts` (new)
 
 Mirrors `checkReportExpiry.ts`'s shape exactly: `runCheckExpiredShares(req, triggeredByUserId)`

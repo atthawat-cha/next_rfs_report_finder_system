@@ -108,7 +108,7 @@
 | แชร์รายงานให้ทั้งแผนก | Should | ✅ (`share_type=DEPARTMENT` มีอยู่แล้วตั้งแต่ 3b, เพิ่ม fan-out แจ้งเตือนให้ทุกคนในแผนกยกเว้นผู้แชร์เอง) | 4e |
 | สร้างลิงก์แชร์ (share token) พร้อมวันหมดอายุ | Should | ✅ (`share_type=LINK`, `expires_at` optional) | 3 |
 | กำหนดสิทธิ์ download/edit บนการแชร์แต่ละครั้ง | Should | ⚠️ (`can_download` บังคับใช้จริง; `can_edit` เก็บใน schema แต่ยังไม่มี anonymous-edit flow ให้ enforce เลย — ตัดสินใจไว้แล้วว่าเป็นการตัดสินใจ ไม่ใช่ของค้าง) | 3 |
-| Cleanup job ลบ/ปิดใช้งานลิงก์ที่หมดอายุอัตโนมัติ | Should | ⚠️ (job scheduler จริงมีแล้วตั้งแต่ 7a — `check-report-expiry` รันทุกวันจริง แต่ทำหน้าที่แค่ "แจ้งเตือนก่อนหมดอายุ" ไม่ได้ลบ/ปิดใช้งานลิงก์ที่หมดอายุแล้วจริง การบังคับหมดอายุยังเป็น lazy check ตอน query เหมือนเดิม) | 3/7a |
+| Cleanup job ลบ/ปิดใช้งานลิงก์ที่หมดอายุอัตโนมัติ | Should | ✅ (`check-expired-shares` job ใหม่ รันทุกวัน 03:00 ลบ `report_shares` ที่หมดอายุแล้วจริง — ยืนยันสดแล้วว่า token ที่ถูกลบเปลี่ยนจาก 410→404 จริง, token ที่ยังไม่หมดอายุไม่โดนลบผิดตัว) | 3/7a/8b |
 
 ## 9. Notifications (FR-9)
 
@@ -198,8 +198,8 @@
 
 | สถานะ | จำนวน feature (จาก 100 รายการ) |
 |---|---|
-| ✅ ทำงานได้จริง | 85 |
-| ⚠️ มีบางส่วน/mock/schema เฉย ๆ | 8 |
+| ✅ ทำงานได้จริง | 86 |
+| ⚠️ มีบางส่วน/mock/schema เฉย ๆ | 7 |
 | ❌ ยังไม่มีเลย | 7 |
 
 > ตัวเลขฐานนับจากตารางด้านบนจริงล่าสุด 2026-08-19 หลัง Phase 5a-5f (รวมทุกแถว feature ไม่รวมแถวหมายเหตุ/ดีไซน์โน้ต) รอบนี้ (2026-08-22) แก้เพิ่ม 7 แถวที่ Phase 7 เปลี่ยนสถานะจริง (ticket ×2, fuzzy search, cleanup job, monthly trend, dashboard cache, storage backend interface) — **ยังไม่ใช่การไล่ตรวจซ้ำทั้ง 100 แถว** แถวอื่นที่ Phase 6/7 อาจแตะไปแล้วบางส่วน (เช่น skeleton loading, structured logging) ปรับ justification text ให้ตรงแล้วแต่สัญลักษณ์ไม่เปลี่ยน ไม่ใช่ story-point estimation — ใช้สื่อสารสัดส่วนงานที่เหลือ ไม่ใช่ใช้วางแผน timeline โดยตรง งานที่เหลือส่วนใหญ่กระจุกอยู่ที่ i18n, E2E test, S3/MinIO backend จริง (interface มีแล้วตั้งแต่ 7d, ตัวจริงยังไม่มี), auth-provider selection (dropped), และ ClamAV AV scan (deferred)
