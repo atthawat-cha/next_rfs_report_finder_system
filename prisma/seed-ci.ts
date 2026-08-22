@@ -5,25 +5,51 @@ import { faker } from "@faker-js/faker";
 
 /**
  * Minimal seed for a fresh CI database — not a substitute for prisma/seed.ts
- * (which seeds a full realistic dataset for local dev). This only creates the
- * bare rows lib/report-acl.test.ts needs via findFirstOrThrow: one role named
- * "USER", one category, one user to act as a report's created_by_id.
- * Skips creation if rows already exist so it's safe to re-run.
+ * (which seeds a full realistic dataset for local dev). Creates the bare rows
+ * lib/report-acl.test.ts needs via findFirstOrThrow (role "USER", one
+ * category, one user), plus the ADMIN/SUPER_ADMIN roles and one user per
+ * role lib/reports-route-acl.test.ts's role matrix needs (Phase 6b) — a
+ * fresh CI database only has migrations applied, no roles at all, so that
+ * suite would otherwise have nothing to findFirstOrThrow. Skips creation if
+ * rows already exist so it's safe to re-run.
  */
 async function main() {
   const adapter = new PrismaPg({ connectionString: process.env.DATABASE_URL });
   const prisma = new PrismaClient({ adapter });
 
-  const userRole =
-    (await prisma.roles.findFirst({ where: { name: "USER" } })) ??
-    (await prisma.roles.create({
-      data: {
-        id: faker.string.uuid(),
-        name: "USER",
-        display_name: "User",
-        updated_at: new Date(),
-      },
-    }));
+  async function findOrCreateRole(name: string) {
+    return (
+      (await prisma.roles.findFirst({ where: { name } })) ??
+      (await prisma.roles.create({
+        data: {
+          id: faker.string.uuid(),
+          name,
+          display_name: name.charAt(0) + name.slice(1).toLowerCase(),
+          updated_at: new Date(),
+        },
+      }))
+    );
+  }
+
+  async function findOrCreateUserForRole(roleId: string, username: string) {
+    return (
+      (await prisma.users.findFirst({ where: { username } })) ??
+      (await prisma.users.create({
+        data: {
+          id: faker.string.uuid(),
+          username,
+          email: `${username}@example.com`,
+          password: "not-a-real-hash",
+          role_id: roleId,
+          updated_at: new Date(),
+        },
+      }))
+    );
+  }
+
+  const userRole = await findOrCreateRole("USER");
+  const adminRole = await findOrCreateRole("ADMIN");
+  const superAdminRole = await findOrCreateRole("SUPER_ADMIN");
 
   const category =
     (await prisma.categories.findFirst()) ??
@@ -38,18 +64,15 @@ async function main() {
 
   const user =
     (await prisma.users.findFirst()) ??
-    (await prisma.users.create({
-      data: {
-        id: faker.string.uuid(),
-        username: "ci-fixture-user",
-        email: "ci-fixture-user@example.com",
-        password: "not-a-real-hash",
-        role_id: userRole.id,
-        updated_at: new Date(),
-      },
-    }));
+    (await findOrCreateUserForRole(userRole.id, "ci-fixture-user"));
+  const adminUser = await findOrCreateUserForRole(adminRole.id, "ci-fixture-admin");
+  const superAdminUser = await findOrCreateUserForRole(superAdminRole.id, "ci-fixture-super-admin");
 
-  console.log(`CI seed ready: role=${userRole.id} category=${category.id} user=${user.id}`);
+  console.log(
+    `CI seed ready: role=${userRole.id} category=${category.id} user=${user.id} ` +
+      `adminRole=${adminRole.id} adminUser=${adminUser.id} ` +
+      `superAdminRole=${superAdminRole.id} superAdminUser=${superAdminUser.id}`
+  );
   await prisma.$disconnect();
 }
 
