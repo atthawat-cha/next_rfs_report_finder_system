@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import prisma from '@/lib/prisma';
+import logger from '@/lib/logger';
 
 export async function GET(req: NextRequest, props: { params: Promise<{ id: string }> }) {
   const params = await props.params;
@@ -35,7 +36,7 @@ export async function GET(req: NextRequest, props: { params: Promise<{ id: strin
     });
 
   } catch (error) {
-    console.log(error);
+    logger.error({ error }, 'GET /api/users/user/[id] failed');
     return NextResponse.json(
       { success: false, error: "Server error" },
       { status: 500 }

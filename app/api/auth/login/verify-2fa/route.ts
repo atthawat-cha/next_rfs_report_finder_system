@@ -11,6 +11,7 @@ import {
   verifyBackupCode,
 } from '@/lib/two-factor';
 import { z } from 'zod';
+import logger from '@/lib/logger';
 
 const verifyZod = z.object({
   pendingToken: z.string().min(1),
@@ -121,7 +122,7 @@ export async function POST(req: NextRequest) {
     if (error instanceof z.ZodError) {
       return NextResponse.json({ error: error.errors[0].message }, { status: 400 });
     }
-    console.error('verify-2fa error:', error);
+    logger.error({ error }, 'verify-2fa error');
     return NextResponse.json({ error: 'เกิดข้อผิดพลาดในการยืนยันตัวตน' }, { status: 500 });
   }
 }

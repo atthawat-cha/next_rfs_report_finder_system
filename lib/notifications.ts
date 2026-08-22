@@ -1,6 +1,7 @@
 import prisma from '@/lib/prisma';
 import { faker } from '@faker-js/faker';
 import { NotificationType } from '@/app/generated/prisma/enums';
+import logger from '@/lib/logger';
 
 /**
  * Central helper for inserting a notifications row — mirrors lib/activity-log.ts.
@@ -27,6 +28,6 @@ export async function createNotification(
             },
         });
     } catch (err) {
-        console.error('[createNotification] failed to write notification:', err);
+        logger.error({ err }, '[createNotification] failed to write notification');
     }
 }

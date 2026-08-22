@@ -13,6 +13,7 @@ import fs from "fs/promises";
 import path from "path";
 import { getFileExtension, isFileSizeAllowed } from "./imageConvert";
 import { getUploadRoot, getMaxUploadSize } from "./storage-path";
+import logger from "./logger";
 
 export interface ReportFileUploadResult {
   filePath: string;
@@ -145,7 +146,7 @@ export async function uploadReportFile(
     };
   } catch (error) {
     const message = error instanceof Error ? error.message : "Unknown upload error.";
-    console.error("[uploadReportFile] Error:", error);
+    logger.error({ error }, "[uploadReportFile] Error");
     return { success: false, error: message };
   }
 }
@@ -156,6 +157,6 @@ export async function deleteReportFile(relativeFilePath: string): Promise<void> 
     const normalized = relativeFilePath.replace(/^[/\\]+/, "");
     await fs.unlink(path.join(root, normalized));
   } catch (error) {
-    console.error("[deleteReportFile] Error:", error);
+    logger.error({ error }, "[deleteReportFile] Error");
   }
 }

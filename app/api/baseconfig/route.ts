@@ -2,6 +2,7 @@ export const dynamic = 'force-dynamic';
 import prisma from '@/lib/prisma';
 import { NextRequest, NextResponse } from 'next/server';
 import { getAuthFromRequest, requireRole } from '@/lib/auth';
+import logger from '@/lib/logger';
 
 
 export async function GET(req:NextRequest){
@@ -59,7 +60,7 @@ export async function GET(req:NextRequest){
         return NextResponse.json(baseRole);
         
     } catch (error) {
-        console.error(error);
+        logger.error({ error }, 'GET /api/baseconfig failed');
         return NextResponse.json({error: "Internal server error"}, {status: 500});
     }
 }

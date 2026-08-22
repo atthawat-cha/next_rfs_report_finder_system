@@ -22,6 +22,7 @@ import {
   isFileSizeAllowed,
   ConvertToWebpOptions,
 } from "./imageConvert";
+import logger from "./logger";
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Types
@@ -247,7 +248,7 @@ export async function uploadImageFile(
   } catch (error) {
     const message =
       error instanceof Error ? error.message : "Unknown upload error.";
-    console.error("[uploadImageFile] Error:", error);
+    logger.error({ error }, "[uploadImageFile] Error");
     return { success: false, error: message };
   }
 }
@@ -339,7 +340,7 @@ export async function deleteUploadedFile(
   } catch (error) {
     const message =
       error instanceof Error ? error.message : "Failed to delete file.";
-    console.error("[deleteUploadedFile] Error:", error);
+    logger.error({ error }, "[deleteUploadedFile] Error");
     return { success: false, error: message };
   }
 }
@@ -364,7 +365,7 @@ export async function replaceUploadedFile(
   // Delete the old file first (best-effort, non-blocking on failure)
   if (oldPublicPath) {
     await deleteUploadedFile(oldPublicPath).catch((err) => {
-      console.warn("[replaceUploadedFile] Could not delete old file:", err);
+      logger.warn({ err }, "[replaceUploadedFile] Could not delete old file");
     });
   }
 

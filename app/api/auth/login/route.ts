@@ -6,6 +6,7 @@ import prisma from '@/lib/prisma';
 import { logActivity } from '@/lib/activity-log';
 import { getClientIp } from '@/lib/request-info';
 import { createPendingTwoFactorToken } from '@/lib/two-factor';
+import logger from '@/lib/logger';
 
 const loginSchema = z.object({
   username: z.string().min(3, 'กรุณากรอกชื่อผู้ใช้'),
@@ -116,7 +117,7 @@ export async function POST(request: NextRequest) {
       try {
         pendingToken = await createPendingTwoFactorToken(user.id);
       } catch (err) {
-        console.error('2FA pending-token error:', err);
+        logger.error({ err }, '2FA pending-token error');
         return NextResponse.json(
           { error: 'ไม่สามารถเริ่มการยืนยันตัวตนสองขั้นตอนได้ โปรดลองใหม่อีกครั้ง' },
           { status: 500 }
@@ -162,7 +163,7 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    console.error('Login error:', error);
+    logger.error({ error }, 'Login error');
     return NextResponse.json(
       { error: 'เกิดข้อผิดพลาดในการเข้าสู่ระบบ' },
       { status: 500 }

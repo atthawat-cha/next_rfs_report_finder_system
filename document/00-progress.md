@@ -32,13 +32,14 @@
 
 **Phase 6 = เคลียร์หนี้ทางเทคนิค** ([`phase6-plan.md`](./phase6-plan.md), ตัดสินใจครบทุกข้อกับผู้ใช้ ดูหัวข้อ "Resolved decisions" ในแผน) — **ปิดครบทั้ง 3 sub-phase**: 6a ✅ ลบโค้ดตาย + แก้เอกสารที่ขัดกับโค้ด, 6b ✅ เทสต์ auth/ACL ระดับ route handler, 6c ✅ lint sweep 222 → 0 warning จริง + รัด CI เป็น `--max-warnings 0`
 
-**Phase 7 มีแผนแล้ว ยังไม่มีโค้ด** ([`phase7-plan.md`](./phase7-plan.md), เขียน 2026-08-22 — ผู้ใช้เลือกทำ backlog ที่เหลือทั้งหมด แยก 5 sub-phase 7a-7e) ดูรายละเอียดใต้ตาราง Phase 7 ด้านล่าง
+**Phase 7 เริ่มแล้ว** ([`phase7-plan.md`](./phase7-plan.md), เขียน 2026-08-22 — ผู้ใช้เลือกทำ backlog ที่เหลือทั้งหมด แยก 5 sub-phase 7a-7e) **7a ปิดจบแล้ว (2026-08-22)**: job scheduler จริงตัวแรกของระบบ (`node-cron` in-process ผ่าน `instrumentation.ts`) + pino logging sweep ครบ 17 ไฟล์ + เจอบั๊กจริง 3 ตัว (`console.error()`-as-value ทำ error message หายเป็น `undefined`) แก้พร้อมกัน ดูรายละเอียดใต้ตาราง Phase 7 ด้านล่าง
 
 **งานถัดไปที่ควรทำ (เรียงตามลำดับ):**
-1. **เริ่ม Phase 7a** (job scheduler + logging sweep) — แผนพร้อมแล้ว ([`phase7-plan.md`](./phase7-plan.md))
+1. **เริ่ม Phase 7b** (server-side pagination + skeleton loading + แก้บั๊ก `reports/categories`/`tags` stub) — แผนพร้อมแล้ว ([`phase7-plan.md`](./phase7-plan.md))
 2. **ยืนยันว่า CI workflow รันจริงบน GitHub** — พักไว้ตามที่ผู้ใช้เลือก (2026-08-22): เครื่องนี้ไม่มี `gh` CLI/token ให้สร้าง PR อัตโนมัติ, ให้ลิงก์ compare (`main...feature/phase5`) ไว้ให้ผู้ใช้เปิดเองแล้ว รอผู้ใช้เปิด PR หรือขอให้ลองติดตั้ง `gh`
 3. **วางแผน i18n (`next-intl`) แยกเป็น phase ใหม่ของตัวเอง** — ถูก scope out จาก 4e, Phase 5, Phase 6 และ Phase 7 เพราะเป็น all-or-nothing sweep ทั้งโปรเจกต์
 4. **ของค้าง #9** (`deepmerge-ts`/Prisma) — รอ Prisma ออก patch จริงหรือ Prisma 8 GA ไม่มีอะไรให้ทำตอนนี้
+5. **ของค้าง #15** (`middleware` → `proxy` deprecation, Next.js 16) — ไม่บล็อกอะไร รอ phase ที่เหมาะสม
 
 ---
 
@@ -312,12 +313,12 @@
 
 **สิ่งที่ scope out จาก Phase 6 โดยตั้งใจ**: drop ตาราง `report_versions` (เสนอแล้วผู้ใช้ไม่เลือก — ยังเป็นของค้าง #3), i18n, job scheduler, email delivery, S3/MinIO backend, support ticket, fuzzy search, dashboard cache, AV scan, sidebar DB-driven, สร้างหน้าที่ dead link 14 จุดชี้ไป, migrate 3 หน้าที่ใช้ `dialog-drawer.tsx` ไปใช้ pattern ใหม่, แก้/ลบ `role-management/manage` stub (เจอใหม่ระหว่าง 6a — ดูด้านบน)
 
-### Phase 7 — Production Hardening & Remaining Feature Backlog 📝 มีแผนแล้ว ยังไม่มีโค้ด
+### Phase 7 — Production Hardening & Remaining Feature Backlog 🚧 เริ่มแล้ว
 [แผนเต็ม →](./phase7-plan.md) — ผู้ใช้เลือกทำ backlog ที่เหลือทั้งหมด (ตัดสินใจ 2026-08-22) แยกเป็น 5 sub-phase
 
 | Sub-phase | งาน | สถานะ |
 |---|---|---|
-| **7a** | Job scheduler (`node-cron` in-process ผ่าน `instrumentation.ts`) ผูก `check-report-expiry`/`check-storage` จริง + pino logging sweep | ❌ |
+| **7a** | Job scheduler (`node-cron` in-process ผ่าน `instrumentation.ts`) ผูก `check-report-expiry`/`check-storage` จริง + pino logging sweep | ✅ |
 | **7b** | Server-side pagination 5 endpoint ที่เหลือ + skeleton loading + **แก้บั๊กจริงที่เจอใหม่**: `reports/categories`/`reports/tags` เป็น stub ไม่ทำงานเลย (data={[]} hardcode, ไม่มี API, submit แค่ console.log) | ❌ |
 | **7c** | Dashboard: monthly trend toggle + Redis cache (fail-open ตาม pattern `lib/rate-limit.ts`) | ❌ |
 | **7d** | Storage backend abstraction (interface-only, local จริง/S3-MinIO เป็น stub) + fuzzy/typo-tolerant search ผ่าน `pg_trgm` similarity (index มีอยู่แล้ว ไม่ต้อง migration ใหม่) | ❌ |
@@ -326,6 +327,17 @@
 **Resolved decisions (ผู้ใช้, 2026-08-22)**: ทำทุก sub-phase, node-cron in-process (ไม่ใช่ GitHub Actions/OS scheduler), ไม่ใช้ error-tracking vendor รอบนี้ (log-only), storage abstraction ออกแบบ interface เท่านั้น (ไม่มี MinIO/S3 จริงให้ทดสอบ), ticket management ใช้ admin tier เดิม (ไม่สร้าง role ใหม่)
 
 **เจอระหว่างวางแผน (ยังไม่แก้ — รอ 7b)**: `app/(auth)/reports/categories/page.tsx`/`tags/page.tsx` ทั้งคู่ pass `data={[]}` แบบ hardcode ไม่มี `fetch()` เลย และไม่มี API endpoint สำหรับ categories/tags CRUD อยู่จริงเลยสักตัว (`grep app/api/**` ไม่เจอ) — `catagoriesCreateForm.tsx`/`tagsCreateForm.tsx` submit แค่ `console.log(params)` ทั้งคู่ หน้าทั้งสองนี้ (ที่ `CLAUDE.md` เคยชี้ว่าเป็น "reference implementation ให้ copy") **ไม่เคยทำงานได้จริงเลยตั้งแต่ Phase 0** — ไม่มีอะไร catch ได้ก่อนหน้านี้เพราะข้อมูล category/tag ยังอ่านได้ปกติผ่าน `baseconfig/selections` (คนละ endpoint) ตัดสินใจไว้แล้วว่าแก้รวมใน 7b ไม่แยกเป็นด่วน เพราะเป็นงานเดียวกับที่ 7b ต้องทำอยู่แล้ว (ต่อ list page เข้า paginated endpoint จริง)
+
+**7a ปิดจบแล้ว** (2026-08-22):
+- [x] `lib/jobs/checkReportExpiry.ts`/`checkStorage.ts` (ใหม่) — ดึง business logic ออกจาก `app/api/system/jobs/check-report-expiry|check-storage/route.ts` เดิม (ยังเหลือไว้เป็น thin wrapper ที่ยัง `requireRole` แล้วเรียกฟังก์ชันเดียวกัน — HTTP path ของ admin ไม่เปลี่ยน behavior)
+- [x] `instrumentation.ts` (ใหม่, root) + `lib/jobs/scheduler.ts` (ใหม่) — ลง `node-cron@4.6.0` (types มาในตัว ไม่ต้อง `@types/node-cron`) จริง, `register()` gate ด้วย `NEXT_RUNTIME === 'nodejs'` + `globalThis` guard กัน double-register ตอน dev reload, cron เรียกฟังก์ชันตรงผ่าน synthetic `NextRequest` (ไม่มี auth เพราะเป็น trusted in-process caller) — `check-report-expiry` daily `0 2 * * *`, `check-storage` hourly `0 * * * *`
+- [x] `lib/log-dev-error.ts` ต่อ pino จริง — dev ยังคง `console.log` เหมือนเดิม, นอก dev เปลี่ยนจาก silent เป็น `logger.error(...)` (ปิด seam ที่ 6c ตั้งใจทิ้งไว้)
+- [x] Logging sweep: แทน `console.*` ด้วย `logger.*` ครบ 11 ไฟล์ API route handler + 6 ไฟล์ `lib/*` (fileUploadServices/imageConvert/notifications/rate-limit/redis/reportFileUploadServices) — ไม่แตะ `'use client'` component (pino เป็น Node-only) หรือ `prisma/seed*.ts` (CLI script คนละ path)
+- [x] **เจอบั๊กจริง 3 ตัวระหว่าง sweep, แก้พร้อมกัน** (คลาสเดียวกับของค้าง #2/5f): `app/api/baseconfig/permissions/route.ts:49`, `app/api/users/roles/route.ts:65`, `app/api/users/user/route.ts:36` ทั้ง 3 จุดเดิมเป็น `{error: console.error()}` ซึ่ง `console.error()` คืน `undefined` เสมอ ทำให้ client เห็น `{error: undefined}`/`{}` แทน error message จริง — แก้เป็น `error instanceof Error ? error.message : ...`
+- [x] ลบ debug leftover: `lib/imageConvert.ts:179`'s `console.log(originalName)` (ไม่มี error context) และ `app/api/reports/report/manage/route.ts:123`'s `console.log(data)` (log ทั้ง FormData object)
+- [x] ยืนยันสดครบ: `npx tsc --noEmit` = 0 error, `npx eslint .` = 0 warning, `npm test` = 32/32 ผ่าน, `npm run build` = exit 0 (หยุด dev server ก่อนรัน); เปิด dev server จริงแล้วยิง request ยืนยันว่า `instrumentation.ts`'s `register()` รันครั้งเดียวจริง (log "scheduled jobs registered" โผล่ครั้งเดียวแม้ยิงหลาย request); มินต์ JWT ของ user role `ADMIN` (ธรรมดา ไม่ใช่ `SUPER_ADMIN` — case เดียวกับของค้าง #13) เรียก `POST /api/system/jobs/check-report-expiry`/`check-storage` ตรงผ่าน curl ได้ response shape เดิมเป๊ะ (proof ว่า extraction behavior-preserving); เขียนสคริปต์แยก (`tsx`, ลบทิ้งหลังตรวจ) รัน `node-cron` จริงด้วย `* * * * *` เป็นเวลา ~130 วินาที ยืนยันว่า cron ยิงตรงเวลาทุกนาทีจริง 3 รอบ เรียก `runCheckStorage` สำเร็จทุกรอบ (มี DB query จริง + insert `activity_logs` จริงด้วย synthetic request ไม่พัง)
+- ⚠️ **เหตุการณ์ระหว่างตรวจ**: รัน `git stash` เพื่อเทียบ baseline โดยไม่ทันสังเกตว่า `stash pop` จะชนกับ `next-env.d.ts` (auto-generated, ต่างกันแค่ path `.next/dev/types` vs `.next/types` ตาม dev/build mode) — stash ค้างอยู่ใน `stash@{0}` ไม่มีอะไรหาย, แก้โดย `git checkout -- next-env.d.ts` แล้ว `git stash pop` สำเร็จ ยืนยันไฟล์ครบตามที่แก้ทุกไฟล์
+- ⚠️ **สังเกตระหว่างตรวจ ไม่เกี่ยวกับ 7a**: `next dev` แจ้ง deprecation warning ใหม่ — `"middleware" file convention is deprecated. Please use "proxy" instead` (Next.js 16 migration, มี codemod `npx @next/codemod@canary middleware-to-proxy`) — ยังไม่ได้ migrate เพราะ 7a ไม่แตะ `middleware.ts`, บันทึกไว้เป็นของค้างใหม่รอ phase ที่เหมาะสม
 
 ---
 
@@ -491,6 +503,10 @@ Next.js 16 ตัด `next lint` ออกทั้งหมด ต้อง mig
 5. `gh` ก็ไม่ได้ติดตั้ง → ยืนยัน CI บน GitHub จากเครื่องนี้ไม่ได้
 
 **สถานะ (2026-08-22): ปิดแล้วเกือบหมด** — ข้อ 1-2 แก้แล้วในเครื่อง (ไม่มีไฟล์ที่ต้อง commit) · **ข้อ 3-4 ผู้ใช้กู้กลับมาเรียบร้อยแล้ว**: `.env`/`.env.local`'s `DATABASE_URL` ชี้ `nextjs_rfs@5432` ถูกต้องแล้ว ยืนยันด้วย `npx prisma migrate status` = "Database schema is up to date!" (8 migrations); Docker Desktop ติดตั้งอยู่แต่ยังต้อง `Start-Process` เองทุกครั้งที่เปิดเครื่องใหม่ (ไม่ auto-start) — เปิดแล้ว + `docker compose up -d` ได้ `rfs-redis` ที่ 6380 ตามปกติ; `npx tsc --noEmit` = 0 error, `npm test` = 21/21 ผ่าน (15 เดิม + 6 ของ `lib/auth.test.ts`) ยืนยันว่า environment ใช้งานได้เต็มรูปแบบอีกครั้ง · ข้อ 5 (`gh` ไม่มี) ยังค้าง ไม่บล็อกอะไรนอกจากการยืนยัน CI บนเครื่องนี้โดยตรง · **6a รับหน้าที่เขียนลำดับ setup ที่ถูกต้องพร้อม failure signature ทั้ง 2 แบบลง `CLAUDE.md`** เพื่อไม่ให้ session ถัดไปต้องไล่หาใหม่ (รวม note เรื่อง Docker Desktop ไม่ auto-start ด้วย)
+
+### 15. `middleware.ts` file convention deprecated ใน Next.js 16 — เจอระหว่าง Phase 7a live check (2026-08-22)
+
+`next dev` แจ้ง deprecation warning ใหม่ตอนสตาร์ท: `The "middleware" file convention is deprecated. Please use "proxy" instead.` พร้อม codemod (`npx @next/codemod@canary middleware-to-proxy`) ยังไม่กระทบ build/runtime (`next build`/`next dev` ยังทำงานได้ปกติ ไม่ใช่ error) และ 7a ไม่ได้แตะ `middleware.ts` เลย จึงไม่ได้แก้ในรอบนี้ — บันทึกไว้เป็นของค้างให้ phase ที่เหมาะสม (อาจเป็นตอนวางแผน Phase 7 ถัดๆไปหรือแยกเป็นงานเล็กเดี่ยวๆ) พิจารณา migrate ก่อน `middleware` convention ถูกถอดออกจริงในเวอร์ชันถัดไป
 
 ---
 

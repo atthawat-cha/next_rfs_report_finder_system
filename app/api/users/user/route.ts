@@ -7,6 +7,7 @@ import { UserStatus } from '@/app/generated/prisma/enums';
 import { getAuthFromRequest, requireRole, routeAcceptted } from '@/lib/auth';
 import { logActivity } from '@/lib/activity-log';
 import { passwordPolicySchema } from '@/lib/password-policy';
+import logger from '@/lib/logger';
 
 export async function GET(req: NextRequest) {
   try {
@@ -31,9 +32,9 @@ export async function GET(req: NextRequest) {
     // console.log(users);
     return NextResponse.json({ success: true, data: users }, { status: 200 });
   } catch (error) {
-    console.error(error);
+    logger.error({ error }, 'GET /api/users/user failed');
     return NextResponse.json(
-      { error: console.error() },
+      { error: error instanceof Error ? error.message : "Bad Request" },
       { status: 400 }
     )
   }
@@ -99,7 +100,7 @@ export async function POST(req: NextRequest) {
 
     return NextResponse.json({ success: true, data: user.id }, { status: 200 });
   } catch (error) {
-    console.error(error);
+    logger.error({ error }, 'POST /api/users/user failed');
     return NextResponse.json(
       { error: "Invalid input", details: String(error) },
       { status: 400 }

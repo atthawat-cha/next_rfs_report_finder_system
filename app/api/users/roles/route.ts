@@ -5,6 +5,7 @@ import z from 'zod';
 import { faker } from '@faker-js/faker';
 import { buildRolePermissionInsert } from '@/lib/user-management';
 import { logActivity } from '@/lib/activity-log';
+import logger from '@/lib/logger';
 
 // GET all roles
 export async function GET(req: NextRequest) {
@@ -60,9 +61,9 @@ export async function GET(req: NextRequest) {
         }
         return NextResponse.json(roles);
     } catch (error) {
-        console.error(error);
+        logger.error({ error }, 'GET /api/users/roles failed');
         return NextResponse.json(
-            { error: console.error() },
+            { error: error instanceof Error ? error.message : "Bad Request" },
             { status: 400 }
         )
     }
@@ -163,7 +164,7 @@ export async function POST(req: NextRequest) {
 
         return NextResponse.json({ success: true, data: [] }, { status: 200 });
     } catch (error) {
-        console.error(error);
+        logger.error({ error }, 'POST /api/users/roles failed');
         return NextResponse.json({ error: "Invalid input" }, { status: 400 });
     }
 }

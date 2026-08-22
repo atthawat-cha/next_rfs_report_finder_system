@@ -1,4 +1,5 @@
 import redis from './redis';
+import logger from './logger';
 
 // ─────────────────────────────────────────────
 // RATE LIMITING HELPER (OWASP A07 - brute-force)
@@ -21,7 +22,7 @@ export async function checkRateLimit(identifier: string): Promise<{ allowed: boo
     }
     return { allowed: true };
   } catch (err) {
-    console.error('[rateLimit] redis error, failing open:', err);
+    logger.error({ err }, '[rateLimit] redis error, failing open');
     return { allowed: true }; // fail-open: rate limiting is defense-in-depth, not the primary auth boundary
   }
 }
@@ -30,7 +31,7 @@ export async function resetRateLimit(identifier: string): Promise<void> {
   try {
     await redis.del(`ratelimit:login:${identifier}`);
   } catch (err) {
-    console.error('[rateLimit] redis error on reset:', err);
+    logger.error({ err }, '[rateLimit] redis error on reset');
   }
 }
 

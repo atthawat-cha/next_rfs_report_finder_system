@@ -7,6 +7,7 @@ import bcrypt from "bcryptjs";
 import { getAuthFromRequest, requireRole, routeAcceptted } from "@/lib/auth";
 import { logActivity } from "@/lib/activity-log";
 import { passwordPolicySchema } from "@/lib/password-policy";
+import logger from "@/lib/logger";
 
 export async function POST(req: NextRequest) {
   const schema = z.object({
@@ -103,7 +104,7 @@ export async function POST(req: NextRequest) {
     });
 
   } catch (error) {
-    console.log(error);
+    logger.error({ error }, 'PUT /api/users/user/update failed');
 
     return NextResponse.json(
       { success: false, error: "Update failed" },

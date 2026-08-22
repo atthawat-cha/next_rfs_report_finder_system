@@ -3,6 +3,7 @@ import prisma from '@/lib/prisma';
 import { NextRequest, NextResponse } from 'next/server';
 import { getAuthFromRequest, requireRole, routeAcceptted } from '@/lib/auth';
 import { AccessLevel, ReportOutputType, ReportStatus, UserStatus } from '@/app/generated/prisma/enums';
+import logger from '@/lib/logger';
 
 
 export async function GET(req:NextRequest){
@@ -70,7 +71,7 @@ export async function GET(req:NextRequest){
         return NextResponse.json({success:true,baseConfig}, {status: 200});
         
     } catch (error) {
-        console.error(error);
+        logger.error({ error }, 'GET /api/baseconfig/selections failed');
         return NextResponse.json({error: "Internal server error"}, {status: 500});
     }
 }

@@ -120,7 +120,6 @@ export async function POST(req: NextRequest) {
         if (!files) {
             return NextResponse.json({ success: false, error: "Files is required" }, { status: 400 });
         }
-        console.log(data);
         const validate = reportZod.safeParse({
             code: data.get("code") as string,
             name_th: data.get("name") as string,

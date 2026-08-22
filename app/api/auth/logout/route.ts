@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { deleteAuthCookie, getCurrentUser } from '@/lib/auth';
 import { logActivity } from '@/lib/activity-log';
+import logger from '@/lib/logger';
 
 export async function POST(request: NextRequest) {
   try {
@@ -23,7 +24,7 @@ export async function POST(request: NextRequest) {
       { status: 200 }
     );
   } catch (error) {
-    console.error('Logout error:', error);
+    logger.error({ error }, 'Logout error');
     return NextResponse.json(
       { error: 'เกิดข้อผิดพลาดในการออกจากระบบ' },
       { status: 500 }

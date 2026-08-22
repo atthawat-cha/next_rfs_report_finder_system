@@ -3,6 +3,7 @@ import { requireAuth, requireRole, routeAcceptted } from "@/lib/auth";
 import prisma from "@/lib/prisma";
 import { buildMenusrender, buildMenuStructure } from "@/lib/user-management";
 import { NextRequest, NextResponse } from "next/server";
+import logger from "@/lib/logger";
 
 
 export async function GET(req:NextRequest){
@@ -45,8 +46,8 @@ export async function GET(req:NextRequest){
 
     return NextResponse.json({success: true, data:result}, { status: 200 });
     } catch (error) {
-        console.error(error);
-        return NextResponse.json({error: console.error()}, {status: 400})
+        logger.error({ error }, 'GET /api/baseconfig/permissions failed');
+        return NextResponse.json({error: error instanceof Error ? error.message : "Bad Request"}, {status: 400})
     }
 }
 

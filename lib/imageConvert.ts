@@ -176,7 +176,6 @@ export async function convertToWebp(
  * @returns            - e.g. "cover-photo.webp"
  */
 export function toWebpFilename(originalName: string): string {
-  console.log(originalName);
   const name = originalName
     .split(".")
     .slice(0, -1)
