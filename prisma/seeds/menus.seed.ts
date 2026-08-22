@@ -1,8 +1,6 @@
-import { PrismaClient, Prisma } from "../../app/generated/prisma/client";
-import { AccessLevel, ReportStatus, NotificationType, ShareType, TicketPriority, TicketStatus, UserStatus } from "../../app/generated/prisma/client";
+import { PrismaClient } from "../../app/generated/prisma/client";
 import 'dotenv/config'
 import { faker } from "@faker-js/faker";
-import bcrypt from 'bcryptjs';
 
 interface MenuSeedRow {
   group_label: string;

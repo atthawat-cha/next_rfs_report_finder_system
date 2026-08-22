@@ -11,7 +11,7 @@ import { tagsColumn } from './components/tagsColumn'
 
 export default function ReportTags() {
 
-  const [openDialog, setOpenDialog] = useState(false)
+  const [openDialog] = useState(false)
   return (
     <ContentLayout title="Report Tags">
       <div className="w-full item-center my-2">

@@ -3,6 +3,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { getCurrentUser, requireRole, routeAcceptted } from '@/lib/auth';
 import { logActivity } from '@/lib/activity-log';
 import { createNotification } from '@/lib/notifications';
+import { logDevError } from '@/lib/log-dev-error';
 
 const STORAGE_LIMIT_KEY = 'STORAGE_LIMIT_BYTES';
 const RENOTIFY_WINDOW_HOURS = 24;
@@ -72,7 +73,7 @@ export async function POST(req: NextRequest) {
             data: { over_threshold: overThreshold, current_bytes: currentBytes, limit_bytes: limitBytes },
         }, { status: 200 });
     } catch (error) {
-        process.env.NODE_ENV === 'development' && console.log(error);
+        logDevError(error);
         return NextResponse.json({ error: "Internal Server Error" }, { status: 500 });
     }
 }

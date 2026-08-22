@@ -1,7 +1,6 @@
 'use client'
 import { ContentLayout } from '@/components/layouts/content-layout'
 import { Breadcrumb, BreadcrumbItem, BreadcrumbLink, BreadcrumbList, BreadcrumbPage, BreadcrumbSeparator } from '@/components/ui/breadcrumb'
-import { Button } from '@/components/ui/button'
 import { Separator } from '@/components/ui/separator'
 import Link from 'next/link'
 import React from 'react'
@@ -17,8 +16,7 @@ import DeptForm from './components/deptForm'
 export default function UserDepartment() {
 
   const [deptData, setDeptData] = React.useState<DepartmentType[]>([]);
-  const [openDialog, setOpenDialog] = React.useState(false);
-  const [deptParams, setDeptParams] = React.useState({});
+  const [openDialog] = React.useState(false);
 
   const fetchDepartments = async () => {
     try {

@@ -7,6 +7,7 @@ import { invalidateSettingsCache } from '@/lib/system-settings';
 import { validateUploadBasePath } from '@/lib/storage-path';
 import { faker } from '@faker-js/faker';
 import { z } from 'zod';
+import { logDevError } from '@/lib/log-dev-error';
 
 const STORAGE_LIMIT_KEY = 'STORAGE_LIMIT_BYTES';
 const MAINTENANCE_MODE_KEY = 'MAINTENANCE_MODE';
@@ -68,7 +69,7 @@ export async function GET(req: NextRequest) {
             },
         }, { status: 200 });
     } catch (error) {
-        process.env.NODE_ENV === 'development' && console.log(error);
+        logDevError(error);
         return NextResponse.json({ error: "Internal Server Error" }, { status: 500 });
     }
 }
@@ -152,7 +153,7 @@ export async function PUT(req: NextRequest) {
 
         return NextResponse.json({ success: true, data }, { status: 200 });
     } catch (error) {
-        process.env.NODE_ENV === 'development' && console.log(error);
+        logDevError(error);
         return NextResponse.json({ error: "Internal Server Error" }, { status: 500 });
     }
 }

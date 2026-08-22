@@ -1,5 +1,6 @@
 import prisma from '@/lib/prisma';
 import { NextRequest, NextResponse } from 'next/server';
+import { logDevError } from '@/lib/log-dev-error';
 
 /**
  * GET /api/shares/[token] — public, token-gated, no auth check by design
@@ -72,7 +73,7 @@ export async function GET(_req: NextRequest, props: { params: Promise<{ token: s
             { status: 200 }
         );
     } catch (error) {
-        process.env.NODE_ENV === 'development' && console.log(error);
+        logDevError(error);
         return NextResponse.json({ error: "Internal Server Error" }, { status: 500 });
     }
 }

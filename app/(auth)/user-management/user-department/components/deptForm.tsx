@@ -9,11 +9,7 @@ import React from "react";
 import toast from "react-hot-toast";
 import { useRouter } from "next/navigation";
 
-type Props = {
-    deptId?: string;
-}
-
-export default function DeptForm({ deptId }: Props) {
+export default function DeptForm() {
 
     const [params, setParams] = React.useState<DepartmentType>({
         name: '',
@@ -61,7 +57,7 @@ export default function DeptForm({ deptId }: Props) {
             });
             router.push("/user-management/user-department");
             // router.refresh();
-        } catch (error) {
+        } catch {
             toast.error("Error creating department");
             setLoading(false);
         }

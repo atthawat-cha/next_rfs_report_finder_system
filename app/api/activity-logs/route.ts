@@ -2,6 +2,7 @@ import prisma from '@/lib/prisma';
 import { NextRequest, NextResponse } from 'next/server';
 import { getAuthFromRequest, requireRole, routeAcceptted } from '@/lib/auth';
 import { parsePagination } from '@/lib/pagination';
+import { logDevError } from '@/lib/log-dev-error';
 
 /**
  * GET /api/activity-logs
@@ -59,7 +60,7 @@ export async function GET(req: NextRequest) {
             meta: { page, pageSize, total, totalPages: Math.ceil(total / pageSize) },
         }, { status: 200 });
     } catch (error) {
-        process.env.NODE_ENV === 'development' && console.log(error);
+        logDevError(error);
         return NextResponse.json({ error: "Internal Server Error" }, { status: 500 });
     }
 }

@@ -6,6 +6,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { getAuthFromRequest, requireRole, routeAcceptted } from '@/lib/auth';
 import { resolveReportAcl } from '@/lib/report-acl';
 import { resolveStoredFile } from '@/lib/storage-path';
+import { logDevError } from '@/lib/log-dev-error';
 
 const MAX_PREVIEW_ROWS = 200;
 const SPREADSHEET_EXTS = new Set(['xlsx', 'xls', 'csv']);
@@ -80,7 +81,7 @@ export async function GET(
 
         return NextResponse.json({ success: true, data: table }, { status: 200 });
     } catch (error) {
-        process.env.NODE_ENV === 'development' && console.log(error);
+        logDevError(error);
         return NextResponse.json({ error: "Internal Server Error" }, { status: 500 });
     }
 }

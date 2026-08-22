@@ -2,6 +2,7 @@ import prisma from '@/lib/prisma';
 import { NextRequest, NextResponse } from 'next/server';
 import { requireAuth } from '@/lib/auth';
 import { generateTotpSecret, buildOtpauthUrl, buildQrCodeDataUrl } from '@/lib/two-factor';
+import { logDevError } from '@/lib/log-dev-error';
 
 /**
  * POST /api/auth/2fa/setup — starts enrollment: generates a new TOTP secret
@@ -37,7 +38,7 @@ export async function POST(req: NextRequest) {
 
         return NextResponse.json({ success: true, data: { secret, otpauthUrl, qrCodeDataUrl } }, { status: 200 });
     } catch (error) {
-        process.env.NODE_ENV === 'development' && console.log(error);
+        logDevError(error);
         return NextResponse.json({ error: "Internal Server Error" }, { status: 500 });
     }
 }

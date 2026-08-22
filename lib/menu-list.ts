@@ -3,13 +3,10 @@
     Users,
     Settings,
     Bookmark,
-    SquarePen,
     LayoutGrid,
     LucideIcon,
     Lock,
     HardDrive,
-    Mail,
-    Gauge,
     ListTree,
     } from "lucide-react";
 
@@ -32,7 +29,7 @@
     menus: Menu[];
     };
 
-    export function getMenuList(pathname: string): Group[] {
+    export function getMenuList(): Group[] {
     return [
         {
     groupLabel: "Dashboard & Analytics",

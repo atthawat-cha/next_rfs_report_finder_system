@@ -1,12 +1,9 @@
 import { faker } from "@faker-js/faker";
 import {
-  MainMenusListType,
-  MenusDataBaseType,
   MenusListType,
   MenuType,
   PermissionTemplateType,
   PermissionType,
-  RolesType,
   SubmenuType,
   UserRolePermissionType,
 } from "./types";
@@ -37,7 +34,7 @@ export const perConvertToCheckbox = (
   per: PermissionTemplateType[],
 ): string[] => {
   const checkData: string[] = [];
-  per.length > 0 &&
+  if (per.length > 0) {
     per.forEach((item: PermissionTemplateType) => {
       item?.menu?.forEach((menu: MenuType) => {
         actions.forEach((action) => {
@@ -46,8 +43,8 @@ export const perConvertToCheckbox = (
           }
         });
 
-        menu.submenus?.length > 0 &&
-          menu?.submenus?.forEach((submenu: SubmenuType) => {
+        if (menu.submenus && menu.submenus.length > 0) {
+          menu.submenus.forEach((submenu: SubmenuType) => {
             actions.forEach((action) => {
               if (submenu[`can_${action}`]) {
                 checkData.push(
@@ -56,8 +53,10 @@ export const perConvertToCheckbox = (
               }
             });
           });
+        }
       });
     });
+  }
 
   return checkData;
 };

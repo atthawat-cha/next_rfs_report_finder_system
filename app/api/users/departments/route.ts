@@ -4,6 +4,7 @@ import { faker } from '@faker-js/faker';
 import { NextRequest, NextResponse } from 'next/server';
 import z from 'zod';
 import { logActivity } from '@/lib/activity-log';
+import { logDevError } from '@/lib/log-dev-error';
 
 export async function GET(req: NextRequest) {
     // กำหนดบทบาทที่สามารถเข้าถึงข้อมูลนี้ได้
@@ -37,7 +38,7 @@ export async function GET(req: NextRequest) {
             return NextResponse.json({ error: "Departments not found" }, { status: 404 });
         }
         return NextResponse.json(departments);
-    } catch (error) {
+    } catch {
         return NextResponse.json({ error: "Failed to fetch departments" }, { status: 500 });
     }
 }
@@ -99,7 +100,7 @@ export async function POST(req: NextRequest) {
 
         return NextResponse.json(department);
     } catch (error) {
-        process.env.NODE_ENV === 'development' && console.log(error);
+        logDevError(error);
         return NextResponse.json({ error: "Failed to create department" }, { status: 500 });
     }
 }

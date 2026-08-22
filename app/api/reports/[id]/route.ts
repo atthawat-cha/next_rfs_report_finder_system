@@ -3,6 +3,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { requireAuth, routeAcceptted } from '@/lib/auth';
 import { resolveReportAcl } from '@/lib/report-acl';
 import { logActivity } from '@/lib/activity-log';
+import { logDevError } from '@/lib/log-dev-error';
 
 /**
  * GET /api/reports/[id] — single-report detail for any authenticated role.
@@ -61,7 +62,7 @@ export async function GET(req: NextRequest, props: { params: Promise<{ id: strin
             { status: 200 }
         );
     } catch (error) {
-        process.env.NODE_ENV === 'development' && console.log(error);
+        logDevError(error);
         return NextResponse.json({ error: "Internal Server Error" }, { status: 500 });
     }
 }

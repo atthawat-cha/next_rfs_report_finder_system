@@ -5,6 +5,7 @@ import { verifyTotp, generateBackupCodes } from '@/lib/two-factor';
 import { logActivity } from '@/lib/activity-log';
 import { faker } from '@faker-js/faker';
 import { z } from 'zod';
+import { logDevError } from '@/lib/log-dev-error';
 
 const confirmZod = z.object({ code: z.string().min(6).max(6) });
 
@@ -65,7 +66,7 @@ export async function POST(req: NextRequest) {
 
         return NextResponse.json({ success: true, data: { backupCodes: plaintext } }, { status: 200 });
     } catch (error) {
-        process.env.NODE_ENV === 'development' && console.log(error);
+        logDevError(error);
         return NextResponse.json({ error: "Internal Server Error" }, { status: 500 });
     }
 }

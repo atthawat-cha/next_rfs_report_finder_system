@@ -66,8 +66,7 @@ export const users_columns: ColumnDef<UserTableType>[] = [
         id:'action',
         accessorKey: 'action',
         header: 'Action',
-        cell: ({ row }) => {
-          const user = row.original.id
+        cell: () => {
           return (
             <DropdownMenu>
               <DropdownMenuTrigger asChild>

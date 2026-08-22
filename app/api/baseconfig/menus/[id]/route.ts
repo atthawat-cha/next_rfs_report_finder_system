@@ -3,6 +3,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { getCurrentUser, requireRole, routeAcceptted } from '@/lib/auth';
 import { logActivity } from '@/lib/activity-log';
 import { z } from 'zod';
+import { logDevError } from '@/lib/log-dev-error';
 
 const updateZod = z.object({
     group_label: z.string().min(1).optional(),
@@ -55,7 +56,7 @@ export async function PUT(req: NextRequest, props: { params: Promise<{ id: strin
 
         return NextResponse.json({ success: true, data: updated }, { status: 200 });
     } catch (error) {
-        process.env.NODE_ENV === 'development' && console.log(error);
+        logDevError(error);
         return NextResponse.json({ error: "Internal Server Error" }, { status: 500 });
     }
 }
@@ -113,7 +114,7 @@ export async function DELETE(req: NextRequest, props: { params: Promise<{ id: st
             { status: 200 }
         );
     } catch (error) {
-        process.env.NODE_ENV === 'development' && console.log(error);
+        logDevError(error);
         return NextResponse.json({ error: "Internal Server Error" }, { status: 500 });
     }
 }

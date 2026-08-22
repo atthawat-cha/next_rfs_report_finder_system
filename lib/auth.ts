@@ -2,14 +2,12 @@ import { SignJWT, jwtVerify } from 'jose';
 import { cookies } from 'next/headers';
 import { NextRequest, NextResponse } from 'next/server';
 import bcrypt from 'bcryptjs';
-import { ZodSchema } from 'zod';
-import { RoleType, UserLoginType, UserSessionType } from './types';
+import { UserSessionType } from './types';
 
 
 const JWT_SECRET = new TextEncoder().encode(
   process.env.JWT_SECRET ?? (() => { throw new Error("JWT_SECRET is not set"); })()
 );
-const ACCESS_TOKEN_TTL = "15m";   // OWASP: keep short
 const REFRESH_TOKEN_TTL = "7d";
 const COOKIE_NAME = "auth-token";
 
@@ -22,23 +20,6 @@ export interface JWTPayload {
   user: UserSessionType;
   exp: number;
 }
-
-// Demo users - ในการใช้งานจริงควรใช้ database
-const DEMO_USERS = [
-  {
-    id: '1',
-    username: 'admin1',
-    password: '$2y$10$xkt6qDTBQ1PDfMw2Fl5SyuXzJl1fLRuA4y2Zf6sICAPwZQ7Wmsyze', // password: admin123
-    name: 'Admin User',
-  },
-  {
-    id: '2',
-    username: 'user1',
-    password: '$2y$10$xkt6qDTBQ1PDfMw2Fl5SyuXzJl1fLRuA4y2Zf6sICAPwZQ7Wmsyze', // password: admin123
-    name: 'Demo User',
-  },
-];
-
 
 // สร้าง JWT token
 export async function createToken(user: UserSessionType): Promise<string> {
@@ -57,7 +38,7 @@ export async function verifyToken(token: string): Promise<JWTPayload | null> {
   try {
     const verified = await jwtVerify(token, JWT_SECRET);
     return verified.payload as unknown as JWTPayload;
-  } catch (error) {
+  } catch {
     return null;
   }
 }
@@ -74,7 +55,7 @@ export async function getCurrentUser(): Promise<UserSessionType | null> {
 
     const payload = await verifyToken(token);
     return payload?.user || null;
-  } catch (error) {
+  } catch {
     return null;
   }
 }
@@ -131,7 +112,7 @@ export async function getAuthFromRequest(request: NextRequest): Promise<UserSess
 
     const payload = await verifyToken(token);
     return payload?.user || null;
-  } catch (error) {
+  } catch {
     return null;
   }
 }

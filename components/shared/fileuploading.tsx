@@ -57,8 +57,6 @@ export interface FileUploadProps {
   className?: string;
   /** แสดง required asterisk */
   required?: boolean;
-  // Main component File param
-  setFilesOutside?: (files: File[]) => void;
   fileOutside?: File[]
 }
 
@@ -212,7 +210,6 @@ export function FileUpload({
   disabled = false,
   className,
   required = false,
-  setFilesOutside
 }: FileUploadProps) {
   const inputRef = useRef<HTMLInputElement>(null);
   const [files, setFiles] = useState<File[]>([]);

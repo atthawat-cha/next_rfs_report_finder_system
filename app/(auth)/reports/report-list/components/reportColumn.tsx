@@ -1,7 +1,6 @@
 'use client'
 import { ColumnDef } from '@tanstack/react-table'
 import { ReportGetDataType } from '@/lib/types'
-import { Badge } from '@/components/ui/badge'
 
 import { Button } from "@/components/ui/button"
 import {
@@ -9,7 +8,6 @@ import {
     DropdownMenuContent,
     DropdownMenuItem,
     DropdownMenuLabel,
-    DropdownMenuSeparator,
     DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
 import { formatDateTime } from '@/lib/utils'
@@ -75,8 +73,12 @@ export function getReportColumn(
         header: 'version',
     },
     {
-        accessorKey: 'create_at',
-        header: 'create_at',
+        accessorKey: 'created_at',
+        header: 'Created At',
+        cell: ({ row }) => {
+            const createdAt = row.original.created_at
+            return <div>{createdAt ? formatDateTime(createdAt) : 'N/A'}</div>
+        },
     },
     {
         id: 'actions',

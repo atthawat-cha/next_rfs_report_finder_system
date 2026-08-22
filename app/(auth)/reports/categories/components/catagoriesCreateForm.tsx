@@ -10,7 +10,7 @@ import { useState } from "react"
 
 export default function CatagoriesCreateForm() {
 
-    const [loading, setLoading] = useState(false)
+    const [loading] = useState(false)
     const [params, setParams] = useState<CategoryType>({
         name: '',
         code: '',

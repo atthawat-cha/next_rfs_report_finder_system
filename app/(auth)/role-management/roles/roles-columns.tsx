@@ -1,7 +1,6 @@
 "use client";
 import { ColumnDef } from "@tanstack/react-table";
-import { DepartmentType, RolesTableType } from "@/lib/types";
-import { Badge } from "@/components/ui/badge";
+import { RolesTableType } from "@/lib/types";
 
 import { Button } from "@/components/ui/button";
 import {
@@ -9,7 +8,6 @@ import {
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuLabel,
-  DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { formatDateTime } from "@/lib/utils";
@@ -53,8 +51,7 @@ export const roles_columns: ColumnDef<RolesTableType>[] = [
     id: "actions",
     accessorKey: "action",
     header: "Actions",
-    cell: ({ row }) => {
-      const id = row?.original?.id;
+    cell: () => {
       return (
         <DropdownMenu>
           <DropdownMenuTrigger asChild>

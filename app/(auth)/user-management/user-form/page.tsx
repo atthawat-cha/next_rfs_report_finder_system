@@ -38,7 +38,7 @@ export default function UserFormData() {
   const searchParams = useSearchParams();
   const redirect = searchParams.get('redirect') || '/user-management/user-list';
 
-  const [action, setAction] = React.useState("create");
+  const [action] = React.useState("create");
   const [userParams, setUserParams] = React.useState<UserCreateType>({
     first_name: "",
     last_name: "",
@@ -110,7 +110,7 @@ const getConfigData = async () => {
       setLoading(false);
       router.push(redirect);
       router.refresh();
-    } catch (error) {
+    } catch {
       toast.error("Error creating user");
       setLoading(false);
     }

@@ -1,5 +1,6 @@
 import prisma from '@/lib/prisma';
 import { NextResponse } from 'next/server';
+import { logDevError } from '@/lib/log-dev-error';
 
 const PUBLIC_KEYS = ['ORG_NAME', 'ADMIN_EMAIL'];
 
@@ -27,7 +28,7 @@ export async function GET() {
             },
         }, { status: 200 });
     } catch (error) {
-        process.env.NODE_ENV === 'development' && console.log(error);
+        logDevError(error);
         return NextResponse.json({ error: "Internal Server Error" }, { status: 500 });
     }
 }

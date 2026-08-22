@@ -5,6 +5,7 @@ import { faker } from '@faker-js/faker';
 import { z } from 'zod';
 import { logActivity } from '@/lib/activity-log';
 import { resolveReportAcl } from '@/lib/report-acl';
+import { logDevError } from '@/lib/log-dev-error';
 
 /**
  * GET /api/reports/favorites — list current user's favorite reports
@@ -49,7 +50,7 @@ export async function GET(req: NextRequest) {
 
         return NextResponse.json({ success: true, data: favorites.map((f) => f.reports) }, { status: 200 });
     } catch (error) {
-        process.env.NODE_ENV === 'development' && console.log(error);
+        logDevError(error);
         return NextResponse.json({ error: "Internal Server Error" }, { status: 500 });
     }
 }
@@ -128,7 +129,7 @@ export async function POST(req: NextRequest) {
 
         return NextResponse.json({ success: true, data: { id: favorite.id } }, { status: 200 });
     } catch (error) {
-        process.env.NODE_ENV === 'development' && console.log(error);
+        logDevError(error);
         return NextResponse.json({ error: "Internal Server Error" }, { status: 500 });
     }
 }

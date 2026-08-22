@@ -8,6 +8,7 @@ import { getClientIp } from '@/lib/request-info';
 import { resolveReportAcl } from '@/lib/report-acl';
 import { resolveStoredFile } from '@/lib/storage-path';
 import { faker } from '@faker-js/faker';
+import { logDevError } from '@/lib/log-dev-error';
 
 const MIME_TYPES: Record<string, string> = {
     pdf: 'application/pdf',
@@ -116,7 +117,7 @@ export async function GET(
             },
         });
     } catch (error) {
-        process.env.NODE_ENV === 'development' && console.log(error);
+        logDevError(error);
         return NextResponse.json({ error: "Internal Server Error" }, { status: 500 });
     }
 }

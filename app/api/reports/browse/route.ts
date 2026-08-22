@@ -3,6 +3,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { getAuthFromRequest, requireRole, routeAcceptted } from '@/lib/auth';
 import { parsePagination } from '@/lib/pagination';
 import { visibleReportIdsFor } from '@/lib/report-acl';
+import { logDevError } from '@/lib/log-dev-error';
 
 /**
  * GET /api/reports/browse
@@ -103,7 +104,7 @@ export async function GET(req: NextRequest) {
             { status: 200 }
         );
     } catch (error) {
-        process.env.NODE_ENV === 'development' && console.log(error);
+        logDevError(error);
         return NextResponse.json({ error: "Internal Server Error" }, { status: 500 });
     }
 }

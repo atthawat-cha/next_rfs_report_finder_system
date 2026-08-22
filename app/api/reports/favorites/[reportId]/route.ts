@@ -2,6 +2,7 @@ import prisma from '@/lib/prisma';
 import { NextRequest, NextResponse } from 'next/server';
 import { getAuthFromRequest, requireRole, routeAcceptted } from '@/lib/auth';
 import { logActivity } from '@/lib/activity-log';
+import { logDevError } from '@/lib/log-dev-error';
 
 /**
  * DELETE /api/reports/favorites/[reportId] — remove a favorite for the current user
@@ -40,7 +41,7 @@ export async function DELETE(req: NextRequest, props: { params: Promise<{ report
 
         return NextResponse.json({ success: true }, { status: 200 });
     } catch (error) {
-        process.env.NODE_ENV === 'development' && console.log(error);
+        logDevError(error);
         return NextResponse.json({ error: "Internal Server Error" }, { status: 500 });
     }
 }

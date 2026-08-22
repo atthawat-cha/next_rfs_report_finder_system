@@ -1,6 +1,7 @@
 import prisma from '@/lib/prisma';
 import { NextRequest, NextResponse } from 'next/server';
 import { getAuthFromRequest, requireRole, routeAcceptted } from '@/lib/auth';
+import { logDevError } from '@/lib/log-dev-error';
 
 const DEFAULT_DAYS = 30;
 const MAX_DAYS = 90;
@@ -52,7 +53,7 @@ export async function GET(req: NextRequest) {
 
         return NextResponse.json({ success: true, data: series }, { status: 200 });
     } catch (error) {
-        process.env.NODE_ENV === 'development' && console.log(error);
+        logDevError(error);
         return NextResponse.json({ error: "Internal Server Error" }, { status: 500 });
     }
 }

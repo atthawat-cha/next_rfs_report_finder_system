@@ -1,8 +1,6 @@
 export const dynamic = 'force-dynamic';
 import prisma from '@/lib/prisma';
 import { NextRequest, NextResponse } from 'next/server';
-import { z } from 'zod';
-import bcrypt from 'bcryptjs';
 import { getAuthFromRequest, requireRole, routeAcceptted } from '@/lib/auth';
 import { AccessLevel, ReportOutputType, ReportStatus, UserStatus } from '@/app/generated/prisma/enums';
 

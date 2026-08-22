@@ -37,6 +37,11 @@
     interface CollapseMenuButtonProps {
     icon: LucideIcon;
     label: string;
+    // Caller (menu.tsx) computes this from pathname.startsWith(href) and
+    // passes it, but nothing here reads it - only each submenu's own
+    // `active` (a same-named but distinct field) drives isSubmenuActive
+    // below. Kept in the props contract rather than removed since the
+    // caller still passes a real, presumably-intended-for-future-use value.
     active: boolean;
     submenus: Submenu[];
     isOpen: boolean | undefined;
@@ -45,7 +50,6 @@
     export function CollapseMenuButton({
     icon: Icon,
     label,
-    active,
     submenus,
     isOpen
     }: CollapseMenuButtonProps) {

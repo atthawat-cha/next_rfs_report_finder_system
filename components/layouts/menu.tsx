@@ -1,7 +1,6 @@
     "use client";
 
     import Link from "next/link";
-    import { LogOut } from "lucide-react";
     import { usePathname } from "next/navigation";
 
     import { cn } from "@/lib/utils";
@@ -22,7 +21,7 @@
 
     export function Menu({ isOpen }: MenuProps) {
     const pathname = usePathname();
-    const menuList = getMenuList(pathname);
+    const menuList = getMenuList();
 
     return (
         <ScrollArea className="[&>div>div[style]]:!block">

@@ -18,11 +18,12 @@ import { perConvertToCheckbox } from "@/lib/user-management";
 import _ from "lodash";
 
 export default function PermissionsFormCheckbox({
-  params,
   setParams,
   template,
   initialSelected,
 }: {
+  // Still part of the props contract (both call sites pass it) even though
+  // the functional setParams updater below no longer needs to read it here.
   params: RolePermissionsType;
   setParams: React.Dispatch<React.SetStateAction<RolePermissionsType>>;
   template: PermissionTemplateType[];
@@ -94,8 +95,10 @@ export default function PermissionsFormCheckbox({
   
   useEffect(() => {
     const selectedArray = Array.from(selectedRows)
-    setParams({...params, permissions: selectedArray})
-
+    // Functional updater, not `{...params, ...}` off the closure - params is
+    // a prop that gets a new reference on every setParams call, so depending
+    // on it here would re-fire this effect after its own write and loop.
+    setParams((prev) => ({...prev, permissions: selectedArray}))
   }, [selectedRows, setParams])
 
   if (!template) return null;

@@ -9,7 +9,7 @@ import { useState } from "react"
 
 export default function TagsCreateForm() {
 
-    const [loading, setLoading] = useState(false)
+    const [loading] = useState(false)
     const [params, setParams] = useState<TagsType>({
         name: '',
         slug: '',

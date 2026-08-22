@@ -1,6 +1,7 @@
 import prisma from '@/lib/prisma';
 import { NextRequest, NextResponse } from 'next/server';
 import { requireRole, routeAcceptted } from '@/lib/auth';
+import { logDevError } from '@/lib/log-dev-error';
 
 /**
  * GET /api/reports/[id]/versions — unified, read-only version history for
@@ -37,7 +38,7 @@ export async function GET(req: NextRequest, props: { params: Promise<{ id: strin
 
         return NextResponse.json({ success: true, data: { files: filesByKind, queries } }, { status: 200 });
     } catch (error) {
-        process.env.NODE_ENV === 'development' && console.log(error);
+        logDevError(error);
         return NextResponse.json({ error: "Internal Server Error" }, { status: 500 });
     }
 }

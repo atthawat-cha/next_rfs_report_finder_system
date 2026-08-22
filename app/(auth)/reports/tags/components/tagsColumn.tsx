@@ -28,8 +28,7 @@ export const tagsColumn: ColumnDef<TagsType>[] = [
     },
     {
         id: "actions",
-        cell: ({ row }) => {
-            const tags = row.original
+        cell: () => {
             return (
                 <DropdownMenu>
                     <DropdownMenuTrigger asChild>

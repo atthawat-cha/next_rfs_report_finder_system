@@ -8,7 +8,6 @@ import { users_columns } from './columns';
 import { UserTableType } from '@/lib/types';
 import { Separator } from "@/components/ui/separator"
 import { Button } from '@/components/ui/button';
-import { redirect } from 'next/navigation';
 
 
 

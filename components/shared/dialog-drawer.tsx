@@ -4,35 +4,21 @@ import * as React from "react"
 import { Button } from "@/components/ui/button"
 import {
   Dialog,
-  DialogClose,
   DialogContent,
   DialogDescription,
-  DialogFooter,
   DialogHeader,
   DialogTitle,
   DialogTrigger,
 } from "@/components/ui/dialog"
-import {
-  Drawer,
-  DrawerClose,
-  DrawerContent,
-  DrawerDescription,
-  DrawerFooter,
-  DrawerHeader,
-  DrawerTitle,
-  DrawerTrigger,
-} from "@/components/ui/drawer"
-import { Input } from "@/components/ui/input"
-import { Label } from "@/components/ui/label"
-import { useSize } from "ahooks"
-import { cn } from "@/lib/utils"
-// import { useMediaQuery } from "@/hooks/use-media-query"
 
 type Props = {
   children: React.ReactNode;
+  // Still part of the props contract (all 3 call sites pass it) even though
+  // this component's uncontrolled <Dialog> below doesn't read it - see
+  // document/00-progress.md's Phase 5d/6a notes on this being a known,
+  // out-of-scope-for-now bug (this demo scaffold ignores isOpen entirely).
   isOpen?: boolean;
   setisOpen?: React.Dispatch<React.SetStateAction<boolean>>
-  handlerSubmit?: () => void
   title?: string;
   description?: string;
   btnText?: string;
@@ -40,7 +26,7 @@ type Props = {
 
 
 
-export function DrawerDialogDemo({ children, title, isOpen, handlerSubmit, description, btnText }: Props) {
+export function DrawerDialogDemo({ children, title, description, btnText }: Props) {
   // const [open, setOpen] = React.useState(false)
 
   return (

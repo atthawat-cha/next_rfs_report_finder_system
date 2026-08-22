@@ -5,6 +5,7 @@ import { logActivity } from '@/lib/activity-log';
 import { syncReportFileCache } from '@/lib/report-file-cache';
 import { faker } from '@faker-js/faker';
 import { z } from 'zod';
+import { logDevError } from '@/lib/log-dev-error';
 
 const bodyZod = z.discriminatedUnion('target', [
     z.object({ target: z.literal('file'), report_files_id: z.string().min(1) }),
@@ -100,7 +101,7 @@ export async function POST(req: NextRequest, props: { params: Promise<{ id: stri
 
         return NextResponse.json({ success: true }, { status: 200 });
     } catch (error) {
-        process.env.NODE_ENV === 'development' && console.log(error);
+        logDevError(error);
         return NextResponse.json({ error: "Internal Server Error" }, { status: 500 });
     }
 }

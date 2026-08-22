@@ -1,4 +1,4 @@
-import { PrismaClient, Prisma } from "../../app/generated/prisma/client";
+import { PrismaClient } from "../../app/generated/prisma/client";
 import "dotenv/config";
 import { faker } from "@faker-js/faker";
 

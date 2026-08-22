@@ -1,8 +1,6 @@
-import { PrismaClient, Prisma } from "../../app/generated/prisma/client";
-import { AccessLevel, ReportStatus, NotificationType, ShareType, TicketPriority, TicketStatus, UserStatus } from "../../app/generated/prisma/client";
+import { PrismaClient } from "../../app/generated/prisma/client";
 import 'dotenv/config'
 import { faker } from "@faker-js/faker";
-import bcrypt from 'bcryptjs';
 
 
 
@@ -20,7 +18,7 @@ export async function initSeed(prisma:PrismaClient) {
     }
   })
 
-  const itDept = await prisma.departments.create({
+  await prisma.departments.create({
     data: {
       id: faker.string.uuid(),
       name: "IT Department",
@@ -133,7 +131,7 @@ export async function initSeed(prisma:PrismaClient) {
   // })
 
   /* -------------------- CATEGORIES -------------------- */
-  const financeCat = await prisma.categories.create({
+  await prisma.categories.create({
     data: {
       id: faker.string.uuid(),
       name: "Finance",
@@ -142,7 +140,7 @@ export async function initSeed(prisma:PrismaClient) {
     }
   })
 
-  const monthlyCat = await prisma.categories.create({
+  await prisma.categories.create({
     data: {
       id: faker.string.uuid(),
       name: "OPD",
@@ -152,7 +150,7 @@ export async function initSeed(prisma:PrismaClient) {
   })
 
   /* -------------------- TAGS -------------------- */
-  const tag1 = await prisma.tags.create({
+  await prisma.tags.create({
     data: {
       id: faker.string.uuid(),
       name: "2026",
@@ -161,7 +159,7 @@ export async function initSeed(prisma:PrismaClient) {
     }
   })
 
-  const tag2 = await prisma.tags.create({
+  await prisma.tags.create({
     data: {
       id: faker.string.uuid(),
       name: "Revenue",

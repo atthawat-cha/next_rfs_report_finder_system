@@ -1,6 +1,5 @@
 "use client";
 import Link from "next/link";
-import { useRouter } from "next/navigation";
 import { Button } from "../ui/button";
 import { SidebarToggle } from "../ui/SidebarToggle";
 import { useStore } from "@/hook/useStore";
@@ -9,32 +8,7 @@ import { PanelsTopLeft } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Menu } from "./menu";
 
-    interface SidebarItem {
-    id: string;
-    name: string;
-    href: string;
-    submenu: [
-        {
-        id: string;
-        name: string;
-        href: string;
-        submenu: [
-            {
-            id: string;
-            name: string;
-            href: string;
-            },
-        ];
-        },
-    ];
-    }
-
-    interface SidebarProps {
-    items: SidebarItem[];
-    }
-
     export default function Sidebar() {
-    const router = useRouter();
     const sidebar = useStore(useSidebar, (x) => x);
     if (!sidebar) return null;
     const { isOpen, toggleOpen, getOpenState, setIsHover, settings } = sidebar;

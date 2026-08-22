@@ -4,6 +4,7 @@ import { getCurrentUser, requireRole, routeAcceptted } from '@/lib/auth';
 import { logActivity } from '@/lib/activity-log';
 import { faker } from '@faker-js/faker';
 import { z } from 'zod';
+import { logDevError } from '@/lib/log-dev-error';
 
 /**
  * GET /api/baseconfig/menus — list every menus row, sorted so rows for the
@@ -26,7 +27,7 @@ export async function GET(req: NextRequest) {
 
         return NextResponse.json({ success: true, data: menus }, { status: 200 });
     } catch (error) {
-        process.env.NODE_ENV === 'development' && console.log(error);
+        logDevError(error);
         return NextResponse.json({ error: "Internal Server Error" }, { status: 500 });
     }
 }
@@ -104,7 +105,7 @@ export async function POST(req: NextRequest) {
 
         return NextResponse.json({ success: true, data: menu }, { status: 200 });
     } catch (error) {
-        process.env.NODE_ENV === 'development' && console.log(error);
+        logDevError(error);
         return NextResponse.json({ error: "Internal Server Error" }, { status: 500 });
     }
 }

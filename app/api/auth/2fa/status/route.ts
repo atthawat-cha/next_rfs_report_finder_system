@@ -1,6 +1,7 @@
 import prisma from '@/lib/prisma';
 import { NextRequest, NextResponse } from 'next/server';
 import { requireAuth } from '@/lib/auth';
+import { logDevError } from '@/lib/log-dev-error';
 
 /**
  * GET /api/auth/2fa/status — a fresh DB read of the current user's 2FA
@@ -19,7 +20,7 @@ export async function GET(req: NextRequest) {
 
         return NextResponse.json({ success: true, data: { enabled: user?.two_factor_enabled ?? false } }, { status: 200 });
     } catch (error) {
-        process.env.NODE_ENV === 'development' && console.log(error);
+        logDevError(error);
         return NextResponse.json({ error: "Internal Server Error" }, { status: 500 });
     }
 }

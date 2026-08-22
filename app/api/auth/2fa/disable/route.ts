@@ -4,6 +4,7 @@ import { requireAuth } from '@/lib/auth';
 import { logActivity } from '@/lib/activity-log';
 import bcrypt from 'bcryptjs';
 import { z } from 'zod';
+import { logDevError } from '@/lib/log-dev-error';
 
 const disableZod = z.object({ password: z.string().min(1) });
 
@@ -53,7 +54,7 @@ export async function POST(req: NextRequest) {
 
         return NextResponse.json({ success: true }, { status: 200 });
     } catch (error) {
-        process.env.NODE_ENV === 'development' && console.log(error);
+        logDevError(error);
         return NextResponse.json({ error: "Internal Server Error" }, { status: 500 });
     }
 }

@@ -1,5 +1,4 @@
 export const dynamic = 'force-dynamic';
-import mockmenus from "@/fakedata/permissionsmock";
 import { requireAuth, requireRole, routeAcceptted } from "@/lib/auth";
 import prisma from "@/lib/prisma";
 import { buildMenusrender, buildMenuStructure } from "@/lib/user-management";
@@ -43,9 +42,6 @@ export async function GET(req:NextRequest){
         }
     })
     const result = buildMenusrender(buildMenuStructure(permissionsTemplate));
-
-    // const result = buildMenusrender(mockmenus);
-
 
     return NextResponse.json({success: true, data:result}, { status: 200 });
     } catch (error) {

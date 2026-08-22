@@ -15,7 +15,7 @@ import { getMenuList } from "./menu-list";
  */
 describe("lib/menu-list", () => {
   it("every leaf href has a matching app/(auth) page", () => {
-    const groups = getMenuList("/");
+    const groups = getMenuList();
     const leafHrefs: string[] = [];
 
     for (const group of groups) {

@@ -5,6 +5,7 @@ import { ReportGetDataType } from '@/lib/types'
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel, DropdownMenuTrigger } from '@/components/ui/dropdown-menu'
 import { Button } from '@/components/ui/button'
 import { MoreHorizontal } from 'lucide-react'
+import { formatDateTime } from '@/lib/utils'
 
 export function getFavReportColumn(onUnfavorite: (reportId: string) => void, onPreview: (reportId: string) => void): ColumnDef<ReportGetDataType>[] {
     return [
@@ -43,8 +44,12 @@ export function getFavReportColumn(onUnfavorite: (reportId: string) => void, onP
         header: 'version',
     },
     {
-        accessorKey: 'create_at',
-        header: 'create_at',
+        accessorKey: 'created_at',
+        header: 'Created At',
+        cell: ({ row }) => {
+            const createdAt = row.original.created_at
+            return <div>{createdAt ? formatDateTime(createdAt) : 'N/A'}</div>
+        },
     },
     {
         id: 'actions',

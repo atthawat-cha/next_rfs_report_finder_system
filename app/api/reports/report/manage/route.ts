@@ -2,12 +2,11 @@ import prisma from '@/lib/prisma';
 import { NextRequest, NextResponse } from 'next/server';
 import { getAuthFromRequest, getCurrentUser, requireRole, routeAcceptted } from '@/lib/auth';
 import z from 'zod';
-import { convertToWebp, getFileExtension, getImageMetadata } from '@/lib/imageConvert';
 import { uploadImageFile, uploadMultipleImages } from '@/lib/fileUploadServices';
-import { ReportCreateDataType, ReportGetDataType } from '@/lib/types';
 import { faker } from '@faker-js/faker';
 import { parsePagination } from '@/lib/pagination';
 import { logActivity } from '@/lib/activity-log';
+import { logDevError } from '@/lib/log-dev-error';
 
 /**
  * GET /api/reports/report/manage
@@ -69,7 +68,7 @@ export async function GET(req: NextRequest) {
             meta: { page, pageSize, total, totalPages: Math.ceil(total / pageSize) }
         }, { status: 200 });
     } catch (error) {
-        process.env.NODE_ENV === 'development' && console.log(error)
+        logDevError(error);
         return NextResponse.json({ error: "Internal Server Error" }, { status: 500 });
     }
 }
@@ -209,7 +208,7 @@ export async function POST(req: NextRequest) {
 
         return NextResponse.json({ success: true, data: { id: report.id } }, { status: 200 });
     } catch (error) {
-        process.env.NODE_ENV === 'development' && console.log(error)
+        logDevError(error);
         return NextResponse.json({ error: "Internal Server Error" }, { status: 500 });
     }
 }

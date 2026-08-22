@@ -3,6 +3,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { getCurrentUser, requireRole, routeAcceptted } from '@/lib/auth';
 import { logActivity } from '@/lib/activity-log';
 import { createNotification } from '@/lib/notifications';
+import { logDevError } from '@/lib/log-dev-error';
 
 const EXPIRY_WARNING_DAYS = 3;
 
@@ -57,7 +58,7 @@ export async function POST(req: NextRequest) {
 
         return NextResponse.json({ success: true, data: { notified: expiringShares.length } }, { status: 200 });
     } catch (error) {
-        process.env.NODE_ENV === 'development' && console.log(error);
+        logDevError(error);
         return NextResponse.json({ error: "Internal Server Error" }, { status: 500 });
     }
 }

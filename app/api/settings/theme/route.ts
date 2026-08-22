@@ -2,6 +2,7 @@ import prisma from '@/lib/prisma';
 import { NextRequest, NextResponse } from 'next/server';
 import { requireAuth } from '@/lib/auth';
 import { z } from 'zod';
+import { logDevError } from '@/lib/log-dev-error';
 
 const themeZod = z.object({
     theme: z.enum(['light', 'dark', 'system']),
@@ -22,7 +23,7 @@ export async function GET(req: NextRequest) {
 
         return NextResponse.json({ success: true, data: { theme: user?.theme_preference ?? null } }, { status: 200 });
     } catch (error) {
-        process.env.NODE_ENV === 'development' && console.log(error);
+        logDevError(error);
         return NextResponse.json({ error: "Internal Server Error" }, { status: 500 });
     }
 }
@@ -48,7 +49,7 @@ export async function PUT(req: NextRequest) {
 
         return NextResponse.json({ success: true }, { status: 200 });
     } catch (error) {
-        process.env.NODE_ENV === 'development' && console.log(error);
+        logDevError(error);
         return NextResponse.json({ error: "Internal Server Error" }, { status: 500 });
     }
 }

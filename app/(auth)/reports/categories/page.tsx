@@ -12,7 +12,7 @@ import CatagoriesCreateForm from './components/catagoriesCreateForm'
 
 export default function ReportCategories() {
 
-  const [openDialog, setOpenDialog] = useState(false)
+  const [openDialog] = useState(false)
   return (
     <ContentLayout title="Report Categories">
       <div className="w-full item-center my-2">

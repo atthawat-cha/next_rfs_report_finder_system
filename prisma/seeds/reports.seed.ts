@@ -1,4 +1,4 @@
-import { AccessLevel, PrismaClient, ReportStatus, UserStatus } from "@/app/generated/prisma/client"
+import { AccessLevel, PrismaClient, ReportStatus } from "@/app/generated/prisma/client"
 import { faker } from '@faker-js/faker';
 
 

@@ -4,6 +4,7 @@ import { getAuthFromRequest, requireRole, routeAcceptted } from '@/lib/auth';
 import { logActivity } from '@/lib/activity-log';
 import { createNotification } from '@/lib/notifications';
 import { z } from 'zod';
+import { logDevError } from '@/lib/log-dev-error';
 
 /**
  * GET /api/reports/report/manage/[id] — single report + current files, for
@@ -54,7 +55,7 @@ export async function GET(req: NextRequest, props: { params: Promise<{ id: strin
 
         return NextResponse.json({ success: true, data }, { status: 200 });
     } catch (error) {
-        process.env.NODE_ENV === 'development' && console.log(error);
+        logDevError(error);
         return NextResponse.json({ error: "Internal Server Error" }, { status: 500 });
     }
 }
@@ -127,7 +128,7 @@ export async function PUT(req: NextRequest, props: { params: Promise<{ id: strin
 
         return NextResponse.json({ success: true, data: { id: report.id } }, { status: 200 });
     } catch (error) {
-        process.env.NODE_ENV === 'development' && console.log(error);
+        logDevError(error);
         return NextResponse.json({ error: "Internal Server Error" }, { status: 500 });
     }
 }
@@ -164,7 +165,7 @@ export async function DELETE(req: NextRequest, props: { params: Promise<{ id: st
 
         return NextResponse.json({ success: true }, { status: 200 });
     } catch (error) {
-        process.env.NODE_ENV === 'development' && console.log(error);
+        logDevError(error);
         return NextResponse.json({ error: "Internal Server Error" }, { status: 500 });
     }
 }

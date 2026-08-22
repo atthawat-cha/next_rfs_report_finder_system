@@ -4,6 +4,7 @@ import prisma from '@/lib/prisma';
 import { NextRequest, NextResponse } from 'next/server';
 import { logActivity } from '@/lib/activity-log';
 import { resolveStoredFile } from '@/lib/storage-path';
+import { logDevError } from '@/lib/log-dev-error';
 
 const MIME_TYPES: Record<string, string> = {
     pdf: 'application/pdf',
@@ -70,7 +71,7 @@ export async function GET(req: NextRequest, props: { params: Promise<{ token: st
             },
         });
     } catch (error) {
-        process.env.NODE_ENV === 'development' && console.log(error);
+        logDevError(error);
         return NextResponse.json({ error: "Internal Server Error" }, { status: 500 });
     }
 }

@@ -31,8 +31,7 @@ export const catagory_column: ColumnDef<CategoryType>[] = [
         id: 'actions',
         accessorKey: 'action',
         header: 'Actions',
-        cell: ({ row }) => {
-            const id = row?.original?.id
+        cell: () => {
             return (
                 <DropdownMenu>
                     <DropdownMenuTrigger asChild>

@@ -1,6 +1,7 @@
 import prisma from '@/lib/prisma';
 import { NextRequest, NextResponse } from 'next/server';
 import { requireAuth } from '@/lib/auth';
+import { logDevError } from '@/lib/log-dev-error';
 
 /**
  * GET /api/notifications — the current user's own notifications, latest 50,
@@ -24,7 +25,7 @@ export async function GET(req: NextRequest) {
 
         return NextResponse.json({ success: true, data: { notifications, unread_count: unreadCount } }, { status: 200 });
     } catch (error) {
-        process.env.NODE_ENV === 'development' && console.log(error);
+        logDevError(error);
         return NextResponse.json({ error: "Internal Server Error" }, { status: 500 });
     }
 }

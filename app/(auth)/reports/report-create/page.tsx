@@ -11,7 +11,7 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
-import { Field, FieldDescription, FieldLabel, FieldSeparator } from "@/components/ui/field";
+import { Field, FieldDescription, FieldLabel } from "@/components/ui/field";
 import { Input } from "@/components/ui/input";
 import {
   Select,
@@ -23,10 +23,9 @@ import {
 } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
 import { Separator } from "@/components/ui/separator";
-import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import FileUpload from "@/components/shared/fileuploading";
 import { Loader2, FileText, Layers } from "lucide-react";
-import { ReportCreateDataType, ReportGetDataType } from "@/lib/types";
+import { ReportCreateDataType } from "@/lib/types";
 import { AccessLevel, ReportOutputType } from "@/app/generated/prisma/enums";
 import { Checkbox } from "@/components/ui/checkbox";
 import toast from "react-hot-toast";
@@ -95,7 +94,7 @@ export default function ReportCreate() {
 
   React.useEffect(() => {
     fetchBaseData();
-  }, []);
+  }, [fetchBaseData]);
 
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();

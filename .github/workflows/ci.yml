@@ -55,12 +55,15 @@ jobs:
       - name: Type check
         run: npx tsc --noEmit
 
-      # Phase 5f: 0 errors as of this commit. 222 pre-existing warnings stay
-      # as a ratchet ceiling - any *new* warning fails CI, the existing 222
-      # get paid down over time by lowering this number (00-progress.md
-      # ของค้าง #11).
+      # Phase 6c paid the ratchet down to 0 (was 222 as of Phase 5f, see
+      # 00-progress.md ของค้าง #11 - now closed): logDevError() replaced the
+      # 60-occurrence dev-log idiom, the 128 no-unused-vars warnings were
+      # each checked before being fixed for real or deleted, and
+      # set-state-in-effect/incompatible-library got scoped `off` overrides
+      # in eslint.config.mjs instead of a blanket warning. Any new warning
+      # now fails CI outright - there is no more debt to grandfather in.
       - name: Lint
-        run: npx eslint . --max-warnings 222
+        run: npx eslint . --max-warnings 0
 
       - name: Build
         run: npm run build
