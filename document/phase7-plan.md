@@ -345,19 +345,30 @@ all. Add a simple day/month toggle (reuse existing `components/ui` primitives �
 
 ## Sub-phase 7d — Storage backend abstraction + fuzzy search
 
+**Closed 2026-08-22 — one deviation from this plan:** the interface ended up with 3 methods, not
+4. Checking every real call site first (as the "Implement per plan" step requires) found that
+`resolve` is never used independently — all 3 download/preview routes call
+`resolveStoredFile()` immediately followed by `fs.readFile()`, never just the path alone. Rather
+than expose a 4th method nothing calls on its own, the traversal-safety check is folded directly
+into `local.ts`'s `write`/`read`/`delete` (still reusing `resolveStoredFile()` from
+`lib/storage-path.ts` unchanged inside each). `app/api/settings/system/route.ts`'s
+`validateUploadBasePath` call was also left untouched, not routed through the interface — it's a
+local-filesystem-specific pre-flight check (does this directory exist and is it writable), not a
+generic storage operation any backend would implement the same way.
+
 ### 1. Storage interface
 
-New `lib/storage/index.ts` (or similar) defining a small interface covering exactly the 4
-operations today's call sites need: `write(relPath, buffer) → void`, `read(relPath) → Buffer`,
-`delete(relPath) → void`, `resolve(relPath) → absolute path` (the traversal-safe check
-`resolveStoredFile` already does). `lib/storage/local.ts` implements it by wrapping today's
-`lib/storage-path.ts` functions unchanged (no behavior change for the only backend actually used).
+`lib/storage/types.ts` defines `StorageBackend` with 3 methods: `write(relPath, buffer) → void`,
+`read(relPath) → Buffer`, `delete(relPath) → void` (see the deviation note above for why not 4).
+`lib/storage/local.ts` implements it by wrapping `lib/storage-path.ts`'s existing
+`resolveStoredFile()` unchanged (no behavior change for the only backend actually used).
 `lib/storage/s3.ts` (stub) implements the same interface with every method throwing
 `Error('S3 storage backend not implemented')` — exists so the interface shape is proven out
-without unverifiable code pretending to work. Update the 5 call sites
-(3 download/preview routes, `reportFileUploadServices.ts`'s write/delete, `settings/system`'s
-validation) to go through the interface, selecting the local implementation unconditionally for
-now (a config point for a future backend switch, not a working switch).
+without unverifiable code pretending to work. `lib/storage/index.ts` exports `storage =
+localStorage` unconditionally (a config point for a future backend switch, not a working switch).
+Updated 4 of the original 5 call sites (3 download/preview routes, `reportFileUploadServices.ts`'s
+write/delete) to go through it; `settings/system`'s validation stayed on `storage-path.ts` directly
+per the deviation above.
 
 ### 2. Fuzzy/typo-tolerant search
 
@@ -366,9 +377,15 @@ the existing `tsvector`/`ILIKE` conditions, using the GIN trigram indexes that a
 (`reports_name_th_trgm_idx`, `reports_name_en_trgm_idx`, `reports_code_trgm_idx` —
 `schema.prisma:288-290`, no new migration needed). Decide a similarity threshold (e.g.
 `similarity(name_th, ${q}) > 0.3`) added as an `OR` branch to the existing `WHERE`, so exact/prefix
-matches (already working) are unaffected and near-miss/typo queries additionally match. Order
-results by best-match rank when a search term is present (today's query has no explicit
-relevance ordering).
+matches (already working) are unaffected and near-miss/typo queries additionally match. Ranking
+by best-match turned out to need more than an `ORDER BY` on the existing raw query: Prisma's
+`findMany` (used for the actual field selection, after the raw query narrows down matching ids)
+has no way to sort by a computed SQL expression, and it doesn't preserve the order of a
+`where: {id: {in: [...]}}` array either. The raw query now selects `id` + a computed `rank`
+column, orders by rank, and pagination slices that already-ranked id list directly (not
+Prisma's `skip`/`take`) — `findMany`'s results are then re-sorted in JS back into that same
+order. Without this, page 2 of a search would return an arbitrary slice, not the next-best
+matches.
 
 ### Verification (7d)
 

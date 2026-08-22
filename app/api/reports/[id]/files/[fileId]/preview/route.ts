@@ -1,11 +1,10 @@
-import fs from 'fs/promises';
 import path from 'path';
 import ExcelJS from 'exceljs';
 import prisma from '@/lib/prisma';
 import { NextRequest, NextResponse } from 'next/server';
 import { getAuthFromRequest, requireRole, routeAcceptted } from '@/lib/auth';
 import { resolveReportAcl } from '@/lib/report-acl';
-import { resolveStoredFile } from '@/lib/storage-path';
+import { storage } from '@/lib/storage';
 import { logDevError } from '@/lib/log-dev-error';
 
 const MAX_PREVIEW_ROWS = 200;
@@ -71,8 +70,7 @@ export async function GET(
 
         let fileBuffer: Buffer;
         try {
-            const absolutePath = await resolveStoredFile(file.file_path);
-            fileBuffer = await fs.readFile(absolutePath);
+            fileBuffer = await storage.read(file.file_path);
         } catch {
             return NextResponse.json({ success: false, error: "File not found on server" }, { status: 404 });
         }

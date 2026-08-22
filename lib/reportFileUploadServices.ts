@@ -9,10 +9,9 @@
  * ⚠️  This module uses Node.js `fs` – server side only.
  */
 
-import fs from "fs/promises";
-import path from "path";
 import { getFileExtension, isFileSizeAllowed } from "./imageConvert";
-import { getUploadRoot, getMaxUploadSize } from "./storage-path";
+import { getMaxUploadSize } from "./storage-path";
+import { storage } from "./storage";
 import logger from "./logger";
 
 export interface ReportFileUploadResult {
@@ -71,10 +70,6 @@ function generateUniqueFilename(originalName: string): string {
   return `rf_${Date.now()}_${base}.${ext}`;
 }
 
-function toRelativePath(absolutePath: string, root: string): string {
-  return absolutePath.replace(root, "").replace(/\\/g, "/");
-}
-
 export async function uploadReportFile(
   file: File,
   fileKind: string,
@@ -126,19 +121,15 @@ export async function uploadReportFile(
       return { success: false, error: "Validation failed.", validationErrors };
     }
 
-    const root = await getUploadRoot();
-    const uploadDir = path.join(root, UPLOAD_FOLDER);
-    await fs.mkdir(uploadDir, { recursive: true });
-
     const fileName = generateUniqueFilename(file.name);
-    const absolutePath = path.join(uploadDir, fileName);
+    const filePath = `/${UPLOAD_FOLDER}/${fileName}`;
     const buffer = Buffer.from(await file.arrayBuffer());
-    await fs.writeFile(absolutePath, buffer);
+    await storage.write(filePath, buffer);
 
     return {
       success: true,
       data: {
-        filePath: toRelativePath(absolutePath, root),
+        filePath,
         fileName,
         fileType: file.type,
         fileSize: file.size,
@@ -153,9 +144,7 @@ export async function uploadReportFile(
 
 export async function deleteReportFile(relativeFilePath: string): Promise<void> {
   try {
-    const root = await getUploadRoot();
-    const normalized = relativeFilePath.replace(/^[/\\]+/, "");
-    await fs.unlink(path.join(root, normalized));
+    await storage.delete(relativeFilePath);
   } catch (error) {
     logger.error({ error }, "[deleteReportFile] Error");
   }

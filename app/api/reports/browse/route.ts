@@ -5,6 +5,8 @@ import { parsePagination } from '@/lib/pagination';
 import { visibleReportIdsFor } from '@/lib/report-acl';
 import { logDevError } from '@/lib/log-dev-error';
 
+const SIMILARITY_THRESHOLD = 0.3;
+
 /**
  * GET /api/reports/browse
  * Non-admin report list — filtered via lib/report-acl.ts's visibleReportIdsFor
@@ -46,58 +48,88 @@ export async function GET(req: NextRequest) {
             ...(tag && { report_tags: { some: { tags: { slug: tag } } } }),
         };
 
-        let matchingIds: string[] | null = null;
+        let pagedIds: string[] | null = null;
+        let total: number | undefined;
+
         if (q) {
             // tsvector handles efficient whole-word/prefix matches; trigram ILIKE covers
             // substring matches inside unsegmented Thai compound words (see migration note).
+            // similarity() (pg_trgm) additionally catches typos/near-misses that neither of
+            // those cover - the trigram GIN indexes on name_th/name_en/code (schema.prisma)
+            // already support it, no new migration needed (Phase 7d).
             const likeTerm = `%${q}%`;
-            const rows = await prisma.$queryRaw<{ id: string }[]>`
-                SELECT id FROM reports
+            const rankedRows = await prisma.$queryRaw<{ id: string; rank: number }[]>`
+                SELECT id,
+                    GREATEST(
+                        similarity(name_th, ${q}),
+                        similarity(coalesce(name_en, ''), ${q}),
+                        similarity(code, ${q}),
+                        CASE WHEN search_vector @@ to_tsquery('simple', ${toTsQueryInput(q)}) THEN 1 ELSE 0 END
+                    ) AS rank
+                FROM reports
                 WHERE id = ANY(${visibleIds})
                   AND (
                     search_vector @@ to_tsquery('simple', ${toTsQueryInput(q)})
                     OR name_th ILIKE ${likeTerm}
                     OR name_en ILIKE ${likeTerm}
                     OR code ILIKE ${likeTerm}
+                    OR similarity(name_th, ${q}) > ${SIMILARITY_THRESHOLD}
+                    OR similarity(coalesce(name_en, ''), ${q}) > ${SIMILARITY_THRESHOLD}
+                    OR similarity(code, ${q}) > ${SIMILARITY_THRESHOLD}
                   )
+                ORDER BY rank DESC
             `;
-            matchingIds = rows.map((r) => r.id);
-            if (matchingIds.length === 0) {
+
+            if (rankedRows.length === 0) {
                 return NextResponse.json(
                     { success: true, data: [], meta: { page, pageSize, total: 0, totalPages: 0 } },
                     { status: 200 }
                 );
             }
-            where.id = { in: matchingIds };
+
+            // Rank has to be decided (and paginated) here, in SQL order - Prisma's
+            // findMany below has no way to sort by this computed rank, only by real
+            // columns, so slicing the already-ranked id list is what makes page 2 of a
+            // search still return the 2nd-best matches instead of an arbitrary slice.
+            total = rankedRows.length;
+            pagedIds = rankedRows.slice(skip, skip + take).map((r) => r.id);
+            where.id = { in: pagedIds };
         }
 
-        const [reports, total] = await Promise.all([
-            prisma.reports.findMany({
-                where,
-                select: {
-                    id: true,
-                    code: true,
-                    name_th: true,
-                    name_en: true,
-                    description: true,
-                    file_path: true,
-                    file_name: true,
-                    access_level: true,
-                    is_downloadable: true,
-                    is_editable: true,
-                    categories: { select: { id: true, name: true } },
-                    departments: { select: { id: true, name: true } },
-                    report_tags: { select: { tags: { select: { id: true, name: true, slug: true } } } },
-                    created_at: true,
-                    status: true,
-                    updated_at: true,
-                },
-                skip,
-                take,
-                orderBy: { created_at: 'desc' },
-            }),
-            prisma.reports.count({ where }),
-        ]);
+        const reportRows = await prisma.reports.findMany({
+            where,
+            select: {
+                id: true,
+                code: true,
+                name_th: true,
+                name_en: true,
+                description: true,
+                file_path: true,
+                file_name: true,
+                access_level: true,
+                is_downloadable: true,
+                is_editable: true,
+                categories: { select: { id: true, name: true } },
+                departments: { select: { id: true, name: true } },
+                report_tags: { select: { tags: { select: { id: true, name: true, slug: true } } } },
+                created_at: true,
+                status: true,
+                updated_at: true,
+            },
+            ...(pagedIds ? {} : { skip, take, orderBy: { created_at: 'desc' } }),
+        });
+
+        // findMany's `where.id: {in: pagedIds}` does not preserve pagedIds' order,
+        // so re-apply the rank order it was sliced in above.
+        let reports = reportRows;
+        if (pagedIds) {
+            const rowById = new Map(reportRows.map((r) => [r.id, r]));
+            reports = pagedIds.map((id) => rowById.get(id)).filter((r) => r !== undefined) as typeof reportRows;
+        }
+
+        if (total === undefined) {
+            total = await prisma.reports.count({ where });
+        }
 
         return NextResponse.json(
             { success: true, data: reports, meta: { page, pageSize, total, totalPages: Math.ceil(total / pageSize) } },

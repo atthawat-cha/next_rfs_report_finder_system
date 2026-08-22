@@ -1,9 +1,8 @@
-import fs from 'fs/promises';
 import path from 'path';
 import prisma from '@/lib/prisma';
 import { NextRequest, NextResponse } from 'next/server';
 import { logActivity } from '@/lib/activity-log';
-import { resolveStoredFile } from '@/lib/storage-path';
+import { storage } from '@/lib/storage';
 import { logDevError } from '@/lib/log-dev-error';
 
 const MIME_TYPES: Record<string, string> = {
@@ -45,8 +44,7 @@ export async function GET(req: NextRequest, props: { params: Promise<{ token: st
 
         let fileBuffer: Buffer;
         try {
-            const absolutePath = await resolveStoredFile(file.file_path);
-            fileBuffer = await fs.readFile(absolutePath);
+            fileBuffer = await storage.read(file.file_path);
         } catch {
             return NextResponse.json({ success: false, error: "File not found on server" }, { status: 404 });
         }
