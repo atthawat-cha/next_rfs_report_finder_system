@@ -34,12 +34,13 @@
 
 **Phase 7 ปิดครบทั้ง 5 sub-phase แล้ว (2026-08-22)** ([`phase7-plan.md`](./phase7-plan.md)) — 7a = job scheduler จริงตัวแรกของระบบ + pino logging sweep + เจอบั๊กจริง 3 ตัว; 7b = pagination 4 endpoint (opt-in แทน unconditional — เจอ combobox 2 จุดที่พึ่ง full list) + categories/tags CRUD ตัวจริงตัวแรก (เดิมเป็น stub ไม่ทำงานเลย) + เจอบั๊กความปลอดภัยจริง (`password` hash หลุดใน `GET /api/users/user`) + บั๊ก UX จริง (department create ไม่เคย toast/redirect); 7c = dashboard monthly toggle + Redis cache 4 endpoint ยืนยัน fail-open จริงตอน Redis ล่ม + cache-hit จริงด้วย sentinel test; 7d = storage backend interface (local จริง/S3 stub) ย้าย 5 call site + fuzzy search จริงด้วย `pg_trgm` similarity พร้อม rank-aware pagination; 7e = support tickets CRUD+UI ตัวจริงตัวแรก + notification 3 ประเภทใหม่ (ต้อง migration จริงเพราะ `NotificationType` เป็น Postgres enum เจอของค้าง #1's `search_vector` false-diff อีกครั้ง) ดูรายละเอียดใต้ตาราง Phase 7 ด้านล่าง
 
+**Phase 8 มีแผนแล้ว ยังไม่มีโค้ด** ([`phase8-plan.md`](./phase8-plan.md), เขียน 2026-08-22, ทำงานบน branch `feature/phase8`) — 4 sub-phase: 8a proxy migration (เจอว่าเป็น runtime change จริง), 8b share cleanup job, 8c zod audit, 8d pagination/skeleton 2 หน้าสุดท้าย ดูรายละเอียดใต้ตาราง Phase 8 ด้านบน
+
 **งานถัดไปที่ควรทำ (เรียงตามลำดับ):**
-1. **วางแผน Phase 8** — Phase 7 ปิดครบแล้ว ไม่มีแผนของ phase ถัดไปที่ตัดสินใจไว้ล่วงหน้า ต้องคุยกับผู้ใช้ก่อนว่าจะไปทางไหนต่อ
+1. **เริ่ม Phase 8a** (migrate `middleware.ts` → `proxy.ts`) — แผนพร้อมแล้ว ([`phase8-plan.md`](./phase8-plan.md)) จะปิดของค้าง #15 ไปด้วยเมื่อเสร็จ
 2. **ยืนยันว่า CI workflow รันจริงบน GitHub** — พักไว้ตามที่ผู้ใช้เลือก (2026-08-22): เครื่องนี้ไม่มี `gh` CLI/token ให้สร้าง PR อัตโนมัติ, ให้ลิงก์ compare (`main...feature/phase5`) ไว้ให้ผู้ใช้เปิดเองแล้ว รอผู้ใช้เปิด PR หรือขอให้ลองติดตั้ง `gh`
-3. **วางแผน i18n (`next-intl`) แยกเป็น phase ใหม่ของตัวเอง** — ถูก scope out จาก 4e, Phase 5, Phase 6 และ Phase 7 เพราะเป็น all-or-nothing sweep ทั้งโปรเจกต์
+3. **วางแผน i18n (`next-intl`) แยกเป็น phase ใหม่ของตัวเอง** — ถูก scope out จาก 4e, Phase 5, Phase 6, Phase 7 และ Phase 8 เพราะเป็น all-or-nothing sweep ทั้งโปรเจกต์
 4. **ของค้าง #9** (`deepmerge-ts`/Prisma) — รอ Prisma ออก patch จริงหรือ Prisma 8 GA ไม่มีอะไรให้ทำตอนนี้
-5. **ของค้าง #15** (`middleware` → `proxy` deprecation, Next.js 16) — ไม่บล็อกอะไร รอ phase ที่เหมาะสม
 
 ---
 
@@ -381,6 +382,20 @@
 - [x] ยืนยันสดครบเต็มรูปแบบ: `npx tsc --noEmit` = 0 error, `npx eslint .` = 0 warning, `npm test` = 32/32 ผ่าน (รวม `lib/menu-list.test.ts` ที่ยืนยันว่า `/tickets`/`/tickets/manage` มีหน้าจริงรองรับ), `npm run build` = exit 0; เปิด dev server จริง มินต์ JWT ทั้ง role `USER` จริงและ `ADMIN` จริงจาก DB ทดสอบ flow เต็ม: USER สร้าง ticket → เห็นแค่ของตัวเอง (total 1) → PUT เอง → 403 ถูกต้อง; ADMIN เห็น ticket พร้อม requester name แนบมาด้วย → assign ให้ตัวเอง + เปลี่ยนเป็น IN_PROGRESS → RESOLVED (resolved_at set จริง) → OPEN อีกครั้ง (resolved_at เคลียร์เป็น null จริง); ตรวจ DB ตรงๆ ว่า notification ถูกสร้างจริงครบ (TICKET_CREATED ไปหา admin 5 คน, TICKET_ASSIGNED 1 ครั้ง, TICKET_STATUS_CHANGED 3 ครั้งตามจำนวนการเปลี่ยนสถานะจริง); ยืนยัน 401 (ไม่ login), 400 (assigned_to เป็น user id ที่ไม่มีจริง), 404 (ticket id ที่ไม่มีจริง); เปิดหน้า `/tickets`/`/tickets/manage` จริงผ่าน curl ได้ 200 ทั้งคู่; ลบ fixture ทดสอบทั้งหมดออกจาก DB หลังตรวจ (ticket + notifications 9 แถว + activity_logs 4 แถวที่เกี่ยวข้อง)
 - ⚠️ **ข้อจำกัดการยืนยัน**: dev DB มี user role `USER` เพียงคนเดียว จึงไม่สามารถทดสอบ cross-user isolation จริง (user คนที่ 2 พยายาม GET ticket ของคนอื่น → ควรได้ 404) ได้ตรงๆ — ตรรกะ (`if (!isAdmin && ticket.user_id !== authResult.user.id) return 404`) เหมือนกับ pattern ที่ `lib/reports-route-acl.test.ts` พิสูจน์แล้วสำหรับ reports ทุกประการ มั่นใจได้จากความสอดคล้องนี้ แต่ไม่ใช่ live-verified ตรงจุดนี้โดยตรง
 - ไม่ได้ตรวจ UI จริงผ่าน browser (ไม่มี browser tool)
+
+---
+
+### Phase 8 — Proxy Migration, Share Cleanup, Validation Audit, List Consistency 📝 มีแผนแล้ว ยังไม่มีโค้ด
+[แผนเต็ม →](./phase8-plan.md) — ผู้ใช้เลือกจาก backlog ที่เหลือจริงและทำได้โดยไม่ต้องรอ infra ภายนอก (ตัดสินใจ 2026-08-22) แยกเป็น 4 sub-phase, ทำงานบน branch ใหม่ `feature/phase8`
+
+| Sub-phase | งาน | สถานะ |
+|---|---|---|
+| **8a** | Migrate `middleware.ts` → `proxy.ts` (Next.js 16 deprecation) — **เจอว่าไม่ใช่แค่ rename**: `middleware.ts` รันบน Edge runtime จริง (ยืนยันด้วย live test) แต่ `proxy.ts` บังคับใช้ Node.js runtime ตายตัว ไม่มีทาง override กลับ Edge | ❌ |
+| **8b** | Job cleanup ลบ `report_shares` ที่หมดอายุแล้วจริง (ต่างจาก `check-report-expiry` เดิมที่แค่เตือนล่วงหน้า) — schema ไม่มี soft-delete field เลยต้องลบจริง | ❌ |
+| **8c** | Audit zod validation ทุก endpoint — เจอแล้วว่า audit สะอาด (28/28 endpoint ที่รับ body validate ครบ) เหลือแค่ยืนยันซ้ำให้ครบ 100% | ❌ |
+| **8d** | Pagination/skeleton ให้ 2 หน้าที่เหลือจริง: `reports/report-list` (หน้าหลักค้นหารายงาน ไม่มีทั้ง skeleton และ pagination UI เลย) กับ `user-management/activity` (มี pagination แล้ว ขาดแค่ skeleton) | ❌ |
+
+**Resolved decisions (ผู้ใช้, 2026-08-22)**: ทำครบทั้ง 4 sub-phase ตามลำดับ 8a→8b→8c→8d, 8a ทำต่อแม้เจอว่าเป็น runtime change จริงแต่เพิ่มความเข้มงวดในการยืนยันสด (ไม่ใช่แค่ rename แล้วจบ), ไม่ย้าย rate-limit/pino เข้า proxy.ts ในรอบนี้ (บันทึกไว้เป็นตัวเลือกใหม่ที่เปิดขึ้นแต่ไม่ทำ), 8b ลบจริงไม่เพิ่ม soft-delete field
 
 ---
 
