@@ -210,6 +210,15 @@ Register a third `cron.schedule(...)` call for this job (e.g. daily, alongside
 
 ## Sub-phase 8c — Zod validation audit (confirm-and-close)
 
+**Closed 2026-08-22 — confirm-only, exactly as anticipated.** Most of the 28 files were already
+read in full across this session's own work on Phases 7-8 (categories/tags/tickets/departments/
+roles/menus/settings/auth, etc.) or by the planning audit fork; only 4 remained genuinely unread:
+`reports/report/manage/[id]/route.ts`, `reports/[id]/variables/route.ts`,
+`reports/[id]/shares/route.ts`, `reports/[id]/queries/route.ts`. All 4 validate correctly (the
+`shares` route even goes further, validating that a `USER`/`DEPARTMENT` share target actually
+exists before creating the row). No code changes were needed - `feature-list.md`'s row was updated
+to a clean ✅, dropping the long-standing "ตรวจให้ครบทุก endpoint ใหม่" hedge.
+
 ### 1. Full-file pass
 
 Read the remaining ~20 of the 28 body-consuming route files not already spot-checked, confirming

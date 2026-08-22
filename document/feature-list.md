@@ -185,7 +185,7 @@
 |---|---|---|---|
 | Password hashing (bcrypt) | Must | ✅ | — |
 | httpOnly, Secure, SameSite cookie | Must | ✅ (`secure: NODE_ENV==='production'`, `sameSite:'lax'`) | 0 |
-| Input validation ด้วย `zod` ทุก endpoint | Must | ✅ (ส่วนใหญ่), ⚠️ (ตรวจให้ครบทุก endpoint ใหม่) | ต่อเนื่อง |
+| Input validation ด้วย `zod` ทุก endpoint | Must | ✅ (Phase 8c ไล่ตรวจครบทั้ง 28 ไฟล์ที่รับ body จริงเทียบกับ `route.ts` ทั้งหมด 57 ไฟล์ — validate ด้วย zod ก่อนใช้งานครบทุกไฟล์ ไม่พบ gap เลยสักจุด) | ต่อเนื่อง/8c |
 | Security headers (CSP, HSTS, X-Content-Type-Options) | Must | ✅ (`next.config.js` `headers()`, ยืนยันสดทุก route ทั้งหน้าเว็บและ `/api/*`) | 4a |
 | Antivirus scan ไฟล์อัปโหลด (ClamAV) | Should | ❌ deferred — ไม่มี ClamAV daemon ยืนยันใน deploy environment | 4c (dropped) |
 | Dependency vulnerability scanning (CI) | Should | ⚠️ (`.github/workflows/ci.yml` — `npm audit --audit-level=high`, non-blocking ชั่วคราว — `next`/`postcss`/`sharp` advisories ที่เคยเป็นเหตุผลเดิมถูกปิดไปแล้วทั้งหมดโดย `dependency-upgrade-plan.md`, เหตุผลที่เหลือตอนนี้คือของค้าง #9 (`deepmerge-ts` ผ่าน `@prisma/config`) เท่านั้น — ตรงกับ comment ใน `ci.yml` เองแล้ว) | 4f |
