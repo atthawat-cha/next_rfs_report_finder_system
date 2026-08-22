@@ -238,6 +238,15 @@ the sampled files already do it (a `safeParse` + 400 response on failure), not a
 
 ## Sub-phase 8d — Pagination/skeleton for `report-list` and `activity`
 
+**Closed 2026-08-22 — Phase 8 fully closed, all 4 sub-phases.** Built as planned, reusing
+`user-management/activity/page.tsx`'s prev/next pager pattern for `report-list` exactly as
+anticipated. Verified the underlying `/api/reports/browse?page=&pageSize=` mechanism returns
+genuinely distinct pages (confirmed with `pageSize=1` against the dev DB's 3 real reports, since
+the default `PAGE_SIZE=20` means the pager UI itself won't visibly appear until the DB has more
+than 20 reports) - the wiring is correct even though this dev environment can't show the pager
+rendering live. No browser tool available to confirm the skeleton/pager render visually, same
+limitation noted throughout every phase in this session.
+
 ### 1. `app/(auth)/reports/report-list/page.tsx`
 
 Add a `SkeletonTable` loading state (matching the Phase 7b convention already used on 5 other

@@ -16,6 +16,7 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
+import { SkeletonTable } from '@/components/shared/skeletonTable';
 
 interface ActivityLogUser {
   id: string;
@@ -176,40 +177,46 @@ export default function UsersActivityLog() {
         </div>
 
         <div className="mt-5 overflow-hidden rounded-md border mx-6">
-          <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead>เวลา</TableHead>
-                <TableHead>ผู้ใช้</TableHead>
-                <TableHead>Action</TableHead>
-                <TableHead>Entity</TableHead>
-                <TableHead>รายละเอียด</TableHead>
-                <TableHead>IP</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {logs.length ? (
-                logs.map((log) => (
-                  <TableRow key={log.id}>
-                    <TableCell className="whitespace-nowrap text-xs tabular-nums">
-                      {new Date(log.created_at).toLocaleString('th-TH')}
-                    </TableCell>
-                    <TableCell>{log.users?.username ?? '-'}</TableCell>
-                    <TableCell className="capitalize">{log.action}</TableCell>
-                    <TableCell className="capitalize">{log.entity}</TableCell>
-                    <TableCell className="max-w-[320px] truncate">{log.description ?? '-'}</TableCell>
-                    <TableCell className="text-xs">{log.ip_address ?? '-'}</TableCell>
-                  </TableRow>
-                ))
-              ) : (
+          {loading ? (
+            <div className="p-4">
+              <SkeletonTable />
+            </div>
+          ) : (
+            <Table>
+              <TableHeader>
                 <TableRow>
-                  <TableCell colSpan={6} className="h-24 text-center text-muted-foreground">
-                    {loading ? 'กำลังโหลด...' : 'ไม่มีข้อมูล'}
-                  </TableCell>
+                  <TableHead>เวลา</TableHead>
+                  <TableHead>ผู้ใช้</TableHead>
+                  <TableHead>Action</TableHead>
+                  <TableHead>Entity</TableHead>
+                  <TableHead>รายละเอียด</TableHead>
+                  <TableHead>IP</TableHead>
                 </TableRow>
-              )}
-            </TableBody>
-          </Table>
+              </TableHeader>
+              <TableBody>
+                {logs.length ? (
+                  logs.map((log) => (
+                    <TableRow key={log.id}>
+                      <TableCell className="whitespace-nowrap text-xs tabular-nums">
+                        {new Date(log.created_at).toLocaleString('th-TH')}
+                      </TableCell>
+                      <TableCell>{log.users?.username ?? '-'}</TableCell>
+                      <TableCell className="capitalize">{log.action}</TableCell>
+                      <TableCell className="capitalize">{log.entity}</TableCell>
+                      <TableCell className="max-w-[320px] truncate">{log.description ?? '-'}</TableCell>
+                      <TableCell className="text-xs">{log.ip_address ?? '-'}</TableCell>
+                    </TableRow>
+                  ))
+                ) : (
+                  <TableRow>
+                    <TableCell colSpan={6} className="h-24 text-center text-muted-foreground">
+                      ไม่มีข้อมูล
+                    </TableCell>
+                  </TableRow>
+                )}
+              </TableBody>
+            </Table>
+          )}
         </div>
 
         <div className="mt-4 flex items-center justify-between px-6">

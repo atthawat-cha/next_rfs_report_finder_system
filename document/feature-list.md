@@ -174,9 +174,9 @@
 |---|---|---|---|
 | Dark/Light theme switch | Must | ✅ (`next-themes`, persist ต่อผู้ใช้แล้วดู FR-13) | — |
 | Sidebar/Navbar responsive layout | Must | ✅ | — |
-| Data table มาตรฐาน (`SharedDataTable`) พร้อม sort/pagination | Must | ⚠️ (client-side sort ใช้แพร่หลาย; server-side pagination ผ่าน `parsePagination` ตอนนี้ครอบ reports/browse, activity-logs, report/manage, favorites, departments, users/user, roles — 4 endpoint หลังเป็น opt-in คือคืน full list เหมือนเดิมถ้าไม่ส่ง `page`/`pageSize` มา เพราะมี combobox ที่พึ่ง full list อยู่ — `baseconfig/menus` ตั้งใจไม่ paginate เพราะพึ่ง full-list-adjacency ในการจัดกลุ่ม) | 0/1/7b |
+| Data table มาตรฐาน (`SharedDataTable`) พร้อม sort/pagination | Must | ⚠️ (client-side sort ใช้แพร่หลาย; server-side pagination ผ่าน `parsePagination` ตอนนี้ครอบ reports/browse, activity-logs, report/manage, favorites, departments, users/user, roles — 4 endpoint หลังเป็น opt-in คือคืน full list เหมือนเดิมถ้าไม่ส่ง `page`/`pageSize` มา เพราะมี combobox ที่พึ่ง full list อยู่ — `baseconfig/menus` ตั้งใจไม่ paginate เพราะพึ่ง full-list-adjacency ในการจัดกลุ่ม; 8d เพิ่ม pager UI จริงตัวที่ 2 ของระบบให้ `reports/report-list` ต่อจาก `user-management/activity` — เดิมหน้านี้ไม่มี pagination UI เลยทั้งที่ endpoint รองรับมาตั้งแต่ 7a) | 0/1/7b/8d |
 | i18n ไทย/อังกฤษเป็นระบบ (`next-intl`) | Should | ❌ (ปนกันแบบ hardcode) | 2+ |
-| Loading/skeleton state มาตรฐานทุกหน้า list | Should | ⚠️ (7b เพิ่ม `SkeletonTable` ให้อีก 5 หน้าที่ไม่มีมาก่อน — `favorites`/`user-department`/`user-list`/`reports/categories`/`reports/tags` — แต่ยังไม่ครบทุกหน้า list ในระบบ ไม่สม่ำเสมอ 100%) | 1/7b |
+| Loading/skeleton state มาตรฐานทุกหน้า list | Should | ⚠️ (7b เพิ่ม `SkeletonTable` ให้อีก 5 หน้าที่ไม่มีมาก่อน — `favorites`/`user-department`/`user-list`/`reports/categories`/`reports/tags`; 8d เพิ่มอีก 2 หน้าที่เป็น gap จริงที่เหลือ — `reports/report-list`/`user-management/activity` — หน้าอื่นที่เหลือ (`role-management/roles` มี skeleton จาก 6b, `settings/menus` มี spinner ตั้งใจไม่เปลี่ยน, dashboard bounded-by-design) ไม่ใช่ gap จริงตามที่ audit ยืนยันแล้วใน Phase 8) | 1/7b/8d |
 | Toast notification สำหรับผลลัพธ์ action (`react-hot-toast`) | Must | ✅ | — |
 
 ## 16. Security & Compliance Features

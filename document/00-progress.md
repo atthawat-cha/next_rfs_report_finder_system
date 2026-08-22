@@ -36,10 +36,10 @@
 
 **Phase 7 ปิดครบทั้ง 5 sub-phase แล้ว (2026-08-22)** ([`phase7-plan.md`](./phase7-plan.md)) — 7a = job scheduler จริงตัวแรกของระบบ + pino logging sweep + เจอบั๊กจริง 3 ตัว; 7b = pagination 4 endpoint (opt-in แทน unconditional — เจอ combobox 2 จุดที่พึ่ง full list) + categories/tags CRUD ตัวจริงตัวแรก (เดิมเป็น stub ไม่ทำงานเลย) + เจอบั๊กความปลอดภัยจริง (`password` hash หลุดใน `GET /api/users/user`) + บั๊ก UX จริง (department create ไม่เคย toast/redirect); 7c = dashboard monthly toggle + Redis cache 4 endpoint ยืนยัน fail-open จริงตอน Redis ล่ม + cache-hit จริงด้วย sentinel test; 7d = storage backend interface (local จริง/S3 stub) ย้าย 5 call site + fuzzy search จริงด้วย `pg_trgm` similarity พร้อม rank-aware pagination; 7e = support tickets CRUD+UI ตัวจริงตัวแรก + notification 3 ประเภทใหม่ (ต้อง migration จริงเพราะ `NotificationType` เป็น Postgres enum เจอของค้าง #1's `search_vector` false-diff อีกครั้ง) ดูรายละเอียดใต้ตาราง Phase 7 ด้านล่าง
 
-**Phase 8 เริ่มแล้ว** ([`phase8-plan.md`](./phase8-plan.md), เขียน 2026-08-22, ทำงานบน branch `feature/phase8`) **8a+8b+8c ปิดจบแล้ว (2026-08-22)**: 8a = migrate `middleware.ts`→`proxy.ts` จริง เจอว่าเป็น Edge→Node runtime change จริง (ไม่ใช่แค่ rename) ยืนยันสดครบทุก auth flow + ปิดของค้าง #15 ไปด้วย; 8b = job cleanup ลบ `report_shares` ที่หมดอายุจริง ยืนยันสด 410→404 behavior change ตามที่คาดไว้; 8c = audit zod validation ครบ 28/28 endpoint ที่รับ body จริง ไม่พบ gap เลย ปิดแบบ confirm-only ตามที่แผนคาดไว้ ดูรายละเอียดใต้ตาราง Phase 8 ด้านบน
+**Phase 8 ปิดครบทั้ง 4 sub-phase แล้ว (2026-08-22)** ([`phase8-plan.md`](./phase8-plan.md), ทำงานบน branch `feature/phase8`) — 8a = migrate `middleware.ts`→`proxy.ts` จริง เจอว่าเป็น Edge→Node runtime change จริง (ไม่ใช่แค่ rename) ยืนยันสดครบทุก auth flow + ปิดของค้าง #15 ไปด้วย; 8b = job cleanup ลบ `report_shares` ที่หมดอายุจริง ยืนยันสด 410→404 behavior change ตามที่คาดไว้; 8c = audit zod validation ครบ 28/28 endpoint ที่รับ body จริง ไม่พบ gap เลย ปิดแบบ confirm-only ตามที่แผนคาดไว้; 8d = pagination/skeleton จริงให้ `reports/report-list` (หน้าหลักค้นหารายงาน เดิมไม่มีทั้งคู่เลย) และ `user-management/activity` (เพิ่มแค่ skeleton) ดูรายละเอียดใต้ตาราง Phase 8 ด้านบน
 
 **งานถัดไปที่ควรทำ (เรียงตามลำดับ):**
-1. **เริ่ม Phase 8d** (pagination/skeleton ให้ `reports/report-list` และ `user-management/activity`) — sub-phase สุดท้ายของ Phase 8, แผนพร้อมแล้ว ([`phase8-plan.md`](./phase8-plan.md))
+1. **วางแผน Phase 9** — Phase 8 ปิดครบแล้ว ไม่มีแผนของ phase ถัดไปที่ตัดสินใจไว้ล่วงหน้า ต้องคุยกับผู้ใช้ก่อนว่าจะไปทางไหนต่อ (backlog ที่เหลือส่วนใหญ่ตอนนี้ต้องรอ infra ภายนอกแล้ว — email provider, S3/MinIO credentials, error-tracking vendor account — หรือเป็น i18n sweep ทั้งโปรเจกต์)
 2. **ยืนยันว่า CI workflow รันจริงบน GitHub** — พักไว้ตามที่ผู้ใช้เลือก (2026-08-22): เครื่องนี้ไม่มี `gh` CLI/token ให้สร้าง PR อัตโนมัติ, ให้ลิงก์ compare (`main...feature/phase5`) ไว้ให้ผู้ใช้เปิดเองแล้ว รอผู้ใช้เปิด PR หรือขอให้ลองติดตั้ง `gh`
 3. **วางแผน i18n (`next-intl`) แยกเป็น phase ใหม่ของตัวเอง** — ถูก scope out จาก 4e, Phase 5, Phase 6, Phase 7 และ Phase 8 เพราะเป็น all-or-nothing sweep ทั้งโปรเจกต์
 4. **ของค้าง #9** (`deepmerge-ts`/Prisma) — รอ Prisma ออก patch จริงหรือ Prisma 8 GA ไม่มีอะไรให้ทำตอนนี้
@@ -387,7 +387,7 @@
 
 ---
 
-### Phase 8 — Proxy Migration, Share Cleanup, Validation Audit, List Consistency 🚧 เริ่มแล้ว
+### Phase 8 — Proxy Migration, Share Cleanup, Validation Audit, List Consistency ✅ ปิดครบทั้ง 4 sub-phase
 [แผนเต็ม →](./phase8-plan.md) — ผู้ใช้เลือกจาก backlog ที่เหลือจริงและทำได้โดยไม่ต้องรอ infra ภายนอก (ตัดสินใจ 2026-08-22) แยกเป็น 4 sub-phase, ทำงานบน branch ใหม่ `feature/phase8`
 
 | Sub-phase | งาน | สถานะ |
@@ -395,7 +395,7 @@
 | **8a** | Migrate `middleware.ts` → `proxy.ts` (Next.js 16 deprecation) — **เจอว่าไม่ใช่แค่ rename**: `middleware.ts` รันบน Edge runtime จริง (ยืนยันด้วย live test) แต่ `proxy.ts` บังคับใช้ Node.js runtime ตายตัว ไม่มีทาง override กลับ Edge | ✅ |
 | **8b** | Job cleanup ลบ `report_shares` ที่หมดอายุแล้วจริง (ต่างจาก `check-report-expiry` เดิมที่แค่เตือนล่วงหน้า) — schema ไม่มี soft-delete field เลยต้องลบจริง | ✅ |
 | **8c** | Audit zod validation ทุก endpoint — เจอแล้วว่า audit สะอาด (28/28 endpoint ที่รับ body validate ครบ) เหลือแค่ยืนยันซ้ำให้ครบ 100% | ✅ |
-| **8d** | Pagination/skeleton ให้ 2 หน้าที่เหลือจริง: `reports/report-list` (หน้าหลักค้นหารายงาน ไม่มีทั้ง skeleton และ pagination UI เลย) กับ `user-management/activity` (มี pagination แล้ว ขาดแค่ skeleton) | ❌ |
+| **8d** | Pagination/skeleton ให้ 2 หน้าที่เหลือจริง: `reports/report-list` (หน้าหลักค้นหารายงาน ไม่มีทั้ง skeleton และ pagination UI เลย) กับ `user-management/activity` (มี pagination แล้ว ขาดแค่ skeleton) | ✅ |
 
 **Resolved decisions (ผู้ใช้, 2026-08-22)**: ทำครบทั้ง 4 sub-phase ตามลำดับ 8a→8b→8c→8d, 8a ทำต่อแม้เจอว่าเป็น runtime change จริงแต่เพิ่มความเข้มงวดในการยืนยันสด (ไม่ใช่แค่ rename แล้วจบ), ไม่ย้าย rate-limit/pino เข้า proxy.ts ในรอบนี้ (บันทึกไว้เป็นตัวเลือกใหม่ที่เปิดขึ้นแต่ไม่ทำ), 8b ลบจริงไม่เพิ่ม soft-delete field
 
@@ -418,6 +418,12 @@
 - [x] ไม่มีโค้ดต้องแก้เลยรอบนี้ — ตรงตามที่แผนคาดไว้ว่าอาจเป็น "confirm-only" ไม่ใช่ "fix" งาน
 - [x] อัปเดต `feature-list.md` แถว "Input validation ด้วย zod ทุก endpoint" จาก "✅ (ส่วนใหญ่), ⚠️ (ตรวจให้ครบทุก endpoint ใหม่)" เป็น "✅" เต็มตัว ตัด hedge ที่ค้างมานานออก
 - ไม่ได้รัน `tsc`/`eslint`/`test`/`build` ซ้ำรอบนี้ เพราะไม่มีไฟล์โค้ดไหนถูกแก้เลย (เป็น read-only audit ล้วนๆ) — สถานะล่าสุดที่ยืนยันแล้วคือของ 8b (0 error/0 warning/32 ผ่าน/build exit 0) ซึ่งยังใช้ได้อยู่เพราะไม่มีอะไรเปลี่ยนหลังจากนั้น
+
+**8d ปิดจบแล้ว** (2026-08-22) — **ปิด Phase 8 ครบทั้ง 4 sub-phase**:
+- [x] `app/(auth)/reports/report-list/page.tsx` — เพิ่ม `SkeletonTable` ระหว่างโหลด (เดิมไม่มี loading indicator เลย) + pagination จริง (`page`/`pageSize=20` state ส่งไปที่ `/api/reports/browse` ที่รองรับอยู่แล้วตั้งแต่ 7a/7d, ปุ่มก่อนหน้า/ถัดไปแบบเดียวกับ `user-management/activity` ซึ่งเป็น precedent เดียวของ pager UI จริงในระบบ, reset `page` เป็น 1 ทุกครั้งที่ค้นหาใหม่)
+- [x] `app/(auth)/user-management/activity/page.tsx` — เพิ่ม `SkeletonTable` แทนที่ inline text "กำลังโหลด..." เดิม (pagination logic ของหน้านี้มีอยู่แล้วสมบูรณ์ ไม่ต้องแก้)
+- [x] ยืนยันสดครบ: `npx tsc --noEmit` = 0 error, `npx eslint .` = 0 warning (ทั้งสองไฟล์อยู่ใน `set-state-in-effect` exemption list เดิมอยู่แล้วตั้งแต่ก่อนหน้านี้ ไม่ต้องเพิ่มใหม่ เพราะเป็นไฟล์เก่าที่แก้ ไม่ใช่ไฟล์ใหม่), `npm test` = 32/32 ผ่าน, `npm run build` = exit 0; เปิด dev server จริงยืนยัน `/api/reports/browse?page=1&pageSize=1` vs `?page=2&pageSize=1` คืนรายงานคนละตัวจริง (`RPT-003` vs `RPT-002`, `totalPages:3`) พิสูจน์ endpoint ที่หน้าเรียกใช้งานได้ผลต่างกันจริงตามหน้าที่ขอ; ทั้ง 2 หน้าเปิดผ่าน curl ได้ 200 ทั้งคู่
+- ⚠️ **ข้อจำกัดการยืนยัน**: dev DB มีรายงานจริงแค่ 3 รายการ (น้อยกว่า `PAGE_SIZE=20` ของหน้า) ทำให้ pager UI จริงจะไม่โผล่ให้เห็นในสภาพ dev DB ปัจจุบัน (เงื่อนไข `totalPages > 1` เป็นเท็จ) ตรวจแยกด้วยการยิง endpoint ตรงด้วย `pageSize=1` แทนเพื่อพิสูจน์ mechanism ทำงานถูกต้อง แต่ไม่ได้เห็นปุ่มก่อนหน้า/ถัดไปโผล่จริงบนหน้าเว็บ — ไม่มี browser tool ให้ตรวจ visual ในเซสชันนี้เหมือนทุก phase ก่อนหน้า
 
 ---
 

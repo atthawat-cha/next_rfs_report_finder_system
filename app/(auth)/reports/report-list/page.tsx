@@ -10,6 +10,9 @@ import ReportCardView from "./components/reportCards";
 import { Button } from "@/components/ui/button";
 import Link from "next/link";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
+import { SkeletonTable } from "@/components/shared/skeletonTable";
+
+const PAGE_SIZE = 20;
 
 export default function ReportList() {
   const router = useRouter();
@@ -20,12 +23,18 @@ export default function ReportList() {
   const [reportView, setReportView] = React.useState("table");
   const [reports, setReports] = React.useState<ReportGetDataType[]>([]);
   const [total, setTotal] = React.useState(0);
+  const [page, setPage] = React.useState(1);
+  const [totalPages, setTotalPages] = React.useState(1);
+  const [loading, setLoading] = React.useState(true);
   const searchDebounceRef = React.useRef<ReturnType<typeof setTimeout> | undefined>(undefined);
 
-  const fetchReports = React.useCallback(async (query: string) => {
+  const fetchReports = React.useCallback(async (query: string, pageNum: number) => {
+    setLoading(true);
     try {
       const params = new URLSearchParams();
       if (query) params.set("q", query);
+      params.set("page", String(pageNum));
+      params.set("pageSize", String(PAGE_SIZE));
 
       const res = await fetch(`/api/reports/browse?${params.toString()}`, {
         method: "GET",
@@ -44,18 +53,22 @@ export default function ReportList() {
       }
       setReports(data?.data ?? []);
       setTotal(data?.meta?.total ?? 0);
+      setTotalPages(data?.meta?.totalPages ?? 1);
     } catch (error) {
       console.error("Error fetching reports:", error);
+    } finally {
+      setLoading(false);
     }
   }, []);
 
   React.useEffect(() => {
-    fetchReports(q);
-  }, [q, fetchReports]);
+    fetchReports(q, page);
+  }, [q, page, fetchReports]);
 
   const hanelerSearch = (value: string) => {
     clearTimeout(searchDebounceRef.current);
     searchDebounceRef.current = setTimeout(() => {
+      setPage(1);
       const params = new URLSearchParams(searchParams.toString());
       if (value) params.set("q", value);
       else params.delete("q");
@@ -98,12 +111,30 @@ export default function ReportList() {
         </div>
 
         <div className="w-full mt-5">
-          {reportView === "table" ? (
+          {loading ? (
+            <SkeletonTable />
+          ) : reportView === "table" ? (
             <ReportTableView reports={reports} />
           ) : (
             <ReportCardView reports={reports} />
           )}
         </div>
+
+        {!loading && totalPages > 1 && (
+          <div className="mt-4 flex items-center justify-between">
+            <span className="text-sm text-muted-foreground">
+              หน้า {page} จาก {totalPages}
+            </span>
+            <div className="flex gap-2">
+              <Button variant="outline" size="sm" disabled={page <= 1} onClick={() => setPage((p) => p - 1)}>
+                ก่อนหน้า
+              </Button>
+              <Button variant="outline" size="sm" disabled={page >= totalPages} onClick={() => setPage((p) => p + 1)}>
+                ถัดไป
+              </Button>
+            </div>
+          </div>
+        )}
       </div>
     </ContentLayout>
   );
