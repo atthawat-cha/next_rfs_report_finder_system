@@ -8,6 +8,7 @@
     Lock,
     HardDrive,
     ListTree,
+    Ticket,
     } from "lucide-react";
 
     type Submenu = {
@@ -175,6 +176,24 @@
       //   icon: Gauge,
       //   submenus: []
       // }
+    ]
+  },
+
+  {
+    groupLabel: "Help & Support",
+    menus: [
+      {
+        href: "/tickets",
+        label: "My Tickets",
+        icon: Ticket,
+        submenus: []
+      },
+      {
+        href: "/tickets/manage",
+        label: "Ticket Queue (Admin)",
+        icon: Ticket,
+        submenus: []
+      }
     ]
   }
         ]

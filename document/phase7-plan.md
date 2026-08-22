@@ -403,6 +403,16 @@ matches.
 
 ## Sub-phase 7e — Support tickets: CRUD + UI
 
+**Closed 2026-08-22 — Phase 7 fully closed, all 5 sub-phases.** Built as planned. One thing worth
+flagging: unlike `ActivityEntity` (a plain TS union - `activity_logs.entity` is just a `String`
+column), `NotificationType` is a real Postgres enum, so adding the 3 ticket notification types
+needed an actual migration, not just an app-level type edit. Running it hit ของค้าง #1's known
+`reports.search_vector` false-diff again (`ALTER TABLE "reports" ALTER COLUMN "search_vector" DROP
+DEFAULT` in the generated `migration.sql`) - caught and stripped via `--create-only` first, per the
+standing rule, then applied cleanly. `npx prisma migrate dev` hung the non-interactive shell after
+a successful apply (same as Phase 4e's experience); confirmed via `prisma migrate status` (up to
+date) and a direct `pg_enum` query (all 3 new values present) instead of waiting on it.
+
 ### 1. Schema additions (additive only)
 
 - `NotificationType` (`schema.prisma:481-494`): add `TICKET_CREATED`, `TICKET_ASSIGNED`,

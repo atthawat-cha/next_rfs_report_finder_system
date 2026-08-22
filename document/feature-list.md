@@ -165,9 +165,8 @@
 
 | Feature | Priority | สถานะ | Phase |
 |---|---|---|---|
-| ผู้ใช้แจ้งปัญหา/ขอรายงานใหม่ผ่านระบบ ticket | Could | ❌ (schema มีเฉย ๆ) | ตัดสินใจก่อน Phase 4 |
-| Admin จัดการ ticket (assign, resolve, close) | Could | ❌ | ตัดสินใจก่อน Phase 4 |
-| **หมายเหตุ**: ถ้าตัดสินใจไม่ทำต่อ ต้องลบตาราง `support_tickets` ออกจาก schema แทนการทิ้งไว้เฉย ๆ | — | — | — |
+| ผู้ใช้แจ้งปัญหา/ขอรายงานใหม่ผ่านระบบ ticket | Could | ✅ (`/tickets`, `POST /api/tickets`) | 7e |
+| Admin จัดการ ticket (assign, resolve, close) | Could | ✅ (`/tickets/manage`, `PUT /api/tickets/[id]` — ไม่มี DELETE ตั้งใจ, close ปลอดภัยกว่า) | 7e |
 
 ## 15. UI / UX Cross-Cutting Features
 
@@ -199,8 +198,8 @@
 
 | สถานะ | จำนวน feature (จาก 100 รายการ) |
 |---|---|
-| ✅ ทำงานได้จริง | 80 |
+| ✅ ทำงานได้จริง | 82 |
 | ⚠️ มีบางส่วน/mock/schema เฉย ๆ | 7 |
-| ❌ ยังไม่มีเลย | 13 |
+| ❌ ยังไม่มีเลย | 11 |
 
-> ตัวเลขนับจากตารางด้านบนจริง (รวมทุกแถว feature ไม่รวมแถวหมายเหตุ/ดีไซน์โน้ต, นับซ้ำล่าสุด 2026-08-19 หลัง Phase 5a-5f) ไม่ใช่ story-point estimation — ใช้สื่อสารสัดส่วนงานที่เหลือ ไม่ใช่ใช้วางแผน timeline โดยตรง งานที่เหลือส่วนใหญ่กระจุกอยู่ที่ i18n, E2E test, storage-backend abstraction (S3/MinIO — dropped, aspirational; แยกจาก `UPLOAD_BASE_PATH` ที่ตั้งค่าได้แล้ว), auth-provider selection (dropped), และ ClamAV AV scan (deferred)
+> ตัวเลขฐานนับจากตารางด้านบนจริงล่าสุด 2026-08-19 หลัง Phase 5a-5f (รวมทุกแถว feature ไม่รวมแถวหมายเหตุ/ดีไซน์โน้ต) แก้เพิ่มเฉพาะ 2 แถว ticket ที่ Phase 7e เปลี่ยนจาก ❌→✅ จริง — **ไม่ใช่การนับใหม่ทั้งตาราง** แถวอื่นที่ Phase 6/7 อาจแตะไปแล้วยังไม่ได้ไล่ตรวจซ้ำทั้งหมด ไม่ใช่ story-point estimation — ใช้สื่อสารสัดส่วนงานที่เหลือ ไม่ใช่ใช้วางแผน timeline โดยตรง งานที่เหลือส่วนใหญ่กระจุกอยู่ที่ i18n, E2E test, S3/MinIO backend จริง (interface มีแล้วตั้งแต่ 7d, ตัวจริงยังไม่มี), auth-provider selection (dropped), และ ClamAV AV scan (deferred)

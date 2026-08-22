@@ -5,7 +5,7 @@ import { getClientIp } from '@/lib/request-info';
 import logger from '@/lib/logger';
 
 export type ActivityAction = 'create' | 'update' | 'delete' | 'login' | 'login_failed' | 'logout' | 'favorite' | 'unfavorite' | 'download' | 'view';
-export type ActivityEntity = 'report' | 'user' | 'department' | 'role' | 'auth' | 'system' | 'menu' | 'category' | 'tag';
+export type ActivityEntity = 'report' | 'user' | 'department' | 'role' | 'auth' | 'system' | 'menu' | 'category' | 'tag' | 'ticket';
 
 interface LogActivityParams {
     userId?: string | null;
