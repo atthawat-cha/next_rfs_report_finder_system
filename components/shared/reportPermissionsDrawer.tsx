@@ -63,9 +63,10 @@ const FLAGS: { key: FlagKey; label: string }[] = [
 /**
  * Per-report ACL editor over the four report_permissions handlers that have
  * existed since Phase 2a with zero UI. Built on Sheet (Radix Dialog under
- * the hood, side="right") rather than components/shared/right-drawer.tsx -
- * that shell is an uncontrolled demo scaffold hardcoded to a bottom sheet
- * regardless of its "right" direction prop, not a reusable controlled shell.
+ * the hood, side="right") rather than a hand-rolled drawer shell - the repo
+ * had one (components/shared/right-drawer.tsx, removed in Phase 6a) but it
+ * was an uncontrolled demo scaffold hardcoded to a bottom sheet regardless
+ * of its "right" direction prop, not a reusable controlled shell.
  *
  * Controlled (open/onOpenChange from the caller), same reason as
  * ReportPreviewDialog: callers open this from a DropdownMenuItem, and a

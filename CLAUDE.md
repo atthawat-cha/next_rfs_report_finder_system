@@ -9,7 +9,7 @@ This is "RFS Report Finder System" — an internal report management/discovery p
 - **Users**: search/find reports, preview sample data, download blank report forms, export sample data, bookmark favorites, and only see reports they have permission to view.
 - **Admins**: full CRUD on report metadata (name, uploaded files — report/jasper/pdf/sample data, blank PDF form, variables, queries — one of which is the "main" query), fine-grained per-report access control (by user or role: view/edit/delete/favorite/export/print), version control on files and queries, activity logs, and a usage dashboard.
 
-Despite the repo/package name ("nextjs-auth-starter" / `next_rfs_report_finder_system`), this has grown well past an auth starter — treat the README.md/SETUP.md at the repo root as stale/aspirational, not authoritative; they describe an early scaffold state.
+Despite the repo/package name ("nextjs-auth-starter" / `next_rfs_report_finder_system`), this has grown well past an auth starter — `README.md`/`SETUP.md` at the repo root describe this actual system and its real dev-environment setup (rewritten in Phase 6a; they used to describe an early auth-scaffold state and are safe to treat as authoritative now).
 
 ## Commands
 
@@ -47,13 +47,13 @@ Required env vars (`.env` / `.env.local`, not committed with real values): `DATA
 - `app/(auth)/...` — the authenticated application shell (dashboard, reports, role-management, user-management, permissions, profile). All pages here render inside `app/(auth)/layout.tsx`, which wraps content in the sidebar/navbar layout from `components/layouts/`.
 - `app/login/`, `app/page.tsx` — public/unauthenticated pages.
 - `app/api/**/route.ts` — Route Handlers, grouped by domain: `api/auth`, `api/baseconfig`, `api/reports/report/manage`, `api/users/*` (departments, roles, permissions, user).
-- `app/generated/prisma/` — generated Prisma client, checked in generated code; do not hand-edit, regenerate via `npx prisma generate` after schema changes.
+- `app/generated/prisma/` — generated Prisma client; it is **gitignored** (`.gitignore` line 38, `git ls-files` returns 0 files for it), **not** checked in — a fresh clone or any `schema.prisma` change requires `npx prisma generate` before `tsc`/the app can run at all. Do not hand-edit.
 
-Route-group naming caution: because Next.js strips `(auth)` from the actual URL, a page at `app/(auth)/dashboard/page.tsx` is served at `/dashboard`, **not** `/(auth)/dashboard`. `middleware.ts` currently lists `protectedPaths` as `['/(auth)/dashboard', '/(auth)/profile']`, which will never match a real pathname — the actual gate that runs today is "any path not in `publicPaths` requires a decoded user," driven by the `matcher` config, not by `protectedPaths`. Keep this in mind before assuming `protectedPaths`/`publicPaths` control access — verify against `matcher` and the real auth check in `middleware()`.
+Route-group naming caution: because Next.js strips `(auth)` from the actual URL, a page at `app/(auth)/dashboard/page.tsx` is served at `/dashboard`, **not** `/(auth)/dashboard`. `middleware.ts` has no `protectedPaths` concept (Phase 0 removed it, `5e799c1`) — the real gate is: `publicPaths = ['/login', '/']` plus any `/shares/`-prefixed path skip the auth check outright, and the `matcher` config runs `middleware()` on everything else except `/api/*`, `_next/static`, `_next/image`, and `favicon.ico`. Anything not in `publicPaths` that reaches `middleware()` without a decoded user gets redirected to `/login`. Verify against `matcher` and `middleware()` itself, not against a `protectedPaths` list — it doesn't exist.
 
 ### Auth model
 
-- JWT-based, via `jose` (`lib/auth.ts`), stored in an httpOnly cookie named `auth-token` (note: `middleware.ts` reads a cookie named `auth_token` when logging — these differ; `getAuthFromRequest`/`getCurrentUser` use `COOKIE_NAME = 'auth-token'`, which is the one that actually matters for auth state).
+- JWT-based, via `jose` (`lib/auth.ts`), stored in an httpOnly cookie named `auth-token` (`COOKIE_NAME` in `lib/auth.ts` — this is the only auth cookie name in the codebase; `middleware.ts` does not read or log any `auth_token` cookie).
 - `getCurrentUser()` / `getAuthFromRequest(req)` — read + verify the session user from the cookie (server components / route handlers respectively).
 - `requireAuth(req)` and `requireRole(req, allowedRoles)` — use inside route handlers; both return either the decoded `JWTPayload` or a `NextResponse` (401/403) — callers must check `instanceof NextResponse` and pass it straight through. This is the standard pattern in every route handler under `app/api/`:
   ```ts
@@ -79,16 +79,32 @@ When working on navigation or permissions, check which of these two the specific
 
 ### UI conventions
 
-- shadcn/ui (`style: new-york`, `baseColor: neutral`) — primitives in `components/ui/`, composed feature components in `components/shared/` (`dataTable.tsx`, `dialog-drawer.tsx`, `right-drawer.tsx`, `searchInput.tsx`, `permissions-form.tsx`, `fileuploading.tsx`) and `components/layouts/` (sidebar/navbar/menu shell).
+- shadcn/ui (`style: new-york`, `baseColor: neutral`) — primitives in `components/ui/`, composed feature components in `components/shared/` (`dataTable.tsx`, `dialog-drawer.tsx`, `searchInput.tsx`, `permissions-form.tsx`, `fileuploading.tsx`) and `components/layouts/` (sidebar/navbar/menu shell). `dialog-drawer.tsx`'s `DrawerDialogDemo` is a real dependency of three pages (`reports/categories`, `reports/tags`, `user-management/user-department`) despite being unsuited as a *reference* to copy for a new dialog — it ignores the `isOpen` prop it's given and can't be seeded with existing data, which is why later controlled dialogs (`ReportPreviewDialog`, `ReportPermissionsDrawer`, `MenuFormDialog`) were written from scratch instead of extending it.
 - Tables use `@tanstack/react-table` — the pattern is a `*Column.tsx` (column defs) + `*Table.tsx`/`*MainTable.tsx` (page-level data fetch + state) + `SharedDataTable` from `components/shared/dataTable.tsx` for rendering. See `app/(auth)/reports/categories/components/` or `.../tags/components/` for the reference implementation to copy when adding a new manageable list.
 - Global client state: `zustand` (`hook/useStore.ts`), plus `hook/useSidebars.ts` and `hook/useMediaQuery.ts`. **Import these as `@/hook/...` (singular)** — `components.json` declares the shadcn alias as `@/hooks`, but no such directory exists; the real directory is `hook/`.
 - Theming via `next-themes` (`components/provider/themeProvider.tsx`, `components/ui/mode-toggle.tsx`) — light/dark, per the requirement doc.
 - Path alias: `@/*` maps to the repo root (`tsconfig.json`), so `@/lib`, `@/components`, `@/app/generated/prisma`, etc.
 
-### Miscellaneous
+### Dev environment setup
 
-- `lib/security_get.ts` and `lib/security_post.ts` exist but are currently empty — don't assume they contain active logic.
-- Files under `app/(auth)/reports/report-create/page copy.tsx` are stray/duplicate scratch pages left in the tree; don't treat them as the canonical implementation of that route.
+If the working copy hasn't been run in a while, do these in order — skipping one produces a
+misleading error that looks like a code problem:
+
+1. `npm install` — devDependencies (Vitest included) can go missing from `node_modules` between
+   sessions. Signature: `npm test` says `'vitest' is not recognized` even though `node_modules`
+   has hundreds of packages in it.
+2. `npx prisma generate` — the client in `app/generated/prisma/` is gitignored (see "Routing
+   structure" above), so a fresh clone or checkout has none, and a stale one silently drifts from
+   `schema.prisma`. Signature: `npx tsc --noEmit` reports dozens of errors naming things that
+   plainly exist in `schema.prisma` (e.g. `ReportOutputType`, `prisma.report_files`).
+3. Confirm `DATABASE_URL` (`.env`/`.env.local`) points at a DB with this project's migrations
+   applied — `npx prisma migrate status` should say "Database schema is up to date!". A URL left
+   over from an older/unrelated DB will connect fine but fail every query.
+4. `docker compose up -d` for Redis on port 6380 (`docker-compose.yml` at repo root) — rate
+   limiting and 2FA's pending-token step depend on it. Docker Desktop does not auto-start with
+   Windows on this machine; if `docker ps` can't reach the daemon, launch Docker Desktop first
+   and wait for it before retrying.
+5. `npm run dev`.
 
 ## Task workflow / Definition of Done
 

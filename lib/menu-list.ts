@@ -7,21 +7,10 @@
     LayoutGrid,
     LucideIcon,
     Lock,
-    FileDown,
-    FileUp,
-    DatabaseBackup,
     HardDrive,
     Mail,
-    Code,
-    Palette,
     Gauge,
     ListTree,
-    BookOpen,
-    HelpCircle,
-    GraduationCap,
-    LifeBuoy,
-    FileText,
-    Bell
     } from "lucide-react";
 
     type Submenu = {
@@ -157,68 +146,6 @@
   },
 
   {
-    groupLabel: "Security",
-    menus: [
-      {
-        href: "/security/auth",
-        label: "Authentication",
-        icon: Lock,
-        submenus: [
-          { href: "/security/login-history", label: "Login History" },
-          { href: "/security/session", label: "Session Management" },
-          // { href: "/security/password-policy", label: "Password Policy" },
-          // { href: "/security/2fa", label: "Two-Factor Authentication" }
-        ]
-      },
-      // {
-      //   href: "/security/audit",
-      //   label: "Audit Trail",
-      //   icon: Lock,
-      //   submenus: []
-      // }
-    ]
-  },
-
-  {
-    groupLabel: "Notification System",
-    menus: [
-      {
-        href: "/notifications",
-        label: "Notifications",
-        icon: Bell,
-        submenus: [
-          { href: "/notifications/history", label: "Notification History" },
-          { href: "/notifications/settings", label: "Notification Settings" }
-        ]
-      }
-    ]
-  },
-
-  {
-    groupLabel: "Data Management",
-    menus: [
-      {
-        href: "/data/export",
-        label: "Export Data",
-        icon: FileDown,
-        submenus: []
-      },
-      {
-        href: "/data/import",
-        label: "Import Data",
-        icon: FileUp,
-        submenus: []
-      },
-      {
-        href: "/data/backup",
-        label: "Backup & Restore",
-        icon: DatabaseBackup,
-        submenus: []
-      }
-    ]
-  },
-
-  {
     groupLabel: "System Settings",
     menus: [
       {
@@ -240,18 +167,6 @@
       //   submenus: []
       // },
       {
-        href: "/settings/api",
-        label: "API Settings",
-        icon: Code,
-        submenus: []
-      },
-      {
-        href: "/settings/theme",
-        label: "Theme & Appearance",
-        icon: Palette,
-        submenus: []
-      },
-      {
         href: "/settings/menus",
         label: "Menu Management",
         icon: ListTree,
@@ -263,42 +178,6 @@
       //   icon: Gauge,
       //   submenus: []
       // }
-    ]
-  },
-
-  {
-    groupLabel: "Help & Support",
-    menus: [
-      {
-        href: "/help/documentation",
-        label: "Documentation",
-        icon: BookOpen,
-        submenus: []
-      },
-      {
-        href: "/help/faq",
-        label: "FAQ",
-        icon: HelpCircle,
-        submenus: []
-      },
-      {
-        href: "/help/tutorial",
-        label: "Tutorial & Training",
-        icon: GraduationCap,
-        submenus: []
-      },
-      {
-        href: "/help/support",
-        label: "Support System",
-        icon: LifeBuoy,
-        submenus: []
-      },
-      {
-        href: "/help/release-notes",
-        label: "Release Notes",
-        icon: FileText,
-        submenus: []
-      }
     ]
   }
         ]

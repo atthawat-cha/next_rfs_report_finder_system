@@ -54,9 +54,10 @@ function toFormState(menu: MenuRow | null): FormState {
  * components/shared/dialog-drawer.tsx's DrawerDialogDemo, which ignores the
  * isOpen prop it's given (its own internal Dialog manages open state
  * unconditionally) and can't be seeded with existing data for edit. Same
- * reasoning as 5b's ReportPermissionsDrawer choosing Sheet over
- * right-drawer.tsx - the "reference" shared component turned out to be a
- * non-functional demo scaffold.
+ * reasoning as 5b's ReportPermissionsDrawer choosing Sheet over the old
+ * components/shared/right-drawer.tsx (removed in Phase 6a) - the
+ * "reference" shared component turned out to be a non-functional demo
+ * scaffold.
  */
 export function MenuFormDialog({
   open,

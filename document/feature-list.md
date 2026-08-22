@@ -189,7 +189,7 @@
 | Input validation ด้วย `zod` ทุก endpoint | Must | ✅ (ส่วนใหญ่), ⚠️ (ตรวจให้ครบทุก endpoint ใหม่) | ต่อเนื่อง |
 | Security headers (CSP, HSTS, X-Content-Type-Options) | Must | ✅ (`next.config.js` `headers()`, ยืนยันสดทุก route ทั้งหน้าเว็บและ `/api/*`) | 4a |
 | Antivirus scan ไฟล์อัปโหลด (ClamAV) | Should | ❌ deferred — ไม่มี ClamAV daemon ยืนยันใน deploy environment | 4c (dropped) |
-| Dependency vulnerability scanning (CI) | Should | ⚠️ (`.github/workflows/ci.yml` — `npm audit --audit-level=high`, non-blocking ชั่วคราวเพราะเจอ pre-existing high/critical advisories ใน `next@14.2.18`/`postcss`/`sharp` ที่ต้องวางแผนอัปเกรดแยกต่างหาก — ดู `00-progress.md` ของค้าง) | 4f |
+| Dependency vulnerability scanning (CI) | Should | ⚠️ (`.github/workflows/ci.yml` — `npm audit --audit-level=high`, non-blocking ชั่วคราว — `next`/`postcss`/`sharp` advisories ที่เคยเป็นเหตุผลเดิมถูกปิดไปแล้วทั้งหมดโดย `dependency-upgrade-plan.md`, เหตุผลที่เหลือตอนนี้คือของค้าง #9 (`deepmerge-ts` ผ่าน `@prisma/config`) เท่านั้น — ตรงกับ comment ใน `ci.yml` เองแล้ว) | 4f |
 | Structured logging + error tracking (pino/Sentry) | Should | ⚠️ (`lib/logger.ts`, pino self-hosted — wire เข้า `logActivity`'s swallowed catch เท่านั้น ยังไม่ mass-replace `console.*` ทั้งโปรเจกต์, ตั้งใจไม่แตะ `lib/auth.ts`/Edge runtime) | 4f |
 | Automated test suite (unit/integration/E2E) | Must | ✅ (Vitest, `lib/report-acl.test.ts` 7 test — integration ต่อ dev DB จริง; E2E ยังไม่ทำ) | 4b |
 

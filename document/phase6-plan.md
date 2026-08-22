@@ -46,7 +46,7 @@ Worst files: `components/shared/dialog-drawer.tsx` (16), `prisma/seeds/init.seed
 | `lib/security_get.ts` | 0 | nothing |
 | `lib/security_post.ts` | 0 | nothing |
 | `components/shared/right-drawer.tsx` | 49 | nothing (only mentioned in `reportPermissionsDrawer.tsx`'s comment explaining why it was *not* used) |
-| `app/(auth)/role-management/manage/page.tsx` | 9 | nothing — stub, not linked from `lib/menu-list.ts` |
+| `app/(auth)/role-management/manage/page.tsx` | 9 | **1 real reference**: `roles-columns.tsx`'s "Modify" dropdown item links to it |
 | `components/shared/dialog-drawer.tsx` | 65 | **3 real pages**: `reports/categories`, `reports/tags`, `user-management/user-department` |
 
 > **Correction to an assumption made while scoping this phase**: `dialog-drawer.tsx` was
@@ -54,6 +54,20 @@ Worst files: `components/shared/dialog-drawer.tsx` (16), `prisma/seeds/init.seed
 > narrower than that — it was unusable *as the reference to copy for a new dialog* (it ignores
 > the props a real form dialog needs), which is why `settings/menus` wrote its own. The three
 > pages above still import and render it today. It stays.
+
+> **Second correction, found during 6a itself**: the audit above claimed
+> `role-management/manage/page.tsx` was "not linked from `lib/menu-list.ts`" and concluded it was
+> dead — true of the sidebar, but `app/(auth)/role-management/roles/roles-columns.tsx`'s row
+> actions render a real `<Link href="/role-management/manage">Modify</Link>` per role, so the page
+> has a live entry point the `menu-list.ts`-only grep missed (the same blind spot that produced
+> 5b/5c/5d's corrections — checking one navigation source isn't checking all of them). The page
+> itself is still a genuine stub (renders only a static "Role Management" header, no id param, no
+> form) — clicking "Modify" does nothing useful today. Because 6a is scoped to zero behaviour
+> change, it is **not deleted**: deleting it would turn a working (if useless) link into a 404,
+> which is a regression, not a cleanup. It stays as pre-existing UX debt, out of scope here —
+> building real role editing at that entry point (or removing the "Modify" item and pointing
+> users at `/permissions`, which is where role editing actually lives as of 5c) is feature work
+> for a later phase.
 
 ### Sidebar: 14 links that 404 when clicked
 
@@ -142,7 +156,9 @@ or a documentation edit.
 - `app/(auth)/reports/report-create/page copy.tsx`
 - `lib/security_get.ts`, `lib/security_post.ts`
 - `components/shared/right-drawer.tsx`
-- `app/(auth)/role-management/manage/page.tsx` (and its now-empty directory)
+
+`app/(auth)/role-management/manage/page.tsx` was on this list originally but turned out to have a
+real referrer (`roles-columns.tsx`'s "Modify" link) — see the second correction above. It stays.
 
 Before each deletion: `grep -rn "<basename>" --include="*.ts" --include="*.tsx"` excluding
 `node_modules`, and confirm the only hits are comments *about* the file. `right-drawer.tsx` is
@@ -154,6 +170,19 @@ reword that comment rather than leaving a reference to a deleted file.
 - Remove the 14 dead leaf entries listed in the audit from `lib/menu-list.ts`. Where removing a
   group's last leaf empties the group (`Data Management`, `Help & Support`), remove the group
   too. Where a parent keeps at least one live child, keep the parent.
+  - **Correction found while doing this**: the audit's own reasoning ("`/reports`,
+    `/user-management`, `/security/auth`, `/notifications` are not dead" because
+    `components/layouts/menu.tsx` renders a menu with `submenus.length > 0` as a collapsible, not
+    a `<Link>`) cuts the other way once *all* of a parent's submenu entries are removed as dead:
+    `submenus` becomes `[]`, `!submenus || submenus.length === 0` then reads true, and the parent
+    itself renders as a direct link — to an href with no page. This is exactly the case for
+    `/security/auth` (both its submenus, `/security/login-history` and `/security/session`, are
+    on the dead-14 list, and no `app/(auth)/security/auth/page.tsx` exists either) and
+    `/notifications` (both its submenus are dead, no `app/(auth)/notifications/page.tsx` exists).
+    Leaving the parent in place after gutting its children would trade two known-dead links for
+    one new one. Both parents — and therefore the `Security` and `Notification System` groups,
+    since each is that group's only menu — are removed too, for the same "would a click 404"
+    reason the other two groups are.
 - New `lib/menu-list.test.ts` — a pure test (no DB) that walks `getMenuList('/')`, collects
   every leaf `href` (items with no submenus, plus every submenu entry), and asserts
   `app/(auth)/<href>/page.tsx` exists on disk. This is what makes the fix stick: the same drift
