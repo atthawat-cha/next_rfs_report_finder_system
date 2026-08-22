@@ -12,16 +12,18 @@ import { department_columns } from './dep-columns'
 import { DrawerDialogDemo } from '@/components/shared/dialog-drawer'
 import toast from 'react-hot-toast'
 import DeptForm from './components/deptForm'
+import { SkeletonTable } from '@/components/shared/skeletonTable'
 
 export default function UserDepartment() {
 
   const [deptData, setDeptData] = React.useState<DepartmentType[]>([]);
+  const [loading, setLoading] = React.useState(true);
   const [openDialog] = React.useState(false);
 
   const fetchDepartments = async () => {
     try {
       const response = await fetch('/api/users/departments');
-      if (!response.ok && response.status !== 403) {
+      if (!response.ok && response.status !== 403 && response.status !== 404) {
         throw new Error('Failed to fetch departments');
       }
 
@@ -29,11 +31,18 @@ export default function UserDepartment() {
         return toast.error("You don't have permission to access this page");
       }
 
+      if (response.status === 404) {
+        setDeptData([]);
+        return;
+      }
+
       const data = await response.json();
-      setDeptData(data);
+      if (data?.success) setDeptData(data.data);
 
     } catch (error) {
       console.log('Error fetching departments:', error);
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -72,7 +81,7 @@ export default function UserDepartment() {
           </DrawerDialogDemo>
         </div>
         <Separator className="my-5" />
-        <DeptDataTable columns={department_columns} data={deptData} />
+        {loading ? <SkeletonTable /> : <DeptDataTable columns={department_columns} data={deptData} />}
       </div>
     </ContentLayout>
   );

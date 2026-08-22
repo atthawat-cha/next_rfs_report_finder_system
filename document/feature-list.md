@@ -175,7 +175,7 @@
 |---|---|---|---|
 | Dark/Light theme switch | Must | ✅ (`next-themes`, persist ต่อผู้ใช้แล้วดู FR-13) | — |
 | Sidebar/Navbar responsive layout | Must | ✅ | — |
-| Data table มาตรฐาน (`SharedDataTable`) พร้อม sort/pagination | Must | ⚠️ (client-side sort/pagination ใช้แพร่หลาย, server-side pagination ผ่าน `parsePagination` มีแค่ไม่กี่ endpoint เช่น reports/browse/activity-logs ยังไม่ครอบคลุมทุกหน้า list) | 0/1 |
+| Data table มาตรฐาน (`SharedDataTable`) พร้อม sort/pagination | Must | ⚠️ (client-side sort ใช้แพร่หลาย; server-side pagination ผ่าน `parsePagination` ตอนนี้ครอบ reports/browse, activity-logs, report/manage, favorites, departments, users/user, roles — 4 endpoint หลังเป็น opt-in คือคืน full list เหมือนเดิมถ้าไม่ส่ง `page`/`pageSize` มา เพราะมี combobox ที่พึ่ง full list อยู่ — `baseconfig/menus` ตั้งใจไม่ paginate เพราะพึ่ง full-list-adjacency ในการจัดกลุ่ม) | 0/1/7b |
 | i18n ไทย/อังกฤษเป็นระบบ (`next-intl`) | Should | ❌ (ปนกันแบบ hardcode) | 2+ |
 | Loading/skeleton state มาตรฐานทุกหน้า list | Should | ⚠️ (ไม่สม่ำเสมอ) | 1+ |
 | Toast notification สำหรับผลลัพธ์ action (`react-hot-toast`) | Must | ✅ | — |

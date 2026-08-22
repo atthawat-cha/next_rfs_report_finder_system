@@ -274,8 +274,8 @@ export default function ReportEdit() {
 
       if (deptRes.ok) {
         const deptJson = await deptRes.json();
-        if (Array.isArray(deptJson)) {
-          setDepartmentOptions(deptJson.map((d: { id: string; name: string }) => ({ id: d.id, name: d.name })));
+        if (Array.isArray(deptJson?.data)) {
+          setDepartmentOptions(deptJson.data.map((d: { id: string; name: string }) => ({ id: d.id, name: d.name })));
         }
       }
     } finally {

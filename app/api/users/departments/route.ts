@@ -5,6 +5,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import z from 'zod';
 import { logActivity } from '@/lib/activity-log';
 import { logDevError } from '@/lib/log-dev-error';
+import { parsePagination } from '@/lib/pagination';
 
 export async function GET(req: NextRequest) {
     // กำหนดบทบาทที่สามารถเข้าถึงข้อมูลนี้ได้
@@ -23,21 +24,34 @@ export async function GET(req: NextRequest) {
             return authResult; // ส่งต่อการตอบกลับ 401 หรือ 403 จาก requireRole
         }
 
-        const departments = await prisma.departments.findMany({
-            select: {
-                id: true,
-                name: true,
-                code: true,
-                is_active: true,
-                created_at: true,
-                updated_at: true,
-            }
-        });
+        const searchParams = req.nextUrl.searchParams;
+        // Paginated only when explicitly requested - other callers (report-edit's
+        // department-share dropdown) depend on getting every department back.
+        const isPaged = searchParams.has('page') || searchParams.has('pageSize');
+        const { page, pageSize, skip, take } = await parsePagination(searchParams);
 
-        if (departments.length === 0) {
+        const [departments, total] = await Promise.all([
+            prisma.departments.findMany({
+                select: {
+                    id: true,
+                    name: true,
+                    code: true,
+                    is_active: true,
+                    created_at: true,
+                    updated_at: true,
+                },
+                ...(isPaged ? { skip, take } : {}),
+            }),
+            prisma.departments.count(),
+        ]);
+
+        if (total === 0) {
             return NextResponse.json({ error: "Departments not found" }, { status: 404 });
         }
-        return NextResponse.json(departments);
+        const meta = isPaged
+            ? { page, pageSize, total, totalPages: Math.ceil(total / pageSize) }
+            : { page: 1, pageSize: total, total, totalPages: 1 };
+        return NextResponse.json({ success: true, data: departments, meta });
     } catch {
         return NextResponse.json({ error: "Failed to fetch departments" }, { status: 500 });
     }
@@ -98,7 +112,7 @@ export async function POST(req: NextRequest) {
             description: `Created department "${department.code}"`,
         });
 
-        return NextResponse.json(department);
+        return NextResponse.json({ success: true, data: department });
     } catch (error) {
         logDevError(error);
         return NextResponse.json({ error: "Failed to create department" }, { status: 500 });

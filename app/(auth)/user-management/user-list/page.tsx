@@ -8,6 +8,7 @@ import { users_columns } from './columns';
 import { UserTableType } from '@/lib/types';
 import { Separator } from "@/components/ui/separator"
 import { Button } from '@/components/ui/button';
+import { SkeletonTable } from '@/components/shared/skeletonTable';
 
 
 
@@ -15,6 +16,7 @@ export default function UserLists() {
 
   // State
   const [users, setUsers] = React.useState<UserTableType[]>([]);
+  const [loading, setLoading] = React.useState(true);
 
 
   // Functions
@@ -41,6 +43,8 @@ export default function UserLists() {
       setUsers(data?.data);
     } catch (error) {
       console.error('Error fetching users:', error);
+    } finally {
+      setLoading(false);
     }
   }
 
@@ -82,7 +86,7 @@ export default function UserLists() {
           </Button>
         </div>
         <Separator className='my-5'/>
-        <UsersDataTable columns={users_columns} data={users} />
+        {loading ? <SkeletonTable /> : <UsersDataTable columns={users_columns} data={users} />}
       </div>
     </ContentLayout>
   )

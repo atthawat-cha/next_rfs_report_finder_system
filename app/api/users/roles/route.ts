@@ -6,6 +6,7 @@ import { faker } from '@faker-js/faker';
 import { buildRolePermissionInsert } from '@/lib/user-management';
 import { logActivity } from '@/lib/activity-log';
 import logger from '@/lib/logger';
+import { parsePagination } from '@/lib/pagination';
 
 // GET all roles
 export async function GET(req: NextRequest) {
@@ -21,45 +22,65 @@ export async function GET(req: NextRequest) {
             return authResult; // ส่งต่อการตอบกลับ 401 หรือ 403 จาก requireRole
         }
 
-        const roles = await prisma.roles.findMany({
-            select: {
-                _count: {
-                    select: { users: true }
-                },
-                id: true,
-                name: true,
-                display_name: true,
-                description: true,
-                role_permissions: {
-                    select: {
-                        id: true,
-                        permission_id: true,
-                        can_create: true,
-                        can_view: true,
-                        can_update: true,
-                        can_delete: true,
-                        permissions: {
-                            select: {
-                                id: true,
-                                name: true,
-                                display_name: true,
-                                category: true,
-                            }
+        // Paginated only when explicitly requested - existing consumers
+        // (role-management/roles page, the role-select combobox in
+        // reportPermissionsDrawer.tsx) expect this endpoint's traditional bare
+        // array and depend on getting every role back, so the response shape
+        // only changes to {success,data,meta} once a caller opts into paging.
+        const searchParams = req.nextUrl.searchParams;
+        const isPaged = searchParams.has('page') || searchParams.has('pageSize');
+        const { page, pageSize, skip, take } = await parsePagination(searchParams);
+
+        const [roles, total] = await Promise.all([
+            prisma.roles.findMany({
+                select: {
+                    _count: {
+                        select: { users: true }
+                    },
+                    id: true,
+                    name: true,
+                    display_name: true,
+                    description: true,
+                    role_permissions: {
+                        select: {
+                            id: true,
+                            permission_id: true,
+                            can_create: true,
+                            can_view: true,
+                            can_update: true,
+                            can_delete: true,
+                            permissions: {
+                                select: {
+                                    id: true,
+                                    name: true,
+                                    display_name: true,
+                                    category: true,
+                                }
+                            },
                         },
                     },
+                    created_at: true,
+                    updated_at: true,
                 },
-                created_at: true,
-                updated_at: true,
-            },
-            orderBy: {
-                created_at: 'asc',
-            }
-        });
+                orderBy: {
+                    created_at: 'asc',
+                },
+                ...(isPaged ? { skip, take } : {}),
+            }),
+            prisma.roles.count(),
+        ]);
 
-        if (roles.length === 0) {
+        if (total === 0) {
             return NextResponse.json({ error: "Roles not found" }, { status: 404 });
         }
-        return NextResponse.json(roles);
+        if (!isPaged) {
+            return NextResponse.json(roles);
+        }
+        return NextResponse.json({
+            success: true,
+            data: roles,
+            meta: { page, pageSize, total, totalPages: Math.ceil(total / pageSize) },
+        });
     } catch (error) {
         logger.error({ error }, 'GET /api/users/roles failed');
         return NextResponse.json(

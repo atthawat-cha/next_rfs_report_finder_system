@@ -26,14 +26,24 @@ const eslintConfig = [
     // disproportionate, regression-prone rewrite for a lint sweep whose own
     // instructions require fixes to be behaviour-preserving. Scoping (rather
     // than a blanket "warn") means a *new* file introducing this pattern
-    // still gets flagged instead of silently joining the exception list.
+    // still gets flagged instead of silently joining the exception list -
+    // exactly what happened when Phase 7b's categories/tags CRUD rebuild
+    // (categoryFormDialog.tsx/tagFormDialog.tsx + their two page.tsx files)
+    // hit real lint errors for the identical "fetch on mount" /
+    // "sync form state from props" idiom MenuFormDialog.tsx and the
+    // role-management/roles page.tsx already use. Added deliberately, not
+    // silently, after confirming it's the same accepted pattern.
     files: [
       "app/(auth)/dashboard/components/DashboardAnalytics.tsx",
       "app/(auth)/permissions/page.tsx",
+      "app/(auth)/reports/categories/components/categoryFormDialog.tsx",
+      "app/(auth)/reports/categories/page.tsx",
       "app/(auth)/reports/favorites/page.tsx",
       "app/(auth)/reports/report-create/page.tsx",
       "app/(auth)/reports/report-edit/\\[id\\]/page.tsx",
       "app/(auth)/reports/report-list/page.tsx",
+      "app/(auth)/reports/tags/components/tagFormDialog.tsx",
+      "app/(auth)/reports/tags/page.tsx",
       "app/(auth)/role-management/role-form/page.tsx",
       "app/(auth)/role-management/roles/page.tsx",
       "app/(auth)/settings/menus/components/deleteMenuDialog.tsx",

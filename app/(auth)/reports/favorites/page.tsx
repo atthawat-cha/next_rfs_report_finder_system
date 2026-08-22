@@ -9,11 +9,13 @@ import { SearchInput } from '@/components/shared/searchInput';
 import { Card } from '@/components/ui/card';
 import { ReportGetDataType } from '@/lib/types';
 import toast from 'react-hot-toast';
+import { SkeletonTable } from '@/components/shared/skeletonTable';
 
 export default function ReportFavorites() {
 
   const [reportView, setReportView] = React.useState("table");
   const [favorites, setFavorites] = React.useState<ReportGetDataType[]>([]);
+  const [loading, setLoading] = React.useState(true);
   const [search, setSearch] = React.useState("");
 
   const fetchFavorites = React.useCallback(async () => {
@@ -32,6 +34,8 @@ export default function ReportFavorites() {
       setFavorites(data?.data ?? []);
     } catch (error) {
       console.error("Error fetching favorites:", error);
+    } finally {
+      setLoading(false);
     }
   }, []);
 
@@ -98,7 +102,9 @@ export default function ReportFavorites() {
 
 
         <div className="w-full mt-5">
-          {reportView === "table" ? (
+          {loading ? (
+            <SkeletonTable />
+          ) : reportView === "table" ? (
             <FavReportMainTableView reports={filteredFavorites} onUnfavorite={handleUnfavorite} />
           ) : (
             <FavReportCardView reports={filteredFavorites} />

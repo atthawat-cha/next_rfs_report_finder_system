@@ -8,6 +8,7 @@ import { getAuthFromRequest, requireRole, routeAcceptted } from '@/lib/auth';
 import { logActivity } from '@/lib/activity-log';
 import { passwordPolicySchema } from '@/lib/password-policy';
 import logger from '@/lib/logger';
+import { parsePagination } from '@/lib/pagination';
 
 export async function GET(req: NextRequest) {
   try {
@@ -24,13 +25,36 @@ export async function GET(req: NextRequest) {
       return authResult; // ส่งต่อการตอบกลับ 401 หรือ 403 จาก requireRole
     }
 
-    const users = await prisma.users.findMany({});
+    const searchParams = req.nextUrl.searchParams;
+    // Paginated only when explicitly requested - the user-select combobox
+    // (reportPermissionsDrawer.tsx, report-edit's share picker) has no
+    // server-side search yet and depends on getting every user back.
+    const isPaged = searchParams.has('page') || searchParams.has('pageSize');
+    const { page, pageSize, skip, take } = await parsePagination(searchParams);
 
-    if (!users) {
-      return NextResponse.json({ success: false, error: "User not found" }, { status: 404 });
-    }
-    // console.log(users);
-    return NextResponse.json({ success: true, data: users }, { status: 200 });
+    const [users, total] = await Promise.all([
+      prisma.users.findMany({
+        select: {
+          id: true,
+          username: true,
+          email: true,
+          first_name: true,
+          last_name: true,
+          phone_number: true,
+          department_id: true,
+          status: true,
+          created_at: true,
+          updated_at: true,
+        },
+        ...(isPaged ? { skip, take } : {}),
+      }),
+      prisma.users.count(),
+    ]);
+
+    const meta = isPaged
+      ? { page, pageSize, total, totalPages: Math.ceil(total / pageSize) }
+      : { page: 1, pageSize: total, total, totalPages: 1 };
+    return NextResponse.json({ success: true, data: users, meta }, { status: 200 });
   } catch (error) {
     logger.error({ error }, 'GET /api/users/user failed');
     return NextResponse.json(

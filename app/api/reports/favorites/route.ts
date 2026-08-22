@@ -6,6 +6,7 @@ import { z } from 'zod';
 import { logActivity } from '@/lib/activity-log';
 import { resolveReportAcl } from '@/lib/report-acl';
 import { logDevError } from '@/lib/log-dev-error';
+import { parsePagination } from '@/lib/pagination';
 
 /**
  * GET /api/reports/favorites — list current user's favorite reports
@@ -22,33 +23,52 @@ export async function GET(req: NextRequest) {
             return authResult;
         }
 
-        const favorites = await prisma.favorites.findMany({
-            where: { user_id: authResult.user.id },
-            select: {
-                reports: {
-                    select: {
-                        id: true,
-                        code: true,
-                        name_th: true,
-                        name_en: true,
-                        description: true,
-                        file_path: true,
-                        file_name: true,
-                        access_level: true,
-                        is_downloadable: true,
-                        is_editable: true,
-                        categories: { select: { id: true, name: true } },
-                        departments: { select: { id: true, name: true } },
-                        created_at: true,
-                        status: true,
-                        updated_at: true,
+        const searchParams = req.nextUrl.searchParams;
+        // Paginated only when the caller opts in via ?page/?pageSize - the favorites
+        // page itself (and any future caller that doesn't ask for a page) keeps
+        // getting the full list, same as before this endpoint supported paging at all.
+        const isPaged = searchParams.has('page') || searchParams.has('pageSize');
+        const { page, pageSize, skip, take } = await parsePagination(searchParams);
+        const where = { user_id: authResult.user.id };
+
+        const [favorites, total] = await Promise.all([
+            prisma.favorites.findMany({
+                where,
+                select: {
+                    reports: {
+                        select: {
+                            id: true,
+                            code: true,
+                            name_th: true,
+                            name_en: true,
+                            description: true,
+                            file_path: true,
+                            file_name: true,
+                            access_level: true,
+                            is_downloadable: true,
+                            is_editable: true,
+                            categories: { select: { id: true, name: true } },
+                            departments: { select: { id: true, name: true } },
+                            created_at: true,
+                            status: true,
+                            updated_at: true,
+                        },
                     },
                 },
-            },
-            orderBy: { created_at: 'desc' },
-        });
+                orderBy: { created_at: 'desc' },
+                ...(isPaged ? { skip, take } : {}),
+            }),
+            prisma.favorites.count({ where }),
+        ]);
 
-        return NextResponse.json({ success: true, data: favorites.map((f) => f.reports) }, { status: 200 });
+        const meta = isPaged
+            ? { page, pageSize, total, totalPages: Math.ceil(total / pageSize) }
+            : { page: 1, pageSize: total, total, totalPages: 1 };
+
+        return NextResponse.json(
+            { success: true, data: favorites.map((f) => f.reports), meta },
+            { status: 200 }
+        );
     } catch (error) {
         logDevError(error);
         return NextResponse.json({ error: "Internal Server Error" }, { status: 500 });

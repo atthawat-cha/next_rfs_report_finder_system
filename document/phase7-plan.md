@@ -200,28 +200,74 @@ While touching these lines:
 
 ## Sub-phase 7b — Server-side pagination, loading states, and the categories/tags fix
 
-### 1. Paginate the 5 full-array list endpoints
+**Closed 2026-08-22 — with two deviations from this plan found necessary during implementation:**
 
-Add `parsePagination` (same helper `reports/browse` already uses) to:
-`GET /api/reports/favorites`, `GET /api/users/departments`, `GET /api/users/user`,
-`GET /api/users/roles`, `GET /api/baseconfig/menus`. Response shape matches the existing
-paginated-endpoint convention (`{data, total, page, pageSize}` or whatever `reports/browse`
-already returns — reuse exactly, don't invent a second shape).
+1. **Pagination is opt-in, not unconditional**, on all 4 endpoints actually touched (see below —
+   `baseconfig/menus` was dropped entirely, not just made opt-in). Live-reading
+   `components/shared/reportPermissionsDrawer.tsx` while implementing found its own header comment
+   already documenting that its user/role combobox has "no server-side search" and depends on the
+   full list from `GET /api/users/user`/`GET /api/users/roles`. Unconditional `skip`/`take` would
+   have silently truncated that combobox at the default page size (100) for any org with more
+   users/roles than that — a permission-management regression worse than the unbounded-query risk
+   being fixed. Resolution: `skip`/`take` only apply when the caller passes `?page`/`?pageSize`
+   explicitly; every existing caller (which never does) keeps getting the full list, unchanged.
+2. **`GET /api/users/roles`'s response shape stays a bare array when not paginated** - a second,
+   independent consumer (`reportPermissionsDrawer.tsx`'s role combobox) does `Array.isArray(json)`
+   directly on the response body. Wrapping the shape in `{success,data,meta}` unconditionally
+   would have zeroed out that combobox's role list. It only switches to `{success,data,meta}` once
+   a caller opts into paging - a deliberately asymmetric contract, not an oversight.
+3. **`GET /api/baseconfig/menus` was not paginated at all**, contrary to this plan's original
+   list of 5 endpoints - its own header comment states rows are deliberately sorted so a
+   `group_label`/`catagory_label` group's rows sit adjacently ("reads as grouped" without a tree
+   widget). A generic page boundary can split a group across two pages, which would break that
+   documented invariant. Menus are also admin-authored master data (bounded by how many nav items
+   exist), not user-generated content that grows unboundedly, so the risk the rest of this
+   sub-phase is mitigating doesn't really apply here. Left unbounded by design.
+
+### 1. Paginate the 4 full-array list endpoints (not 5 — see deviation above)
+
+Add `parsePagination` (same helper `reports/browse` already uses), opt-in via
+`?page`/`?pageSize`, to: `GET /api/reports/favorites`, `GET /api/users/departments`,
+`GET /api/users/user`, `GET /api/users/roles`. Response shape matches the existing
+paginated-endpoint convention (`{success,data,meta:{page,pageSize,total,totalPages}}`) once a
+caller opts in; unpaginated calls get exactly what they got before (full list, and for
+`GET /api/users/roles` specifically, the original bare-array body).
+
+Two real bugs found and fixed while touching these exact handlers:
+- `GET /api/users/user` had no `select` at all (`prisma.users.findMany({})`) - every response
+  included the bcrypt `password` hash and `two_factor_secret`. Added an explicit `select` scoped
+  to the fields the UI actually reads.
+- `POST /api/users/departments` returned the bare created row with no `success` key, but
+  `deptForm.tsx`'s submit handler only shows its toast/redirects on `data?.success` - department
+  creation worked (row landed in the DB) but silently never gave the admin any feedback. Fixed to
+  return `{success:true, data: department}` matching every other create endpoint's convention.
 
 ### 2. New: `categories`/`tags` CRUD, replacing the stub pages
 
-- `app/api/reports/categories/route.ts` (new) — `GET` (paginated, admin+user readable per
-  existing read-tier convention elsewhere), `POST` (admin, `faker.string.uuid()` id per repo
-  convention, fields per `categories` model: `name`, `code` unique, `description?`, `parent_id?`,
-  `icon?`, `color?`, `sort_order`, `is_active`).
-- `app/api/reports/categories/[id]/route.ts` (new) — `PUT`/`DELETE` (admin).
+- `app/api/reports/categories/route.ts` (new) — `GET` (admin-tier, matching every other
+  master-data endpoint here — departments/roles/menus are all admin-only), `POST` (admin,
+  `faker.string.uuid()` id per repo convention, fields per `categories` model: `name`, `code`
+  unique, `description?`, `parent_id?`, `icon?`, `color?`, `sort_order`, `is_active`).
+- `app/api/reports/categories/[id]/route.ts` (new) — `PUT`/`DELETE` (admin). `DELETE` is blocked
+  with a 409 (not attempted) if any report or child category still references the row -
+  `reports.category_id` is a required column with no `onDelete` rule, so letting the delete hit
+  Postgres directly would surface a raw FK-violation 500 instead.
 - `app/api/reports/tags/route.ts` + `[id]/route.ts` (new) — same shape for the `tags` model
-  (`name`, `slug` unique, `description?`).
-- Wire `catagoriesTable.tsx`/`tagsTable.tsx` to actually `fetch()` these new endpoints
-  (page + pageSize state, same pattern as `reports/report-list`), fix `catagoriesCreateForm.tsx`/
-  `tagsCreateForm.tsx` to `POST`/`PUT` instead of `console.log(params)`, and fix
-  `reports/categories/page.tsx`'s `openDialog` state (currently `const [openDialog] = useState(false)`
-  with the setter discarded — the dialog never actually opens/closes based on real state).
+  (`name`, `slug` unique, `description?`). `DELETE` has no such block - `tags -> report_tags` is
+  `onDelete: Cascade`, so deleting a tag just un-tags whatever reports had it.
+- Found two empty, git-untracked scaffold directories at these exact paths already
+  (`app/api/reports/catagories/` - misspelled, and `app/api/reports/tag/` - singular), never
+  populated by anyone. Removed and replaced with the correctly-named, real directories above.
+- Built real controlled dialogs (`categoryFormDialog.tsx`/`deleteCategoryDialog.tsx`,
+  `tagFormDialog.tsx`/`deleteTagDialog.tsx`) following `settings/menus`'s `MenuFormDialog`/
+  `DeleteMenuDialog` pattern, replacing the two pages' `DrawerDialogDemo` usage entirely (it can't
+  be seeded with data for edit) - deleted the old `catagoriesCreateForm.tsx`/`tagsCreateForm.tsx`
+  stub forms (`console.log(params)` on submit, no fetch) along with them. Converted
+  `catagoriesColumn.tsx`/`tagsColumn.tsx` into factory functions taking `onEdit`/`onDelete`
+  callbacks (same shape as `reportColumn.tsx`), which is what makes the previously-no-op Edit/Delete
+  dropdown items in both tables real. Found and fixed a second `create_at`/`created_at` typo in
+  `catagoriesColumn.tsx` (a different occurrence from the one 6c already fixed in
+  report-list/favorites).
 
 ### 3. Loading/skeleton states
 
@@ -231,12 +277,13 @@ fetch is in flight, same pattern as the one page that already does this correctl
 
 ### Verification (7b)
 
-- Each of the 5 paginated endpoints: `curl` with `?page=2&pageSize=10` (or whatever param names
-  `parsePagination` expects) and confirm `total`/`page` match real DB counts, not just page 1
-  repeated.
-- `reports/categories`: create a category through the UI → appears in the list without a manual
-  refresh → edit it → delete it. Same for `reports/tags`. This is the first time these flows have
-  ever worked end-to-end — verify by hand, not by reading the code.
+- Each of the 4 paginated endpoints: `curl` with `?page=2&pageSize=2` and confirm `total`/`page`
+  match real DB counts, not just page 1 repeated; then `curl` with no params and confirm the full
+  list still comes back unchanged (the opt-in default). ✅ done live for all 4 (see 00-progress.md).
+- `reports/categories`/`reports/tags`: create → appears in the list without a manual refresh →
+  edit it → delete it, including the categories delete-blocked-when-in-use 409 path. This is the
+  first time these flows have ever worked end-to-end. ✅ done live via curl with a real admin JWT
+  (no browser tool available in this session — see 00-progress.md for the exact commands/results).
 - Every touched list page shows a skeleton while loading (throttle network in devtools or add a
   temporary delay to confirm, then remove the delay) and the real data after.
 - `npx tsc --noEmit` → 0 errors; `npx eslint .` → 0 warnings; `npm test` → green;
