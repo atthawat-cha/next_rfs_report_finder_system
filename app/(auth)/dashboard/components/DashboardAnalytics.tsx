@@ -3,8 +3,11 @@
 import { useCallback, useEffect, useState } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
+import { ToggleGroup, ToggleGroupItem } from '@/components/ui/toggle-group';
 import { TrendAreaChart } from '@/components/shared/charts/TrendAreaChart';
 import { BreakdownBarChart } from '@/components/shared/charts/BreakdownBarChart';
+
+type TrendGranularity = 'day' | 'month';
 
 interface DashboardSummary {
   by_status: { status: string; count: number }[];
@@ -59,6 +62,7 @@ function formatBytes(bytes: number): string {
 export default function DashboardAnalytics() {
   const [summary, setSummary] = useState<DashboardSummary | null>(null);
   const [trends, setTrends] = useState<TrendPoint[]>([]);
+  const [trendGranularity, setTrendGranularity] = useState<TrendGranularity>('day');
   const [topReports, setTopReports] = useState<TopReport[]>([]);
   const [authAlerts, setAuthAlerts] = useState<AuthAlert[]>([]);
   const [loading, setLoading] = useState(true);
@@ -66,22 +70,19 @@ export default function DashboardAnalytics() {
   const fetchAll = useCallback(async () => {
     setLoading(true);
     try {
-      const [summaryRes, trendsRes, topRes, authAlertsRes] = await Promise.all([
+      const [summaryRes, topRes, authAlertsRes] = await Promise.all([
         fetch('/api/dashboard/summary', { credentials: 'include' }),
-        fetch('/api/dashboard/trends?days=30', { credentials: 'include' }),
         fetch('/api/dashboard/top-reports?limit=10', { credentials: 'include' }),
         fetch('/api/dashboard/auth-alerts?hours=24', { credentials: 'include' }),
       ]);
 
-      const [summaryJson, trendsJson, topJson, authAlertsJson] = await Promise.all([
+      const [summaryJson, topJson, authAlertsJson] = await Promise.all([
         summaryRes.json(),
-        trendsRes.json(),
         topRes.json(),
         authAlertsRes.json(),
       ]);
 
       if (summaryJson?.success) setSummary(summaryJson.data);
-      if (trendsJson?.success) setTrends(trendsJson.data);
       if (topJson?.success) setTopReports(topJson.data);
       if (authAlertsJson?.success) setAuthAlerts(authAlertsJson.data.alerts);
     } catch (error) {
@@ -91,9 +92,23 @@ export default function DashboardAnalytics() {
     }
   }, []);
 
+  const fetchTrends = useCallback(async (granularity: TrendGranularity) => {
+    try {
+      const res = await fetch(`/api/dashboard/trends?granularity=${granularity}`, { credentials: 'include' });
+      const json = await res.json();
+      if (json?.success) setTrends(json.data);
+    } catch (error) {
+      console.error('Error fetching dashboard trends:', error);
+    }
+  }, []);
+
   useEffect(() => {
     fetchAll();
   }, [fetchAll]);
+
+  useEffect(() => {
+    fetchTrends(trendGranularity);
+  }, [trendGranularity, fetchTrends]);
 
   return (
     <div className="space-y-6 mt-5">
@@ -127,9 +142,28 @@ export default function DashboardAnalytics() {
       </div>
 
       <Card>
-        <CardHeader>
-          <CardTitle>แนวโน้มการดาวน์โหลด (30 วันล่าสุด)</CardTitle>
-          <CardDescription>จำนวนดาวน์โหลดรายวัน</CardDescription>
+        <CardHeader className="flex flex-row items-start justify-between gap-4">
+          <div>
+            <CardTitle>
+              แนวโน้มการดาวน์โหลด ({trendGranularity === 'day' ? '30 วันล่าสุด' : '12 เดือนล่าสุด'})
+            </CardTitle>
+            <CardDescription>
+              {trendGranularity === 'day' ? 'จำนวนดาวน์โหลดรายวัน' : 'จำนวนดาวน์โหลดรายเดือน'}
+            </CardDescription>
+          </div>
+          <ToggleGroup
+            variant="outline"
+            type="single"
+            value={trendGranularity}
+            onValueChange={(value) => value && setTrendGranularity(value as TrendGranularity)}
+          >
+            <ToggleGroupItem value="day" aria-label="รายวัน">
+              รายวัน
+            </ToggleGroupItem>
+            <ToggleGroupItem value="month" aria-label="รายเดือน">
+              รายเดือน
+            </ToggleGroupItem>
+          </ToggleGroup>
         </CardHeader>
         <CardContent>
           <TrendAreaChart data={trends} />

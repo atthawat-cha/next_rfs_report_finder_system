@@ -293,6 +293,16 @@ fetch is in flight, same pattern as the one page that already does this correctl
 
 ## Sub-phase 7c — Dashboard: monthly trend toggle + Redis cache
 
+**Closed 2026-08-22.** Built as planned, plus fixing the identical stale "`view_count` is never
+incremented" comment found in `top-reports/route.ts` too (not just `trends/route.ts` — same
+Phase-4c-made-it-stale class of doc/code mismatch). The 4 endpoints' cache-aside logic shares one
+new helper, `lib/cache.ts`'s `withCache()`, rather than repeating the try/catch boilerplate 4
+times. Live-verified both the fail-open path (Redis genuinely down at session start - `ECONNREFUSED`
+logged 10 times, every endpoint still returned 200 with correct live data) and the cache-hit path
+for real (wrote a distinguishable sentinel value directly into the `dashboard:summary` Redis key,
+called the endpoint, got the sentinel back - proof the code actually reads from cache rather than
+always recomputing). See `00-progress.md`'s Phase 7 section for the full verification log.
+
 ### 1. Monthly grouping option
 
 `GET /api/dashboard/trends?days=30&granularity=day|month` (new `granularity` param, default
