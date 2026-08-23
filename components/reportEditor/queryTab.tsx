@@ -87,7 +87,7 @@ function QueryEditForm({
   );
 }
 
-export function QueryTab({ reportId }: { reportId: string }) {
+export function QueryTab({ reportId, onDataChange }: { reportId: string; onDataChange?: () => void }) {
   const [queries, setQueries] = React.useState<ReportQueryRow[]>([]);
   const [subReports, setSubReports] = React.useState<SubReportOption[]>([]);
   const [newQuery, setNewQuery] = React.useState(EMPTY_NEW_QUERY);
@@ -107,7 +107,8 @@ export function QueryTab({ reportId }: { reportId: string }) {
       const json = await subReportsRes.json();
       if (json?.success) setSubReports(json.data.map((s: { id: string; name: string }) => ({ id: s.id, name: s.name })));
     }
-  }, [reportId]);
+    onDataChange?.();
+  }, [reportId, onDataChange]);
 
   React.useEffect(() => {
     fetchAll();

@@ -46,7 +46,7 @@ const EMPTY_NEW_SUB_REPORT = {
   linked_report_id: "",
 };
 
-export function SubTab({ reportId }: { reportId: string }) {
+export function SubTab({ reportId, onDataChange }: { reportId: string; onDataChange?: () => void }) {
   const [subReports, setSubReports] = React.useState<SubReportRow[]>([]);
   const [reportOptions, setReportOptions] = React.useState<SelectOption[]>([]);
   const [newSubReport, setNewSubReport] = React.useState(EMPTY_NEW_SUB_REPORT);
@@ -73,7 +73,8 @@ export function SubTab({ reportId }: { reportId: string }) {
         );
       }
     }
-  }, [reportId]);
+    onDataChange?.();
+  }, [reportId, onDataChange]);
 
   React.useEffect(() => {
     fetchAll();

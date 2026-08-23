@@ -37,7 +37,7 @@ const TabsTrigger = React.forwardRef<
       "inline-flex items-center justify-center whitespace-nowrap rounded-md px-3 py-1 text-sm font-medium ring-offset-background transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 data-[state=active]:bg-background data-[state=active]:text-foreground data-[state=active]:shadow gap-1.5",
       // Same reason as TabsList above - TabsTrigger itself never carries
       // data-orientation either, only Tabs.Root does.
-      "group-data-[orientation=vertical]:justify-start group-data-[orientation=vertical]:w-full",
+      "group-data-[orientation=vertical]:justify-between group-data-[orientation=vertical]:w-full",
       className
     )}
     {...props}

@@ -30,7 +30,8 @@ import { QueryTab } from "@/components/reportEditor/queryTab";
 import { SubTab } from "@/components/reportEditor/subTab";
 import { DocTab } from "@/components/reportEditor/docTab";
 import { HistoryTab } from "@/components/reportEditor/historyTab";
-import { Loader2, FileText, Layers, CheckCircle2 } from "lucide-react";
+import { useReportEditorCounts } from "@/hook/useReportEditorCounts";
+import { Loader2, FileText, CheckCircle2 } from "lucide-react";
 import { ReportCreateDataType } from "@/lib/types";
 import { AccessLevel, ReportOutputType } from "@/app/generated/prisma/enums";
 import { Checkbox } from "@/components/ui/checkbox";
@@ -62,6 +63,7 @@ export default function ReportCreate() {
   // rendering the same shared tab components report-edit uses (Phase 10
   // revision v2, decision #7: manage everything starting at creation).
   const [createdId, setCreatedId] = React.useState<string | null>(null);
+  const { counts, refresh: refreshCounts } = useReportEditorCounts(createdId);
   const [reportData, setReportData] = React.useState<ReportCreateDataType>({
     code: "",
     name: "",
@@ -188,9 +190,20 @@ export default function ReportCreate() {
       <Tabs defaultValue="info" orientation="vertical" className="group flex items-start gap-6">
         <TabsList className="w-48 flex-none sticky top-4">
           <TabsTrigger value="info">Info</TabsTrigger>
-          <TabsTrigger value="param" disabled={locked} title={locked ? "บันทึกข้อมูลพื้นฐานก่อน" : undefined}>Param</TabsTrigger>
-          <TabsTrigger value="query" disabled={locked} title={locked ? "บันทึกข้อมูลพื้นฐานก่อน" : undefined}>Query</TabsTrigger>
-          <TabsTrigger value="sub" disabled={locked} title={locked ? "บันทึกข้อมูลพื้นฐานก่อน" : undefined}>Sub</TabsTrigger>
+          <TabsTrigger value="param" disabled={locked} title={locked ? "บันทึกข้อมูลพื้นฐานก่อน" : undefined}>
+            <span>Param</span>
+            {counts.param > 0 && <span className="text-xs text-muted-foreground">{counts.param}</span>}
+          </TabsTrigger>
+          <TabsTrigger value="query" disabled={locked} title={locked ? "บันทึกข้อมูลพื้นฐานก่อน" : undefined}>
+            <span>Query</span>
+            {counts.queryMain + counts.querySub > 0 && (
+              <span className="text-xs text-muted-foreground">{counts.queryMain}+{counts.querySub}</span>
+            )}
+          </TabsTrigger>
+          <TabsTrigger value="sub" disabled={locked} title={locked ? "บันทึกข้อมูลพื้นฐานก่อน" : undefined}>
+            <span>Sub</span>
+            {counts.sub > 0 && <span className="text-xs text-muted-foreground">{counts.sub}</span>}
+          </TabsTrigger>
           <TabsTrigger value="doc" disabled={locked} title={locked ? "บันทึกข้อมูลพื้นฐานก่อน" : undefined}>Doc</TabsTrigger>
           <TabsTrigger value="history" disabled={locked} title={locked ? "บันทึกข้อมูลพื้นฐานก่อน" : undefined}>History</TabsTrigger>
         </TabsList>
@@ -204,106 +217,64 @@ export default function ReportCreate() {
             </div>
           )}
           <form onSubmit={handleSubmit} noValidate>
-            {/* Two-column card grid */}
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 items-start">
+            <Card>
+              <CardHeader className="pb-4">
+                <div className="flex items-center gap-2">
+                  <FileText className="h-4 w-4 text-muted-foreground" />
+                  <CardTitle className="text-base">Report Information</CardTitle>
+                </div>
+                <CardDescription>ข้อมูลพื้นฐานของรายงาน</CardDescription>
+              </CardHeader>
+              <CardContent className="space-y-4">
 
-              {/* ── LEFT: Report Information ─────────────────────────────────── */}
-              <Card className="h-[600px] overflow-y-auto">
-                <CardHeader className="pb-4">
-                  <div className="flex items-center gap-2">
-                    <FileText className="h-4 w-4 text-muted-foreground" />
-                    <CardTitle className="text-base">Report Information</CardTitle>
-                  </div>
-                  <CardDescription>Basic details about the report.</CardDescription>
-                </CardHeader>
-                <CardContent className="space-y-4">
+                {/* Code */}
+                <Field>
+                  <FieldLabel htmlFor="code">
+                    Code <span className="text-destructive ml-0.5">*</span>
+                  </FieldLabel>
+                  <Input
+                    id="code"
+                    name="code"
+                    placeholder="e.g. Anes-0001"
+                    required
+                    autoComplete="off"
+                    disabled={!!createdId}
+                    value={reportData?.code}
+                    onChange={handleInputChange}
+                  />
+                  <FieldDescription>Format: Department-XXXX</FieldDescription>
+                </Field>
 
-                  {/* Code */}
+                {/* Name */}
+                <Field>
+                  <FieldLabel htmlFor="name">
+                    Name <span className="text-destructive ml-0.5">*</span>
+                  </FieldLabel>
+                  <Input
+                    id="name"
+                    name="name"
+                    placeholder="Enter report name"
+                    required
+                    autoComplete="off"
+                    disabled={!!createdId}
+                    value={reportData?.name}
+                    onChange={handleInputChange}
+                  />
+                </Field>
+
+                {/* Category + Department – inline 2-col */}
+                <div className="grid grid-cols-2 gap-3">
                   <Field>
-                    <FieldLabel htmlFor="code">
-                      Code <span className="text-destructive ml-0.5">*</span>
-                    </FieldLabel>
-                    <Input
-                      id="code"
-                      name="code"
-                      placeholder="e.g. Anes-0001"
-                      required
-                      autoComplete="off"
-                      disabled={!!createdId}
-                      value={reportData?.code}
-                      onChange={handleInputChange}
-                    />
-                    <FieldDescription>Format: Department-XXXX</FieldDescription>
-                  </Field>
-
-                  {/* Name */}
-                  <Field>
-                    <FieldLabel htmlFor="name">
-                      Name <span className="text-destructive ml-0.5">*</span>
-                    </FieldLabel>
-                    <Input
-                      id="name"
-                      name="name"
-                      placeholder="Enter report name"
-                      required
-                      autoComplete="off"
-                      disabled={!!createdId}
-                      value={reportData?.name}
-                      onChange={handleInputChange}
-                    />
-                  </Field>
-
-                  {/* Category + Department – inline 2-col */}
-                  <div className="grid grid-cols-2 gap-3">
-                    <Field>
-                      <FieldLabel htmlFor="rp_catagory">Category</FieldLabel>
-                      <Select disabled={!!createdId} value={reportData?.category} onValueChange={(e) => handleSelectChange("category", e)}>
-                        <SelectTrigger id="rp_catagory">
-                          <SelectValue placeholder="Select category" />
-                        </SelectTrigger>
-                        <SelectContent>
-                          <SelectGroup>
-                            {baseSelect.catagory.map((item) => (
-                              <SelectItem key={item.id} value={item.id}>
-                                {item.name}
-                              </SelectItem>
-                            ))}
-                          </SelectGroup>
-                        </SelectContent>
-                      </Select>
-                    </Field>
-
-                    <Field>
-                      <FieldLabel htmlFor="rp_department">Department</FieldLabel>
-                      <Select disabled={!!createdId} value={reportData?.department} onValueChange={(e) => handleSelectChange("department", e)}>
-                        <SelectTrigger id="rp_department">
-                          <SelectValue placeholder="Select dept." />
-                        </SelectTrigger>
-                        <SelectContent>
-                          <SelectGroup>
-                            {baseSelect.departments.map((item) => (
-                              <SelectItem key={item.id} value={item.id}>
-                                {item.name}
-                              </SelectItem>
-                            ))}
-                          </SelectGroup>
-                        </SelectContent>
-                      </Select>
-                    </Field>
-                  </div>
-
-                  {/* Status */}
-                  <Field>
-                    <FieldLabel htmlFor="rp_status">Status</FieldLabel>
-                    <Select disabled={!!createdId} value={reportData?.status} onValueChange={(e) => handleSelectChange("status", e)}>
-                      <SelectTrigger id="rp_status">
-                        <SelectValue placeholder="Select status" />
+                    <FieldLabel htmlFor="rp_catagory">Category</FieldLabel>
+                    <Select disabled={!!createdId} value={reportData?.category} onValueChange={(e) => handleSelectChange("category", e)}>
+                      <SelectTrigger id="rp_catagory">
+                        <SelectValue placeholder="Select category" />
                       </SelectTrigger>
                       <SelectContent>
                         <SelectGroup>
-                          {baseSelect.status.map((item) => (
-                            <SelectItem key={item} value={item}>
-                              {item}
+                          {baseSelect.catagory.map((item) => (
+                            <SelectItem key={item.id} value={item.id}>
+                              {item.name}
                             </SelectItem>
                           ))}
                         </SelectGroup>
@@ -311,7 +282,46 @@ export default function ReportCreate() {
                     </Select>
                   </Field>
 
-                  {/* Access Level */}
+                  <Field>
+                    <FieldLabel htmlFor="rp_department">Department</FieldLabel>
+                    <Select disabled={!!createdId} value={reportData?.department} onValueChange={(e) => handleSelectChange("department", e)}>
+                      <SelectTrigger id="rp_department">
+                        <SelectValue placeholder="Select dept." />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectGroup>
+                          {baseSelect.departments.map((item) => (
+                            <SelectItem key={item.id} value={item.id}>
+                              {item.name}
+                            </SelectItem>
+                          ))}
+                        </SelectGroup>
+                      </SelectContent>
+                    </Select>
+                  </Field>
+                </div>
+
+                {/* Output Type + Access Level – inline 2-col */}
+                <div className="grid grid-cols-2 gap-3">
+                  <Field>
+                    <FieldLabel htmlFor="rp_output_type">Output Type</FieldLabel>
+                    <Select disabled={!!createdId} value={reportData?.output_type} onValueChange={(e) => handleSelectChange("output_type", e)}>
+                      <SelectTrigger id="rp_output_type">
+                        <SelectValue placeholder="Select output type" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectGroup>
+                          {baseSelect.output_type.map((item) => (
+                            <SelectItem key={item} value={item}>
+                              {item}
+                            </SelectItem>
+                          ))}
+                        </SelectGroup>
+                      </SelectContent>
+                    </Select>
+                    <FieldDescription>กำหนดครั้งเดียวตอนสร้าง เปลี่ยนไม่ได้ทีหลัง</FieldDescription>
+                  </Field>
+
                   <Field>
                     <FieldLabel htmlFor="rp_access_level">Access Level</FieldLabel>
                     <Select disabled={!!createdId} value={reportData?.access_level} onValueChange={(e) => handleSelectChange("access_level", e)}>
@@ -329,94 +339,72 @@ export default function ReportCreate() {
                       </SelectContent>
                     </Select>
                     <FieldDescription>
-                      PUBLIC เผยแพร่ให้ผู้ใช้ทั่วไปเห็นได้ · RESTRICTED/PRIVATE ต้องกำหนดสิทธิ์รายบุคคล/บทบาทเพิ่มในหน้าแก้ไขรายงาน ไม่งั้นจะไม่มีใครเห็นเลยนอกจากแอดมิน
+                      PUBLIC เผยแพร่ให้ผู้ใช้ทั่วไปเห็นได้ · RESTRICTED/PRIVATE ต้องกำหนดสิทธิ์เพิ่มทีหลัง
                     </FieldDescription>
                   </Field>
+                </div>
 
-                  {/* Output Type */}
-                  <Field>
-                    <FieldLabel htmlFor="rp_output_type">Output Type</FieldLabel>
-                    <Select disabled={!!createdId} value={reportData?.output_type} onValueChange={(e) => handleSelectChange("output_type", e)}>
-                      <SelectTrigger id="rp_output_type">
-                        <SelectValue placeholder="Select output type" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectGroup>
-                          {baseSelect.output_type.map((item) => (
-                            <SelectItem key={item} value={item}>
-                              {item}
-                            </SelectItem>
-                          ))}
-                        </SelectGroup>
-                      </SelectContent>
-                    </Select>
-                    <FieldDescription>
-                      PRINT_FORM = ใบพิมพ์ (PDF) · DATA_REPORT = รายงานข้อมูล (Excel) — กำหนดครั้งเดียวตอนสร้าง เปลี่ยนไม่ได้หลังแนบไฟล์แล้ว
-                    </FieldDescription>
-                  </Field>
+                {/* Status */}
+                <Field>
+                  <FieldLabel htmlFor="rp_status">Status</FieldLabel>
+                  <Select disabled={!!createdId} value={reportData?.status} onValueChange={(e) => handleSelectChange("status", e)}>
+                    <SelectTrigger id="rp_status">
+                      <SelectValue placeholder="Select status" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectGroup>
+                        {baseSelect.status.map((item) => (
+                          <SelectItem key={item} value={item}>
+                            {item}
+                          </SelectItem>
+                        ))}
+                      </SelectGroup>
+                    </SelectContent>
+                  </Select>
+                </Field>
 
-                </CardContent>
-              </Card>
+                {/* File Upload */}
+                <FileUpload
+                  label="Attachments"
+                  accept="all"
+                  multiple
+                  maxSizeMB={20}
+                  disabled={!!createdId}
+                  onFilesChange={(files) => setReportData(prev => ({ ...prev, files }))}
+                  fileOutside={reportData?.files}
+                />
 
-              {/* ── RIGHT: Report Settings ───────────────────────────────────── */}
-              <Card className="h-[600px] overflow-y-auto">
-                <CardHeader className="pb-4">
-                  <div className="flex items-center gap-2">
-                    <Layers className="h-4 w-4 text-muted-foreground" />
-                    <CardTitle className="text-base">Report Settings</CardTitle>
-                  </div>
-                  <CardDescription>Configure type, notes, and attachments.</CardDescription>
-                </CardHeader>
-                <CardContent className="space-y-5">
+                {/* Description */}
+                <Field>
+                  <FieldLabel htmlFor="description">Description</FieldLabel>
+                  <Textarea
+                    id="description"
+                    name="description"
+                    placeholder="Add any additional information about this report…"
+                    className="resize-none min-h-[96px]"
+                    disabled={!!createdId}
+                    value={reportData?.description}
+                    onChange={handleInputChange}
+                  />
+                </Field>
 
-                  {/* Report options */}
-                  <FieldDescription>Report Options</FieldDescription>
+                <div className="grid grid-cols-2 gap-3">
                   <Field orientation="horizontal">
                     <Checkbox id="is_downloadable" disabled={!!createdId} checked={reportData?.is_downloadable} onCheckedChange={(e) => handleSelectChange("is_downloadable", e)} />
-                    <FieldLabel
-                      htmlFor="is_downloadable"
-                      className="font-normal">
+                    <FieldLabel htmlFor="is_downloadable" className="font-normal">
                       Downloadable
                     </FieldLabel>
                   </Field>
                   <Field orientation="horizontal">
                     <Checkbox id="is_editable" disabled={!!createdId} checked={reportData?.is_editable} onCheckedChange={(e) => handleSelectChange("is_editable", e)} />
-                    <FieldLabel
-                      htmlFor="is_editable"
-                      className="font-normal"
-                    >
+                    <FieldLabel htmlFor="is_editable" className="font-normal">
                       Editable
                     </FieldLabel>
                   </Field>
+                </div>
 
-                  {/* File Upload */}
-                  <FileUpload
-                    label="Attachments"
-                    accept="all"
-                    multiple
-                    maxSizeMB={20}
-                    disabled={!!createdId}
-                    onFilesChange={(files) => setReportData(prev => ({ ...prev, files }))}
-                    fileOutside={reportData?.files}
-                  />
-
-                  {/* Description */}
-                  <Field>
-                    <FieldLabel htmlFor="description">Description</FieldLabel>
-                    <Textarea
-                      id="description"
-                      name="description"
-                      placeholder="Add any additional information about this report…"
-                      className="resize-none min-h-[96px]"
-                      disabled={!!createdId}
-                      value={reportData?.description}
-                      onChange={handleInputChange}
-                    />
-                  </Field>
-
-                </CardContent>
-              </Card>
-            </div>
+              </CardContent>
+            </Card>
 
             {/* ── Action bar ───────────────────────────────────────────────────── */}
             {!createdId && (
@@ -440,15 +428,15 @@ export default function ReportCreate() {
         </TabsContent>
 
         <TabsContent value="param" className="mt-0 flex-1 min-w-0">
-          {createdId && <ParamTab reportId={createdId} />}
+          {createdId && <ParamTab reportId={createdId} onDataChange={refreshCounts} />}
         </TabsContent>
 
         <TabsContent value="query" className="mt-0 flex-1 min-w-0">
-          {createdId && <QueryTab reportId={createdId} />}
+          {createdId && <QueryTab reportId={createdId} onDataChange={refreshCounts} />}
         </TabsContent>
 
         <TabsContent value="sub" className="mt-0 flex-1 min-w-0">
-          {createdId && <SubTab reportId={createdId} />}
+          {createdId && <SubTab reportId={createdId} onDataChange={refreshCounts} />}
         </TabsContent>
 
         <TabsContent value="doc" className="mt-0 flex-1 min-w-0">

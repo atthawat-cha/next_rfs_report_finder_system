@@ -32,7 +32,8 @@ import { QueryTab } from "@/components/reportEditor/queryTab";
 import { SubTab } from "@/components/reportEditor/subTab";
 import { DocTab } from "@/components/reportEditor/docTab";
 import { HistoryTab } from "@/components/reportEditor/historyTab";
-import { Loader2, FileText, Layers, Shield } from "lucide-react";
+import { useReportEditorCounts } from "@/hook/useReportEditorCounts";
+import { Loader2, FileText, Shield } from "lucide-react";
 import toast from "react-hot-toast";
 
 type SelectOption = { id: string; name: string };
@@ -65,6 +66,7 @@ export default function ReportEdit() {
   const [isSubmitting, setIsSubmitting] = React.useState(false);
   const [outputType, setOutputType] = React.useState<string>("DATA_REPORT");
   const [permissionsOpen, setPermissionsOpen] = React.useState(false);
+  const { counts, refresh: refreshCounts } = useReportEditorCounts(reportId);
   const [baseSelect, setBaseSelect] = React.useState<BaseSelect>({
     departments: [],
     status: [],
@@ -204,9 +206,20 @@ export default function ReportEdit() {
       <Tabs defaultValue="info" orientation="vertical" className="group flex items-start gap-6">
         <TabsList className="w-48 flex-none sticky top-4">
           <TabsTrigger value="info">Info</TabsTrigger>
-          <TabsTrigger value="param">Param</TabsTrigger>
-          <TabsTrigger value="query">Query</TabsTrigger>
-          <TabsTrigger value="sub">Sub</TabsTrigger>
+          <TabsTrigger value="param">
+            <span>Param</span>
+            {counts.param > 0 && <span className="text-xs text-muted-foreground">{counts.param}</span>}
+          </TabsTrigger>
+          <TabsTrigger value="query">
+            <span>Query</span>
+            {counts.queryMain + counts.querySub > 0 && (
+              <span className="text-xs text-muted-foreground">{counts.queryMain}+{counts.querySub}</span>
+            )}
+          </TabsTrigger>
+          <TabsTrigger value="sub">
+            <span>Sub</span>
+            {counts.sub > 0 && <span className="text-xs text-muted-foreground">{counts.sub}</span>}
+          </TabsTrigger>
           <TabsTrigger value="doc">Doc</TabsTrigger>
           <TabsTrigger value="history">History</TabsTrigger>
         </TabsList>
@@ -214,74 +227,73 @@ export default function ReportEdit() {
         {/* ══════════════════ INFO ══════════════════ */}
         <TabsContent value="info" className="mt-0 flex-1 min-w-0">
           <form onSubmit={handleSaveMetadata} noValidate>
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 items-start">
-              <Card>
-                <CardHeader className="pb-4">
-                  <div className="flex items-center gap-2">
-                    <FileText className="h-4 w-4 text-muted-foreground" />
-                    <CardTitle className="text-base">Report Information</CardTitle>
-                  </div>
-                  <CardDescription>Basic details about the report.</CardDescription>
-                </CardHeader>
-                <CardContent className="space-y-4">
+            <Card>
+              <CardHeader className="pb-4">
+                <div className="flex items-center gap-2">
+                  <FileText className="h-4 w-4 text-muted-foreground" />
+                  <CardTitle className="text-base">Report Information</CardTitle>
+                </div>
+                <CardDescription>ข้อมูลพื้นฐานของรายงาน</CardDescription>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                <Field>
+                  <FieldLabel htmlFor="code">Code</FieldLabel>
+                  <Input id="code" value={formData.code} onChange={handleInputChange} />
+                </Field>
+
+                <Field>
+                  <FieldLabel htmlFor="name_th">Name</FieldLabel>
+                  <Input id="name_th" value={formData.name_th} onChange={handleInputChange} />
+                </Field>
+
+                <div className="grid grid-cols-2 gap-3">
                   <Field>
-                    <FieldLabel htmlFor="code">Code</FieldLabel>
-                    <Input id="code" value={formData.code} onChange={handleInputChange} />
-                  </Field>
-
-                  <Field>
-                    <FieldLabel htmlFor="name_th">Name</FieldLabel>
-                    <Input id="name_th" value={formData.name_th} onChange={handleInputChange} />
-                  </Field>
-
-                  <div className="grid grid-cols-2 gap-3">
-                    <Field>
-                      <FieldLabel htmlFor="rp_catagory">Category</FieldLabel>
-                      <Select value={formData.category_id} onValueChange={(v) => handleSelectChange("category_id", v)}>
-                        <SelectTrigger id="rp_catagory">
-                          <SelectValue placeholder="Select category" />
-                        </SelectTrigger>
-                        <SelectContent>
-                          <SelectGroup>
-                            {baseSelect.catagory.map((item) => (
-                              <SelectItem key={item.id} value={item.id}>{item.name}</SelectItem>
-                            ))}
-                          </SelectGroup>
-                        </SelectContent>
-                      </Select>
-                    </Field>
-
-                    <Field>
-                      <FieldLabel htmlFor="rp_department">Department</FieldLabel>
-                      <Select value={formData.department_id} onValueChange={(v) => handleSelectChange("department_id", v)}>
-                        <SelectTrigger id="rp_department">
-                          <SelectValue placeholder="Select dept." />
-                        </SelectTrigger>
-                        <SelectContent>
-                          <SelectGroup>
-                            {baseSelect.departments.map((item) => (
-                              <SelectItem key={item.id} value={item.id}>{item.name}</SelectItem>
-                            ))}
-                          </SelectGroup>
-                        </SelectContent>
-                      </Select>
-                    </Field>
-                  </div>
-
-                  <Field>
-                    <FieldLabel htmlFor="rp_status">Status</FieldLabel>
-                    <Select value={formData.status} onValueChange={(v) => handleSelectChange("status", v)}>
-                      <SelectTrigger id="rp_status">
-                        <SelectValue placeholder="Select status" />
+                    <FieldLabel htmlFor="rp_catagory">Category</FieldLabel>
+                    <Select value={formData.category_id} onValueChange={(v) => handleSelectChange("category_id", v)}>
+                      <SelectTrigger id="rp_catagory">
+                        <SelectValue placeholder="Select category" />
                       </SelectTrigger>
                       <SelectContent>
                         <SelectGroup>
-                          {baseSelect.status.map((item) => (
-                            <SelectItem key={item} value={item}>{item}</SelectItem>
+                          {baseSelect.catagory.map((item) => (
+                            <SelectItem key={item.id} value={item.id}>{item.name}</SelectItem>
                           ))}
                         </SelectGroup>
                       </SelectContent>
                     </Select>
+                  </Field>
+
+                  <Field>
+                    <FieldLabel htmlFor="rp_department">Department</FieldLabel>
+                    <Select value={formData.department_id} onValueChange={(v) => handleSelectChange("department_id", v)}>
+                      <SelectTrigger id="rp_department">
+                        <SelectValue placeholder="Select dept." />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectGroup>
+                          {baseSelect.departments.map((item) => (
+                            <SelectItem key={item.id} value={item.id}>{item.name}</SelectItem>
+                          ))}
+                        </SelectGroup>
+                      </SelectContent>
+                    </Select>
+                  </Field>
+                </div>
+
+                <div className="grid grid-cols-2 gap-3">
+                  <Field>
+                    <FieldLabel htmlFor="rp_output_type">Output Type</FieldLabel>
+                    <Select value={outputType} disabled>
+                      <SelectTrigger id="rp_output_type">
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectGroup>
+                          <SelectItem value={outputType}>{outputType}</SelectItem>
+                        </SelectGroup>
+                      </SelectContent>
+                    </Select>
+                    <FieldDescription>กำหนดตอนสร้าง แก้ไม่ได้</FieldDescription>
                   </Field>
 
                   <Field>
@@ -299,17 +311,35 @@ export default function ReportEdit() {
                       </SelectContent>
                     </Select>
                   </Field>
+                </div>
 
-                  <Field>
-                    <FieldLabel htmlFor="description">Description</FieldLabel>
-                    <Textarea
-                      id="description"
-                      className="resize-none min-h-[96px]"
-                      value={formData.description}
-                      onChange={handleInputChange}
-                    />
-                  </Field>
+                <Field>
+                  <FieldLabel htmlFor="rp_status">Status</FieldLabel>
+                  <Select value={formData.status} onValueChange={(v) => handleSelectChange("status", v)}>
+                    <SelectTrigger id="rp_status">
+                      <SelectValue placeholder="Select status" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectGroup>
+                        {baseSelect.status.map((item) => (
+                          <SelectItem key={item} value={item}>{item}</SelectItem>
+                        ))}
+                      </SelectGroup>
+                    </SelectContent>
+                  </Select>
+                </Field>
 
+                <Field>
+                  <FieldLabel htmlFor="description">Description</FieldLabel>
+                  <Textarea
+                    id="description"
+                    className="resize-none min-h-[96px]"
+                    value={formData.description}
+                    onChange={handleInputChange}
+                  />
+                </Field>
+
+                <div className="grid grid-cols-2 gap-3">
                   <Field orientation="horizontal">
                     <Checkbox
                       id="is_downloadable"
@@ -326,26 +356,9 @@ export default function ReportEdit() {
                     />
                     <FieldLabel htmlFor="is_editable" className="font-normal">Editable</FieldLabel>
                   </Field>
-                </CardContent>
-              </Card>
-
-              <Card>
-                <CardHeader className="pb-4">
-                  <div className="flex items-center gap-2">
-                    <Layers className="h-4 w-4 text-muted-foreground" />
-                    <CardTitle className="text-base">Report Settings</CardTitle>
-                  </div>
-                  <CardDescription>
-                    Output type: <span className="font-medium">{outputType}</span> (กำหนดตอนสร้าง แก้ไม่ได้)
-                  </CardDescription>
-                </CardHeader>
-                <CardContent className="space-y-4">
-                  <FieldDescription>
-                    ไฟล์ คิวรี่ พารามิเตอร์ รายงานย่อย และการแชร์ ย้ายไปจัดการในแท็บ Param / Query / Sub / Doc แล้ว
-                  </FieldDescription>
-                </CardContent>
-              </Card>
-            </div>
+                </div>
+              </CardContent>
+            </Card>
 
             <div className="mt-6 flex items-center justify-end gap-3">
               <Button variant="outline" type="button" onClick={() => router.push("/reports/report-list")}>
@@ -366,15 +379,15 @@ export default function ReportEdit() {
         </TabsContent>
 
         <TabsContent value="param" className="mt-0 flex-1 min-w-0">
-          <ParamTab reportId={reportId} />
+          <ParamTab reportId={reportId} onDataChange={refreshCounts} />
         </TabsContent>
 
         <TabsContent value="query" className="mt-0 flex-1 min-w-0">
-          <QueryTab reportId={reportId} />
+          <QueryTab reportId={reportId} onDataChange={refreshCounts} />
         </TabsContent>
 
         <TabsContent value="sub" className="mt-0 flex-1 min-w-0">
-          <SubTab reportId={reportId} />
+          <SubTab reportId={reportId} onDataChange={refreshCounts} />
         </TabsContent>
 
         <TabsContent value="doc" className="mt-0 flex-1 min-w-0">

@@ -46,7 +46,7 @@ const EMPTY_NEW_VARIABLE = {
   sub_report_id: MAIN_SCOPE,
 };
 
-export function ParamTab({ reportId }: { reportId: string }) {
+export function ParamTab({ reportId, onDataChange }: { reportId: string; onDataChange?: () => void }) {
   const [variables, setVariables] = React.useState<ReportVariableRow[]>([]);
   const [subReports, setSubReports] = React.useState<SubReportOption[]>([]);
   const [newVariable, setNewVariable] = React.useState(EMPTY_NEW_VARIABLE);
@@ -66,7 +66,8 @@ export function ParamTab({ reportId }: { reportId: string }) {
       const json = await subReportsRes.json();
       if (json?.success) setSubReports(json.data.map((s: { id: string; name: string }) => ({ id: s.id, name: s.name })));
     }
-  }, [reportId]);
+    onDataChange?.();
+  }, [reportId, onDataChange]);
 
   React.useEffect(() => {
     fetchAll();
