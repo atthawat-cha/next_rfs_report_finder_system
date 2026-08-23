@@ -110,7 +110,7 @@ export function CategoryFormDialog({
 
         <div className="space-y-3">
           <div className="space-y-1.5">
-            <Label htmlFor="cat_name">Name</Label>
+            <Label htmlFor="cat_name">ชื่อ</Label>
             <Input
               id="cat_name"
               value={form.name}
@@ -119,7 +119,7 @@ export function CategoryFormDialog({
             />
           </div>
           <div className="space-y-1.5">
-            <Label htmlFor="cat_code">Code</Label>
+            <Label htmlFor="cat_code">รหัส</Label>
             <Input
               id="cat_code"
               value={form.code}
@@ -128,7 +128,7 @@ export function CategoryFormDialog({
             />
           </div>
           <div className="space-y-1.5">
-            <Label htmlFor="cat_description">Description</Label>
+            <Label htmlFor="cat_description">คำอธิบาย</Label>
             <Textarea
               id="cat_description"
               rows={3}
@@ -144,7 +144,7 @@ export function CategoryFormDialog({
               onCheckedChange={(checked) => setForm((prev) => ({ ...prev, is_active: checked }))}
               disabled={saving}
             />
-            <FieldLabel htmlFor="cat_status">{form.is_active ? "Active" : "Inactive"}</FieldLabel>
+            <FieldLabel htmlFor="cat_status">{form.is_active ? "ใช้งาน" : "ไม่ใช้งาน"}</FieldLabel>
           </Field>
         </div>
 

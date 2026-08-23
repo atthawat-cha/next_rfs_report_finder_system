@@ -124,7 +124,7 @@ export default function ReportCreate() {
       formData.append("output_type", reportData.output_type);
 
       if (reportData.files.length === 0) {
-        toast.error("Please select at least one file");
+        toast.error("กรุณาเลือกไฟล์อย่างน้อย 1 ไฟล์");
         return;
       }
       reportData.files.forEach((file) => {
@@ -149,7 +149,7 @@ export default function ReportCreate() {
       if (process.env.NODE_ENV === "development") {
         console.error("Failed to create report", error);
       }
-      toast.error("Failed to create report");
+      toast.error("สร้างรายงานไม่สำเร็จ");
     } finally {
       setIsSubmitting(false);
     }
@@ -173,17 +173,17 @@ export default function ReportCreate() {
   const locked = !createdId;
 
   return (
-    <ContentLayout title="Report Create">
+    <ContentLayout title="สร้างรายงาน">
       <DefaultBreadcrumb />
       <Separator className="my-5" />
 
       {/* Page header */}
       <div className="mb-6">
-        <h1 className="text-xl font-semibold tracking-tight">Report Creation</h1>
+        <h1 className="text-xl font-semibold tracking-tight">สร้างรายงาน</h1>
         <p className="text-sm text-muted-foreground mt-1">
           {createdId
             ? "บันทึกข้อมูลพื้นฐานสำเร็จแล้ว — จัดการ Param/Query/Sub/Doc/History ต่อได้เลย"
-            : "Fill in the details below and share the report with your organization."}
+            : "กรอกรายละเอียดด้านล่างเพื่อแชร์รายงานให้กับองค์กรของคุณ"}
         </p>
       </div>
 
@@ -221,7 +221,7 @@ export default function ReportCreate() {
               <CardHeader className="pb-4">
                 <div className="flex items-center gap-2">
                   <FileText className="h-4 w-4 text-muted-foreground" />
-                  <CardTitle className="text-base">Report Information</CardTitle>
+                  <CardTitle className="text-base">ข้อมูลรายงาน</CardTitle>
                 </div>
                 <CardDescription>ข้อมูลพื้นฐานของรายงาน</CardDescription>
               </CardHeader>
@@ -230,30 +230,30 @@ export default function ReportCreate() {
                 {/* Code */}
                 <Field>
                   <FieldLabel htmlFor="code">
-                    Code <span className="text-destructive ml-0.5">*</span>
+                    รหัส <span className="text-destructive ml-0.5">*</span>
                   </FieldLabel>
                   <Input
                     id="code"
                     name="code"
-                    placeholder="e.g. Anes-0001"
+                    placeholder="เช่น Anes-0001"
                     required
                     autoComplete="off"
                     disabled={!!createdId}
                     value={reportData?.code}
                     onChange={handleInputChange}
                   />
-                  <FieldDescription>Format: Department-XXXX</FieldDescription>
+                  <FieldDescription>รูปแบบ: แผนก-XXXX</FieldDescription>
                 </Field>
 
                 {/* Name */}
                 <Field>
                   <FieldLabel htmlFor="name">
-                    Name <span className="text-destructive ml-0.5">*</span>
+                    ชื่อ <span className="text-destructive ml-0.5">*</span>
                   </FieldLabel>
                   <Input
                     id="name"
                     name="name"
-                    placeholder="Enter report name"
+                    placeholder="ระบุชื่อรายงาน"
                     required
                     autoComplete="off"
                     disabled={!!createdId}
@@ -265,10 +265,10 @@ export default function ReportCreate() {
                 {/* Category + Department – inline 2-col */}
                 <div className="grid grid-cols-2 gap-3">
                   <Field>
-                    <FieldLabel htmlFor="rp_catagory">Category</FieldLabel>
+                    <FieldLabel htmlFor="rp_catagory">หมวดหมู่</FieldLabel>
                     <Select disabled={!!createdId} value={reportData?.category} onValueChange={(e) => handleSelectChange("category", e)}>
                       <SelectTrigger id="rp_catagory">
-                        <SelectValue placeholder="Select category" />
+                        <SelectValue placeholder="เลือกหมวดหมู่" />
                       </SelectTrigger>
                       <SelectContent>
                         <SelectGroup>
@@ -283,10 +283,10 @@ export default function ReportCreate() {
                   </Field>
 
                   <Field>
-                    <FieldLabel htmlFor="rp_department">Department</FieldLabel>
+                    <FieldLabel htmlFor="rp_department">แผนก</FieldLabel>
                     <Select disabled={!!createdId} value={reportData?.department} onValueChange={(e) => handleSelectChange("department", e)}>
                       <SelectTrigger id="rp_department">
-                        <SelectValue placeholder="Select dept." />
+                        <SelectValue placeholder="เลือกแผนก" />
                       </SelectTrigger>
                       <SelectContent>
                         <SelectGroup>
@@ -304,10 +304,10 @@ export default function ReportCreate() {
                 {/* Output Type + Access Level – inline 2-col */}
                 <div className="grid grid-cols-2 gap-3">
                   <Field>
-                    <FieldLabel htmlFor="rp_output_type">Output Type</FieldLabel>
+                    <FieldLabel htmlFor="rp_output_type">ประเภทผลลัพธ์</FieldLabel>
                     <Select disabled={!!createdId} value={reportData?.output_type} onValueChange={(e) => handleSelectChange("output_type", e)}>
                       <SelectTrigger id="rp_output_type">
-                        <SelectValue placeholder="Select output type" />
+                        <SelectValue placeholder="เลือกประเภทผลลัพธ์" />
                       </SelectTrigger>
                       <SelectContent>
                         <SelectGroup>
@@ -323,10 +323,10 @@ export default function ReportCreate() {
                   </Field>
 
                   <Field>
-                    <FieldLabel htmlFor="rp_access_level">Access Level</FieldLabel>
+                    <FieldLabel htmlFor="rp_access_level">ระดับการเข้าถึง</FieldLabel>
                     <Select disabled={!!createdId} value={reportData?.access_level} onValueChange={(e) => handleSelectChange("access_level", e)}>
                       <SelectTrigger id="rp_access_level">
-                        <SelectValue placeholder="Select access level" />
+                        <SelectValue placeholder="เลือกระดับการเข้าถึง" />
                       </SelectTrigger>
                       <SelectContent>
                         <SelectGroup>
@@ -346,10 +346,10 @@ export default function ReportCreate() {
 
                 {/* Status */}
                 <Field>
-                  <FieldLabel htmlFor="rp_status">Status</FieldLabel>
+                  <FieldLabel htmlFor="rp_status">สถานะ</FieldLabel>
                   <Select disabled={!!createdId} value={reportData?.status} onValueChange={(e) => handleSelectChange("status", e)}>
                     <SelectTrigger id="rp_status">
-                      <SelectValue placeholder="Select status" />
+                      <SelectValue placeholder="เลือกสถานะ" />
                     </SelectTrigger>
                     <SelectContent>
                       <SelectGroup>
@@ -365,7 +365,7 @@ export default function ReportCreate() {
 
                 {/* File Upload */}
                 <FileUpload
-                  label="Attachments"
+                  label="ไฟล์แนบ"
                   accept="all"
                   multiple
                   maxSizeMB={20}
@@ -376,11 +376,11 @@ export default function ReportCreate() {
 
                 {/* Description */}
                 <Field>
-                  <FieldLabel htmlFor="description">Description</FieldLabel>
+                  <FieldLabel htmlFor="description">คำอธิบาย</FieldLabel>
                   <Textarea
                     id="description"
                     name="description"
-                    placeholder="Add any additional information about this report…"
+                    placeholder="เพิ่มข้อมูลเพิ่มเติมเกี่ยวกับรายงานนี้…"
                     className="resize-none min-h-[96px]"
                     disabled={!!createdId}
                     value={reportData?.description}
@@ -392,13 +392,13 @@ export default function ReportCreate() {
                   <Field orientation="horizontal">
                     <Checkbox id="is_downloadable" disabled={!!createdId} checked={reportData?.is_downloadable} onCheckedChange={(e) => handleSelectChange("is_downloadable", e)} />
                     <FieldLabel htmlFor="is_downloadable" className="font-normal">
-                      Downloadable
+                      ดาวน์โหลดได้
                     </FieldLabel>
                   </Field>
                   <Field orientation="horizontal">
                     <Checkbox id="is_editable" disabled={!!createdId} checked={reportData?.is_editable} onCheckedChange={(e) => handleSelectChange("is_editable", e)} />
                     <FieldLabel htmlFor="is_editable" className="font-normal">
-                      Editable
+                      แก้ไขได้
                     </FieldLabel>
                   </Field>
                 </div>
@@ -410,16 +410,16 @@ export default function ReportCreate() {
             {!createdId && (
               <div className="mt-6 flex items-center justify-end gap-3">
                 <Button variant="outline" type="button">
-                  Cancel
+                  ยกเลิก
                 </Button>
                 <Button type="submit" disabled={isSubmitting}>
                   {isSubmitting ? (
                     <>
                       <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                      Submitting…
+                      กำลังส่ง…
                     </>
                   ) : (
-                    "Create Report"
+                    "สร้างรายงาน"
                   )}
                 </Button>
               </div>

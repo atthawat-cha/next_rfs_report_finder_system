@@ -47,21 +47,21 @@ export default function ReportTags() {
   );
 
   return (
-    <ContentLayout title="Report Tags">
+    <ContentLayout title="แท็กรายงาน">
       <div className="w-full item-center my-2">
         <DefaultBreadcrumb />
       </div>
 
       <Card className="container mx-auto py-10 gap-6 mt-5">
         <div className="flex items-center justify-between">
-          <h4 className="text-xl md:text-3xl font-bold">Report Tags</h4>
+          <h4 className="text-xl md:text-3xl font-bold">แท็กรายงาน</h4>
           <Button
             onClick={() => {
               setEditingTag(null);
               setFormOpen(true);
             }}
           >
-            <Plus className="h-4 w-4 mr-2" /> New Tag
+            <Plus className="h-4 w-4 mr-2" /> เพิ่มแท็ก
           </Button>
         </div>
         <Separator className="my-5" />

@@ -50,14 +50,14 @@ export default function ReportFavorites() {
         credentials: "include",
       });
       if (!res.ok) {
-        toast.error("Failed to remove favorite");
+        toast.error("ลบออกจากรายการโปรดไม่สำเร็จ");
         return;
       }
       setFavorites((prev) => prev.filter((r) => r.id !== reportId));
-      toast.success("Removed from favorites");
+      toast.success("ลบออกจากรายการโปรดแล้ว");
     } catch (error) {
       console.error("Error removing favorite:", error);
-      toast.error("Failed to remove favorite");
+      toast.error("ลบออกจากรายการโปรดไม่สำเร็จ");
     }
   };
 
@@ -75,7 +75,7 @@ export default function ReportFavorites() {
     setReportView(view)
   }
   return (
-    <ContentLayout title="Report Favorites">
+    <ContentLayout title="รายงานโปรด">
       <div className="w-full item-center my-2">
         <DefaultBreadcrumb />
       </div>
@@ -88,10 +88,10 @@ export default function ReportFavorites() {
             onValueChange={hanelerViewChange}
           >
             <ToggleGroupItem value="table" aria-label="Toggle all">
-              List
+              รายการ
             </ToggleGroupItem>
             <ToggleGroupItem value="card" aria-label="Toggle missed">
-              Card
+              การ์ด
             </ToggleGroupItem>
           </ToggleGroup>
 

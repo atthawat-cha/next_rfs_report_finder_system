@@ -75,7 +75,7 @@ export function ParamTab({ reportId, onDataChange }: { reportId: string; onDataC
 
   const handleAddVariable = async () => {
     if (!newVariable.name.trim()) {
-      toast.error("Name is required");
+      toast.error("กรุณากรอกชื่อ");
       return;
     }
     const res = await fetch(`/api/reports/${reportId}/variables`, {
@@ -89,10 +89,10 @@ export function ParamTab({ reportId, onDataChange }: { reportId: string; onDataC
     });
     if (!res.ok) {
       const body = await res.json().catch(() => null);
-      toast.error(body?.error ?? "Failed to add variable");
+      toast.error(body?.error ?? "เพิ่มพารามิเตอร์ไม่สำเร็จ");
       return;
     }
-    toast.success("Variable added");
+    toast.success("เพิ่มพารามิเตอร์สำเร็จ");
     setNewVariable(EMPTY_NEW_VARIABLE);
     fetchAll();
   };
@@ -124,10 +124,10 @@ export function ParamTab({ reportId, onDataChange }: { reportId: string; onDataC
     });
     if (!res.ok) {
       const body = await res.json().catch(() => null);
-      toast.error(body?.error ?? "Failed to save variable");
+      toast.error(body?.error ?? "บันทึกพารามิเตอร์ไม่สำเร็จ");
       return;
     }
-    toast.success("Variable saved");
+    toast.success("บันทึกพารามิเตอร์สำเร็จ");
     setEditingVariableId(null);
     fetchAll();
   };
@@ -138,10 +138,10 @@ export function ParamTab({ reportId, onDataChange }: { reportId: string; onDataC
       credentials: "include",
     });
     if (!res.ok) {
-      toast.error("Failed to delete variable");
+      toast.error("ลบพารามิเตอร์ไม่สำเร็จ");
       return;
     }
-    toast.success("Variable deleted");
+    toast.success("ลบพารามิเตอร์สำเร็จ");
     fetchAll();
   };
 
@@ -149,7 +149,7 @@ export function ParamTab({ reportId, onDataChange }: { reportId: string; onDataC
     { key: MAIN_SCOPE as string | null, title: "พารามิเตอร์ของรายงานหลัก", rows: variables.filter((v) => !v.sub_report_id) },
     ...subReports.map((sr) => ({
       key: sr.id,
-      title: `พารามิเตอร์ของ Sub-report: ${sr.name}`,
+      title: `พารามิเตอร์ของรายงานย่อย: ${sr.name}`,
       rows: variables.filter((v) => v.sub_report_id === sr.id),
     })),
   ];
@@ -161,19 +161,19 @@ export function ParamTab({ reportId, onDataChange }: { reportId: string; onDataC
           <Input
             value={variableDraft.name}
             onChange={(e) => setVariableDraft((prev) => ({ ...prev, name: e.target.value }))}
-            placeholder="Name"
+            placeholder="ชื่อ"
           />
           <Input
             value={variableDraft.label}
             onChange={(e) => setVariableDraft((prev) => ({ ...prev, label: e.target.value }))}
-            placeholder="Label"
+            placeholder="ป้ายกำกับ"
           />
           <Select
             value={variableDraft.data_type}
             onValueChange={(val) => setVariableDraft((prev) => ({ ...prev, data_type: val as ReportVariableRow["data_type"] }))}
           >
             <SelectTrigger>
-              <SelectValue placeholder="Data type" />
+              <SelectValue placeholder="ชนิดข้อมูล" />
             </SelectTrigger>
             <SelectContent>
               <SelectGroup>
@@ -186,13 +186,13 @@ export function ParamTab({ reportId, onDataChange }: { reportId: string; onDataC
           <Input
             value={variableDraft.default_value}
             onChange={(e) => setVariableDraft((prev) => ({ ...prev, default_value: e.target.value }))}
-            placeholder="Default value"
+            placeholder="ค่าเริ่มต้น"
           />
           <Input
             type="number"
             value={variableDraft.sort_order}
             onChange={(e) => setVariableDraft((prev) => ({ ...prev, sort_order: Number(e.target.value) }))}
-            placeholder="Sort order"
+            placeholder="ลำดับการแสดง"
           />
           <div className="flex items-center gap-2">
             <Checkbox
@@ -200,14 +200,14 @@ export function ParamTab({ reportId, onDataChange }: { reportId: string; onDataC
               checked={variableDraft.is_required}
               onCheckedChange={(c) => setVariableDraft((prev) => ({ ...prev, is_required: c === true }))}
             />
-            <FieldLabel htmlFor={`v-required-${v.id}`} className="font-normal">Required</FieldLabel>
+            <FieldLabel htmlFor={`v-required-${v.id}`} className="font-normal">จำเป็น</FieldLabel>
           </div>
           <div className="col-span-2 flex justify-end gap-2">
             <Button type="button" size="sm" variant="outline" onClick={() => setEditingVariableId(null)}>
-              Cancel
+              ยกเลิก
             </Button>
             <Button type="button" size="sm" onClick={handleSaveVariable}>
-              Save
+              บันทึก
             </Button>
           </div>
         </div>
@@ -218,15 +218,15 @@ export function ParamTab({ reportId, onDataChange }: { reportId: string; onDataC
             {v.label && <span className="text-muted-foreground"> ({v.label})</span>}
             <span className="ml-2 text-xs rounded bg-muted px-1.5 py-0.5">{v.data_type}</span>
             {v.is_required && (
-              <span className="ml-2 text-xs rounded bg-primary/10 text-primary px-1.5 py-0.5">Required</span>
+              <span className="ml-2 text-xs rounded bg-primary/10 text-primary px-1.5 py-0.5">จำเป็น</span>
             )}
           </div>
           <div className="flex gap-2">
             <Button type="button" size="sm" variant="ghost" onClick={() => startEditVariable(v)}>
-              Edit
+              แก้ไข
             </Button>
             <Button type="button" size="sm" variant="ghost" onClick={() => handleDeleteVariable(v)}>
-              Delete
+              ลบ
             </Button>
           </div>
         </div>
@@ -239,7 +239,7 @@ export function ParamTab({ reportId, onDataChange }: { reportId: string; onDataC
       <CardHeader className="pb-4">
         <div className="flex items-center gap-2">
           <VariableIcon className="h-4 w-4 text-muted-foreground" />
-          <CardTitle className="text-base">Parameters</CardTitle>
+          <CardTitle className="text-base">พารามิเตอร์</CardTitle>
         </div>
         <CardDescription>ตัวแปรที่ใช้ในรายงานนี้ — ระบุได้ว่าใช้กับรายงานหลัก หรือ sub-report ตัวไหน</CardDescription>
       </CardHeader>
@@ -270,7 +270,7 @@ export function ParamTab({ reportId, onDataChange }: { reportId: string; onDataC
               <SelectGroup>
                 <SelectItem value={MAIN_SCOPE}>รายงานหลัก</SelectItem>
                 {subReports.map((sr) => (
-                  <SelectItem key={sr.id} value={sr.id}>Sub-report: {sr.name}</SelectItem>
+                  <SelectItem key={sr.id} value={sr.id}>รายงานย่อย: {sr.name}</SelectItem>
                 ))}
               </SelectGroup>
             </SelectContent>
@@ -279,19 +279,19 @@ export function ParamTab({ reportId, onDataChange }: { reportId: string; onDataC
             <Input
               value={newVariable.name}
               onChange={(e) => setNewVariable((prev) => ({ ...prev, name: e.target.value }))}
-              placeholder="Name"
+              placeholder="ชื่อ"
             />
             <Input
               value={newVariable.label}
               onChange={(e) => setNewVariable((prev) => ({ ...prev, label: e.target.value }))}
-              placeholder="Label"
+              placeholder="ป้ายกำกับ"
             />
             <Select
               value={newVariable.data_type}
               onValueChange={(val) => setNewVariable((prev) => ({ ...prev, data_type: val as ReportVariableRow["data_type"] }))}
             >
               <SelectTrigger>
-                <SelectValue placeholder="Data type" />
+                <SelectValue placeholder="ชนิดข้อมูล" />
               </SelectTrigger>
               <SelectContent>
                 <SelectGroup>
@@ -304,13 +304,13 @@ export function ParamTab({ reportId, onDataChange }: { reportId: string; onDataC
             <Input
               value={newVariable.default_value}
               onChange={(e) => setNewVariable((prev) => ({ ...prev, default_value: e.target.value }))}
-              placeholder="Default value"
+              placeholder="ค่าเริ่มต้น"
             />
             <Input
               type="number"
               value={newVariable.sort_order}
               onChange={(e) => setNewVariable((prev) => ({ ...prev, sort_order: Number(e.target.value) }))}
-              placeholder="Sort order"
+              placeholder="ลำดับการแสดง"
             />
             <div className="flex items-center gap-2">
               <Checkbox
@@ -318,11 +318,11 @@ export function ParamTab({ reportId, onDataChange }: { reportId: string; onDataC
                 checked={newVariable.is_required}
                 onCheckedChange={(c) => setNewVariable((prev) => ({ ...prev, is_required: c === true }))}
               />
-              <FieldLabel htmlFor="new-v-required" className="font-normal">Required</FieldLabel>
+              <FieldLabel htmlFor="new-v-required" className="font-normal">จำเป็น</FieldLabel>
             </div>
             <div className="col-span-2 flex justify-end">
               <Button type="button" size="sm" variant="outline" onClick={handleAddVariable}>
-                Add Parameter
+                เพิ่มพารามิเตอร์
               </Button>
             </div>
           </div>

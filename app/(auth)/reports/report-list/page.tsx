@@ -81,7 +81,7 @@ export default function ReportList() {
   };
 
   return (
-    <ContentLayout title="Report List">
+    <ContentLayout title="รายการรายงาน">
       <div className="w-full item-center my-2">
         <DefaultBreadcrumb />
       </div>
@@ -95,17 +95,17 @@ export default function ReportList() {
             onValueChange={hanelerViewChange}
           >
             <ToggleGroupItem value="table" aria-label="Toggle all">
-              List
+              รายการ
             </ToggleGroupItem>
             <ToggleGroupItem value="card" aria-label="Toggle missed">
-              Card
+              การ์ด
             </ToggleGroupItem>
           </ToggleGroup>
 
           <div className="flex gap-2 item-center">
             <SearchInput countRes={total.toString()} defaultValue={q} onSearch={hanelerSearch} />
             <Button asChild >
-              <Link href="/reports/report-create">Create</Link>
+              <Link href="/reports/report-create">สร้างรายงาน</Link>
             </Button>
           </div>
         </div>

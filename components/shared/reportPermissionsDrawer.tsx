@@ -52,12 +52,12 @@ interface SubjectOption {
 }
 
 const FLAGS: { key: FlagKey; label: string }[] = [
-  { key: "can_view", label: "View" },
-  { key: "can_edit", label: "Edit" },
-  { key: "can_delete", label: "Delete" },
-  { key: "can_favorite", label: "Favorite" },
-  { key: "can_export", label: "Export" },
-  { key: "can_print", label: "Print" },
+  { key: "can_view", label: "ดู" },
+  { key: "can_edit", label: "แก้ไข" },
+  { key: "can_delete", label: "ลบ" },
+  { key: "can_favorite", label: "รายการโปรด" },
+  { key: "can_export", label: "ส่งออก" },
+  { key: "can_print", label: "พิมพ์" },
 ];
 
 /**

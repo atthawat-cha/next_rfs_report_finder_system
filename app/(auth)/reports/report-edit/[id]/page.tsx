@@ -94,12 +94,12 @@ export default function ReportEdit() {
       ]);
 
       if (!reportRes.ok) {
-        toast.error("Failed to load report");
+        toast.error("โหลดข้อมูลรายงานไม่สำเร็จ");
         return;
       }
       const reportJson = await reportRes.json();
       if (!reportJson?.success) {
-        toast.error("Report not found");
+        toast.error("ไม่พบรายงาน");
         return;
       }
       const report = reportJson.data;
@@ -157,14 +157,14 @@ export default function ReportEdit() {
         body: JSON.stringify(formData),
       });
       if (!res.ok) {
-        toast.error("Failed to save report");
+        toast.error("บันทึกรายงานไม่สำเร็จ");
         return;
       }
-      toast.success("Report updated");
+      toast.success("อัปเดตรายงานสำเร็จ");
       router.push("/reports/report-list");
     } catch (error) {
       console.error(error);
-      toast.error("Failed to save report");
+      toast.error("บันทึกรายงานไม่สำเร็จ");
     } finally {
       setIsSubmitting(false);
     }
@@ -172,7 +172,7 @@ export default function ReportEdit() {
 
   if (loading) {
     return (
-      <ContentLayout title="Report Edit">
+      <ContentLayout title="แก้ไขรายงาน">
         <div className="flex items-center justify-center h-64">
           <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
         </div>
@@ -181,15 +181,15 @@ export default function ReportEdit() {
   }
 
   return (
-    <ContentLayout title="Report Edit">
+    <ContentLayout title="แก้ไขรายงาน">
       <DefaultBreadcrumb />
       <Separator className="my-5" />
 
       <div className="mb-6 flex flex-wrap items-start justify-between gap-2">
         <div>
-          <h1 className="text-xl font-semibold tracking-tight">Edit Report</h1>
+          <h1 className="text-xl font-semibold tracking-tight">แก้ไขรายงาน</h1>
           <p className="text-sm text-muted-foreground mt-1">
-            Output type: <span className="font-medium">{outputType}</span> (กำหนดตอนสร้าง แก้ไม่ได้)
+            ประเภทผลลัพธ์: <span className="font-medium">{outputType}</span> (กำหนดตอนสร้าง แก้ไม่ได้)
           </p>
         </div>
         <Button type="button" variant="outline" onClick={() => setPermissionsOpen(true)}>
@@ -231,27 +231,27 @@ export default function ReportEdit() {
               <CardHeader className="pb-4">
                 <div className="flex items-center gap-2">
                   <FileText className="h-4 w-4 text-muted-foreground" />
-                  <CardTitle className="text-base">Report Information</CardTitle>
+                  <CardTitle className="text-base">ข้อมูลรายงาน</CardTitle>
                 </div>
                 <CardDescription>ข้อมูลพื้นฐานของรายงาน</CardDescription>
               </CardHeader>
               <CardContent className="space-y-4">
                 <Field>
-                  <FieldLabel htmlFor="code">Code</FieldLabel>
+                  <FieldLabel htmlFor="code">รหัส</FieldLabel>
                   <Input id="code" value={formData.code} onChange={handleInputChange} />
                 </Field>
 
                 <Field>
-                  <FieldLabel htmlFor="name_th">Name</FieldLabel>
+                  <FieldLabel htmlFor="name_th">ชื่อ</FieldLabel>
                   <Input id="name_th" value={formData.name_th} onChange={handleInputChange} />
                 </Field>
 
                 <div className="grid grid-cols-2 gap-3">
                   <Field>
-                    <FieldLabel htmlFor="rp_catagory">Category</FieldLabel>
+                    <FieldLabel htmlFor="rp_catagory">หมวดหมู่</FieldLabel>
                     <Select value={formData.category_id} onValueChange={(v) => handleSelectChange("category_id", v)}>
                       <SelectTrigger id="rp_catagory">
-                        <SelectValue placeholder="Select category" />
+                        <SelectValue placeholder="เลือกหมวดหมู่" />
                       </SelectTrigger>
                       <SelectContent>
                         <SelectGroup>
@@ -264,10 +264,10 @@ export default function ReportEdit() {
                   </Field>
 
                   <Field>
-                    <FieldLabel htmlFor="rp_department">Department</FieldLabel>
+                    <FieldLabel htmlFor="rp_department">แผนก</FieldLabel>
                     <Select value={formData.department_id} onValueChange={(v) => handleSelectChange("department_id", v)}>
                       <SelectTrigger id="rp_department">
-                        <SelectValue placeholder="Select dept." />
+                        <SelectValue placeholder="เลือกแผนก" />
                       </SelectTrigger>
                       <SelectContent>
                         <SelectGroup>
@@ -282,7 +282,7 @@ export default function ReportEdit() {
 
                 <div className="grid grid-cols-2 gap-3">
                   <Field>
-                    <FieldLabel htmlFor="rp_output_type">Output Type</FieldLabel>
+                    <FieldLabel htmlFor="rp_output_type">ประเภทผลลัพธ์</FieldLabel>
                     <Select value={outputType} disabled>
                       <SelectTrigger id="rp_output_type">
                         <SelectValue />
@@ -297,10 +297,10 @@ export default function ReportEdit() {
                   </Field>
 
                   <Field>
-                    <FieldLabel htmlFor="rp_access_level">Access Level</FieldLabel>
+                    <FieldLabel htmlFor="rp_access_level">ระดับการเข้าถึง</FieldLabel>
                     <Select value={formData.access_level} onValueChange={(v) => handleSelectChange("access_level", v)}>
                       <SelectTrigger id="rp_access_level">
-                        <SelectValue placeholder="Select access level" />
+                        <SelectValue placeholder="เลือกระดับการเข้าถึง" />
                       </SelectTrigger>
                       <SelectContent>
                         <SelectGroup>
@@ -314,10 +314,10 @@ export default function ReportEdit() {
                 </div>
 
                 <Field>
-                  <FieldLabel htmlFor="rp_status">Status</FieldLabel>
+                  <FieldLabel htmlFor="rp_status">สถานะ</FieldLabel>
                   <Select value={formData.status} onValueChange={(v) => handleSelectChange("status", v)}>
                     <SelectTrigger id="rp_status">
-                      <SelectValue placeholder="Select status" />
+                      <SelectValue placeholder="เลือกสถานะ" />
                     </SelectTrigger>
                     <SelectContent>
                       <SelectGroup>
@@ -330,7 +330,7 @@ export default function ReportEdit() {
                 </Field>
 
                 <Field>
-                  <FieldLabel htmlFor="description">Description</FieldLabel>
+                  <FieldLabel htmlFor="description">คำอธิบาย</FieldLabel>
                   <Textarea
                     id="description"
                     className="resize-none min-h-[96px]"
@@ -346,7 +346,7 @@ export default function ReportEdit() {
                       checked={formData.is_downloadable}
                       onCheckedChange={(v) => handleSelectChange("is_downloadable", v === true)}
                     />
-                    <FieldLabel htmlFor="is_downloadable" className="font-normal">Downloadable</FieldLabel>
+                    <FieldLabel htmlFor="is_downloadable" className="font-normal">ดาวน์โหลดได้</FieldLabel>
                   </Field>
                   <Field orientation="horizontal">
                     <Checkbox
@@ -354,7 +354,7 @@ export default function ReportEdit() {
                       checked={formData.is_editable}
                       onCheckedChange={(v) => handleSelectChange("is_editable", v === true)}
                     />
-                    <FieldLabel htmlFor="is_editable" className="font-normal">Editable</FieldLabel>
+                    <FieldLabel htmlFor="is_editable" className="font-normal">แก้ไขได้</FieldLabel>
                   </Field>
                 </div>
               </CardContent>
@@ -362,16 +362,16 @@ export default function ReportEdit() {
 
             <div className="mt-6 flex items-center justify-end gap-3">
               <Button variant="outline" type="button" onClick={() => router.push("/reports/report-list")}>
-                Cancel
+                ยกเลิก
               </Button>
               <Button type="submit" disabled={isSubmitting}>
                 {isSubmitting ? (
                   <>
                     <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                    Saving…
+                    กำลังบันทึก…
                   </>
                 ) : (
-                  "Save Changes"
+                  "บันทึกการเปลี่ยนแปลง"
                 )}
               </Button>
             </div>

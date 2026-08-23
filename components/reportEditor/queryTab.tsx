@@ -54,18 +54,18 @@ function QueryEditForm({
       <Input
         value={draft.name}
         onChange={(e) => setDraft((prev) => ({ ...prev, name: e.target.value }))}
-        placeholder="Query name"
+        placeholder="ชื่อคิวรี่"
       />
       <Textarea
         className="resize-none min-h-[80px] font-mono text-xs"
         value={draft.sql_text}
         onChange={(e) => setDraft((prev) => ({ ...prev, sql_text: e.target.value }))}
-        placeholder="SQL text"
+        placeholder="ข้อความ SQL"
       />
       <Input
         value={draft.change_log}
         onChange={(e) => setDraft((prev) => ({ ...prev, change_log: e.target.value }))}
-        placeholder="Change log (optional, saved with the version snapshot)"
+        placeholder="บันทึกการเปลี่ยนแปลง (ไม่บังคับ บันทึกไว้กับเวอร์ชันนี้)"
       />
       <div className="flex items-center gap-2">
         <Checkbox
@@ -73,14 +73,14 @@ function QueryEditForm({
           checked={draft.is_main}
           onCheckedChange={(v) => setDraft((prev) => ({ ...prev, is_main: v === true }))}
         />
-        <FieldLabel htmlFor="q-draft-main" className="font-normal">Main query</FieldLabel>
+        <FieldLabel htmlFor="q-draft-main" className="font-normal">คิวรี่หลัก</FieldLabel>
       </div>
       <div className="flex justify-end gap-2">
         <Button type="button" size="sm" variant="outline" onClick={onCancel}>
-          Cancel
+          ยกเลิก
         </Button>
         <Button type="button" size="sm" onClick={onSave}>
-          Save
+          บันทึก
         </Button>
       </div>
     </div>
@@ -116,7 +116,7 @@ export function QueryTab({ reportId, onDataChange }: { reportId: string; onDataC
 
   const handleAddQuery = async () => {
     if (!newQuery.name.trim() || !newQuery.sql_text.trim()) {
-      toast.error("Name and SQL text are required");
+      toast.error("กรุณากรอกชื่อและข้อความ SQL");
       return;
     }
     const res = await fetch(`/api/reports/${reportId}/queries`, {
@@ -132,10 +132,10 @@ export function QueryTab({ reportId, onDataChange }: { reportId: string; onDataC
     });
     if (!res.ok) {
       const body = await res.json().catch(() => null);
-      toast.error(body?.error ?? "Failed to add query");
+      toast.error(body?.error ?? "เพิ่มคิวรี่ไม่สำเร็จ");
       return;
     }
-    toast.success("Query added");
+    toast.success("เพิ่มคิวรี่สำเร็จ");
     setNewQuery(EMPTY_NEW_QUERY);
     fetchAll();
   };
@@ -155,10 +155,10 @@ export function QueryTab({ reportId, onDataChange }: { reportId: string; onDataC
     });
     if (!res.ok) {
       const body = await res.json().catch(() => null);
-      toast.error(body?.error ?? "Failed to save query");
+      toast.error(body?.error ?? "บันทึกคิวรี่ไม่สำเร็จ");
       return;
     }
-    toast.success("Query saved");
+    toast.success("บันทึกคิวรี่สำเร็จ");
     setEditingQueryId(null);
     fetchAll();
   };
@@ -171,10 +171,10 @@ export function QueryTab({ reportId, onDataChange }: { reportId: string; onDataC
       body: JSON.stringify({ id: row.id, is_main: true }),
     });
     if (!res.ok) {
-      toast.error("Failed to set as main query");
+      toast.error("ตั้งเป็นคิวรี่หลักไม่สำเร็จ");
       return;
     }
-    toast.success(`"${row.name}" set as main query`);
+    toast.success(`ตั้ง "${row.name}" เป็นคิวรี่หลักแล้ว`);
     fetchAll();
   };
 
@@ -184,16 +184,16 @@ export function QueryTab({ reportId, onDataChange }: { reportId: string; onDataC
       credentials: "include",
     });
     if (!res.ok) {
-      toast.error("Failed to delete query");
+      toast.error("ลบคิวรี่ไม่สำเร็จ");
       return;
     }
-    toast.success("Query deleted");
+    toast.success("ลบคิวรี่สำเร็จ");
     fetchAll();
   };
 
   const containers = [
     { key: null as string | null, title: "รายงานหลัก" },
-    ...subReports.map((sr) => ({ key: sr.id, title: `Sub-report: ${sr.name}` })),
+    ...subReports.map((sr) => ({ key: sr.id, title: `รายงานย่อย: ${sr.name}` })),
   ];
 
   return (
@@ -211,12 +211,12 @@ export function QueryTab({ reportId, onDataChange }: { reportId: string; onDataC
                 <CardTitle className="text-base">{container.title}</CardTitle>
               </div>
               <CardDescription>
-                Reference/documentation only — the app never executes these queries
+                ใช้เป็นข้อมูลอ้างอิงเท่านั้น — ระบบไม่รันคิวรี่เหล่านี้จริง
               </CardDescription>
             </CardHeader>
             <CardContent className="space-y-4">
               <div>
-                <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground mb-2">Main Query</p>
+                <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground mb-2">คิวรี่หลัก</p>
                 {mainQuery ? (
                   <div className="border rounded-md p-3 space-y-2">
                     {editingQueryId === mainQuery.id ? (
@@ -226,12 +226,12 @@ export function QueryTab({ reportId, onDataChange }: { reportId: string; onDataC
                         <div className="flex items-center justify-between">
                           <div className="flex items-center gap-2">
                             <span className="font-medium text-sm">{mainQuery.name}</span>
-                            <span className="text-xs rounded bg-primary/10 text-primary px-1.5 py-0.5">Main</span>
+                            <span className="text-xs rounded bg-primary/10 text-primary px-1.5 py-0.5">หลัก</span>
                             <span className="text-xs text-muted-foreground">v{mainQuery.version}</span>
                           </div>
                           <div className="flex gap-2">
-                            <Button type="button" size="sm" variant="ghost" onClick={() => startEditQuery(mainQuery)}>Edit</Button>
-                            <Button type="button" size="sm" variant="ghost" onClick={() => handleDeleteQuery(mainQuery)}>Delete</Button>
+                            <Button type="button" size="sm" variant="ghost" onClick={() => startEditQuery(mainQuery)}>แก้ไข</Button>
+                            <Button type="button" size="sm" variant="ghost" onClick={() => handleDeleteQuery(mainQuery)}>ลบ</Button>
                           </div>
                         </div>
                         <QuerySummary sql={mainQuery.sql_text} maxHeight="16rem" />
@@ -244,7 +244,7 @@ export function QueryTab({ reportId, onDataChange }: { reportId: string; onDataC
               </div>
 
               <div>
-                <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground mb-2">Sub Queries</p>
+                <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground mb-2">คิวรี่ย่อย</p>
                 {subQueries.length === 0 && <FieldDescription>ยังไม่มี sub query</FieldDescription>}
                 <div className="space-y-2">
                   {subQueries.map((q) => (
@@ -259,9 +259,9 @@ export function QueryTab({ reportId, onDataChange }: { reportId: string; onDataC
                               <span className="text-xs text-muted-foreground">v{q.version}</span>
                             </div>
                             <div className="flex gap-2">
-                              <Button type="button" size="sm" variant="ghost" onClick={() => handleSetMainQuery(q)}>Set as main</Button>
-                              <Button type="button" size="sm" variant="ghost" onClick={() => startEditQuery(q)}>Edit</Button>
-                              <Button type="button" size="sm" variant="ghost" onClick={() => handleDeleteQuery(q)}>Delete</Button>
+                              <Button type="button" size="sm" variant="ghost" onClick={() => handleSetMainQuery(q)}>ตั้งเป็นหลัก</Button>
+                              <Button type="button" size="sm" variant="ghost" onClick={() => startEditQuery(q)}>แก้ไข</Button>
+                              <Button type="button" size="sm" variant="ghost" onClick={() => handleDeleteQuery(q)}>ลบ</Button>
                             </div>
                           </div>
                           <QuerySummary sql={q.sql_text} maxHeight="16rem" />
@@ -278,8 +278,8 @@ export function QueryTab({ reportId, onDataChange }: { reportId: string; onDataC
 
       <Card>
         <CardHeader className="pb-4">
-          <CardTitle className="text-base">Add query</CardTitle>
-          <CardDescription>เลือกขอบเขต (รายงานหลัก หรือ sub-report) แล้วติ๊ก &quot;Main query&quot; ถ้าต้องการให้เป็นคิวรี่หลักของขอบเขตนั้น</CardDescription>
+          <CardTitle className="text-base">เพิ่มคิวรี่</CardTitle>
+          <CardDescription>เลือกขอบเขต (รายงานหลัก หรือรายงานย่อย) แล้วติ๊ก &quot;คิวรี่หลัก&quot; ถ้าต้องการให้เป็นคิวรี่หลักของขอบเขตนั้น</CardDescription>
         </CardHeader>
         <CardContent className="space-y-2">
           <Select
@@ -293,7 +293,7 @@ export function QueryTab({ reportId, onDataChange }: { reportId: string; onDataC
               <SelectGroup>
                 <SelectItem value={MAIN_SCOPE}>รายงานหลัก</SelectItem>
                 {subReports.map((sr) => (
-                  <SelectItem key={sr.id} value={sr.id}>Sub-report: {sr.name}</SelectItem>
+                  <SelectItem key={sr.id} value={sr.id}>รายงานย่อย: {sr.name}</SelectItem>
                 ))}
               </SelectGroup>
             </SelectContent>
@@ -301,13 +301,13 @@ export function QueryTab({ reportId, onDataChange }: { reportId: string; onDataC
           <Input
             value={newQuery.name}
             onChange={(e) => setNewQuery((prev) => ({ ...prev, name: e.target.value }))}
-            placeholder="Query name"
+            placeholder="ชื่อคิวรี่"
           />
           <Textarea
             className="resize-none min-h-[80px] font-mono text-xs"
             value={newQuery.sql_text}
             onChange={(e) => setNewQuery((prev) => ({ ...prev, sql_text: e.target.value }))}
-            placeholder="SQL text"
+            placeholder="ข้อความ SQL"
           />
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-2">
@@ -316,10 +316,10 @@ export function QueryTab({ reportId, onDataChange }: { reportId: string; onDataC
                 checked={newQuery.is_main}
                 onCheckedChange={(v) => setNewQuery((prev) => ({ ...prev, is_main: v === true }))}
               />
-              <FieldLabel htmlFor="new-q-main" className="font-normal">Main query</FieldLabel>
+              <FieldLabel htmlFor="new-q-main" className="font-normal">คิวรี่หลัก</FieldLabel>
             </div>
             <Button type="button" size="sm" variant="outline" onClick={handleAddQuery}>
-              Add Query
+              เพิ่มคิวรี่
             </Button>
           </div>
         </CardContent>

@@ -104,7 +104,7 @@ export function DocTab({ reportId }: { reportId: string }) {
 
   const handleUpload = async () => {
     if (pendingUpload.length === 0) {
-      toast.error("Please select a file first");
+      toast.error("กรุณาเลือกไฟล์ก่อน");
       return;
     }
     const filesToUpload = isMultiFilePurpose(uploadPurpose) ? pendingUpload : [pendingUpload[0]];
@@ -135,7 +135,7 @@ export function DocTab({ reportId }: { reportId: string }) {
       credentials: "include",
     });
     if (!res.ok) {
-      toast.error("Failed to delete file");
+      toast.error("ลบไฟล์ไม่สำเร็จ");
       return;
     }
     toast.success("ลบไฟล์แล้ว");
@@ -144,7 +144,7 @@ export function DocTab({ reportId }: { reportId: string }) {
 
   const handleAddShare = async () => {
     if (newShare.share_type !== "LINK" && !newShare.shared_with) {
-      toast.error(newShare.share_type === "USER" ? "Please choose a user" : "Please choose a department");
+      toast.error(newShare.share_type === "USER" ? "กรุณาเลือกผู้ใช้" : "กรุณาเลือกแผนก");
       return;
     }
     const res = await fetch(`/api/reports/${reportId}/shares`, {
@@ -161,10 +161,10 @@ export function DocTab({ reportId }: { reportId: string }) {
     });
     if (!res.ok) {
       const body = await res.json().catch(() => null);
-      toast.error(body?.error ?? "Failed to create share");
+      toast.error(body?.error ?? "สร้างการแชร์ไม่สำเร็จ");
       return;
     }
-    toast.success("Share created");
+    toast.success("สร้างการแชร์สำเร็จ");
     setNewShare(EMPTY_NEW_SHARE);
     fetchAll();
   };
@@ -175,17 +175,17 @@ export function DocTab({ reportId }: { reportId: string }) {
       credentials: "include",
     });
     if (!res.ok) {
-      toast.error("Failed to revoke share");
+      toast.error("ยกเลิกการแชร์ไม่สำเร็จ");
       return;
     }
-    toast.success("Share revoked");
+    toast.success("ยกเลิกการแชร์สำเร็จ");
     fetchAll();
   };
 
   const handleCopyLink = (token: string) => {
     const url = `${window.location.origin}/shares/${token}`;
     navigator.clipboard.writeText(url);
-    toast.success("Copied link to clipboard");
+    toast.success("คัดลอกลิงก์แล้ว");
   };
 
   return (
@@ -194,7 +194,7 @@ export function DocTab({ reportId }: { reportId: string }) {
         <CardHeader className="pb-4">
           <div className="flex items-center gap-2">
             <FolderOpen className="h-4 w-4 text-muted-foreground" />
-            <CardTitle className="text-base">Documents</CardTitle>
+            <CardTitle className="text-base">เอกสาร</CardTitle>
           </div>
           <CardDescription>
             ไม่ผูกกับ output_type — อัปโหลดไฟล์แล้วเลือกว่าจะใช้เพื่ออะไร ไฟล์ล่าสุดของแต่ละประเภทถูกใช้งานอัตโนมัติ
@@ -225,7 +225,7 @@ export function DocTab({ reportId }: { reportId: string }) {
             />
             <div className="flex justify-end">
               <Button type="button" size="sm" variant="outline" disabled={pendingUpload.length === 0} onClick={handleUpload}>
-                Upload
+                อัปโหลด
               </Button>
             </div>
           </div>
@@ -249,7 +249,7 @@ export function DocTab({ reportId }: { reportId: string }) {
                       <div key={f.id} className="flex items-center justify-between text-sm bg-muted/40 rounded px-3 py-2">
                         <span className="truncate">{f.file_name} (v{f.version})</span>
                         <Button type="button" variant="ghost" size="sm" onClick={() => handleDeleteFile(f.id)}>
-                          Remove
+                          ลบ
                         </Button>
                       </div>
                     ))}
@@ -265,7 +265,7 @@ export function DocTab({ reportId }: { reportId: string }) {
         <CardHeader className="pb-4">
           <div className="flex items-center gap-2">
             <Share2 className="h-4 w-4 text-muted-foreground" />
-            <CardTitle className="text-base">Sharing</CardTitle>
+            <CardTitle className="text-base">การแชร์</CardTitle>
           </div>
           <CardDescription>แชร์รายงานนี้ให้ผู้ใช้/แผนก หรือสร้างลิงก์สาธารณะ (ไม่ต้อง login)</CardDescription>
         </CardHeader>
@@ -275,10 +275,10 @@ export function DocTab({ reportId }: { reportId: string }) {
               <div className="min-w-0 flex-1">
                 <div className="flex items-center gap-2">
                   <span className="text-xs rounded bg-muted px-1.5 py-0.5">
-                    {s.share_type === "USER" ? "User" : s.share_type === "DEPARTMENT" ? "Department" : "Link"}
+                    {s.share_type === "USER" ? "ผู้ใช้" : s.share_type === "DEPARTMENT" ? "แผนก" : "ลิงก์"}
                   </span>
-                  {s.can_download && <span className="text-xs rounded bg-primary/10 text-primary px-1.5 py-0.5">Download</span>}
-                  {s.can_edit && <span className="text-xs rounded bg-primary/10 text-primary px-1.5 py-0.5">Edit</span>}
+                  {s.can_download && <span className="text-xs rounded bg-primary/10 text-primary px-1.5 py-0.5">ดาวน์โหลดได้</span>}
+                  {s.can_edit && <span className="text-xs rounded bg-primary/10 text-primary px-1.5 py-0.5">แก้ไขได้</span>}
                   {s.expires_at && (
                     <span className="text-xs text-muted-foreground">
                       หมดอายุ {new Date(s.expires_at).toLocaleDateString("th-TH")}
@@ -298,7 +298,7 @@ export function DocTab({ reportId }: { reportId: string }) {
                 )}
               </div>
               <Button type="button" size="sm" variant="ghost" onClick={() => handleRevokeShare(s)}>
-                Revoke
+                เพิกถอน
               </Button>
             </div>
           ))}
@@ -311,13 +311,13 @@ export function DocTab({ reportId }: { reportId: string }) {
                 onValueChange={(v) => setNewShare((prev) => ({ ...prev, share_type: v as ReportShareRow["share_type"], shared_with: "" }))}
               >
                 <SelectTrigger>
-                  <SelectValue placeholder="Share type" />
+                  <SelectValue placeholder="ประเภทการแชร์" />
                 </SelectTrigger>
                 <SelectContent>
                   <SelectGroup>
-                    <SelectItem value="LINK">Public Link</SelectItem>
-                    <SelectItem value="USER">User</SelectItem>
-                    <SelectItem value="DEPARTMENT">Department</SelectItem>
+                    <SelectItem value="LINK">ลิงก์สาธารณะ</SelectItem>
+                    <SelectItem value="USER">ผู้ใช้</SelectItem>
+                    <SelectItem value="DEPARTMENT">แผนก</SelectItem>
                   </SelectGroup>
                 </SelectContent>
               </Select>
@@ -327,7 +327,7 @@ export function DocTab({ reportId }: { reportId: string }) {
                   onValueChange={(v) => setNewShare((prev) => ({ ...prev, shared_with: v }))}
                 >
                   <SelectTrigger>
-                    <SelectValue placeholder={newShare.share_type === "USER" ? "Select user" : "Select department"} />
+                    <SelectValue placeholder={newShare.share_type === "USER" ? "เลือกผู้ใช้" : "เลือกแผนก"} />
                   </SelectTrigger>
                   <SelectContent>
                     <SelectGroup>
@@ -346,7 +346,7 @@ export function DocTab({ reportId }: { reportId: string }) {
                   checked={newShare.can_download}
                   onCheckedChange={(c) => setNewShare((prev) => ({ ...prev, can_download: c === true }))}
                 />
-                <FieldLabel htmlFor="new-share-download" className="font-normal">Can download</FieldLabel>
+                <FieldLabel htmlFor="new-share-download" className="font-normal">ดาวน์โหลดได้</FieldLabel>
               </div>
               <div className="flex items-center gap-2">
                 <Checkbox
@@ -354,10 +354,10 @@ export function DocTab({ reportId }: { reportId: string }) {
                   checked={newShare.can_edit}
                   onCheckedChange={(c) => setNewShare((prev) => ({ ...prev, can_edit: c === true }))}
                 />
-                <FieldLabel htmlFor="new-share-edit" className="font-normal">Can edit</FieldLabel>
+                <FieldLabel htmlFor="new-share-edit" className="font-normal">แก้ไขได้</FieldLabel>
               </div>
               <div className="flex items-center gap-2">
-                <FieldLabel htmlFor="new-share-expires" className="font-normal">Expires</FieldLabel>
+                <FieldLabel htmlFor="new-share-expires" className="font-normal">วันหมดอายุ</FieldLabel>
                 <Input
                   id="new-share-expires"
                   type="date"
@@ -369,7 +369,7 @@ export function DocTab({ reportId }: { reportId: string }) {
             </div>
             <div className="flex justify-end">
               <Button type="button" size="sm" variant="outline" onClick={handleAddShare}>
-                Create Share
+                สร้างการแชร์
               </Button>
             </div>
           </div>

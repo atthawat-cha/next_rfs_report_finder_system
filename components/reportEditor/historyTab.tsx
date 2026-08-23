@@ -58,10 +58,10 @@ export function HistoryTab({ reportId }: { reportId: string }) {
       body: JSON.stringify({ target: "file", report_files_id: row.id }),
     });
     if (!res.ok) {
-      toast.error("Rollback failed");
+      toast.error("ย้อนกลับไม่สำเร็จ");
       return;
     }
-    toast.success(`Rolled back to v${row.version}`);
+    toast.success(`ย้อนกลับไปยังเวอร์ชัน v${row.version} แล้ว`);
     fetchAll();
   };
 
@@ -73,10 +73,10 @@ export function HistoryTab({ reportId }: { reportId: string }) {
       body: JSON.stringify({ target: "query", version_id: version.id }),
     });
     if (!res.ok) {
-      toast.error("Rollback failed");
+      toast.error("ย้อนกลับไม่สำเร็จ");
       return;
     }
-    toast.success(`Rolled back to v${version.version}`);
+    toast.success(`ย้อนกลับไปยังเวอร์ชัน v${version.version} แล้ว`);
     fetchAll();
   };
 
@@ -87,9 +87,9 @@ export function HistoryTab({ reportId }: { reportId: string }) {
       <CardHeader className="pb-4">
         <div className="flex items-center gap-2">
           <HistoryIcon className="h-4 w-4 text-muted-foreground" />
-          <CardTitle className="text-base">Version History</CardTitle>
+          <CardTitle className="text-base">ประวัติเวอร์ชัน</CardTitle>
         </div>
-        <CardDescription>ประวัติไฟล์และคิวรี่ทุกเวอร์ชัน — กด Rollback เพื่อย้อนกลับไปเวอร์ชันเก่า</CardDescription>
+        <CardDescription>ประวัติไฟล์และคิวรี่ทุกเวอร์ชัน — กดย้อนกลับเพื่อย้อนกลับไปเวอร์ชันเก่า</CardDescription>
       </CardHeader>
       <CardContent className="space-y-6">
         {fileKinds.length === 0 && history.queries.length === 0 && (
@@ -113,7 +113,7 @@ export function HistoryTab({ reportId }: { reportId: string }) {
                     </div>
                     {!r.is_current && (
                       <Button type="button" size="sm" variant="ghost" onClick={() => handleRollbackFile(r)}>
-                        Rollback
+                        ย้อนกลับ
                       </Button>
                     )}
                   </div>
@@ -137,7 +137,7 @@ export function HistoryTab({ reportId }: { reportId: string }) {
                       {v.change_log && <span className="text-muted-foreground truncate"> — {v.change_log}</span>}
                     </div>
                     <Button type="button" size="sm" variant="ghost" onClick={() => handleRollbackQuery(v)}>
-                      Rollback
+                      ย้อนกลับ
                     </Button>
                   </div>
                 ))}

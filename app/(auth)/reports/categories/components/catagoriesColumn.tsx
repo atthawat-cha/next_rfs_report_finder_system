@@ -14,46 +14,46 @@ export function getCatagoryColumn(
     return [
         {
             accessorKey: 'code',
-            header: 'Code',
+            header: 'รหัส',
         },
         {
             accessorKey: 'name',
-            header: 'Name',
+            header: 'ชื่อ',
         },
         {
             accessorKey: 'description',
-            header: 'Description',
+            header: 'คำอธิบาย',
         },
         {
             accessorKey: 'is_active',
-            header: 'Status',
+            header: 'สถานะ',
             cell: ({ row }) => (
                 <Badge variant={row.original.is_active ? 'default' : 'secondary'}>
-                    {row.original.is_active ? 'Active' : 'Inactive'}
+                    {row.original.is_active ? 'ใช้งาน' : 'ไม่ใช้งาน'}
                 </Badge>
             ),
         },
         {
             accessorKey: 'created_at',
-            header: 'Created At',
+            header: 'วันที่สร้าง',
             cell: ({ row }) => formatDateTime(row.original.created_at),
         },
         {
             id: 'actions',
-            header: 'Actions',
+            header: 'การจัดการ',
             cell: ({ row }) => {
                 return (
                     <DropdownMenu>
                         <DropdownMenuTrigger asChild>
                             <Button variant="ghost" className="h-8 w-8 p-0">
-                                <span className="sr-only">Open menu</span>
+                                <span className="sr-only">เปิดเมนู</span>
                                 <MoreHorizontal className="h-4 w-4" />
                             </Button>
                         </DropdownMenuTrigger>
                         <DropdownMenuContent align="end">
-                            <DropdownMenuLabel>Actions</DropdownMenuLabel>
-                            <DropdownMenuItem onClick={() => onEdit(row.original)}>Edit</DropdownMenuItem>
-                            <DropdownMenuItem onClick={() => onDelete(row.original)}>Delete</DropdownMenuItem>
+                            <DropdownMenuLabel>การจัดการ</DropdownMenuLabel>
+                            <DropdownMenuItem onClick={() => onEdit(row.original)}>แก้ไข</DropdownMenuItem>
+                            <DropdownMenuItem onClick={() => onDelete(row.original)}>ลบ</DropdownMenuItem>
                         </DropdownMenuContent>
                     </DropdownMenu>
                 )

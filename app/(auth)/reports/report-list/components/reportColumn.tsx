@@ -23,13 +23,13 @@ async function addToFavorites(reportId: string) {
             body: JSON.stringify({ report_id: reportId }),
         })
         if (!res.ok) {
-            toast.error('Failed to add favorite')
+            toast.error('เพิ่มรายการโปรดไม่สำเร็จ')
             return
         }
-        toast.success('Added to favorites')
+        toast.success('เพิ่มเป็นรายการโปรดแล้ว')
     } catch (error) {
         console.error('Error adding favorite:', error)
-        toast.error('Failed to add favorite')
+        toast.error('เพิ่มรายการโปรดไม่สำเร็จ')
     }
 }
 
@@ -40,11 +40,11 @@ export function getReportColumn(
     return [
     {
         accessorKey: 'code',
-        header: 'Code',
+        header: 'รหัส',
     },
     {
         accessorKey: 'name_th',
-        header: 'Name',
+        header: 'ชื่อ',
         cell: ({ row }) => {
             const id = row.original.id
             const name = row.original.name_th
@@ -58,32 +58,32 @@ export function getReportColumn(
     },
     {
         accessorKey: 'description',
-        header: 'description',
+        header: 'คำอธิบาย',
     },
     {
         accessorKey: 'department',
-        header: 'department',
+        header: 'แผนก',
     },
     {
         accessorKey: 'status',
-        header: 'status',
+        header: 'สถานะ',
     },
     {
         accessorKey: 'version',
-        header: 'version',
+        header: 'เวอร์ชัน',
     },
     {
         accessorKey: 'created_at',
-        header: 'Created At',
+        header: 'วันที่สร้าง',
         cell: ({ row }) => {
             const createdAt = row.original.created_at
-            return <div>{createdAt ? formatDateTime(createdAt) : 'N/A'}</div>
+            return <div>{createdAt ? formatDateTime(createdAt) : 'ไม่มีข้อมูล'}</div>
         },
     },
     {
         id: 'actions',
         accessorKey: 'action',
-        header: 'Actions',
+        header: 'การจัดการ',
         cell: ({ row }) => {
             const id = row.original.id
             if (!id) return null
@@ -91,29 +91,29 @@ export function getReportColumn(
                 <DropdownMenu>
                     <DropdownMenuTrigger asChild>
                         <Button variant="ghost" className="h-8 w-8 p-0">
-                            <span className="sr-only">Open menu</span>
+                            <span className="sr-only">เปิดเมนู</span>
                             <MoreHorizontal className="h-4 w-4" />
                         </Button>
                     </DropdownMenuTrigger>
                     <DropdownMenuContent align="end">
-                        <DropdownMenuLabel>Actions</DropdownMenuLabel>
+                        <DropdownMenuLabel>การจัดการ</DropdownMenuLabel>
                         <DropdownMenuItem asChild>
-                            <a href={`/reports/report-detail/${id}`}>View</a>
+                            <a href={`/reports/report-detail/${id}`}>ดู</a>
                         </DropdownMenuItem>
                         <DropdownMenuItem asChild>
-                            <a href={`/reports/report-edit/${id}`}>Edit</a>
+                            <a href={`/reports/report-edit/${id}`}>แก้ไข</a>
                         </DropdownMenuItem>
                         <DropdownMenuItem onClick={() => onPreview(id)}>
-                            Preview
+                            ดูตัวอย่าง
                         </DropdownMenuItem>
                         <DropdownMenuItem asChild>
-                            <a href={`/api/reports/${id}/download`}>Download</a>
+                            <a href={`/api/reports/${id}/download`}>ดาวน์โหลด</a>
                         </DropdownMenuItem>
                         <DropdownMenuItem onClick={() => onManagePermissions(id)}>
-                            Permissions
+                            สิทธิ์การใช้งาน
                         </DropdownMenuItem>
                         <DropdownMenuItem onClick={() => addToFavorites(id)}>
-                            Add to Favorites
+                            เพิ่มในรายการโปรด
                         </DropdownMenuItem>
                     </DropdownMenuContent>
                 </DropdownMenu>

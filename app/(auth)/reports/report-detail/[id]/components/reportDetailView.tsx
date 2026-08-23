@@ -195,13 +195,13 @@ export default function ReportDetailView({ reportId, isAdmin }: { reportId: stri
         <BreadcrumbList>
           <BreadcrumbItem>
             <BreadcrumbLink asChild>
-              <Link href="/dashboard">Dashboard</Link>
+              <Link href="/dashboard">แดชบอร์ด</Link>
             </BreadcrumbLink>
           </BreadcrumbItem>
           <BreadcrumbSeparator />
           <BreadcrumbItem>
             <BreadcrumbLink asChild>
-              <Link href="/reports/report-list">Reports</Link>
+              <Link href="/reports/report-list">รายงาน</Link>
             </BreadcrumbLink>
           </BreadcrumbItem>
           <BreadcrumbSeparator />
@@ -287,7 +287,7 @@ export default function ReportDetailView({ reportId, isAdmin }: { reportId: stri
                       </div>
                       <div className="flex gap-1">
                         <Button size="sm" variant="ghost" onClick={() => setPreviewFileId(file.id)}>
-                          <Eye className="h-4 w-4 mr-1" /> Preview
+                          <Eye className="h-4 w-4 mr-1" /> ดูตัวอย่าง
                         </Button>
                         {report.acl.can_export && (
                           <Button size="sm" variant="ghost" asChild>
@@ -296,13 +296,13 @@ export default function ReportDetailView({ reportId, isAdmin }: { reportId: stri
                               target="_blank"
                               rel="noreferrer"
                             >
-                              <Download className="h-4 w-4 mr-1" /> Download
+                              <Download className="h-4 w-4 mr-1" /> ดาวน์โหลด
                             </a>
                           </Button>
                         )}
                         {report.acl.can_print && isPdfFile(file) && (
                           <Button size="sm" variant="ghost" onClick={() => handlePrint(file.id)}>
-                            <Printer className="h-4 w-4 mr-1" /> Print
+                            <Printer className="h-4 w-4 mr-1" /> พิมพ์
                           </Button>
                         )}
                       </div>
@@ -339,7 +339,7 @@ export default function ReportDetailView({ reportId, isAdmin }: { reportId: stri
                 <div key={q.id} className="space-y-1">
                   <div className="flex items-center gap-2">
                     <span className="text-sm font-medium">{q.name}</span>
-                    {q.is_main && <Badge className="text-[10px]">Main</Badge>}
+                    {q.is_main && <Badge className="text-[10px]">หลัก</Badge>}
                     <span className="text-xs text-muted-foreground">v{q.version}</span>
                   </div>
                   <SqlBlock sql={q.sql_text} maxHeight="16rem" />

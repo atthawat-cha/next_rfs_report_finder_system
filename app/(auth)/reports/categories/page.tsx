@@ -47,21 +47,21 @@ export default function ReportCategories() {
   );
 
   return (
-    <ContentLayout title="Report Categories">
+    <ContentLayout title="หมวดหมู่รายงาน">
       <div className="w-full item-center my-2">
         <DefaultBreadcrumb />
       </div>
 
       <Card className="container mx-auto py-10 gap-6 mt-5">
         <div className="flex items-center justify-between">
-          <h4 className="text-xl md:text-3xl font-bold">Report Categories</h4>
+          <h4 className="text-xl md:text-3xl font-bold">หมวดหมู่รายงาน</h4>
           <Button
             onClick={() => {
               setEditingCategory(null);
               setFormOpen(true);
             }}
           >
-            <Plus className="h-4 w-4 mr-2" /> New Category
+            <Plus className="h-4 w-4 mr-2" /> เพิ่มหมวดหมู่
           </Button>
         </div>
         <Separator className="my-5" />

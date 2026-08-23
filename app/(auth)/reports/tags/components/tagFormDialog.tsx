@@ -97,7 +97,7 @@ export function TagFormDialog({
 
         <div className="space-y-3">
           <div className="space-y-1.5">
-            <Label htmlFor="tag_name">Name</Label>
+            <Label htmlFor="tag_name">ชื่อ</Label>
             <Input
               id="tag_name"
               value={form.name}
@@ -115,7 +115,7 @@ export function TagFormDialog({
             />
           </div>
           <div className="space-y-1.5">
-            <Label htmlFor="tag_description">Description</Label>
+            <Label htmlFor="tag_description">คำอธิบาย</Label>
             <Textarea
               id="tag_description"
               rows={3}

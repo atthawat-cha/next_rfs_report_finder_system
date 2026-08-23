@@ -34,9 +34,9 @@ export interface SubReportRow {
 
 const SLOT_OPTIONS: SubReportSlot[] = ["HEADER", "DETAIL", "FOOTER"];
 const SLOT_LABEL: Record<SubReportSlot, string> = {
-  HEADER: "Header band",
-  DETAIL: "Detail band",
-  FOOTER: "Footer band",
+  HEADER: "แถบส่วนหัว (Header)",
+  DETAIL: "แถบรายละเอียด (Detail)",
+  FOOTER: "แถบส่วนท้าย (Footer)",
 };
 
 const EMPTY_NEW_SUB_REPORT = {
@@ -82,15 +82,15 @@ export function SubTab({ reportId, onDataChange }: { reportId: string; onDataCha
 
   const handleAddSubReport = async () => {
     if (!newSubReport.name.trim()) {
-      toast.error("Name is required");
+      toast.error("กรุณากรอกชื่อ");
       return;
     }
     if (newSubReport.source_type === "UPLOAD" && newSubReportFile.length === 0) {
-      toast.error("Please select a file to upload");
+      toast.error("กรุณาเลือกไฟล์ที่จะอัปโหลด");
       return;
     }
     if (newSubReport.source_type === "LINKED_REPORT" && !newSubReport.linked_report_id) {
-      toast.error("Please choose a report to link");
+      toast.error("กรุณาเลือกรายงานที่จะลิงก์");
       return;
     }
 
@@ -111,10 +111,10 @@ export function SubTab({ reportId, onDataChange }: { reportId: string; onDataCha
     });
     if (!res.ok) {
       const body = await res.json().catch(() => null);
-      toast.error(body?.error ?? "Failed to add sub-report");
+      toast.error(body?.error ?? "เพิ่มรายงานย่อยไม่สำเร็จ");
       return;
     }
-    toast.success("Sub-report added");
+    toast.success("เพิ่มรายงานย่อยสำเร็จ");
     setNewSubReport(EMPTY_NEW_SUB_REPORT);
     setNewSubReportFile([]);
     fetchAll();
@@ -135,10 +135,10 @@ export function SubTab({ reportId, onDataChange }: { reportId: string; onDataCha
     });
     if (!res.ok) {
       const body = await res.json().catch(() => null);
-      toast.error(body?.error ?? "Failed to save sub-report");
+      toast.error(body?.error ?? "บันทึกรายงานย่อยไม่สำเร็จ");
       return;
     }
-    toast.success("Sub-report saved");
+    toast.success("บันทึกรายงานย่อยสำเร็จ");
     setEditingSubReportId(null);
     fetchAll();
   };
@@ -149,10 +149,10 @@ export function SubTab({ reportId, onDataChange }: { reportId: string; onDataCha
       credentials: "include",
     });
     if (!res.ok) {
-      toast.error("Failed to delete sub-report");
+      toast.error("ลบรายงานย่อยไม่สำเร็จ");
       return;
     }
-    toast.success("Sub-report deleted");
+    toast.success("ลบรายงานย่อยสำเร็จ");
     fetchAll();
   };
 
@@ -166,7 +166,7 @@ export function SubTab({ reportId, onDataChange }: { reportId: string; onDataCha
       <CardHeader className="pb-4">
         <div className="flex items-center gap-2">
           <GitBranch className="h-4 w-4 text-muted-foreground" />
-          <CardTitle className="text-base">Sub-reports</CardTitle>
+          <CardTitle className="text-base">รายงานย่อย</CardTitle>
         </div>
         <CardDescription>
           รายงานย่อยที่ฝังอยู่ภายในรายงานนี้ — อัปโหลดไฟล์ดีไซน์ย่อย (.jrxml/.rpt/.pdf) หรือลิงก์ไปยังรายงานอื่นที่มีอยู่แล้ว จัดวางตามตำแหน่ง (slot)
@@ -187,7 +187,7 @@ export function SubTab({ reportId, onDataChange }: { reportId: string; onDataCha
                         <Input
                           value={subReportDraft.name}
                           onChange={(e) => setSubReportDraft((prev) => ({ ...prev, name: e.target.value }))}
-                          placeholder="Name"
+                          placeholder="ชื่อ"
                         />
                         <Select
                           value={subReportDraft.slot}
@@ -206,10 +206,10 @@ export function SubTab({ reportId, onDataChange }: { reportId: string; onDataCha
                         </Select>
                         <div className="flex justify-end gap-2">
                           <Button type="button" size="sm" variant="outline" onClick={() => setEditingSubReportId(null)}>
-                            Cancel
+                            ยกเลิก
                           </Button>
                           <Button type="button" size="sm" onClick={handleSaveSubReport}>
-                            Save
+                            บันทึก
                           </Button>
                         </div>
                       </div>
@@ -225,10 +225,10 @@ export function SubTab({ reportId, onDataChange }: { reportId: string; onDataCha
                         </div>
                         <div className="flex gap-2 flex-none">
                           <Button type="button" size="sm" variant="ghost" onClick={() => startEditSubReport(row)}>
-                            Edit
+                            แก้ไข
                           </Button>
                           <Button type="button" size="sm" variant="ghost" onClick={() => handleDeleteSubReport(row)}>
-                            Delete
+                            ลบ
                           </Button>
                         </div>
                       </div>
@@ -241,12 +241,12 @@ export function SubTab({ reportId, onDataChange }: { reportId: string; onDataCha
         ))}
 
         <div className="border-t pt-4 space-y-3">
-          <FieldLabel>เพิ่ม Sub-report</FieldLabel>
+          <FieldLabel>เพิ่มรายงานย่อย</FieldLabel>
           <div className="grid grid-cols-2 gap-2">
             <Input
               value={newSubReport.name}
               onChange={(e) => setNewSubReport((prev) => ({ ...prev, name: e.target.value }))}
-              placeholder="Name"
+              placeholder="ชื่อ"
             />
             <Select
               value={newSubReport.slot}
@@ -306,7 +306,7 @@ export function SubTab({ reportId, onDataChange }: { reportId: string; onDataCha
 
           <div className="flex justify-end">
             <Button type="button" size="sm" variant="outline" onClick={handleAddSubReport}>
-              + Add Sub-report
+              + เพิ่มรายงานย่อย
             </Button>
           </div>
         </div>
