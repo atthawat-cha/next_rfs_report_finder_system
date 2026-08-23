@@ -1,0 +1,38 @@
+{
+  "groups": {
+    "dashboard": "Dashboard & Analytics",
+    "reports": "Report Management",
+    "users": "User Management",
+    "settings": "System Settings",
+    "support": "Help & Support"
+  },
+  "dashboard": {
+    "main": "Dashboard",
+    "blank": "Blank Page"
+  },
+  "reports": {
+    "search": "Find Reports",
+    "list": "All Reports",
+    "favorites": "Favorites",
+    "create": "Create Report",
+    "categories": "Manage Categories",
+    "tags": "Manage Tags"
+  },
+  "users": {
+    "management": "User Management",
+    "list": "User List",
+    "department": "Department",
+    "activity": "Activity Log",
+    "roles": "Role Management",
+    "permissions": "Permissions"
+  },
+  "settings": {
+    "general": "General Settings",
+    "storage": "Storage Settings",
+    "menus": "Menu Management"
+  },
+  "support": {
+    "myTickets": "My Tickets",
+    "ticketQueue": "Ticket Queue (Admin)"
+  }
+}

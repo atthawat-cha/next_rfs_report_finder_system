@@ -1,0 +1,9 @@
+{
+  "pageTitle": "Dashboard",
+  "breadcrumbHome": "Home",
+  "welcomeTitle": "Welcome",
+  "welcomeBack": "Welcome back, {name}!",
+  "findReportsTitle": "Find Reports",
+  "findReportsDescription": "Start searching for the report you need",
+  "goToReportList": "Go to report list"
+}

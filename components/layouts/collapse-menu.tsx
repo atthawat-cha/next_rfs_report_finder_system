@@ -1,6 +1,6 @@
     "use client";
 
-    import Link from "next/link";
+    import { Link, usePathname } from "@/i18n/navigation";
     import { useState } from "react";
     import { ChevronDown, Dot, LucideIcon } from "lucide-react";
 
@@ -26,8 +26,6 @@
     DropdownMenuContent,
     DropdownMenuSeparator
     } from "@/components/ui/dropdown-menu";
-    import { usePathname } from "next/navigation";
-
     type Submenu = {
     href: string;
     label: string;

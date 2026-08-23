@@ -42,31 +42,34 @@ const eslintConfig = [
     // hit the identical flags for the identical reason - added the same way,
     // caught late (after Phase 10 already shipped) because that phase never
     // ran `npx eslint .` as part of its own verification, only `tsc`/`test`/
-    // `build`; recorded in 00-progress.md as a real process gap.
+    // `build`; recorded in 00-progress.md as a real process gap. Phase 11a's
+    // app/[locale] restructuring (see document/phase11-plan.md) moved every
+    // one of these paths down one level - updated here, not re-added, since
+    // the underlying pattern/reasoning is unchanged.
     files: [
-      "app/(auth)/dashboard/components/DashboardAnalytics.tsx",
-      "app/(auth)/permissions/page.tsx",
-      "app/(auth)/reports/categories/components/categoryFormDialog.tsx",
-      "app/(auth)/reports/categories/page.tsx",
-      "app/(auth)/reports/favorites/page.tsx",
-      "app/(auth)/reports/report-create/page.tsx",
-      "app/(auth)/reports/report-edit/\\[id\\]/page.tsx",
-      "app/(auth)/reports/report-list/page.tsx",
-      "app/(auth)/reports/tags/components/tagFormDialog.tsx",
-      "app/(auth)/reports/tags/page.tsx",
-      "app/(auth)/role-management/role-form/page.tsx",
-      "app/(auth)/role-management/roles/page.tsx",
-      "app/(auth)/settings/menus/components/deleteMenuDialog.tsx",
-      "app/(auth)/settings/menus/components/menuFormDialog.tsx",
-      "app/(auth)/settings/menus/page.tsx",
-      "app/(auth)/tickets/components/createTicketDialog.tsx",
-      "app/(auth)/tickets/manage/components/ticketEditDialog.tsx",
-      "app/(auth)/tickets/manage/page.tsx",
-      "app/(auth)/tickets/page.tsx",
-      "app/(auth)/user-management/activity/page.tsx",
-      "app/(auth)/user-management/user-department/page.tsx",
-      "app/(auth)/user-management/user-form/page.tsx",
-      "app/(auth)/user-management/user-list/page.tsx",
+      "app/\\[locale\\]/(auth)/dashboard/components/DashboardAnalytics.tsx",
+      "app/\\[locale\\]/(auth)/permissions/page.tsx",
+      "app/\\[locale\\]/(auth)/reports/categories/components/categoryFormDialog.tsx",
+      "app/\\[locale\\]/(auth)/reports/categories/page.tsx",
+      "app/\\[locale\\]/(auth)/reports/favorites/page.tsx",
+      "app/\\[locale\\]/(auth)/reports/report-create/page.tsx",
+      "app/\\[locale\\]/(auth)/reports/report-edit/\\[id\\]/page.tsx",
+      "app/\\[locale\\]/(auth)/reports/report-list/page.tsx",
+      "app/\\[locale\\]/(auth)/reports/tags/components/tagFormDialog.tsx",
+      "app/\\[locale\\]/(auth)/reports/tags/page.tsx",
+      "app/\\[locale\\]/(auth)/role-management/role-form/page.tsx",
+      "app/\\[locale\\]/(auth)/role-management/roles/page.tsx",
+      "app/\\[locale\\]/(auth)/settings/menus/components/deleteMenuDialog.tsx",
+      "app/\\[locale\\]/(auth)/settings/menus/components/menuFormDialog.tsx",
+      "app/\\[locale\\]/(auth)/settings/menus/page.tsx",
+      "app/\\[locale\\]/(auth)/tickets/components/createTicketDialog.tsx",
+      "app/\\[locale\\]/(auth)/tickets/manage/components/ticketEditDialog.tsx",
+      "app/\\[locale\\]/(auth)/tickets/manage/page.tsx",
+      "app/\\[locale\\]/(auth)/tickets/page.tsx",
+      "app/\\[locale\\]/(auth)/user-management/activity/page.tsx",
+      "app/\\[locale\\]/(auth)/user-management/user-department/page.tsx",
+      "app/\\[locale\\]/(auth)/user-management/user-form/page.tsx",
+      "app/\\[locale\\]/(auth)/user-management/user-list/page.tsx",
       "components/layouts/notification-bell.tsx",
       "components/reportEditor/docTab.tsx",
       "components/reportEditor/historyTab.tsx",
@@ -93,17 +96,28 @@ const eslintConfig = [
     // override above: a new incompatible-library site elsewhere should still
     // surface.
     files: [
-      "app/(auth)/reports/categories/components/catagoriesTable.tsx",
-      "app/(auth)/reports/favorites/components/favReportTable.tsx",
-      "app/(auth)/reports/report-list/components/reportTable.tsx",
-      "app/(auth)/reports/tags/components/tagsTable.tsx",
-      "app/(auth)/tickets/components/ticketTable.tsx",
-      "app/(auth)/user-management/user-department/dept-data-table.tsx",
-      "app/(auth)/user-management/user-list/users-data-table.tsx",
+      "app/\\[locale\\]/(auth)/reports/categories/components/catagoriesTable.tsx",
+      "app/\\[locale\\]/(auth)/reports/favorites/components/favReportTable.tsx",
+      "app/\\[locale\\]/(auth)/reports/report-list/components/reportTable.tsx",
+      "app/\\[locale\\]/(auth)/reports/tags/components/tagsTable.tsx",
+      "app/\\[locale\\]/(auth)/tickets/components/ticketTable.tsx",
+      "app/\\[locale\\]/(auth)/user-management/user-department/dept-data-table.tsx",
+      "app/\\[locale\\]/(auth)/user-management/user-list/users-data-table.tsx",
       "components/shared/dataTable.tsx",
     ],
     rules: {
       "react-hooks/incompatible-library": "off",
+    },
+  },
+  {
+    // next.config.js stays CommonJS (module.exports) - Phase 11a wraps it
+    // with next-intl's createNextIntlPlugin(), whose own setup docs use
+    // require() for exactly this file type. Converting the whole file to
+    // ESM (.mjs or "type": "module") to satisfy this rule would be a larger,
+    // unrelated diff than the i18n change itself calls for.
+    files: ["next.config.js"],
+    rules: {
+      "@typescript-eslint/no-require-imports": "off",
     },
   },
 ];

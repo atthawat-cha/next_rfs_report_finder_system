@@ -1,7 +1,7 @@
     "use client";
 
-    import Link from "next/link";
-    import { usePathname } from "next/navigation";
+    import { Link, usePathname } from "@/i18n/navigation";
+    import { useTranslations } from "next-intl";
 
     import { cn } from "@/lib/utils";
     import { getMenuList } from "@/lib/menu-list";
@@ -21,7 +21,8 @@
 
     export function Menu({ isOpen }: MenuProps) {
     const pathname = usePathname();
-    const menuList = getMenuList();
+    const t = useTranslations("nav");
+    const menuList = getMenuList(t);
 
     return (
         <ScrollArea className="[&>div>div[style]]:!block">

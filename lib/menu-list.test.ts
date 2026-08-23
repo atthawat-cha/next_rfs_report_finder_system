@@ -14,8 +14,8 @@ import { getMenuList } from "./menu-list";
  * produced those over five phases with nothing to catch it.
  */
 describe("lib/menu-list", () => {
-  it("every leaf href has a matching app/(auth) page", () => {
-    const groups = getMenuList();
+  it("every leaf href has a matching app/[locale]/(auth) page", () => {
+    const groups = getMenuList((key) => key);
     const leafHrefs: string[] = [];
 
     for (const group of groups) {
@@ -33,7 +33,7 @@ describe("lib/menu-list", () => {
     expect(leafHrefs.length).toBeGreaterThan(0);
 
     const missing = leafHrefs.filter(
-      (href) => !existsSync(join(process.cwd(), "app", "(auth)", href, "page.tsx"))
+      (href) => !existsSync(join(process.cwd(), "app", "[locale]", "(auth)", href, "page.tsx"))
     );
 
     expect(missing).toEqual([]);

@@ -1,5 +1,5 @@
 "use client";
-import Link from "next/link";
+import { Link } from "@/i18n/navigation";
 import { Button } from "../ui/button";
 import { SidebarToggle } from "../ui/SidebarToggle";
 import { useStore } from "@/hook/useStore";
