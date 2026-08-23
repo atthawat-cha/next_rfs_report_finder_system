@@ -1,6 +1,6 @@
 # ความคืบหน้าโครงการ — RFS Report Finder System
 
-> **อัปเดตล่าสุด:** 2026-08-23 · **Branch:** `refactor/create-update-report` · **HEAD:** `11fcbe8`
+> **อัปเดตล่าสุด:** 2026-08-23 · **Branch:** `refactor/create-update-report` · **HEAD:** `d602508`
 >
 > ไฟล์นี้ตอบคำถามเดียว: **"ตอนนี้ถึงไหนแล้ว และเหลืออะไร"** สถานะทุกแถวอ้างอิง commit จริงใน git log เป็นหลักฐาน ไม่ใช่การอ่านโค้ดเดา
 >
@@ -503,6 +503,11 @@
 - [x] ยืนยันสดแบบ end-to-end เต็มรูปแบบ: สร้างรายงานทดสอบ (`output_type=PRINT_FORM`) → เพิ่ม parameter/main query/sub-report(อัปโหลด)/เอกสาร `SAMPLE_DATA` (gate หลุดแล้วจริง) ต่อกันทันทีด้วย id เดียวกันไม่มีการ navigate เลย → เปิด `report-edit/[id]` ของรายงานเดียวกันเห็นข้อมูลครบทุกอย่างผ่าน shared component ชุดเดียวกัน → ลบรายงานทดสอบ+ไฟล์ทิ้งหลังยืนยันเสร็จ
 - [x] `npx tsc --noEmit` = 0 error, `npm test` = 37/37 ผ่าน, `npm run build` = exit 0
 - ⚠️ ไม่มี browser tool ในเซสชันนี้เหมือนเดิม (ผู้ใช้เลือก "เช็คเองแทน" ตอนถูกถามรอบสอง) — ยืนยันด้วย curl/tsc/build + อ่านโค้ดที่ extract ออกมาอย่างละเอียดว่า logic ตรงกับต้นฉบับทุกจุด ยังไม่เห็นการคลิกสลับแท็บจริง/drag-drop ไฟล์จริงในเบราว์เซอร์
+
+**บั๊กจริงที่เจอหลังผู้ใช้เช็คเอง** (`d602508`, 2026-08-23) — **แท็บแนวตั้งจาก 10d ไม่เคยทำงานจริงเลยตั้งแต่แรก**:
+- ผู้ใช้รายงานว่าหน้าจอไม่เหมือน demo เลย — ไล่โค้ด `@radix-ui/react-tabs` (`node_modules/@radix-ui/react-tabs/dist/index.mjs`) ตรงๆ พบว่า **`Tabs.List` และ `Tabs.Trigger` ไม่เคยได้รับ attribute `data-orientation` ของตัวเองเลย** — มีแค่ `Tabs.Root` (และ `Tabs.Content` ผ่าน role `tabpanel`) เท่านั้นที่ได้ ดังนั้น selector `data-[orientation=vertical]:...` ที่ใส่ไว้บน `TabsList`/`TabsTrigger` ใน 10d **เป็น CSS ที่ตายตั้งแต่เขียน ไม่เคย match อะไรเลย** — แท็บเลยแสดงเป็นแนวนอน (ค่าเริ่มต้น) มาตลอดทั้งที่โค้ดส่ง `orientation="vertical"` ให้ `<Tabs>` ถูกต้องแล้ว
+- แก้ด้วยการเติม `className="group"` ให้ `<Tabs>` root (จุดเดียวที่มี `data-orientation` จริง) แล้วเปลี่ยน selector บน `TabsList`/`TabsTrigger` เป็น `group-data-[orientation=vertical]:...` แทน — ยืนยันแล้วว่า production CSS build ออกมาเป็น `.group[data-orientation=vertical] .group-data-\[orientation\=vertical\]\:flex-col{...}` ตรงตามที่ตั้งใจจริง (`grep` ไฟล์ CSS ที่ build ออกมาโดยตรง)
+- **ของค้างเชิงกระบวนการที่ต้องบันทึกไว้**: หน้าเว็บที่ auth-gated ทั้งหมดของแอปนี้เป็น client-rendered ล้วน (ไม่มี SSR HTML ที่มีเนื้อหาจริงให้ตรวจ) การเช็คด้วย curl ว่า "200 ไม่มี error marker" ที่ทำมาตลอด Phase 10 **พิสูจน์ได้แค่ว่าเพจไม่ 500 เท่านั้น ไม่เคยพิสูจน์ว่า layout/การแสดงผลถูกต้องจริง** — บั๊กแท็บแนวตั้งนี้คือหลักฐานตรงๆ ว่าวิธีเช็คแบบเดิมมี blind spot จริง ไม่ใช่แค่ "ข้อจำกัดที่รู้อยู่แล้ว" เฉยๆ — งานต่อไปที่เกี่ยวกับ CSS/layout ควรถือว่า curl check ไม่พอ ต้องรอ user feedback จริงหรือ browser tool เท่านั้นถึงจะปิดได้
 
 ---
 
