@@ -331,22 +331,34 @@ item 5 and sub-phase 10f entirely (10d/10e/10g and everything else in v2 are una
   `report_files` behavior, before v2's 10f ever introduced an explicit main-picker) — uploading a new
   file for a purpose just supersedes the old one automatically; the old one still shows up in the
   History tab exactly like today. No "ตั้งเป็นหลัก" button, no second step.
-- **Renames, not new kinds**: `FileKind.BLANK_FORM` → `PRE_FORM`, `FileKind.SAMPLE_FILLED_FORM` →
-  `PREVIEW` (rename via `ALTER TYPE "FileKind" RENAME VALUE`, not new values — cleaner than carrying
-  both old and new names). `SAMPLE_DATA` and `REFERENCE_DOC` keep their existing names since they
-  already match the purpose language. Enum rename still touches a table `reports` depends on, so the
-  same **migration-safety check** from 10a applies (`--create-only`, inspect for the
-  `search_vector DROP DEFAULT` false-diff before applying).
+- **Implementation note (decided while implementing 10f, 2026-08-23): display-only relabeling, not
+  an enum rename.** The plan originally called for `ALTER TYPE "FileKind" RENAME VALUE` (`BLANK_FORM`
+  → `PRE_FORM`, `SAMPLE_FILLED_FORM` → `PREVIEW`). A pre-implementation grep turned up 9 real-code
+  call sites keyed on those exact enum strings beyond the Doc tab itself: `lib/report-file-cache.ts`
+  (primary-file cache sync), `app/api/shares/[token]/route.ts` (legacy fallback), `lib/storage-path.ts`
+  + `lib/system-settings.ts` + `app/api/settings/system/route.ts` +
+  `app/(auth)/settings/storage/page.tsx` (four files implementing the admin-configurable per-kind max
+  upload size setting), and `app/(auth)/reports/report-detail/[id]/components/reportDetailView.tsx`
+  (user-facing file list). None of those care about the *display name* — they only need the stored
+  value to keep meaning "the blank-template kind" / "the preview kind" consistently. Renaming the
+  enum would touch all of them for a purely cosmetic outcome. **Decision: keep the four `FileKind`
+  values exactly as they are today (`BLANK_FORM`, `SAMPLE_FILLED_FORM`, `SAMPLE_DATA`,
+  `REFERENCE_DOC`) — no migration — and only change how they're *labeled* in the Doc tab UI** ("Pre-
+  form", "Preview", "Sample Data", "Reference doc"). This fully satisfies the actual ask (tag purpose
+  at upload, no output_type gate, no separate "set main" step) without the added risk/blast-radius of
+  a rename. `lib/report-file-cache.ts`'s `PRIMARY_KIND_BY_OUTPUT_TYPE` map (still keyed on
+  `output_type` today) becomes a fixed priority list — `[BLANK_FORM, SAMPLE_FILLED_FORM,
+  SAMPLE_DATA]`, first current match wins — since a report's primary cached file can no longer be
+  inferred from `output_type` alone once any kind is allowed regardless of it.
 - **`VALID_KINDS_BY_OUTPUT_TYPE` is deleted, not extended** — `app/api/reports/[id]/files/route.ts`
-  stops gating any kind by `output_type` at all; all 4 kinds are always valid for any report.
-  `lib/reportFileUploadServices.ts`'s `ALLOWED_EXT_BY_KIND`/`ALLOWED_MIME_BY_KIND`/`MAX_SIZE_BY_KIND`
-  maps get their keys renamed to match (`PRE_FORM`, `PREVIEW`) with the same allow-lists as before
-  (PDF-only for both, xlsx/xls/csv for `SAMPLE_DATA`) — only the output_type gate is removed, not the
-  per-purpose file-type validation.
-- **`report-detail`/download/preview call sites** that currently branch on `file_kind` values
-  `BLANK_FORM`/`SAMPLE_FILLED_FORM` need their string literals updated to `PRE_FORM`/`PREVIEW` — a
-  rename sweep, not a logic change (grep every reference before implementing 10f-v3 to catch all of
-  them, the same discipline as any other renamed identifier).
+  stops gating any kind by `output_type` at all; all 4 kinds are always valid for any report. This
+  was the only real behavior change needed on the API side — 10a's upload-replaces-previous semantics
+  for the three singular kinds were never changed to an "explicit main" flow in actual code (that
+  only ever existed in the v2 demo/plan), so there is nothing to revert there.
+- **`report-detail` gap found and fixed in passing**: `reportDetailView.tsx`'s `FILE_KIND_ORDER` never
+  included `REFERENCE_DOC` since 10a added it — reference docs were silently invisible on the
+  user-facing report detail page. Fixed as part of this sub-phase's relabeling pass (adds
+  `REFERENCE_DOC` to the order + label map) since it's the same map being touched anyway.
 
 ### Open item to flag back to the user before/at implementation
 
@@ -359,7 +371,60 @@ not resolved.
 
 ### Sub-phase 10f (redefined)
 
-**10f** — Doc tab purpose-tag upload: rename `FileKind` values (migration), delete
-`VALID_KINDS_BY_OUTPUT_TYPE` gating, one unified upload control with a per-upload purpose selector,
-grouped-by-purpose display (all 4 groups always shown), sweep every `BLANK_FORM`/`SAMPLE_FILLED_FORM`
-reference across the codebase to the renamed values. No "set as main" UI — superseded, never built.
+**10f** — Doc tab purpose-tag upload: delete `VALID_KINDS_BY_OUTPUT_TYPE` gating (no enum rename —
+see "Implementation note" above), one unified upload control with a per-upload purpose selector
+(display-labeled "Pre-form"/"Preview"/"Sample Data"/"Reference doc"), grouped-by-purpose display (all
+4 groups always shown), `lib/report-file-cache.ts` priority-list fix, `reportDetailView.tsx`
+`REFERENCE_DOC` gap fix. No "set as main" UI — superseded, never built.
+
+## Verification plan for 10d-10g
+
+**10d (vertical tabs + SQL analyzer):**
+- Live check: `report-edit/[id]` renders the tab rail on the left, content on the right; switching
+  tabs preserves in-progress state (unchanged behavior, just re-oriented).
+- `lib/sql-analyze.ts`: unit tests (`lib/sql-analyze.test.ts`) covering a normal `SELECT ... FROM ...
+  JOIN ... WHERE ...` query (extracts tables/fields/conditions correctly), a query with no `WHERE`
+  (empty conditions, not a crash), and a deliberately malformed/unparseable string (falls back to the
+  "ไม่สามารถวิเคราะห์ได้" state, not a throw).
+- Every query row shows the compact summary by default; "ดู SQL เต็ม" expands the full `SqlBlock`.
+- `npx tsc --noEmit` → 0 errors; `npm test` → green (new suite included); `npm run build` → exit 0.
+
+**10e (Param/Query sub-report scoping):**
+- `npx prisma migrate dev --create-only` → inspect SQL for the `search_vector` false-diff before
+  applying (same discipline as 10a); `npx prisma migrate status` → up to date after.
+- `curl`: create a variable scoped to a sub-report (`sub_report_id` set) and one scoped to the main
+  report (`null`) on the same report with the same `name` — both succeed (proves the app-layer
+  same-name guard is scoped correctly, not colliding across containers); attempt two main-report-
+  scoped variables with the same name — second one rejected.
+- `curl`: create a main query for the main report and a separate main query for a sub-report on the
+  same report — both stay `is_main: true` simultaneously (proves per-container scoping); adding a
+  second main-report-scoped main query correctly demotes the first (existing behavior, still scoped
+  correctly post-migration).
+- Live check: Param/Query tabs render grouped by container (main report + one group per existing
+  sub-report), add-forms include the scope/container selector.
+- `npx tsc --noEmit` → 0 errors; `npm test` → green; `npm run build` → exit 0.
+
+**10f (Doc tab purpose-tag upload):**
+- `curl`: upload a file with `file_kind=SAMPLE_DATA` to a `PRINT_FORM`-output_type report (previously
+  rejected by `VALID_KINDS_BY_OUTPUT_TYPE`) → now succeeds, proving the gate is gone.
+- Live check: Doc tab shows one upload control with a purpose dropdown and four always-visible
+  groups (Pre-form/Preview/Sample Data/Reference docs); uploading under a singular purpose replaces
+  the previous one (unchanged 10a behavior) with old version visible in History; Reference docs still
+  allow multiple simultaneous files.
+- Live check: `report-detail` page now lists Reference docs alongside the other three kinds.
+- `npx tsc --noEmit` → 0 errors; `npm test` → green; `npm run build` → exit 0.
+
+**10g (shared tab components + in-place create unlock):**
+- Live check: `report-create`, after the Info tab's first successful save, unlocks Param/Query/Sub/
+  Doc/History **without a page navigation** (URL stays `/reports/report-create`, or is updated via
+  `history.replaceState`-style client-side state, not a `router.push`) and each tab is immediately
+  usable (add a variable, add a query, add a sub-report, upload a document — all succeed against the
+  newly-created `report_id`).
+- Live check: `report-edit/[id]` still works identically to before (same shared components, always
+  "unlocked" since it always has an `id` from the route).
+- `npx tsc --noEmit` → 0 errors; `npm test` → green; `npm run build` → exit 0.
+
+## Progress doc updates (10d-10g)
+
+- `document/00-progress.md` — extend the Phase 10 table with 10d/10e/10f/10g rows + commits, refresh
+  "ตอนนี้อยู่ตรงไหน", record the enum-rename deviation under this phase's notes.
