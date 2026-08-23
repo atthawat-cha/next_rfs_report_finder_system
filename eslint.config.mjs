@@ -35,7 +35,14 @@ const eslintConfig = [
     // silently, after confirming it's the same accepted pattern. Phase 7e's
     // support-ticket CRUD (createTicketDialog.tsx, ticketEditDialog.tsx,
     // tickets/page.tsx, tickets/manage/page.tsx) hit the identical flags for
-    // the identical reason and is added the same deliberate way.
+    // the identical reason and is added the same deliberate way. Phase 10g's
+    // shared tab components (components/reportEditor/*.tsx, each fetching its
+    // own data via the same `useEffect(() => { fetchAll(); }, [fetchAll])`
+    // idiom) and hook/useReportEditorCounts.ts (same idiom, named `refresh`)
+    // hit the identical flags for the identical reason - added the same way,
+    // caught late (after Phase 10 already shipped) because that phase never
+    // ran `npx eslint .` as part of its own verification, only `tsc`/`test`/
+    // `build`; recorded in 00-progress.md as a real process gap.
     files: [
       "app/(auth)/dashboard/components/DashboardAnalytics.tsx",
       "app/(auth)/permissions/page.tsx",
@@ -61,10 +68,16 @@ const eslintConfig = [
       "app/(auth)/user-management/user-form/page.tsx",
       "app/(auth)/user-management/user-list/page.tsx",
       "components/layouts/notification-bell.tsx",
+      "components/reportEditor/docTab.tsx",
+      "components/reportEditor/historyTab.tsx",
+      "components/reportEditor/paramTab.tsx",
+      "components/reportEditor/queryTab.tsx",
+      "components/reportEditor/subTab.tsx",
       "components/shared/fileuploading.tsx",
       "components/shared/reportFilePreview.tsx",
       "components/shared/reportPermissionsDrawer.tsx",
       "components/shared/reportPreviewDialog.tsx",
+      "hook/useReportEditorCounts.ts",
       "hook/useStore.ts",
     ],
     rules: {
