@@ -1,9 +1,11 @@
 # Phase 10 — Report Editor Tabbed Redesign (Info / Param / Query / Sub / Doc / History)
 
 > **2026-08-23 update:** 10a/10b/10c below shipped and were reviewed live by the user, who requested
-> corrections — see `document/phase10-plan-fix.md` and the **"Revision v2"** section at the bottom of
-> this file for what's changing (10d-10g) and why. Read the revision section for current scope; the
-> body below is kept as-is for history/context on what already shipped.
+> corrections — see `document/phase10-plan-fix.md` and the **"Revision v2"** and **"Revision v3"**
+> sections at the bottom of this file for what's changing (10d-10g) and why. Revision v3 supersedes
+> v2's Doc tab design (item 5 / sub-phase 10f) — read v3's "Doc tab v3" content as current for that
+> tab; everything else in v2 (items 1-4, 6-7, sub-phases 10d/10e/10g) still stands. The body below is
+> kept as-is for history/context on what already shipped.
 
 ## Context
 
@@ -296,8 +298,8 @@ implemented** — same "demo first" process as the original wireframe review.
 - **10e** — Schema: `sub_report_id` on `report_variables` and `report_queries` (+ the two-partial-
   index change for `is_main`) + API changes to accept/filter by `sub_report_id` + Param/Query tab UI
   grouped by container.
-- **10f** — Doc tab "explicit main" flow: `report_files` POST stops auto-demoting, new "set as main"
-  action/endpoint, UI update (list + per-row "ตั้งเป็นหลัก" button, "หลัก" badge on the current one).
+- **10f** — ~~Doc tab "explicit main" flow~~ **superseded by Revision v3 below** — see "Doc tab v3"
+  for what 10f actually builds now.
 - **10g** — Extract shared tab-content components out of `report-edit/[id]/page.tsx`; wire
   `report-create` to unlock them in place after its first save instead of redirecting; delete the
   now-unused disabled-placeholder tabs from 10c.
@@ -305,3 +307,59 @@ implemented** — same "demo first" process as the original wireframe review.
 Exact verification lists per sub-phase will be fleshed out (matching the detail level of 10a-10c's
 Verification section) once the v2 demo is signed off and before writing any code, per the project's
 plan-before-implementing convention.
+
+---
+
+## Revision v3 (2026-08-23) — Doc tab simplified further, output_type gate dropped
+
+User feedback on the v2 demo, specifically on the Doc tab: v2's "upload freely, then explicitly pick
+one as 'หลัก'" (10f) still asks the admin to do a second step. The actual ask is simpler — **tag each
+file's purpose at upload time, and never think about "main" at all.** This **replaces** Revision v2
+item 5 and sub-phase 10f entirely (10d/10e/10g and everything else in v2 are unaffected).
+
+### New Doc tab design
+
+- **One unified upload control**, not per-`output_type` upload boxes. Every upload picks a
+  **purpose** from a fixed list, decoupled from the report's `output_type` — a report can carry any
+  combination of purposes regardless of whether it's `PRINT_FORM` or `DATA_REPORT`:
+  - **Pre-form** (แบบฟอร์มเปล่า) — the blank template document a user downloads to fill in.
+  - **Preview** (พรีวิว) — a document meant for on-screen preview (e.g. a filled example).
+  - **Sample Data** (ตัวอย่างข้อมูล) — sample data (Excel/CSV).
+  - **Reference doc** (เอกสารอ้างอิงอื่นๆ) — free-form supporting material, unchanged from 10a: many
+    can coexist, no "main" concept.
+- For the first three (singular-purpose): **back to plain upload-replaces-previous** (10a's original
+  `report_files` behavior, before v2's 10f ever introduced an explicit main-picker) — uploading a new
+  file for a purpose just supersedes the old one automatically; the old one still shows up in the
+  History tab exactly like today. No "ตั้งเป็นหลัก" button, no second step.
+- **Renames, not new kinds**: `FileKind.BLANK_FORM` → `PRE_FORM`, `FileKind.SAMPLE_FILLED_FORM` →
+  `PREVIEW` (rename via `ALTER TYPE "FileKind" RENAME VALUE`, not new values — cleaner than carrying
+  both old and new names). `SAMPLE_DATA` and `REFERENCE_DOC` keep their existing names since they
+  already match the purpose language. Enum rename still touches a table `reports` depends on, so the
+  same **migration-safety check** from 10a applies (`--create-only`, inspect for the
+  `search_vector DROP DEFAULT` false-diff before applying).
+- **`VALID_KINDS_BY_OUTPUT_TYPE` is deleted, not extended** — `app/api/reports/[id]/files/route.ts`
+  stops gating any kind by `output_type` at all; all 4 kinds are always valid for any report.
+  `lib/reportFileUploadServices.ts`'s `ALLOWED_EXT_BY_KIND`/`ALLOWED_MIME_BY_KIND`/`MAX_SIZE_BY_KIND`
+  maps get their keys renamed to match (`PRE_FORM`, `PREVIEW`) with the same allow-lists as before
+  (PDF-only for both, xlsx/xls/csv for `SAMPLE_DATA`) — only the output_type gate is removed, not the
+  per-purpose file-type validation.
+- **`report-detail`/download/preview call sites** that currently branch on `file_kind` values
+  `BLANK_FORM`/`SAMPLE_FILLED_FORM` need their string literals updated to `PRE_FORM`/`PREVIEW` — a
+  rename sweep, not a logic change (grep every reference before implementing 10f-v3 to catch all of
+  them, the same discipline as any other renamed identifier).
+
+### Open item to flag back to the user before/at implementation
+
+`output_type` (`PRINT_FORM`/`DATA_REPORT`) still exists on `reports` and still drives behavior
+*outside* this create/edit tab redesign (report browsing/download/preview elsewhere in the app) —
+this revision only removes it as a **gate on which document purposes the Doc tab shows**. Whether
+`output_type` should eventually be dropped entirely now that a report can freely mix pre-form +
+sample data is a bigger question **out of scope for Phase 10** — noted here so it doesn't get lost,
+not resolved.
+
+### Sub-phase 10f (redefined)
+
+**10f** — Doc tab purpose-tag upload: rename `FileKind` values (migration), delete
+`VALID_KINDS_BY_OUTPUT_TYPE` gating, one unified upload control with a per-upload purpose selector,
+grouped-by-purpose display (all 4 groups always shown), sweep every `BLANK_FORM`/`SAMPLE_FILLED_FORM`
+reference across the codebase to the renamed values. No "set as main" UI — superseded, never built.
