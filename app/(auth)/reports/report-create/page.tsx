@@ -23,6 +23,7 @@ import {
 } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
 import { Separator } from "@/components/ui/separator";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import FileUpload from "@/components/shared/fileuploading";
 import { Loader2, FileText, Layers } from "lucide-react";
 import { ReportCreateDataType } from "@/lib/types";
@@ -135,7 +136,6 @@ export default function ReportCreate() {
         throw new Error("Failed response from server");
       }
       const data = await res.json();
-      console.log(data);
       if (!data?.success) throw new Error("Operation unsuccessful");
 
       toast.success("Report created successfully");
@@ -153,7 +153,9 @@ export default function ReportCreate() {
         files: []
       });
       await new Promise((r) => setTimeout(r, 1000));
-      router.push("/reports/report-list");
+      // Land on the edit page (not the list) so Param/Query/Sub/Doc/History —
+      // disabled here since they need a report_id — are immediately usable.
+      router.push(`/reports/report-edit/${data.data.id}`);
     } catch (error) {
       if (process.env.NODE_ENV === "development") {
         console.error("Failed to create report", error);
@@ -193,6 +195,17 @@ export default function ReportCreate() {
         </p>
       </div>
 
+      <Tabs defaultValue="info">
+        <TabsList>
+          <TabsTrigger value="info">Info</TabsTrigger>
+          <TabsTrigger value="param" disabled title="บันทึกข้อมูลพื้นฐานก่อน">Param</TabsTrigger>
+          <TabsTrigger value="query" disabled title="บันทึกข้อมูลพื้นฐานก่อน">Query</TabsTrigger>
+          <TabsTrigger value="sub" disabled title="บันทึกข้อมูลพื้นฐานก่อน">Sub</TabsTrigger>
+          <TabsTrigger value="doc" disabled title="บันทึกข้อมูลพื้นฐานก่อน">Doc</TabsTrigger>
+          <TabsTrigger value="history" disabled title="บันทึกข้อมูลพื้นฐานก่อน">History</TabsTrigger>
+        </TabsList>
+
+        <TabsContent value="info">
       <form onSubmit={handleSubmit} noValidate>
         {/* Two-column card grid */}
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 items-start">
@@ -441,6 +454,20 @@ export default function ReportCreate() {
           </Button>
         </div>
       </form>
+        </TabsContent>
+
+        {(["param", "query", "sub", "doc", "history"] as const).map((tab) => (
+          <TabsContent key={tab} value={tab}>
+            <Card>
+              <CardContent className="py-10 text-center">
+                <FieldDescription>
+                  บันทึกข้อมูลพื้นฐานในแท็บ Info ก่อน — แท็บนี้ใช้งานได้หลังสร้างรายงานสำเร็จ (จะพาไปหน้าแก้ไขที่เปิดแท็บนี้ให้อัตโนมัติ)
+                </FieldDescription>
+              </CardContent>
+            </Card>
+          </TabsContent>
+        ))}
+      </Tabs>
     </ContentLayout>
   );
 }
