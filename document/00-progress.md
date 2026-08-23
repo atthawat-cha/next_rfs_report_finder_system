@@ -1,6 +1,6 @@
 # ความคืบหน้าโครงการ — RFS Report Finder System
 
-> **อัปเดตล่าสุด:** 2026-08-23 · **Branch:** `refactor/create-update-report` · **HEAD:** `d602508`
+> **อัปเดตล่าสุด:** 2026-08-23 · **Branch:** `refactor/create-update-report` · **HEAD:** `e7fe918`
 >
 > ไฟล์นี้ตอบคำถามเดียว: **"ตอนนี้ถึงไหนแล้ว และเหลืออะไร"** สถานะทุกแถวอ้างอิง commit จริงใน git log เป็นหลักฐาน ไม่ใช่การอ่านโค้ดเดา
 >
@@ -508,6 +508,11 @@
 - ผู้ใช้รายงานว่าหน้าจอไม่เหมือน demo เลย — ไล่โค้ด `@radix-ui/react-tabs` (`node_modules/@radix-ui/react-tabs/dist/index.mjs`) ตรงๆ พบว่า **`Tabs.List` และ `Tabs.Trigger` ไม่เคยได้รับ attribute `data-orientation` ของตัวเองเลย** — มีแค่ `Tabs.Root` (และ `Tabs.Content` ผ่าน role `tabpanel`) เท่านั้นที่ได้ ดังนั้น selector `data-[orientation=vertical]:...` ที่ใส่ไว้บน `TabsList`/`TabsTrigger` ใน 10d **เป็น CSS ที่ตายตั้งแต่เขียน ไม่เคย match อะไรเลย** — แท็บเลยแสดงเป็นแนวนอน (ค่าเริ่มต้น) มาตลอดทั้งที่โค้ดส่ง `orientation="vertical"` ให้ `<Tabs>` ถูกต้องแล้ว
 - แก้ด้วยการเติม `className="group"` ให้ `<Tabs>` root (จุดเดียวที่มี `data-orientation` จริง) แล้วเปลี่ยน selector บน `TabsList`/`TabsTrigger` เป็น `group-data-[orientation=vertical]:...` แทน — ยืนยันแล้วว่า production CSS build ออกมาเป็น `.group[data-orientation=vertical] .group-data-\[orientation\=vertical\]\:flex-col{...}` ตรงตามที่ตั้งใจจริง (`grep` ไฟล์ CSS ที่ build ออกมาโดยตรง)
 - **ของค้างเชิงกระบวนการที่ต้องบันทึกไว้**: หน้าเว็บที่ auth-gated ทั้งหมดของแอปนี้เป็น client-rendered ล้วน (ไม่มี SSR HTML ที่มีเนื้อหาจริงให้ตรวจ) การเช็คด้วย curl ว่า "200 ไม่มี error marker" ที่ทำมาตลอด Phase 10 **พิสูจน์ได้แค่ว่าเพจไม่ 500 เท่านั้น ไม่เคยพิสูจน์ว่า layout/การแสดงผลถูกต้องจริง** — บั๊กแท็บแนวตั้งนี้คือหลักฐานตรงๆ ว่าวิธีเช็คแบบเดิมมี blind spot จริง ไม่ใช่แค่ "ข้อจำกัดที่รู้อยู่แล้ว" เฉยๆ — งานต่อไปที่เกี่ยวกับ CSS/layout ควรถือว่า curl check ไม่พอ ต้องรอ user feedback จริงหรือ browser tool เท่านั้นถึงจะปิดได้
+
+**บั๊ก/ช่องว่างที่ 2 ที่เจอจากการเทียบภาพหน้าจอ demo กับโค้ดจริง** (`e7fe918`, 2026-08-23):
+- ผู้ใช้ส่งภาพหน้าจอของ demo (ไม่ใช่แอปจริง แต่ breadcrumb บอกชัดว่า "Report Editor (demo v2)") มาให้เทียบ — ไล่โค้ดจริงแล้วพบ 2 จุดที่ไม่ตรงโดยไม่ต้องรอภาพแอปจริงเลย: (1) แท็บ Info ในโค้ดจริงยังเป็น **2 การ์ดแยกซ้าย-ขวา** (Report Information + Report Settings ที่เหลือแค่ข้อความว่างๆ) จากก่อน Phase 10 ทั้งที่ demo รวมเป็นการ์ดเดียว — ตอนแตก Param/Query/Sub/Doc/History ออกมาใน 10g ลืมรวมแท็บ Info ตาม; (2) แท็บ Param/Query/Sub ในโค้ดจริงไม่มีตัวเลขนับ (เช่น "Query 1+3") ต่อท้ายชื่อแท็บเหมือน demo
+- แก้ทั้งคู่: รวม Info เป็นการ์ดเดียว (Code, Name, [Category|Department], [Output Type|Access Level], Status, (create เท่านั้น) Attachments, Description, [Downloadable|Editable]) ทั้ง `report-create` และ `report-edit`; เพิ่ม `hook/useReportEditorCounts.ts` (fetch นับจำนวนแยกจาก tab component เอง) + ให้ `ParamTab`/`QueryTab`/`SubTab` รับ `onDataChange` optional เรียกท้าย `fetchAll` เพื่อให้ badge sync กับทุกการเพิ่ม/แก้/ลบอัตโนมัติ
+- `npx tsc --noEmit` = 0 error, `npm test` = 37/37 ผ่าน, `npm run build` = exit 0 — ยังไม่มี browser tool ยืนยัน visual จริงเหมือนเดิม รอผู้ใช้เช็คต่อ
 
 ---
 
