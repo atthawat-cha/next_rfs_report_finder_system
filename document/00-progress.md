@@ -1,6 +1,6 @@
 # ความคืบหน้าโครงการ — RFS Report Finder System
 
-> **อัปเดตล่าสุด:** 2026-08-23 · **Branch:** `refactor/create-update-report` · **HEAD:** `e7fe918`
+> **อัปเดตล่าสุด:** 2026-08-23 · **Branch:** `refactor/create-update-report` · **HEAD:** `5c120c5`
 >
 > ไฟล์นี้ตอบคำถามเดียว: **"ตอนนี้ถึงไหนแล้ว และเหลืออะไร"** สถานะทุกแถวอ้างอิง commit จริงใน git log เป็นหลักฐาน ไม่ใช่การอ่านโค้ดเดา
 >
@@ -21,6 +21,8 @@
 > หมายเหตุ branch: ย้ายมาทำงานบน `feature/phase4` แล้ว (เดิม `feature/phase3`) — commit ประวัติเดียวกัน ไม่มีอะไรหาย ดู git log ถ้าสงสัย
 >
 > **อัปเดต (2026-08-22, Phase 8):** ย้ายมาทำงานบน `feature/phase8` แล้ว — ระหว่างปิด Phase 7 มีเหตุการณ์ที่ local checkout ถูกสลับไป branch `development` โดยไม่ได้ตั้งใจ (ไม่ใช่คำสั่งที่ assistant สั่งเอง เจอตอน commit แล้วสังเกตว่า branch เปลี่ยน) แต่เป็น fast-forward ของ `feature/phase5` เข้า `development` ไม่มีอะไรหายหรือ diverge จากนั้นมี branch `feature/phase8` ใหม่ถูกสร้างขึ้น (ตรงตาม naming convention เดิมของโปรเจกต์) ให้ทำงานต่อ commit ประวัติเดียวกันทั้งหมด ดู git log ถ้าสงสัย
+>
+> **อัปเดต (2026-08-23, ระหว่าง Phase 10→9):** เหตุการณ์เดียวกันเกิดซ้ำอีกครั้ง — local checkout ถูกสลับจาก `refactor/create-update-report` ไป `development` เองระหว่าง commit (ไม่ใช่คำสั่งที่ assistant สั่ง เจอผ่าน `git reflog`: `checkout: moving from refactor/create-update-report to development` ตามด้วย fast-forward merge อัตโนมัติ) ยืนยันจาก reflog ว่าเป็น fast-forward ล้วนๆ ไม่มีอะไรหายหรือ diverge เหมือนครั้งก่อน รอบนี้สลับกลับมา `refactor/create-update-report` ทันทีด้วย `git checkout` + `git merge --ff-only` (ผู้ใช้ยืนยันให้ทำแบบนี้แทนที่จะสร้าง branch ใหม่) เพราะต่างกันแค่ 1 commit เท่านั้น ยังไม่ทราบสาเหตุที่แท้จริงว่าเครื่องมือ/โปรเซสไหนสลับ branch ให้ — ถ้าเกิดซ้ำอีกควรสงสัยเครื่องมือ background (เช่น IDE source control auto-sync) มากกว่า assistant
 
 **ค้างอยู่:** ไม่มีงานเฟส 0-3 ค้างแล้ว — **Phase 4d ปิดจบสมบูรณ์แล้ว 100%** (ดูล่างนี้ — full login-flow ยืนยันสดแล้ว 2026-08-18 หลังแก้ Redis connectivity) — **`dependency-upgrade-plan.md` ปิดครบทั้ง 4 stage แล้ว** (Next 14→16.3.1, React 18→19.2.8, sharp 0.34→0.35.3, postcss top-level 8.4→8.5.26) — `next`/`postcss`/`sharp` ทุก CVE ที่ตั้งใจปิดในแผนนี้หายหมดจริง เหลือแค่ 2 ของค้างที่ไม่เกี่ยวกับแผนนี้เลย (#9 `deepmerge-ts`/Prisma, `uuid`/`exceljs` เดิมตั้งแต่ 4c) — **baseline TypeScript error 2 ตัวสุดท้ายก็แก้จบแล้วเช่นกัน (2026-08-18)** ระหว่างทางเจอบั๊ก runtime จริงที่ยังไม่เคยมีใครเจอมาก่อน (multi-file upload พังเงียบๆมาตลอด, `status` field ไม่มี enum validation) แก้พร้อมกันหมด — `npx tsc --noEmit` = 0 error, `npm run build` = exit 0 สำเร็จเต็มรูปแบบเป็นครั้งแรกของ repo นี้ ปิดของค้าง #2/#12 ไปด้วย
 
