@@ -57,11 +57,12 @@ interface ReportQuery {
   version: string;
 }
 
-const FILE_KIND_ORDER = ["BLANK_FORM", "SAMPLE_FILLED_FORM", "SAMPLE_DATA"] as const;
+const FILE_KIND_ORDER = ["BLANK_FORM", "SAMPLE_FILLED_FORM", "SAMPLE_DATA", "REFERENCE_DOC"] as const;
 const FILE_KIND_LABELS: Record<string, string> = {
-  BLANK_FORM: "ฟอร์มเปล่า",
-  SAMPLE_FILLED_FORM: "ฟอร์มตัวอย่างที่กรอกแล้ว",
-  SAMPLE_DATA: "ไฟล์ข้อมูลตัวอย่าง",
+  BLANK_FORM: "Pre-form (แบบฟอร์มเปล่า)",
+  SAMPLE_FILLED_FORM: "Preview (ตัวอย่างที่กรอกแล้ว)",
+  SAMPLE_DATA: "Sample Data (ไฟล์ข้อมูลตัวอย่าง)",
+  REFERENCE_DOC: "เอกสารอ้างอิงเพิ่มเติม",
 };
 const STATUS_LABEL: Record<string, string> = {
   DRAFT: "แบบร่าง",

@@ -8,11 +8,6 @@ import { faker } from '@faker-js/faker';
 import { z } from 'zod';
 import { logDevError } from '@/lib/log-dev-error';
 
-const VALID_KINDS_BY_OUTPUT_TYPE: Record<string, string[]> = {
-    PRINT_FORM: ['BLANK_FORM', 'SAMPLE_FILLED_FORM'],
-    DATA_REPORT: ['SAMPLE_DATA'],
-};
-
 /**
  * GET /api/reports/[id]/files — current report_files for this report
  */
@@ -61,7 +56,7 @@ export async function POST(req: NextRequest, props: { params: Promise<{ id: stri
 
         const report = await prisma.reports.findUnique({
             where: { id: params.id },
-            select: { id: true, output_type: true },
+            select: { id: true },
         });
         if (!report) {
             return NextResponse.json({ success: false, error: "Report not found" }, { status: 404 });
@@ -74,19 +69,12 @@ export async function POST(req: NextRequest, props: { params: Promise<{ id: stri
         }
         const fileKind = fileKindValidate.data;
 
-        // REFERENCE_DOC is a free-form supporting document, not tied to
-        // output_type — any number can coexist, unlike the singular
-        // replace-in-place slots below.
+        // Every kind is valid for any report regardless of output_type (Phase 10
+        // revision v3) — the admin tags each upload's purpose directly instead of
+        // picking from a fixed set gated by output_type. REFERENCE_DOC is further
+        // free-form: any number can coexist, unlike the singular replace-in-place
+        // kinds below.
         const isReferenceDoc = fileKind === 'REFERENCE_DOC';
-        if (!isReferenceDoc) {
-            const allowedKinds = VALID_KINDS_BY_OUTPUT_TYPE[report.output_type];
-            if (!allowedKinds.includes(fileKind)) {
-                return NextResponse.json(
-                    { success: false, error: `file_kind "${fileKind}" is not valid for output_type "${report.output_type}". Allowed: ${allowedKinds.join(', ')}` },
-                    { status: 400 }
-                );
-            }
-        }
 
         const file = data.get('file') as File | null;
         if (!file) {
@@ -156,8 +144,8 @@ export async function POST(req: NextRequest, props: { params: Promise<{ id: stri
 
 /**
  * DELETE /api/reports/[id]/files?fileKind=BLANK_FORM — remove the current file
- * of that kind. Not blocked even if it's the last file of a kind output_type
- * requires — the report just shows "no file" in preview/download until a new
+ * of that kind. Not blocked even if it's the only one uploaded — the report
+ * just shows "no file" in preview/download until a new
  * one is uploaded (MVP decision, see document/phase2-plan.md §Sub-phase 2b).
  *
  * DELETE /api/reports/[id]/files?id=<report_files.id> — remove one specific
@@ -199,6 +187,10 @@ export async function DELETE(req: NextRequest, props: { params: Promise<{ id: st
 
         await prisma.report_files.delete({ where: { id: current.id } });
         await deleteReportFile(current.file_path);
+        // Pre-existing gap found while testing 10f: DELETE never re-synced
+        // reports.file_path/file_name, so deleting the file the cache pointed
+        // at left it referencing a file that no longer exists on disk.
+        await syncReportFileCache(params.id);
 
         await logActivity(req, {
             userId: authResult.user.id,
