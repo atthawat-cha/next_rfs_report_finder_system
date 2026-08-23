@@ -185,7 +185,7 @@ export default function ReportCreate() {
         </p>
       </div>
 
-      <Tabs defaultValue="info" orientation="vertical" className="flex items-start gap-6">
+      <Tabs defaultValue="info" orientation="vertical" className="group flex items-start gap-6">
         <TabsList className="w-48 flex-none sticky top-4">
           <TabsTrigger value="info">Info</TabsTrigger>
           <TabsTrigger value="param" disabled={locked} title={locked ? "บันทึกข้อมูลพื้นฐานก่อน" : undefined}>Param</TabsTrigger>
