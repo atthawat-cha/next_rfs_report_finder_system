@@ -70,7 +70,7 @@ export function NotificationBell() {
         </Button>
       </DropdownMenuTrigger>
       <DropdownMenuContent className="w-80" align="end" forceMount>
-        <DropdownMenuLabel>Notifications</DropdownMenuLabel>
+        <DropdownMenuLabel>การแจ้งเตือน</DropdownMenuLabel>
         <DropdownMenuSeparator />
         {notifications.length === 0 ? (
           <div className="px-2 py-4 text-center text-sm text-muted-foreground">ไม่มีการแจ้งเตือน</div>

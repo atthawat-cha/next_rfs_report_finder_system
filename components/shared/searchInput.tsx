@@ -15,14 +15,14 @@ export function SearchInput({ onSearch, countRes, defaultValue }: Prop) {
     return (
         <InputGroup className="max-w-xs">
             <InputGroupInput
-                placeholder="Search..."
+                placeholder="ค้นหา..."
                 defaultValue={defaultValue}
                 onChange={(e) => onSearch(e.target.value)}
             />
             <InputGroupAddon>
                 <Search />
             </InputGroupAddon>
-            <InputGroupAddon align="inline-end">{countRes} results</InputGroupAddon>
+            <InputGroupAddon align="inline-end">{countRes} รายการ</InputGroupAddon>
         </InputGroup>
     )
 }

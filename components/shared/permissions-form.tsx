@@ -108,15 +108,15 @@ export default function PermissionsFormCheckbox({
       <div className="flex item-center justify-between my-2 gap-5">
         <div className="flex flex-col w-full justify-start">
             <FieldLegend variant="label">
-            <FieldTitle className="text-xl">Permissions</FieldTitle>
+            <FieldTitle className="text-xl">สิทธิ์การใช้งาน</FieldTitle>
           </FieldLegend>
-          <FieldDescription>Select the permissions you want.</FieldDescription>
+          <FieldDescription>เลือกสิทธิ์ที่ต้องการ</FieldDescription>
         </div>
 
           <div className="flex w-full justify-end">
         <div className="flex flex-row w-full justify-end gap-2">
           <Checkbox id={`p-all`} name="terms-checkbox-basic" checked={selectAll} onCheckedChange={handleSelectAll}/>
-          <FieldLabel htmlFor="terms-checkbox-basic">Select All</FieldLabel>
+          <FieldLabel htmlFor="terms-checkbox-basic">เลือกทั้งหมด</FieldLabel>
         </div>
         </div>
       </div>
@@ -139,7 +139,7 @@ export default function PermissionsFormCheckbox({
                     handleSelectGroupRows(`p-${item.group_label}-view`,checked === true)
                     }
                   />
-                  <FieldLabel htmlFor={`p-${item.group_label}-view`}>View</FieldLabel>
+                  <FieldLabel htmlFor={`p-${item.group_label}-view`}>ดู</FieldLabel>
 
                   <Checkbox
                     id={`p-${item.group_label}-create`}
@@ -148,7 +148,7 @@ export default function PermissionsFormCheckbox({
                     onCheckedChange={(checked) =>
                     handleSelectGroupRows(`p-${item.group_label}-create`,checked === true)
                     }/>
-                  <FieldLabel htmlFor={`p-${item.group_label}-create`}>Create</FieldLabel>
+                  <FieldLabel htmlFor={`p-${item.group_label}-create`}>สร้าง</FieldLabel>
 
                   <Checkbox
                     id={`p-${item.group_label}-update`}
@@ -157,7 +157,7 @@ export default function PermissionsFormCheckbox({
                     onCheckedChange={(checked) =>
                     handleSelectGroupRows(`p-${item.group_label}-update`,checked === true)}
                   />
-                  <FieldLabel htmlFor={`p-${item.group_label}-update`}>Update</FieldLabel>
+                  <FieldLabel htmlFor={`p-${item.group_label}-update`}>แก้ไข</FieldLabel>
 
                   <Checkbox
                     id={`p-${item.group_label}-delete`}
@@ -166,7 +166,7 @@ export default function PermissionsFormCheckbox({
                     onCheckedChange={(checked) =>
                     handleSelectGroupRows(`p-${item.group_label}-delete`,checked === true)}
                   />
-                  <FieldLabel htmlFor={`p-${item.group_label}-delete`}>Delete</FieldLabel>
+                  <FieldLabel htmlFor={`p-${item.group_label}-delete`}>ลบ</FieldLabel>
                 </Field>
               </FieldGroup>
               <FieldGroup className="gap-2 mx-auto">
@@ -189,7 +189,7 @@ export default function PermissionsFormCheckbox({
                         }
                       />
                       <FieldLabel htmlFor={`p-${item.group_label}-${menu.label}-view`} className="text-muted-foreground">
-                        View
+                        ดู
                       </FieldLabel>
 
                       <Checkbox
@@ -200,7 +200,7 @@ export default function PermissionsFormCheckbox({
                         handleSelectRow(`p-${item.group_label}-${menu.label}-create`,checked === true)}
                       />
                       <FieldLabel htmlFor={`p-${item.group_label}-${menu.label}-create`} className="text-muted-foreground">
-                        Create
+                        สร้าง
                       </FieldLabel>
 
                       <Checkbox
@@ -211,7 +211,7 @@ export default function PermissionsFormCheckbox({
                         handleSelectRow(`p-${item.group_label}-${menu.label}-update`,checked === true)}
                       />
                       <FieldLabel htmlFor={`p-${item.group_label}-${menu.label}-update`} className="text-muted-foreground">
-                        Update
+                        แก้ไข
                       </FieldLabel>
 
                       <Checkbox
@@ -222,7 +222,7 @@ export default function PermissionsFormCheckbox({
                         handleSelectRow(`p-${item.group_label}-${menu.label}-delete`,checked === true)}
                       />
                       <FieldLabel htmlFor={`p-${item.group_label}-${menu.label}-delete`} className="text-muted-foreground">
-                        Delete
+                        ลบ
                       </FieldLabel>
                     </Field>
                   ))}

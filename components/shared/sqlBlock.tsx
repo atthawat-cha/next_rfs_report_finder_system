@@ -60,7 +60,7 @@ export function SqlBlock({
       <div className="flex items-center justify-end border-b px-2 py-1">
         <Button type="button" size="sm" variant="ghost" className="h-7 px-2" onClick={handleCopy}>
           {copied ? <Check className="h-3.5 w-3.5 mr-1" /> : <Copy className="h-3.5 w-3.5 mr-1" />}
-          {copied ? "Copied" : "Copy"}
+          {copied ? "คัดลอกแล้ว" : "คัดลอก"}
         </Button>
       </div>
       <div className="overflow-auto" style={{ maxHeight }}>

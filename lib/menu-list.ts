@@ -33,17 +33,17 @@
     export function getMenuList(): Group[] {
     return [
         {
-    groupLabel: "Dashboard & Analytics",
+    groupLabel: "แดชบอร์ดและการวิเคราะห์",
     menus: [
       {
         href: "/dashboard",
-        label: "Main Dashboard",
+        label: "แดชบอร์ดหลัก",
         icon: LayoutGrid,
         submenus: []
       },
       {
         href: "/blank",
-        label: "Blank Page",
+        label: "หน้าว่าง",
         icon: Lock,
         submenus: []
       }
@@ -62,34 +62,34 @@
   },
 
   {
-    groupLabel: "Report Management",
+    groupLabel: "จัดการรายงาน",
     menus: [
       {
         href: "/reports",
-        label: "Report Finder",
+        label: "ค้นหารายงาน",
         icon: Bookmark,
         submenus: [
-          { href: "/reports/report-list", label: "All Reports" },
-          { href: "/reports/favorites", label: "Favorite Reports" },
+          { href: "/reports/report-list", label: "รายงานทั้งหมด" },
+          { href: "/reports/favorites", label: "รายงานโปรด" },
           // { href: "/reports/recent", label: "Recently Viewed" },
           // { href: "/reports/most-downloaded", label: "Most Downloaded" }
         ]
       },
       {
         href: "/reports/report-create",
-        label: "Create Report",
+        label: "สร้างรายงาน",
         icon: Tag,
         submenus: []
       },
       {
         href: "/reports/categories",
-        label: "Category Management",
+        label: "จัดการหมวดหมู่",
         icon: Tag,
         submenus: []
       },
       {
         href: "/reports/tags",
-        label: "Tag Management",
+        label: "จัดการแท็ก",
         icon: Tag,
         submenus: []
       },
@@ -115,28 +115,28 @@
   },
 
   {
-    groupLabel: "User Management",
+    groupLabel: "จัดการผู้ใช้งาน",
     menus: [
       {
         href: "/user-management",
-        label: "User Management",
+        label: "จัดการผู้ใช้งาน",
         icon: Users,
         submenus: [
-          { href: "/user-management/user-list", label: "User List" },
-          { href: "/user-management/user-department", label: "Departments" },
-          { href: "/user-management/activity", label: "Activity Log" },
+          { href: "/user-management/user-list", label: "รายชื่อผู้ใช้งาน" },
+          { href: "/user-management/user-department", label: "แผนก" },
+          { href: "/user-management/activity", label: "บันทึกกิจกรรม" },
           // { href: "/user-management/import", label: "Bulk User Import" }
         ]
       },
       {
         href: "/role-management/roles",
-        label: "Role Management",
+        label: "จัดการบทบาท",
         icon: Settings,
         submenus: []
       },
       {
         href: "/permissions",
-        label: "Permission Management",
+        label: "จัดการสิทธิ์",
         icon: Settings,
         submenus: []
       }
@@ -144,17 +144,17 @@
   },
 
   {
-    groupLabel: "System Settings",
+    groupLabel: "ตั้งค่าระบบ",
     menus: [
       {
         href: "/settings/general",
-        label: "General Settings",
+        label: "ตั้งค่าทั่วไป",
         icon: Settings,
         submenus: []
       },
       {
         href: "/settings/storage",
-        label: "File Storage Settings",
+        label: "ตั้งค่าที่เก็บไฟล์",
         icon: HardDrive,
         submenus: []
       },
@@ -166,7 +166,7 @@
       // },
       {
         href: "/settings/menus",
-        label: "Menu Management",
+        label: "จัดการเมนู",
         icon: ListTree,
         submenus: []
       },
@@ -180,17 +180,17 @@
   },
 
   {
-    groupLabel: "Help & Support",
+    groupLabel: "ช่วยเหลือและสนับสนุน",
     menus: [
       {
         href: "/tickets",
-        label: "My Tickets",
+        label: "ตั๋วของฉัน",
         icon: Ticket,
         submenus: []
       },
       {
         href: "/tickets/manage",
-        label: "Ticket Queue (Admin)",
+        label: "คิวตั๋ว (ผู้ดูแลระบบ)",
         icon: Ticket,
         submenus: []
       }
@@ -198,4 +198,3 @@
   }
         ]
         };
-  

@@ -63,7 +63,7 @@ return (
             </Button>
         </DropdownMenuTrigger>
         </TooltipTrigger>
-        <TooltipContent side="bottom">Profile</TooltipContent>
+        <TooltipContent side="bottom">โปรไฟล์</TooltipContent>
     </Tooltip>
     </TooltipProvider>
 
@@ -81,20 +81,20 @@ return (
         <DropdownMenuItem className="hover:cursor-pointer" asChild>
         <Link href="/dashboard" className="flex items-center">
             <LayoutGrid className="w-4 h-4 mr-3 text-muted-foreground" />
-            Dashboard
+            แดชบอร์ด
         </Link>
         </DropdownMenuItem>
         <DropdownMenuItem className="hover:cursor-pointer" asChild>
         <Link href="/account" className="flex items-center">
             <User className="w-4 h-4 mr-3 text-muted-foreground" />
-            Account
+            บัญชี
         </Link>
         </DropdownMenuItem>
     </DropdownMenuGroup>
     <DropdownMenuSeparator />
     <DropdownMenuItem className="hover:cursor-pointer" onClick={handleLogout}>
         <LogOut className="w-4 h-4 mr-3 text-muted-foreground" />
-        Sign out
+        ออกจากระบบ
     </DropdownMenuItem>
     </DropdownMenuContent>
 </DropdownMenu>

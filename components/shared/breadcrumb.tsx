@@ -9,18 +9,18 @@ export default function DefaultBreadcrumb() {
             <BreadcrumbList>
                 <BreadcrumbItem>
                     <BreadcrumbLink asChild>
-                        <Link href="/">Dashboard</Link>
+                        <Link href="/">แดชบอร์ด</Link>
                     </BreadcrumbLink>
                 </BreadcrumbItem>
                 <BreadcrumbSeparator />
                 <BreadcrumbItem>
                     <BreadcrumbLink asChild>
-                        <Link href="/dashboard">Management</Link>
+                        <Link href="/dashboard">การจัดการ</Link>
                     </BreadcrumbLink>
                 </BreadcrumbItem>
                 <BreadcrumbSeparator />
                 <BreadcrumbItem>
-                    <BreadcrumbPage>Reports</BreadcrumbPage>
+                    <BreadcrumbPage>รายงาน</BreadcrumbPage>
                 </BreadcrumbItem>
             </BreadcrumbList>
         </Breadcrumb>
