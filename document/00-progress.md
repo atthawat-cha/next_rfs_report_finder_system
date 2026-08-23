@@ -1,6 +1,6 @@
 # ความคืบหน้าโครงการ — RFS Report Finder System
 
-> **อัปเดตล่าสุด:** 2026-08-22 · **Branch:** `feature/phase8` · **HEAD:** `e96ea03`
+> **อัปเดตล่าสุด:** 2026-08-23 · **Branch:** `refactor/create-update-report` · **HEAD:** `f671d59`
 >
 > ไฟล์นี้ตอบคำถามเดียว: **"ตอนนี้ถึงไหนแล้ว และเหลืออะไร"** สถานะทุกแถวอ้างอิง commit จริงใน git log เป็นหลักฐาน ไม่ใช่การอ่านโค้ดเดา
 >
@@ -38,11 +38,15 @@
 
 **Phase 8 ปิดครบทั้ง 4 sub-phase แล้ว (2026-08-22)** ([`phase8-plan.md`](./phase8-plan.md), ทำงานบน branch `feature/phase8`) — 8a = migrate `middleware.ts`→`proxy.ts` จริง เจอว่าเป็น Edge→Node runtime change จริง (ไม่ใช่แค่ rename) ยืนยันสดครบทุก auth flow + ปิดของค้าง #15 ไปด้วย; 8b = job cleanup ลบ `report_shares` ที่หมดอายุจริง ยืนยันสด 410→404 behavior change ตามที่คาดไว้; 8c = audit zod validation ครบ 28/28 endpoint ที่รับ body จริง ไม่พบ gap เลย ปิดแบบ confirm-only ตามที่แผนคาดไว้; 8d = pagination/skeleton จริงให้ `reports/report-list` (หน้าหลักค้นหารายงาน เดิมไม่มีทั้งคู่เลย) และ `user-management/activity` (เพิ่มแค่ skeleton) ดูรายละเอียดใต้ตาราง Phase 8 ด้านบน
 
+**Phase 9 (i18n/Thai standardization) วางแผนไว้แล้ว** (`phase9-plan.md`, commit `303ef9b`) **แต่ยังไม่เริ่มโค้ด** — ผู้ใช้ขอให้ทำ Phase 10 (ด้านล่าง) ก่อนแทน ไม่ได้ยกเลิก Phase 9 แค่สลับคิว
+
+**Phase 10 ปิดครบทั้ง 3 sub-phase แล้ว (2026-08-23)** ([`phase10-plan.md`](./phase10-plan.md), ทำงานบน branch ใหม่ `refactor/create-update-report` — ไม่ใช่ branch เลขต่อจาก `feature/phase8`, ผู้ใช้ตั้งชื่อเองตามงานจริง) — โจทย์จาก wireframe ที่ผู้ใช้แนบมา (`document/wriefream/1.png`): ปรับหน้า report-create/report-edit ให้เป็นแท็บ Info/Param/Query/Sub/Doc/History แทน card เรียงยาว มี demo/analysis เป็น HTML artifact ให้ผู้ใช้ยืนยัน mapping ก่อนเริ่มโค้ดจริง — 10a = schema ใหม่ `report_sub_reports` (sub-report แบบอัปโหลดไฟล์ดีไซน์ย่อยหรือลิงก์รายงานอื่น จัดตาม slot HEADER/DETAIL/FOOTER) + `FileKind.REFERENCE_DOC` ที่ยอมให้มีหลายแถว `is_current:true` พร้อมกันได้ (ต่างจาก 3 kind เดิมที่ replace-in-place) เจอ migrate lock ค้างจาก session ก่อนหน้า (แก้ด้วย `pg_terminate_backend`) และเจอ `search_vector DROP DEFAULT` false-diff อีกครั้งตามที่ `CLAUDE.md` เตือนไว้ (ลบบรรทัดออกก่อน apply); 10b = สร้าง `components/ui/tabs.tsx` (shadcn บน `@radix-ui/react-tabs` ใหม่) + rebuild `report-edit/[id]` ทั้งหน้าเป็น 6 แท็บ, Query แยกเป็น Main/Sub ด้วย flag `is_main` เดิม (ไม่แก้ schema), Doc รวม Files+เอกสารอ้างอิงใหม่+Sharing (ย้ายมาจากการ์ดท้ายหน้าเดิม); 10c = ใช้ tab shell เดียวกันกับ `report-create` (Param/Query/Sub/Doc/History disabled จนกว่าจะ save ครั้งแรก) + เปลี่ยน redirect หลังสร้างจาก `report-list` ไปที่ `report-edit/[id]` ดูรายละเอียดใต้ตาราง Phase 10 ด้านล่าง
+
 **งานถัดไปที่ควรทำ (เรียงตามลำดับ):**
-1. **วางแผน Phase 9** — Phase 8 ปิดครบแล้ว ไม่มีแผนของ phase ถัดไปที่ตัดสินใจไว้ล่วงหน้า ต้องคุยกับผู้ใช้ก่อนว่าจะไปทางไหนต่อ (backlog ที่เหลือส่วนใหญ่ตอนนี้ต้องรอ infra ภายนอกแล้ว — email provider, S3/MinIO credentials, error-tracking vendor account — หรือเป็น i18n sweep ทั้งโปรเจกต์)
+1. **กลับไปทำ Phase 9 (i18n/Thai standardization)** — แผนพร้อมแล้ว (`phase9-plan.md`) แค่ยังไม่เริ่มโค้ด 9a-9f
 2. **ยืนยันว่า CI workflow รันจริงบน GitHub** — พักไว้ตามที่ผู้ใช้เลือก (2026-08-22): เครื่องนี้ไม่มี `gh` CLI/token ให้สร้าง PR อัตโนมัติ, ให้ลิงก์ compare (`main...feature/phase5`) ไว้ให้ผู้ใช้เปิดเองแล้ว รอผู้ใช้เปิด PR หรือขอให้ลองติดตั้ง `gh`
-3. **วางแผน i18n (`next-intl`) แยกเป็น phase ใหม่ของตัวเอง** — ถูก scope out จาก 4e, Phase 5, Phase 6, Phase 7 และ Phase 8 เพราะเป็น all-or-nothing sweep ทั้งโปรเจกต์
-4. **ของค้าง #9** (`deepmerge-ts`/Prisma) — รอ Prisma ออก patch จริงหรือ Prisma 8 GA ไม่มีอะไรให้ทำตอนนี้
+3. **ของค้าง #9** (`deepmerge-ts`/Prisma) — รอ Prisma ออก patch จริงหรือ Prisma 8 GA ไม่มีอะไรให้ทำตอนนี้
+4. **ของค้างใหม่จาก Phase 10** (ดูใต้ตาราง Phase 10): ไม่มี browser tool ในเซสชันนี้เหมือนทุก phase ก่อนหน้า — การยืนยันแท็บ UI (สลับแท็บ, สถานะฟอร์มไม่หายตอนสลับแท็บ) เป็นการตรวจโค้ด + curl/tsc/build เท่านั้น ยังไม่เห็น visual จริงในเบราว์เซอร์
 
 ---
 
@@ -424,6 +428,40 @@
 - [x] `app/(auth)/user-management/activity/page.tsx` — เพิ่ม `SkeletonTable` แทนที่ inline text "กำลังโหลด..." เดิม (pagination logic ของหน้านี้มีอยู่แล้วสมบูรณ์ ไม่ต้องแก้)
 - [x] ยืนยันสดครบ: `npx tsc --noEmit` = 0 error, `npx eslint .` = 0 warning (ทั้งสองไฟล์อยู่ใน `set-state-in-effect` exemption list เดิมอยู่แล้วตั้งแต่ก่อนหน้านี้ ไม่ต้องเพิ่มใหม่ เพราะเป็นไฟล์เก่าที่แก้ ไม่ใช่ไฟล์ใหม่), `npm test` = 32/32 ผ่าน, `npm run build` = exit 0; เปิด dev server จริงยืนยัน `/api/reports/browse?page=1&pageSize=1` vs `?page=2&pageSize=1` คืนรายงานคนละตัวจริง (`RPT-003` vs `RPT-002`, `totalPages:3`) พิสูจน์ endpoint ที่หน้าเรียกใช้งานได้ผลต่างกันจริงตามหน้าที่ขอ; ทั้ง 2 หน้าเปิดผ่าน curl ได้ 200 ทั้งคู่
 - ⚠️ **ข้อจำกัดการยืนยัน**: dev DB มีรายงานจริงแค่ 3 รายการ (น้อยกว่า `PAGE_SIZE=20` ของหน้า) ทำให้ pager UI จริงจะไม่โผล่ให้เห็นในสภาพ dev DB ปัจจุบัน (เงื่อนไข `totalPages > 1` เป็นเท็จ) ตรวจแยกด้วยการยิง endpoint ตรงด้วย `pageSize=1` แทนเพื่อพิสูจน์ mechanism ทำงานถูกต้อง แต่ไม่ได้เห็นปุ่มก่อนหน้า/ถัดไปโผล่จริงบนหน้าเว็บ — ไม่มี browser tool ให้ตรวจ visual ในเซสชันนี้เหมือนทุก phase ก่อนหน้า
+
+---
+
+### Phase 10 — Report Editor Tabbed Redesign (Info/Param/Query/Sub/Doc/History) ✅ ปิดครบทั้ง 3 sub-phase
+[แผนเต็ม →](./phase10-plan.md) — โจทย์จาก wireframe ที่ผู้ใช้แนบ (`document/wriefream/1.png`), ยืนยัน mapping แท็บกับผู้ใช้ผ่าน HTML demo artifact ก่อนเริ่มโค้ดจริง (2026-08-23) ทำงานบน branch `refactor/create-update-report`
+
+| Sub-phase | งาน | สถานะ | Commit |
+|---|---|---|---|
+| **10a** | Data model: `report_sub_reports` (upload หรือ linked-report, slot HEADER/DETAIL/FOOTER) + `FileKind.REFERENCE_DOC` (หลายไฟล์ current พร้อมกันได้) + API `/api/reports/[id]/sub-reports` + แก้ `/api/reports/[id]/files` ให้รองรับ REFERENCE_DOC | ✅ | `e3c90bd` |
+| **10b** | Rebuild `report-edit/[id]` เป็น 6 แท็บ (`components/ui/tabs.tsx` ใหม่บน `@radix-ui/react-tabs`) — Query แยก Main/Sub, Doc รวม Files+เอกสารอ้างอิง+Sharing, History เป็นแท็บแยก | ✅ | `cc41622` |
+| **10c** | `report-create` ใช้ tab shell เดียวกัน (Param/Query/Sub/Doc/History disabled จนกว่าจะ save ครั้งแรก) + redirect หลังสร้างไป `report-edit/[id]` แทน `report-list` | ✅ | `f671d59` |
+
+**Resolved decisions (ผู้ใช้, 2026-08-23)**: Param = variables เดิม (ไม่แก้ schema); Query แยก Main/Sub ด้วย `is_main` เดิม; Sub = sub-report ใหม่ทั้งหมด (อัปโหลดไฟล์ดีไซน์ย่อยหรือลิงก์รายงานอื่น); Doc = files เดิม + เอกสารอ้างอิงใหม่ + Sharing ย้ายเข้ามา; History แยกเป็นแท็บของตัวเอง (ไม่รวมใน Doc); create/edit ใช้ tab shell เดียวกัน — ดูรายละเอียดเต็มใน `phase10-plan.md`
+
+**10a ปิดจบแล้ว** (`e3c90bd`):
+- [x] Schema: `report_sub_reports` (+ enum `SubReportSlot`, `SubReportSourceType`) และ `FileKind` เพิ่มค่า `REFERENCE_DOC` — migration `20260823044850_add_report_sub_reports`
+- [x] **เจอ migrate advisory lock ค้างจาก session ก่อนหน้า** (`pg_advisory_lock(72707369)` ถูกยึดไว้โดย connection ที่ idle ค้างมาตั้งแต่วันก่อน — เจอ 2 รอบติดกัน คือทั้งตอน `--create-only` และตอน apply) แก้ด้วย `pg_terminate_backend` ทั้งสองรอบก่อนจะรันต่อได้; ตัว `npx prisma migrate dev` (apply) เองก็แขวนไม่คืน prompt แม้ DB จะรันสำเร็จจริงแล้ว (ยืนยันจาก `_prisma_migrations.finished_at`) — เปลี่ยนมาใช้ `npx prisma migrate status` ยืนยันแทน ไม่ใช่รอ CLI คืน exit code
+- [x] **เจอ `search_vector DROP DEFAULT` false-diff อีกครั้ง** ตรงตามที่ `CLAUDE.md` เตือนไว้ — migration.sql ที่ generate ออกมามีบรรทัด `ALTER TABLE "reports" ALTER COLUMN "search_vector" DROP DEFAULT` ปนมาทั้งที่ schema change รอบนี้ไม่เกี่ยวกับ `reports` โดยตรงเลย (แค่เพิ่ม enum value + ตารางลูกใหม่ที่ FK ไปหา `reports`) ลบบรรทัดนั้นออกก่อน apply ตามขั้นตอนที่กำหนดไว้
+- [x] `lib/subReportUploadServices.ts` (ใหม่) — คล้าย `reportFileUploadServices.ts` แต่ validate ด้วยนามสกุลไฟล์ล้วน (`.jrxml`/`.rpt`/`.pdf`) เพราะเบราว์เซอร์ไม่มี MIME type ที่เชื่อถือได้สำหรับ `.jrxml`/`.rpt`
+- [x] ยืนยันสดด้วย curl ครบ: สร้าง sub-report แบบ UPLOAD และแบบ LINKED_REPORT ผ่านจริง, self-link ถูกปฏิเสธ (400), rename/reslot (PUT) และ delete ทำงานถูกต้อง (ไฟล์บน disk ถูกลบไปด้วยกรณี UPLOAD); อัปโหลด `REFERENCE_DOC` 2 ไฟล์พร้อมกัน → ทั้งคู่ `is_current:true` พร้อมกันจริง, `DELETE?id=` ลบได้ทีละไฟล์ไม่กระทบไฟล์อื่น; regression check `SAMPLE_DATA` (replace-in-place เดิม) ยังทำงานถูกต้องเหมือนเดิม (v1.0→v1.1, แถวเก่า `is_current:false`)
+- [x] `npx tsc --noEmit` = 0 error, `npm test` = 32/32 ผ่าน, `npm run build` = exit 0
+
+**10b ปิดจบแล้ว** (`cc41622`):
+- [x] `components/ui/tabs.tsx` (ใหม่) — shadcn primitive บน `@radix-ui/react-tabs` (เพิ่มเป็น dependency ใหม่)
+- [x] Rebuild `report-edit/[id]/page.tsx` ทั้งหน้าเป็น `<Tabs>` — state/handler เดิมทั้งหมดย้ายมาแบบไม่แก้ logic (เป็น structural regroup) ยกเว้นจุดที่ระบุไว้ในแผน (Query grouping, sub-report state ใหม่, reference-doc state ใหม่)
+- [x] ยืนยันสด: เปิดหน้า edit ผ่าน curl ได้ 200 ไม่มี error marker, ยิง endpoint ที่หน้าพึ่งพาทั้งหมด (manage/queries/variables/sub-reports/versions/shares) ผ่านครบ 200
+- [x] `npx tsc --noEmit` = 0 error, `npm run build` = exit 0
+- ⚠️ ไม่มี browser tool ในเซสชันนี้ (ผู้ใช้ปฏิเสธติดตั้ง Claude in Chrome extension ตอนลอง) — ยืนยันด้วย curl/tsc/build เท่านั้น ยังไม่เห็นการสลับแท็บจริงในเบราว์เซอร์
+
+**10c ปิดจบแล้ว** (`f671d59`):
+- [x] `report-create/page.tsx` ห่อด้วย tab shell เดียวกัน, แท็บอื่นนอกจาก Info เป็น `disabled` พร้อมข้อความอธิบาย
+- [x] แก้ redirect หลังสร้างสำเร็จจาก `router.push("/reports/report-list")` เป็น `router.push(\`/reports/report-edit/${data.data.id}\`)`
+- [x] ยืนยันสดแบบ end-to-end: สร้างรายงานจริงผ่าน `POST /api/reports/report/manage` (multipart เหมือนฟอร์มจริงส่ง) → ได้ id กลับมา → เปิด `report-edit/[id]` ของรายงานที่เพิ่งสร้างสำเร็จ 200 + endpoint ลูกทั้งหมด (queries/variables/sub-reports/versions/shares) คืนค่าว่างที่ถูกต้องสำหรับรายงานใหม่ → ลบรายงานทดสอบทิ้งหลังยืนยันเสร็จ
+- [x] `npx tsc --noEmit` = 0 error, `npm test` = 32/32 ผ่าน, `npm run build` = exit 0
 
 ---
 
