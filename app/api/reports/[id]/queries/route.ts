@@ -33,12 +33,16 @@ const createZod = z.object({
     name: z.string().min(1),
     sql_text: z.string().min(1),
     is_main: z.boolean().optional().default(false),
+    // null/omitted = the main report's own container; a report_sub_reports id = that
+    // sub-report's own container instead (Phase 10 revision v2) — is_main is scoped per container.
+    sub_report_id: z.string().nullable().optional(),
 });
 
 /**
- * POST /api/reports/[id]/queries — create a new query. If is_main=true and
- * another query on this report is already main, that one is auto-demoted in
- * the same transaction (mirrors report_files.is_current toggling).
+ * POST /api/reports/[id]/queries — create a new query, scoped to the main
+ * report or to one of its sub-reports. If is_main=true and another query in
+ * the same container is already main, that one is auto-demoted in the same
+ * transaction (mirrors report_files.is_current toggling).
  */
 export async function POST(req: NextRequest, props: { params: Promise<{ id: string }> }) {
     const params = await props.params;
@@ -57,6 +61,14 @@ export async function POST(req: NextRequest, props: { params: Promise<{ id: stri
             return NextResponse.json({ success: false, error: validate.error.errors }, { status: 400 });
         }
         const { name, sql_text, is_main } = validate.data;
+        const subReportId = validate.data.sub_report_id ?? null;
+
+        if (subReportId) {
+            const subReport = await prisma.report_sub_reports.findFirst({ where: { id: subReportId, report_id: params.id } });
+            if (!subReport) {
+                return NextResponse.json({ success: false, error: "Sub-report not found" }, { status: 404 });
+            }
+        }
 
         const user = await getCurrentUser();
         const now = new Date();
@@ -64,7 +76,7 @@ export async function POST(req: NextRequest, props: { params: Promise<{ id: stri
         const created = await prisma.$transaction(async (tx) => {
             if (is_main) {
                 await tx.report_queries.updateMany({
-                    where: { report_id: params.id, is_main: true },
+                    where: { report_id: params.id, sub_report_id: subReportId, is_main: true },
                     data: { is_main: false },
                 });
             }
@@ -72,6 +84,7 @@ export async function POST(req: NextRequest, props: { params: Promise<{ id: stri
                 data: {
                     id: faker.string.uuid(),
                     report_id: params.id,
+                    sub_report_id: subReportId,
                     name,
                     sql_text,
                     is_main,
@@ -104,12 +117,16 @@ const updateZod = z.object({
     sql_text: z.string().min(1).optional(),
     is_main: z.boolean().optional(),
     change_log: z.string().optional(),
+    sub_report_id: z.string().nullable().optional(),
 });
 
 /**
- * PUT /api/reports/[id]/queries — update a query. Changing sql_text
+ * PUT /api/reports/[id]/queries — update a query, including moving it
+ * between containers (main report <-> a sub-report). Changing sql_text
  * snapshots the pre-change state into report_query_versions first, then
- * bumps version. Setting is_main=true auto-demotes the previous main query.
+ * bumps version. Setting is_main=true auto-demotes the previous main query
+ * in the same container (the resulting one, if sub_report_id is also
+ * changing in this same request).
  */
 export async function PUT(req: NextRequest, props: { params: Promise<{ id: string }> }) {
     const params = await props.params;
@@ -129,6 +146,14 @@ export async function PUT(req: NextRequest, props: { params: Promise<{ id: strin
         });
         if (!existing) {
             return NextResponse.json({ success: false, error: "Query not found" }, { status: 404 });
+        }
+
+        const nextSubReportId = validate.data.sub_report_id !== undefined ? validate.data.sub_report_id : existing.sub_report_id;
+        if (nextSubReportId) {
+            const subReport = await prisma.report_sub_reports.findFirst({ where: { id: nextSubReportId, report_id: params.id } });
+            if (!subReport) {
+                return NextResponse.json({ success: false, error: "Sub-report not found" }, { status: 404 });
+            }
         }
 
         const user = await getCurrentUser();
@@ -154,7 +179,7 @@ export async function PUT(req: NextRequest, props: { params: Promise<{ id: strin
             }
             if (is_main === true) {
                 await tx.report_queries.updateMany({
-                    where: { report_id: params.id, is_main: true, id: { not: existing.id } },
+                    where: { report_id: params.id, sub_report_id: nextSubReportId, is_main: true, id: { not: existing.id } },
                     data: { is_main: false },
                 });
             }
@@ -164,6 +189,7 @@ export async function PUT(req: NextRequest, props: { params: Promise<{ id: strin
                     name: name ?? existing.name,
                     sql_text: sql_text ?? existing.sql_text,
                     is_main: is_main ?? existing.is_main,
+                    sub_report_id: nextSubReportId,
                     version: nextVersion,
                     updated_at: now,
                 },

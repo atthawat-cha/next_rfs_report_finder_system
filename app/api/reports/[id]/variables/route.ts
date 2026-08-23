@@ -36,12 +36,18 @@ const createZod = z.object({
     default_value: z.string().optional(),
     is_required: z.boolean().optional().default(false),
     sort_order: z.number().int().optional().default(0),
+    // null/omitted = scoped to the main report; a report_sub_reports id = scoped to that
+    // sub-report instead (Phase 10 revision v2).
+    sub_report_id: z.string().nullable().optional(),
 });
 
 /**
- * POST /api/reports/[id]/variables — create a variable. (report_id, name)
+ * POST /api/reports/[id]/variables — create a variable, scoped to the main
+ * report or to one of its sub-reports. (report_id, sub_report_id, name)
  * uniqueness is pre-checked so callers get a readable 409 instead of a raw
- * Prisma P2002.
+ * Prisma P2002 — the DB's own unique index only catches same-sub_report_id
+ * duplicates (Postgres never matches NULL to NULL), so this check is the
+ * real enforcement for two main-report-scoped variables sharing a name.
  */
 export async function POST(req: NextRequest, props: { params: Promise<{ id: string }> }) {
     const params = await props.params;
@@ -60,18 +66,27 @@ export async function POST(req: NextRequest, props: { params: Promise<{ id: stri
             return NextResponse.json({ success: false, error: validate.error.errors }, { status: 400 });
         }
         const data = validate.data;
+        const subReportId = data.sub_report_id ?? null;
+
+        if (subReportId) {
+            const subReport = await prisma.report_sub_reports.findFirst({ where: { id: subReportId, report_id: params.id } });
+            if (!subReport) {
+                return NextResponse.json({ success: false, error: "Sub-report not found" }, { status: 404 });
+            }
+        }
 
         const duplicate = await prisma.report_variables.findFirst({
-            where: { report_id: params.id, name: data.name },
+            where: { report_id: params.id, sub_report_id: subReportId, name: data.name },
         });
         if (duplicate) {
-            return NextResponse.json({ success: false, error: "Variable name already exists for this report" }, { status: 409 });
+            return NextResponse.json({ success: false, error: "Variable name already exists in this scope" }, { status: 409 });
         }
 
         const created = await prisma.report_variables.create({
             data: {
                 id: faker.string.uuid(),
                 report_id: params.id,
+                sub_report_id: subReportId,
                 name: data.name,
                 label: data.label,
                 data_type: data.data_type,
@@ -105,11 +120,14 @@ const updateZod = z.object({
     default_value: z.string().optional(),
     is_required: z.boolean().optional(),
     sort_order: z.number().int().optional(),
+    sub_report_id: z.string().nullable().optional(),
 });
 
 /**
- * PUT /api/reports/[id]/variables — update a variable. Renaming re-checks
- * (report_id, name) uniqueness against the other rows.
+ * PUT /api/reports/[id]/variables — update a variable, including moving it
+ * between scopes (main report <-> a sub-report). Renaming or re-scoping
+ * re-checks (report_id, sub_report_id, name) uniqueness against the other
+ * rows in the resulting scope.
  */
 export async function PUT(req: NextRequest, props: { params: Promise<{ id: string }> }) {
     const params = await props.params;
@@ -131,12 +149,21 @@ export async function PUT(req: NextRequest, props: { params: Promise<{ id: strin
             return NextResponse.json({ success: false, error: "Variable not found" }, { status: 404 });
         }
 
-        if (rest.name && rest.name !== existing.name) {
+        const nextSubReportId = rest.sub_report_id !== undefined ? rest.sub_report_id : existing.sub_report_id;
+        if (nextSubReportId) {
+            const subReport = await prisma.report_sub_reports.findFirst({ where: { id: nextSubReportId, report_id: params.id } });
+            if (!subReport) {
+                return NextResponse.json({ success: false, error: "Sub-report not found" }, { status: 404 });
+            }
+        }
+
+        const nextName = rest.name ?? existing.name;
+        if (nextName !== existing.name || nextSubReportId !== existing.sub_report_id) {
             const duplicate = await prisma.report_variables.findFirst({
-                where: { report_id: params.id, name: rest.name, id: { not: existing.id } },
+                where: { report_id: params.id, sub_report_id: nextSubReportId, name: nextName, id: { not: existing.id } },
             });
             if (duplicate) {
-                return NextResponse.json({ success: false, error: "Variable name already exists for this report" }, { status: 409 });
+                return NextResponse.json({ success: false, error: "Variable name already exists in this scope" }, { status: 409 });
             }
         }
 

@@ -131,9 +131,14 @@ model report_files {
 }
 
 // Reference/documentation only — the app never executes sql_text (see system-design.md §5.2).
+// sub_report_id is null for a query that belongs to the main report itself, or set when the
+// query belongs to one specific sub-report instead (Phase 10 revision v2) — is_main is then
+// scoped per "container" (the main report is one container, each sub-report is another), not
+// globally per report_id.
 model report_queries {
   id                    String                  @id
   report_id             String
+  sub_report_id         String?
   name                  String
   sql_text              String
   is_main               Boolean                 @default(false)
@@ -142,11 +147,13 @@ model report_queries {
   created_at            DateTime                @default(now())
   updated_at            DateTime
   reports               reports                 @relation(fields: [report_id], references: [id], onDelete: Cascade)
+  report_sub_reports    report_sub_reports?     @relation(fields: [sub_report_id], references: [id], onDelete: Cascade)
   report_query_versions report_query_versions[]
-  // partial unique index (one is_main=true per report) added via raw SQL migration —
-  // Prisma's schema DSL doesn't support partial indexes.
+  // partial unique indexes (one is_main=true per container: report itself, or per sub_report_id)
+  // added via raw SQL migration — Prisma's schema DSL doesn't support partial indexes.
 
   @@index([report_id])
+  @@index([sub_report_id])
 }
 
 model report_query_versions {
@@ -160,18 +167,27 @@ model report_query_versions {
   report_queries report_queries @relation(fields: [query_id], references: [id], onDelete: Cascade)
 }
 
+// sub_report_id is null for a variable that belongs to the main report, or set when it belongs
+// to one specific sub-report instead (Phase 10 revision v2). The (report_id, sub_report_id, name)
+// unique constraint only protects same-sub-report duplicates — Postgres treats NULL as distinct
+// from every other NULL, so two main-report-scoped (sub_report_id: null) variables sharing a name
+// are NOT caught by this index; that case is guarded at the application layer instead (see
+// app/api/reports/[id]/variables/route.ts).
 model report_variables {
-  id            String  @id
-  report_id     String
-  name          String
-  label         String?
-  data_type     String
-  default_value String?
-  is_required   Boolean @default(false)
-  sort_order    Int     @default(0)
-  reports       reports @relation(fields: [report_id], references: [id], onDelete: Cascade)
+  id                 String              @id
+  report_id          String
+  sub_report_id      String?
+  name               String
+  label              String?
+  data_type          String
+  default_value      String?
+  is_required        Boolean             @default(false)
+  sort_order         Int                 @default(0)
+  reports            reports             @relation(fields: [report_id], references: [id], onDelete: Cascade)
+  report_sub_reports report_sub_reports? @relation(fields: [sub_report_id], references: [id], onDelete: Cascade)
 
-  @@unique([report_id, name])
+  @@unique([report_id, sub_report_id, name])
+  @@index([sub_report_id])
 }
 
 // subject_id refers to users.id or roles.id depending on subject_type — not FK'd to both
@@ -212,6 +228,8 @@ model report_sub_reports {
   created_at       DateTime            @default(now())
   reports          reports             @relation("report_sub_reports_report", fields: [report_id], references: [id], onDelete: Cascade)
   linked_report    reports?            @relation("report_sub_reports_linked", fields: [linked_report_id], references: [id], onDelete: SetNull)
+  report_variables report_variables[]
+  report_queries   report_queries[]
 
   @@index([report_id])
 }
@@ -257,48 +275,48 @@ model report_versions {
 }
 
 model reports {
-  id                 String                   @id
-  code               String                   @unique
-  name_th            String
-  name_en            String?
-  description        String?
-  file_path          String
-  file_name          String
-  file_type          String
-  file_size          BigInt
-  thumbnail_path     String?
-  category_id        String
-  department_id      String?
-  created_by_id      String
-  author             String?
-  report_date        DateTime?
-  version            String                   @default("1.0")
-  status             ReportStatus             @default(DRAFT)
-  access_level       AccessLevel              @default(PUBLIC)
-  output_type        ReportOutputType         @default(DATA_REPORT)
-  is_downloadable    Boolean                  @default(true)
-  is_editable        Boolean                  @default(true)
-  view_count         Int                      @default(0)
-  download_count     Int                      @default(0)
-  published_at       DateTime?
-  archived_at        DateTime?
-  created_at         DateTime                 @default(now())
-  updated_at         DateTime
-  search_vector      Unsupported("tsvector")?
-  downloads          downloads[]
-  favorites          favorites[]
-  report_shares      report_shares[]
-  report_tags        report_tags[]
-  report_versions    report_versions[]
-  report_files       report_files[]
-  report_queries     report_queries[]
-  report_variables   report_variables[]
-  report_permissions report_permissions[]
-  report_sub_reports report_sub_reports[] @relation("report_sub_reports_report")
-  linked_as_sub_report report_sub_reports[] @relation("report_sub_reports_linked")
-  categories         categories               @relation(fields: [category_id], references: [id])
-  users              users                    @relation(fields: [created_by_id], references: [id])
-  departments        departments?             @relation(fields: [department_id], references: [id])
+  id                   String                   @id
+  code                 String                   @unique
+  name_th              String
+  name_en              String?
+  description          String?
+  file_path            String
+  file_name            String
+  file_type            String
+  file_size            BigInt
+  thumbnail_path       String?
+  category_id          String
+  department_id        String?
+  created_by_id        String
+  author               String?
+  report_date          DateTime?
+  version              String                   @default("1.0")
+  status               ReportStatus             @default(DRAFT)
+  access_level         AccessLevel              @default(PUBLIC)
+  output_type          ReportOutputType         @default(DATA_REPORT)
+  is_downloadable      Boolean                  @default(true)
+  is_editable          Boolean                  @default(true)
+  view_count           Int                      @default(0)
+  download_count       Int                      @default(0)
+  published_at         DateTime?
+  archived_at          DateTime?
+  created_at           DateTime                 @default(now())
+  updated_at           DateTime
+  search_vector        Unsupported("tsvector")?
+  downloads            downloads[]
+  favorites            favorites[]
+  report_shares        report_shares[]
+  report_tags          report_tags[]
+  report_versions      report_versions[]
+  report_files         report_files[]
+  report_queries       report_queries[]
+  report_variables     report_variables[]
+  report_permissions   report_permissions[]
+  report_sub_reports   report_sub_reports[]     @relation("report_sub_reports_report")
+  linked_as_sub_report report_sub_reports[]     @relation("report_sub_reports_linked")
+  categories           categories               @relation(fields: [category_id], references: [id])
+  users                users                    @relation(fields: [created_by_id], references: [id])
+  departments          departments?             @relation(fields: [department_id], references: [id])
 
   @@index([category_id])
   @@index([code])
@@ -405,36 +423,36 @@ model user_sessions {
 }
 
 model users {
-  id                  String            @id
-  username            String            @unique
-  email               String            @unique
-  password            String
-  first_name          String?
-  last_name           String?
-  phone_number        String?
-  profile_image       String?
-  position            String?
-  department_id       String?
-  status              UserStatus        @default(ACTIVE)
-  email_verified      Boolean           @default(false)
-  two_factor_enabled  Boolean           @default(false)
-  two_factor_secret   String?
-  last_login_at       DateTime?
-  last_login_ip       String?
-  password_changed_at DateTime?
-  theme_preference    String?
-  created_at          DateTime          @default(now())
-  updated_at          DateTime
-  activity_logs       activity_logs[]
-  downloads           downloads[]
-  favorites           favorites[]
-  notifications       notifications[]
-  report_shares       report_shares[]
-  reports             reports[]
-  support_tickets     support_tickets[]
-  user_roles          user_roles[]
-  user_sessions       user_sessions[]
-  role_id             String            @db.VarChar(100)
+  id                      String                    @id
+  username                String                    @unique
+  email                   String                    @unique
+  password                String
+  first_name              String?
+  last_name               String?
+  phone_number            String?
+  profile_image           String?
+  position                String?
+  department_id           String?
+  status                  UserStatus                @default(ACTIVE)
+  email_verified          Boolean                   @default(false)
+  two_factor_enabled      Boolean                   @default(false)
+  two_factor_secret       String?
+  last_login_at           DateTime?
+  last_login_ip           String?
+  password_changed_at     DateTime?
+  theme_preference        String?
+  created_at              DateTime                  @default(now())
+  updated_at              DateTime
+  activity_logs           activity_logs[]
+  downloads               downloads[]
+  favorites               favorites[]
+  notifications           notifications[]
+  report_shares           report_shares[]
+  reports                 reports[]
+  support_tickets         support_tickets[]
+  user_roles              user_roles[]
+  user_sessions           user_sessions[]
+  role_id                 String                    @db.VarChar(100)
   two_factor_backup_codes two_factor_backup_codes[]
 
   roles       roles        @relation(fields: [role_id], references: [id], onDelete: Cascade)
