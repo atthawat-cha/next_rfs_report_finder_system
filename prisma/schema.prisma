@@ -196,6 +196,26 @@ model report_permissions {
   @@index([subject_type, subject_id])
 }
 
+model report_sub_reports {
+  id               String              @id
+  report_id        String
+  name             String
+  slot             SubReportSlot       @default(DETAIL)
+  source_type      SubReportSourceType
+  linked_report_id String?
+  file_path        String?
+  file_name        String?
+  file_type        String?
+  file_size        BigInt?
+  sort_order       Int                 @default(0)
+  created_by       String
+  created_at       DateTime            @default(now())
+  reports          reports             @relation("report_sub_reports_report", fields: [report_id], references: [id], onDelete: Cascade)
+  linked_report    reports?            @relation("report_sub_reports_linked", fields: [linked_report_id], references: [id], onDelete: SetNull)
+
+  @@index([report_id])
+}
+
 model report_shares {
   id                 String    @id
   report_id          String
@@ -274,6 +294,8 @@ model reports {
   report_queries     report_queries[]
   report_variables   report_variables[]
   report_permissions report_permissions[]
+  report_sub_reports report_sub_reports[] @relation("report_sub_reports_report")
+  linked_as_sub_report report_sub_reports[] @relation("report_sub_reports_linked")
   categories         categories               @relation(fields: [category_id], references: [id])
   users              users                    @relation(fields: [created_by_id], references: [id])
   departments        departments?             @relation(fields: [department_id], references: [id])
@@ -465,6 +487,18 @@ enum FileKind {
   BLANK_FORM
   SAMPLE_FILLED_FORM
   SAMPLE_DATA
+  REFERENCE_DOC
+}
+
+enum SubReportSlot {
+  HEADER
+  DETAIL
+  FOOTER
+}
+
+enum SubReportSourceType {
+  UPLOAD
+  LINKED_REPORT
 }
 
 enum SubjectType {

@@ -41,7 +41,7 @@ export async function GET(req: NextRequest, props: { params: Promise<{ id: strin
     }
 }
 
-const fileKindZod = z.enum(['BLANK_FORM', 'SAMPLE_FILLED_FORM', 'SAMPLE_DATA']);
+const fileKindZod = z.enum(['BLANK_FORM', 'SAMPLE_FILLED_FORM', 'SAMPLE_DATA', 'REFERENCE_DOC']);
 
 /**
  * POST /api/reports/[id]/files (multipart: file, file_kind) — upload a new
@@ -74,12 +74,18 @@ export async function POST(req: NextRequest, props: { params: Promise<{ id: stri
         }
         const fileKind = fileKindValidate.data;
 
-        const allowedKinds = VALID_KINDS_BY_OUTPUT_TYPE[report.output_type];
-        if (!allowedKinds.includes(fileKind)) {
-            return NextResponse.json(
-                { success: false, error: `file_kind "${fileKind}" is not valid for output_type "${report.output_type}". Allowed: ${allowedKinds.join(', ')}` },
-                { status: 400 }
-            );
+        // REFERENCE_DOC is a free-form supporting document, not tied to
+        // output_type — any number can coexist, unlike the singular
+        // replace-in-place slots below.
+        const isReferenceDoc = fileKind === 'REFERENCE_DOC';
+        if (!isReferenceDoc) {
+            const allowedKinds = VALID_KINDS_BY_OUTPUT_TYPE[report.output_type];
+            if (!allowedKinds.includes(fileKind)) {
+                return NextResponse.json(
+                    { success: false, error: `file_kind "${fileKind}" is not valid for output_type "${report.output_type}". Allowed: ${allowedKinds.join(', ')}` },
+                    { status: 400 }
+                );
+            }
         }
 
         const file = data.get('file') as File | null;
@@ -94,9 +100,15 @@ export async function POST(req: NextRequest, props: { params: Promise<{ id: stri
 
         const user = await getCurrentUser();
 
-        const previousCurrent = await prisma.report_files.findFirst({
-            where: { report_id: params.id, file_kind: fileKind, is_current: true },
-        });
+        // REFERENCE_DOC uploads never replace a previous one of the same
+        // kind — each is an independent item, so there's nothing to demote
+        // and version tracking (which assumes one lineage per kind) doesn't
+        // apply; it stays "1.0" for every row.
+        const previousCurrent = isReferenceDoc
+            ? null
+            : await prisma.report_files.findFirst({
+                where: { report_id: params.id, file_kind: fileKind, is_current: true },
+            });
 
         const nextVersion = previousCurrent
             ? (parseFloat(previousCurrent.version) + 0.1).toFixed(1)
@@ -147,6 +159,11 @@ export async function POST(req: NextRequest, props: { params: Promise<{ id: stri
  * of that kind. Not blocked even if it's the last file of a kind output_type
  * requires — the report just shows "no file" in preview/download until a new
  * one is uploaded (MVP decision, see document/phase2-plan.md §Sub-phase 2b).
+ *
+ * DELETE /api/reports/[id]/files?id=<report_files.id> — remove one specific
+ * row by id instead. Required for REFERENCE_DOC, where several rows share
+ * the same file_kind and `?fileKind=` alone can't tell them apart; also
+ * accepted for the other kinds.
  */
 export async function DELETE(req: NextRequest, props: { params: Promise<{ id: string }> }) {
     const params = await props.params;
@@ -158,16 +175,26 @@ export async function DELETE(req: NextRequest, props: { params: Promise<{ id: st
         const authResult = await requireRole(req, routeAcceptted('admin'));
         if (authResult instanceof NextResponse) return authResult;
 
-        const fileKindValidate = fileKindZod.safeParse(req.nextUrl.searchParams.get('fileKind'));
-        if (!fileKindValidate.success) {
-            return NextResponse.json({ success: false, error: "Invalid or missing fileKind query param" }, { status: 400 });
+        const fileId = req.nextUrl.searchParams.get('id');
+
+        let current;
+        let describedKind: string;
+        if (fileId) {
+            current = await prisma.report_files.findFirst({ where: { id: fileId, report_id: params.id } });
+            describedKind = current?.file_kind ?? 'file';
+        } else {
+            const fileKindValidate = fileKindZod.safeParse(req.nextUrl.searchParams.get('fileKind'));
+            if (!fileKindValidate.success) {
+                return NextResponse.json({ success: false, error: "Invalid or missing fileKind/id query param" }, { status: 400 });
+            }
+            current = await prisma.report_files.findFirst({
+                where: { report_id: params.id, file_kind: fileKindValidate.data, is_current: true },
+            });
+            describedKind = fileKindValidate.data;
         }
 
-        const current = await prisma.report_files.findFirst({
-            where: { report_id: params.id, file_kind: fileKindValidate.data, is_current: true },
-        });
         if (!current) {
-            return NextResponse.json({ success: false, error: "No current file of that kind" }, { status: 404 });
+            return NextResponse.json({ success: false, error: "File not found" }, { status: 404 });
         }
 
         await prisma.report_files.delete({ where: { id: current.id } });
@@ -178,7 +205,7 @@ export async function DELETE(req: NextRequest, props: { params: Promise<{ id: st
             action: 'delete',
             entity: 'report',
             entityId: params.id,
-            description: `Deleted ${fileKindValidate.data} for report ${params.id}`,
+            description: `Deleted ${describedKind} for report ${params.id}`,
         });
 
         return NextResponse.json({ success: true }, { status: 200 });

@@ -41,12 +41,16 @@ const MAX_SIZE_BY_KIND: Record<string, number> = {
   BLANK_FORM: 10 * 1024 * 1024, // 10 MB
   SAMPLE_FILLED_FORM: 10 * 1024 * 1024, // 10 MB
   SAMPLE_DATA: 20 * 1024 * 1024, // 20 MB
+  REFERENCE_DOC: 20 * 1024 * 1024, // 20 MB
 };
 
 const ALLOWED_EXT_BY_KIND: Record<string, string[]> = {
   BLANK_FORM: ["pdf"],
   SAMPLE_FILLED_FORM: ["pdf"],
   SAMPLE_DATA: ["xlsx", "xls", "csv"],
+  // Free-form supporting documents (manuals, notes) — broader allow-list than
+  // the other kinds since these aren't tied to a specific report format.
+  REFERENCE_DOC: ["pdf", "doc", "docx", "xlsx", "xls", "csv", "jpg", "jpeg", "png"],
 };
 
 const ALLOWED_MIME_BY_KIND: Record<string, string[]> = {
@@ -56,6 +60,16 @@ const ALLOWED_MIME_BY_KIND: Record<string, string[]> = {
     "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
     "application/vnd.ms-excel",
     "text/csv",
+  ],
+  REFERENCE_DOC: [
+    "application/pdf",
+    "application/msword",
+    "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+    "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+    "application/vnd.ms-excel",
+    "text/csv",
+    "image/jpeg",
+    "image/png",
   ],
 };
 
