@@ -1,5 +1,16 @@
 # Phase 9 — Standardize UI Language to Thai
 
+> **2026-08-23 update:** this plan was written before Phase 10 (report editor tabbed redesign,
+> `phase10-plan.md`) shipped. Phase 10 restructured exactly the two files sub-phase 9b/9c call out as
+> the largest single sources of strings: `report-edit/[id]/page.tsx` shrank drastically and most of
+> its content (and new content — sub-reports, Param/Query scoping, Doc purpose-tags — that didn't
+> exist during this plan's original audit) moved into `components/reportEditor/{paramTab,queryTab,
+> subTab,docTab,historyTab}.tsx`; `report-create/page.tsx` gained the same shared components plus new
+> strings of its own (the "created successfully" banner, disabled-field states). **9b/9c's file lists
+> below are followed as a starting map, not a literal string count** — before translating either
+> sub-phase, re-grep the current state of these files rather than trust the string counts quoted
+> here, which predate Phase 10.
+
 ## Context
 
 Phase 8 closed the entire backlog reachable without external infra/credentials. There was no
