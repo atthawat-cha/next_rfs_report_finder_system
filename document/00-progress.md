@@ -1,6 +1,6 @@
 # ความคืบหน้าโครงการ — RFS Report Finder System
 
-> **อัปเดตล่าสุด:** 2026-08-23 · **Branch:** `refactor/create-update-report` · **HEAD:** `f671d59`
+> **อัปเดตล่าสุด:** 2026-08-23 · **Branch:** `refactor/create-update-report` · **HEAD:** `11fcbe8`
 >
 > ไฟล์นี้ตอบคำถามเดียว: **"ตอนนี้ถึงไหนแล้ว และเหลืออะไร"** สถานะทุกแถวอ้างอิง commit จริงใน git log เป็นหลักฐาน ไม่ใช่การอ่านโค้ดเดา
 >
@@ -40,7 +40,7 @@
 
 **Phase 9 (i18n/Thai standardization) วางแผนไว้แล้ว** (`phase9-plan.md`, commit `303ef9b`) **แต่ยังไม่เริ่มโค้ด** — ผู้ใช้ขอให้ทำ Phase 10 (ด้านล่าง) ก่อนแทน ไม่ได้ยกเลิก Phase 9 แค่สลับคิว
 
-**Phase 10 ปิดครบทั้ง 3 sub-phase แล้ว (2026-08-23)** ([`phase10-plan.md`](./phase10-plan.md), ทำงานบน branch ใหม่ `refactor/create-update-report` — ไม่ใช่ branch เลขต่อจาก `feature/phase8`, ผู้ใช้ตั้งชื่อเองตามงานจริง) — โจทย์จาก wireframe ที่ผู้ใช้แนบมา (`document/wriefream/1.png`): ปรับหน้า report-create/report-edit ให้เป็นแท็บ Info/Param/Query/Sub/Doc/History แทน card เรียงยาว มี demo/analysis เป็น HTML artifact ให้ผู้ใช้ยืนยัน mapping ก่อนเริ่มโค้ดจริง — 10a = schema ใหม่ `report_sub_reports` (sub-report แบบอัปโหลดไฟล์ดีไซน์ย่อยหรือลิงก์รายงานอื่น จัดตาม slot HEADER/DETAIL/FOOTER) + `FileKind.REFERENCE_DOC` ที่ยอมให้มีหลายแถว `is_current:true` พร้อมกันได้ (ต่างจาก 3 kind เดิมที่ replace-in-place) เจอ migrate lock ค้างจาก session ก่อนหน้า (แก้ด้วย `pg_terminate_backend`) และเจอ `search_vector DROP DEFAULT` false-diff อีกครั้งตามที่ `CLAUDE.md` เตือนไว้ (ลบบรรทัดออกก่อน apply); 10b = สร้าง `components/ui/tabs.tsx` (shadcn บน `@radix-ui/react-tabs` ใหม่) + rebuild `report-edit/[id]` ทั้งหน้าเป็น 6 แท็บ, Query แยกเป็น Main/Sub ด้วย flag `is_main` เดิม (ไม่แก้ schema), Doc รวม Files+เอกสารอ้างอิงใหม่+Sharing (ย้ายมาจากการ์ดท้ายหน้าเดิม); 10c = ใช้ tab shell เดียวกันกับ `report-create` (Param/Query/Sub/Doc/History disabled จนกว่าจะ save ครั้งแรก) + เปลี่ยน redirect หลังสร้างจาก `report-list` ไปที่ `report-edit/[id]` ดูรายละเอียดใต้ตาราง Phase 10 ด้านล่าง
+**Phase 10 ปิดครบทั้ง 7 sub-phase แล้ว (2026-08-23)** ([`phase10-plan.md`](./phase10-plan.md), ทำงานบน branch ใหม่ `refactor/create-update-report` — ไม่ใช่ branch เลขต่อจาก `feature/phase8`, ผู้ใช้ตั้งชื่อเองตามงานจริง) — โจทย์จาก wireframe ที่ผู้ใช้แนบมา (`document/wriefream/1.png`): ปรับหน้า report-create/report-edit ให้เป็นแท็บ Info/Param/Query/Sub/Doc/History แทน card เรียงยาว ทำเป็น 2 รอบ: **รอบแรก (10a-10c)** ตาม wireframe ตรงๆ, **รอบสอง (10d-10g)** ตามฟีดแบ็กหลังผู้ใช้ลองรีวิว demo จริง (`document/phase10-plan-fix.md`) — ทุกรอบมี demo/analysis เป็น HTML artifact ให้ผู้ใช้ยืนยันก่อนเริ่มโค้ดจริงเสมอ — 10a = schema ใหม่ `report_sub_reports` (sub-report แบบอัปโหลดไฟล์ดีไซน์ย่อยหรือลิงก์รายงานอื่น จัดตาม slot HEADER/DETAIL/FOOTER) + `FileKind.REFERENCE_DOC` ที่ยอมให้มีหลายแถว `is_current:true` พร้อมกันได้ เจอ migrate lock ค้างจาก session ก่อนหน้า (แก้ด้วย `pg_terminate_backend`) และเจอ `search_vector DROP DEFAULT` false-diff อีกครั้งตามที่ `CLAUDE.md` เตือนไว้; 10b = สร้าง `components/ui/tabs.tsx` (shadcn บน `@radix-ui/react-tabs` ใหม่) + rebuild `report-edit/[id]` เป็น 6 แท็บ, Query แยก Main/Sub ด้วย flag `is_main` เดิม, Doc รวม Files+เอกสารอ้างอิง+Sharing; 10c = ใช้ tab shell เดียวกันกับ `report-create` (แท็บอื่น disabled จนกว่าจะ save ครั้งแรก) + redirect ไป `report-edit/[id]`; **10d** = แท็บแนวตั้งซ้ายมือ (ตามฟีดแบ็ก) + `lib/sql-analyze.ts` (SQL analyzer แบบ best-effort) + `QuerySummary` แทน `SqlBlock` เต็มความกว้าง; **10e** = เพิ่ม `sub_report_id` ให้ `report_variables`/`report_queries` (ผูกพารามิเตอร์/คิวรี่กับ sub-report ได้) + partial unique index 2 ตัวแทนตัวเดิมเพราะ `is_main` ต้อง scope ต่อ container; **10f** = ตัด gate ตาม output_type ออกจากแท็บ Doc ทั้งหมด (ตัดสินใจไม่ rename enum หลัง grep เจอ 9 จุดที่ใช้ค่าเดิมอยู่ เปลี่ยนแค่ label) + เจอบั๊กจริง 2 ตัวระหว่างทาง (reportDetailView ไม่เคยแสดง REFERENCE_DOC, DELETE ไม่เคย sync cache); **10g** = แตกแท็บ Param/Query/Sub/Doc/History เป็น shared component ใต้ `components/reportEditor/` ใช้ร่วมกันทั้ง create/edit + เปลี่ยน `report-create` จาก "disabled แล้ว redirect" เป็น "ปลดล็อกในหน้าเดิมทันทีหลัง save ครั้งแรก ไม่ redirect" ดูรายละเอียดใต้ตาราง Phase 10 ด้านล่าง
 
 **งานถัดไปที่ควรทำ (เรียงตามลำดับ):**
 1. **กลับไปทำ Phase 9 (i18n/Thai standardization)** — แผนพร้อมแล้ว (`phase9-plan.md`) แค่ยังไม่เริ่มโค้ด 9a-9f
@@ -431,14 +431,18 @@
 
 ---
 
-### Phase 10 — Report Editor Tabbed Redesign (Info/Param/Query/Sub/Doc/History) ✅ ปิดครบทั้ง 3 sub-phase
-[แผนเต็ม →](./phase10-plan.md) — โจทย์จาก wireframe ที่ผู้ใช้แนบ (`document/wriefream/1.png`), ยืนยัน mapping แท็บกับผู้ใช้ผ่าน HTML demo artifact ก่อนเริ่มโค้ดจริง (2026-08-23) ทำงานบน branch `refactor/create-update-report`
+### Phase 10 — Report Editor Tabbed Redesign (Info/Param/Query/Sub/Doc/History) ✅ ปิดครบทั้ง 7 sub-phase
+[แผนเต็ม →](./phase10-plan.md) — โจทย์จาก wireframe ที่ผู้ใช้แนบ (`document/wriefream/1.png`), ยืนยัน mapping แท็บกับผู้ใช้ผ่าน HTML demo artifact ก่อนเริ่มโค้ดจริง (2026-08-23) ทำงานบน branch `refactor/create-update-report` — 10a-10c ตาม wireframe รอบแรก, 10d-10g ตามฟีดแบ็กรอบสองหลังผู้ใช้รีวิว demo จริง (`document/phase10-plan-fix.md`, แผนแก้ไขอยู่ใน `phase10-plan.md`'s "Revision v2"/"Revision v3")
 
 | Sub-phase | งาน | สถานะ | Commit |
 |---|---|---|---|
 | **10a** | Data model: `report_sub_reports` (upload หรือ linked-report, slot HEADER/DETAIL/FOOTER) + `FileKind.REFERENCE_DOC` (หลายไฟล์ current พร้อมกันได้) + API `/api/reports/[id]/sub-reports` + แก้ `/api/reports/[id]/files` ให้รองรับ REFERENCE_DOC | ✅ | `e3c90bd` |
 | **10b** | Rebuild `report-edit/[id]` เป็น 6 แท็บ (`components/ui/tabs.tsx` ใหม่บน `@radix-ui/react-tabs`) — Query แยก Main/Sub, Doc รวม Files+เอกสารอ้างอิง+Sharing, History เป็นแท็บแยก | ✅ | `cc41622` |
 | **10c** | `report-create` ใช้ tab shell เดียวกัน (Param/Query/Sub/Doc/History disabled จนกว่าจะ save ครั้งแรก) + redirect หลังสร้างไป `report-edit/[id]` แทน `report-list` | ✅ | `f671d59` |
+| **10d** | แท็บแนวตั้งซ้ายมือ (`components/ui/tabs.tsx` เพิ่ม `data-[orientation=vertical]`) + `lib/sql-analyze.ts` (SQL analyzer แบบ best-effort) + `components/shared/querySummary.tsx` แทน `SqlBlock` เต็มความกว้างในทุกคิวรี่ | ✅ | `c2ce8e7` |
+| **10e** | Schema: `sub_report_id` (nullable) บน `report_variables`/`report_queries` + partial unique index 2 ตัวแทนตัวเดิม (`is_main` ต้อง scope ต่อ container ไม่ใช่ทั้ง report) — backend เท่านั้น, UI grouping ไปทำพร้อม 10g | ✅ | `e764a50` |
+| **10f** | ตัด `VALID_KINDS_BY_OUTPUT_TYPE` gate ออกจาก `/api/reports/[id]/files` ทั้งหมด (ไม่ rename enum) + แก้ `report-file-cache.ts` เป็น priority list — backend เท่านั้น, UI purpose-tag ไปทำพร้อม 10g | ✅ | `5240312` |
+| **10g** | แตก Param/Query/Sub/Doc/History เป็น shared component (`components/reportEditor/`) ใช้ร่วมกันทั้ง create/edit + `report-create` ปลดล็อกแท็บในหน้าเดิมทันทีหลัง save ครั้งแรก (ไม่ redirect) | ✅ | `11fcbe8` |
 
 **Resolved decisions (ผู้ใช้, 2026-08-23)**: Param = variables เดิม (ไม่แก้ schema); Query แยก Main/Sub ด้วย `is_main` เดิม; Sub = sub-report ใหม่ทั้งหมด (อัปโหลดไฟล์ดีไซน์ย่อยหรือลิงก์รายงานอื่น); Doc = files เดิม + เอกสารอ้างอิงใหม่ + Sharing ย้ายเข้ามา; History แยกเป็นแท็บของตัวเอง (ไม่รวมใน Doc); create/edit ใช้ tab shell เดียวกัน — ดูรายละเอียดเต็มใน `phase10-plan.md`
 
@@ -462,6 +466,43 @@
 - [x] แก้ redirect หลังสร้างสำเร็จจาก `router.push("/reports/report-list")` เป็น `router.push(\`/reports/report-edit/${data.data.id}\`)`
 - [x] ยืนยันสดแบบ end-to-end: สร้างรายงานจริงผ่าน `POST /api/reports/report/manage` (multipart เหมือนฟอร์มจริงส่ง) → ได้ id กลับมา → เปิด `report-edit/[id]` ของรายงานที่เพิ่งสร้างสำเร็จ 200 + endpoint ลูกทั้งหมด (queries/variables/sub-reports/versions/shares) คืนค่าว่างที่ถูกต้องสำหรับรายงานใหม่ → ลบรายงานทดสอบทิ้งหลังยืนยันเสร็จ
 - [x] `npx tsc --noEmit` = 0 error, `npm test` = 32/32 ผ่าน, `npm run build` = exit 0
+
+**รอบสอง (10d-10g) — ตามฟีดแบ็กหลังผู้ใช้รีวิว demo v1 จริง (`document/phase10-plan-fix.md`, 2026-08-23):**
+
+**10d ปิดจบแล้ว** (`c2ce8e7`):
+- [x] `components/ui/tabs.tsx` เพิ่ม `data-[orientation=vertical]:` variant ให้ `TabsList`/`TabsTrigger` (ไม่แก้ primitive เอง) + `report-edit/[id]` ใช้ `orientation="vertical"` พร้อม flex layout (rail ซ้าย 192px, เนื้อหาขวา)
+- [x] `lib/sql-analyze.ts` (ใหม่) — วิเคราะห์ SQL แบบ regex/scan (ไม่ใช่ parser จริง) ดึงตาราง/ฟิลด์/เงื่อนไข ต่อยอดจาก `lib/sql-highlight.ts`'s tokenizer เดิม — เจอ edge case จริงระหว่างเขียนเทสต์: `BETWEEN x AND y` ทำให้การตัดแบ่งเงื่อนไขด้วย `AND` แบบไร้เดียงสาพัง (`u.used_at BETWEEN :start_date` ถูกตัดออกจาก `:end_date`) แก้ด้วย `splitConditions()` ที่นับ `pendingBetween` แยกจาก `AND`/`OR` ทั่วไป
+- [x] `lib/sql-analyze.test.ts` (ใหม่) — 5 เทสต์ครอบคลุม query ปกติ, ไม่มี WHERE, BETWEEN+AND/OR ผสมกัน, non-SELECT statement (`ok:false`), garbage input (`ok:false` ไม่ throw)
+- [x] `components/shared/querySummary.tsx` (ใหม่) — แสดงสรุปแบบ chip เป็นค่าเริ่มต้น พร้อมปุ่ม "ดู SQL เต็ม" ขยาย `SqlBlock` เดิม, fallback ข้อความ "ไม่สามารถวิเคราะห์ได้" เมื่อ `analyzeSql` คืน `ok:false`
+- [x] ยืนยันสด: เปิดหน้า edit ผ่าน curl ได้ 200 ไม่มี error marker
+- [x] `npx tsc --noEmit` = 0 error, `npm test` = 37/37 ผ่าน (32 เดิม + 5 ใหม่), `npm run build` = exit 0
+
+**10e ปิดจบแล้ว** (`e764a50`):
+- [x] Schema: `sub_report_id` (nullable, FK → `report_sub_reports`, `onDelete: Cascade`) บน `report_variables` และ `report_queries` — migration `20260823092602_add_sub_report_scoping`
+- [x] แก้ partial unique index เดิม (`report_queries_one_main_per_report`, บังคับ "1 main query ต่อ 1 report") เป็น **2 ตัวแยกกัน**: `WHERE is_main AND sub_report_id IS NULL` (ต่อ `report_id`) กับ `WHERE is_main AND sub_report_id IS NOT NULL` (ต่อ `report_id, sub_report_id`) — เหตุผล: Postgres ไม่มองว่า `NULL = NULL` ใน unique index เลย ถ้าใช้ index เดียว `UNIQUE(report_id, sub_report_id) WHERE is_main` แถวที่ `sub_report_id IS NULL` หลายแถวจะไม่ชนกันเลย ทำให้ "1 main query ของรายงานหลัก" หลุดการบังคับไปเงียบๆ
+- [x] **เจอ `prisma migrate dev` ปฏิเสธรันแบบ non-interactive** ทันทีที่มี warning ("unique constraint...if duplicate values, this will fail") ต่างจาก 10a ที่ไม่มี warning เจอปัญหานี้ — แก้ด้วย `prisma migrate diff --from-config-datasource --to-schema --script` (ไม่ interactive) ดึง SQL diff ออกมาก่อน แล้วเขียน migration file มือ + `db execute` + `migrate resolve --applied` ตาม pattern เดียวกับที่ Phase 3e เคยใช้
+- [x] API: `queries`/`variables` route รับ/validate `sub_report_id`, scope การ demote `is_main` และ app-layer duplicate-name guard (`report_variables`) ด้วย `(report_id, sub_report_id)` แทน `report_id` เดี่ยวๆ
+- [x] ยืนยันสดด้วย curl ครบ: parameter ชื่อเดียวกันของรายงานหลักกับของ sub-report อยู่ร่วมกันได้จริง (409 เฉพาะตอนชนกันในขอบเขตเดียวกัน), main query ของ sub-report คงเป็น `is_main:true` อยู่ได้แม้รายงานหลักจะเปลี่ยน main query ของตัวเอง (พิสูจน์ container แยกกันจริง)
+- [x] `npx tsc --noEmit` = 0 error, `npm test` = 37/37 ผ่าน, `npm run build` = exit 0
+- UI grouping ตาม container (Param/Query tab) เลื่อนไปทำพร้อม 10g ตามที่บันทึกไว้ในแผน — หลีกเลี่ยงเขียน UI ซ้ำสองรอบ
+
+**10f ปิดจบแล้ว** (`5240312`):
+- [x] ลบ `VALID_KINDS_BY_OUTPUT_TYPE` ออกจาก `/api/reports/[id]/files` ทั้งหมด — ทุก kind ใช้ได้กับทุกรายงานไม่ว่า `output_type` จะเป็นอะไร
+- [x] **ตัดสินใจไม่ rename enum** (`BLANK_FORM`→`PRE_FORM` ฯลฯ) ตามที่แผน v3 เขียนไว้ทีแรก — grep เจอ 9 จุดในโค้ดจริงที่ผูกกับชื่อ enum เดิมด้วยเหตุผลที่ไม่เกี่ยวกับการแสดงผลเลย (`report-file-cache.ts`, `shares/[token]` fallback, การตั้งค่า max upload size 4 ไฟล์, `reportDetailView.tsx`) เปลี่ยนแค่ label ที่ UI พอ ผลลัพธ์เดียวกันแต่ blast radius เล็กกว่ามาก
+- [x] `lib/report-file-cache.ts`: `PRIMARY_KIND_BY_OUTPUT_TYPE` (keyed ด้วย output_type) → `PRIMARY_KIND_PRIORITY` (fixed list, ตัวแรกที่เจอ current ชนะ) เพราะ output_type ไม่ได้บ่งบอกว่ามี kind ไหนอยู่จริงอีกต่อไป
+- [x] **เจอบั๊กจริง 2 ตัวระหว่างยืนยันสด**: (1) `reportDetailView.tsx`'s `FILE_KIND_ORDER` ไม่เคยมี `REFERENCE_DOC` ตั้งแต่ 10a เพิ่มเข้ามา — เอกสารอ้างอิงไม่เคยโชว์ในหน้า report-detail ฝั่งผู้ใช้เลย แก้แล้ว; (2) `DELETE /api/reports/[id]/files` ไม่เคยเรียก `syncReportFileCache` เลยตั้งแต่แรก — ลบไฟล์ที่ cache ชี้อยู่แล้วปล่อยให้ `reports.file_path` ค้างชี้ไฟล์ที่ถูกลบไปแล้ว (เจอจริงระหว่างเทส ต้องกู้ข้อมูล report ทดสอบด้วย SQL ตรงๆ) แก้แล้ว
+- [x] ยืนยันสดด้วย curl: อัปโหลด `SAMPLE_DATA` ให้รายงาน `output_type=PRINT_FORM` (เดิมโดนปฏิเสธ) → สำเร็จ; อัปโหลด `BLANK_FORM` แล้วเช็ค `reports.file_path` ว่าอัปเดตตาม priority list จริง
+- [x] `npx tsc --noEmit` = 0 error, `npm test` = 37/37 ผ่าน, `npm run build` = exit 0
+- UI purpose-tag (Doc tab) เลื่อนไปทำพร้อม 10g เหมือน 10e
+
+**10g ปิดจบแล้ว** (`11fcbe8`) — **ปิด Phase 10 ครบทั้ง 7 sub-phase**:
+- [x] แตก Param/Query/Sub/Doc/History ออกจาก `report-edit/[id]/page.tsx` (เดิม ~1700 บรรทัดในไฟล์เดียว) เป็น 5 component แยกใต้ `components/reportEditor/` (`paramTab.tsx`, `queryTab.tsx`, `subTab.tsx`, `docTab.tsx`, `historyTab.tsx`) — แต่ละตัวรับแค่ `reportId` prop แล้ว fetch ข้อมูลของตัวเองตอน mount (self-contained, ไม่แชร์ state กับ parent) — `report-edit/[id]/page.tsx` เหลือแค่ Info tab + render 5 component นี้
+- [x] `ParamTab`/`QueryTab` ใช้ grouping ตาม container จริงเป็นครั้งแรกในหน้า UI (backend มาตั้งแต่ 10e) — จัดกลุ่ม "พารามิเตอร์/คิวรี่ของรายงานหลัก" กับ "...ของ Sub-report: [ชื่อ]" แยกกัน พร้อม selector ขอบเขตตอนเพิ่มใหม่
+- [x] `DocTab` ใช้ purpose-tag upload จริงเป็นครั้งแรก (backend มาตั้งแต่ 10f) — ช่องอัปโหลดเดียว เลือกประเภท (Pre-form/Preview/Sample Data/Reference doc) ก่อนแล้วค่อยเลือกไฟล์ ไม่มีปุ่ม "ตั้งเป็นหลัก" เลยตามที่ยืนยันไว้ใน Revision v3
+- [x] `report-create/page.tsx`: หลัง submit Info tab สำเร็จ **ไม่ redirect อีกต่อไป** — เก็บ id ที่ได้ไว้ใน state (`createdId`) แล้ว render 5 component เดียวกันในหน้าเดิมทันที ฟิลด์ Info tab เปลี่ยนเป็น disabled (อ่านอย่างเดียว) พร้อมลิงก์ไปหน้า `report-edit/[id]` เต็มรูปแบบถ้าต้องแก้ข้อมูลพื้นฐานเพิ่ม (เพื่อไม่ให้กด "Create" ซ้ำสร้างรายงานซ้อน)
+- [x] ยืนยันสดแบบ end-to-end เต็มรูปแบบ: สร้างรายงานทดสอบ (`output_type=PRINT_FORM`) → เพิ่ม parameter/main query/sub-report(อัปโหลด)/เอกสาร `SAMPLE_DATA` (gate หลุดแล้วจริง) ต่อกันทันทีด้วย id เดียวกันไม่มีการ navigate เลย → เปิด `report-edit/[id]` ของรายงานเดียวกันเห็นข้อมูลครบทุกอย่างผ่าน shared component ชุดเดียวกัน → ลบรายงานทดสอบ+ไฟล์ทิ้งหลังยืนยันเสร็จ
+- [x] `npx tsc --noEmit` = 0 error, `npm test` = 37/37 ผ่าน, `npm run build` = exit 0
+- ⚠️ ไม่มี browser tool ในเซสชันนี้เหมือนเดิม (ผู้ใช้เลือก "เช็คเองแทน" ตอนถูกถามรอบสอง) — ยืนยันด้วย curl/tsc/build + อ่านโค้ดที่ extract ออกมาอย่างละเอียดว่า logic ตรงกับต้นฉบับทุกจุด ยังไม่เห็นการคลิกสลับแท็บจริง/drag-drop ไฟล์จริงในเบราว์เซอร์
 
 ---
 
