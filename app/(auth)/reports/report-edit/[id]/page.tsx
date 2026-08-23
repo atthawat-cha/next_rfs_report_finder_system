@@ -27,7 +27,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Separator } from "@/components/ui/separator";
 import { Checkbox } from "@/components/ui/checkbox";
 import FileUpload, { AllowedFileType } from "@/components/shared/fileuploading";
-import { SqlBlock } from "@/components/shared/sqlBlock";
+import { QuerySummary } from "@/components/shared/querySummary";
 import { ReportPermissionsDrawer } from "@/components/shared/reportPermissionsDrawer";
 import {
   Loader2,
@@ -795,8 +795,8 @@ export default function ReportEdit() {
         onOpenChange={setPermissionsOpen}
       />
 
-      <Tabs defaultValue="info">
-        <TabsList>
+      <Tabs defaultValue="info" orientation="vertical" className="flex items-start gap-6">
+        <TabsList className="w-48 flex-none sticky top-4">
           <TabsTrigger value="info">Info</TabsTrigger>
           <TabsTrigger value="param">Param</TabsTrigger>
           <TabsTrigger value="query">Query</TabsTrigger>
@@ -806,7 +806,7 @@ export default function ReportEdit() {
         </TabsList>
 
         {/* ══════════════════ INFO ══════════════════ */}
-        <TabsContent value="info">
+        <TabsContent value="info" className="mt-0 flex-1 min-w-0">
           <form onSubmit={handleSaveMetadata} noValidate>
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 items-start">
               <Card>
@@ -960,7 +960,7 @@ export default function ReportEdit() {
         </TabsContent>
 
         {/* ══════════════════ PARAM ══════════════════ */}
-        <TabsContent value="param">
+        <TabsContent value="param" className="mt-0 flex-1 min-w-0">
           <Card>
             <CardHeader className="pb-4">
               <div className="flex items-center gap-2">
@@ -1106,7 +1106,7 @@ export default function ReportEdit() {
         </TabsContent>
 
         {/* ══════════════════ QUERY ══════════════════ */}
-        <TabsContent value="query">
+        <TabsContent value="query" className="mt-0 flex-1 min-w-0">
           <Card>
             <CardHeader className="pb-4">
               <div className="flex items-center gap-2">
@@ -1144,7 +1144,7 @@ export default function ReportEdit() {
                           </Button>
                         </div>
                       </div>
-                      <SqlBlock sql={mainQuery.sql_text} maxHeight="16rem" />
+                      <QuerySummary sql={mainQuery.sql_text} maxHeight="16rem" />
                     </>
                   )}
                 </div>
@@ -1189,7 +1189,7 @@ export default function ReportEdit() {
                           </Button>
                         </div>
                       </div>
-                      <SqlBlock sql={q.sql_text} maxHeight="16rem" />
+                      <QuerySummary sql={q.sql_text} maxHeight="16rem" />
                     </>
                   )}
                 </div>
@@ -1227,7 +1227,7 @@ export default function ReportEdit() {
         </TabsContent>
 
         {/* ══════════════════ SUB (SUB-REPORTS) ══════════════════ */}
-        <TabsContent value="sub">
+        <TabsContent value="sub" className="mt-0 flex-1 min-w-0">
           <Card>
             <CardHeader className="pb-4">
               <div className="flex items-center gap-2">
@@ -1381,7 +1381,7 @@ export default function ReportEdit() {
         </TabsContent>
 
         {/* ══════════════════ DOC ══════════════════ */}
-        <TabsContent value="doc">
+        <TabsContent value="doc" className="mt-0 flex-1 min-w-0">
           <Card>
             <CardHeader className="pb-4">
               <div className="flex items-center gap-2">
@@ -1582,7 +1582,7 @@ export default function ReportEdit() {
         </TabsContent>
 
         {/* ══════════════════ HISTORY ══════════════════ */}
-        <TabsContent value="history">
+        <TabsContent value="history" className="mt-0 flex-1 min-w-0">
           <Card>
             <CardHeader className="pb-4">
               <div className="flex items-center gap-2">
