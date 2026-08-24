@@ -1,6 +1,7 @@
 {
   "activity": {
     "pageTitle": "บันทึกกิจกรรม",
+    "breadcrumbUsersManagement": "จัดการผู้ใช้งาน",
     "cardTitle": "บันทึกกิจกรรม",
     "totalCount": "ทั้งหมด {count} รายการ",
     "userLabel": "ผู้ใช้",

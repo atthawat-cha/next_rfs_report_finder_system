@@ -17,6 +17,7 @@ import { Field, FieldLabel } from "@/components/ui/field";
 import { Switch } from "@/components/ui/switch";
 import { Loader2 } from "lucide-react";
 import toast from "react-hot-toast";
+import { useTranslations } from "next-intl";
 import type { CategoryRow } from "./categoryTypes";
 
 interface FormState {
@@ -55,6 +56,8 @@ export function CategoryFormDialog({
   category: CategoryRow | null;
   onSaved: () => void;
 }) {
+  const t = useTranslations("reports.categories.form");
+  const tc = useTranslations("common");
   const [form, setForm] = React.useState<FormState>(EMPTY_FORM);
   const [saving, setSaving] = React.useState(false);
 
@@ -66,7 +69,7 @@ export function CategoryFormDialog({
 
   const handleSubmit = async () => {
     if (!form.name.trim() || !form.code.trim()) {
-      toast.error("กรุณากรอกชื่อและโค้ด");
+      toast.error(t("missingFields"));
       return;
     }
     setSaving(true);
@@ -89,10 +92,10 @@ export function CategoryFormDialog({
       const json = await res.json();
       if (!res.ok || !json?.success) {
         const message = Array.isArray(json?.error) ? json.error[0]?.message : json?.error;
-        toast.error(message ?? "บันทึกไม่สำเร็จ");
+        toast.error(message ?? t("saveFailed"));
         return;
       }
-      toast.success(isEdit ? "แก้ไขหมวดหมู่เรียบร้อย" : "สร้างหมวดหมู่เรียบร้อย");
+      toast.success(isEdit ? t("editSuccess") : t("createSuccess"));
       onOpenChange(false);
       onSaved();
     } finally {
@@ -104,13 +107,13 @@ export function CategoryFormDialog({
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-lg">
         <DialogHeader>
-          <DialogTitle>{isEdit ? "แก้ไขหมวดหมู่" : "สร้างหมวดหมู่ใหม่"}</DialogTitle>
-          <DialogDescription>จัดการหมวดหมู่รายงาน</DialogDescription>
+          <DialogTitle>{isEdit ? t("editTitle") : t("createTitle")}</DialogTitle>
+          <DialogDescription>{t("description")}</DialogDescription>
         </DialogHeader>
 
         <div className="space-y-3">
           <div className="space-y-1.5">
-            <Label htmlFor="cat_name">ชื่อ</Label>
+            <Label htmlFor="cat_name">{tc("name")}</Label>
             <Input
               id="cat_name"
               value={form.name}
@@ -119,7 +122,7 @@ export function CategoryFormDialog({
             />
           </div>
           <div className="space-y-1.5">
-            <Label htmlFor="cat_code">รหัส</Label>
+            <Label htmlFor="cat_code">{tc("code")}</Label>
             <Input
               id="cat_code"
               value={form.code}
@@ -128,7 +131,7 @@ export function CategoryFormDialog({
             />
           </div>
           <div className="space-y-1.5">
-            <Label htmlFor="cat_description">คำอธิบาย</Label>
+            <Label htmlFor="cat_description">{tc("description")}</Label>
             <Textarea
               id="cat_description"
               rows={3}
@@ -144,17 +147,17 @@ export function CategoryFormDialog({
               onCheckedChange={(checked) => setForm((prev) => ({ ...prev, is_active: checked }))}
               disabled={saving}
             />
-            <FieldLabel htmlFor="cat_status">{form.is_active ? "ใช้งาน" : "ไม่ใช้งาน"}</FieldLabel>
+            <FieldLabel htmlFor="cat_status">{form.is_active ? tc("active") : tc("inactive")}</FieldLabel>
           </Field>
         </div>
 
         <DialogFooter>
           <Button variant="outline" onClick={() => onOpenChange(false)} disabled={saving}>
-            ยกเลิก
+            {tc("cancel")}
           </Button>
           <Button onClick={handleSubmit} disabled={saving}>
             {saving && <Loader2 className="h-4 w-4 mr-2 animate-spin" />}
-            บันทึก
+            {tc("save")}
           </Button>
         </DialogFooter>
       </DialogContent>

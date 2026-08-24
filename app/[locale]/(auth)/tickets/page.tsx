@@ -20,6 +20,7 @@ import type { TicketRow } from './components/ticketTypes'
 export default function MyTicketsPage() {
   const t = useTranslations('tickets.myTickets');
   const tCol = useTranslations('tickets.columns');
+  const tc = useTranslations('common');
   const [tickets, setTickets] = React.useState<TicketRow[]>([]);
   const [loading, setLoading] = React.useState(true);
   const [createOpen, setCreateOpen] = React.useState(false);
@@ -41,7 +42,10 @@ export default function MyTicketsPage() {
   return (
     <ContentLayout title={t('pageTitle')}>
       <div className="w-full item-center my-2">
-        <DefaultBreadcrumb />
+        <DefaultBreadcrumb items={[
+          { label: tc('breadcrumbDashboard'), href: '/dashboard' },
+          { label: t('pageTitle') },
+        ]} />
       </div>
 
       <Card className="container mx-auto py-10 gap-6 mt-5">

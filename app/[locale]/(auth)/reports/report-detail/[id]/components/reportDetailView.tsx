@@ -20,6 +20,7 @@ import { ReportFilePreview, isPdfFile, type ReportFilePreviewFile } from "@/comp
 import { ReportPermissionsDrawer } from "@/components/shared/reportPermissionsDrawer";
 import { formatDateTime } from "@/lib/utils";
 import { Loader2, Download, Printer, Eye, FileText, ShieldCheck } from "lucide-react";
+import { useTranslations } from "next-intl";
 
 interface ReportDetailAcl {
   can_view: boolean;
@@ -58,22 +59,6 @@ interface ReportQuery {
 }
 
 const FILE_KIND_ORDER = ["BLANK_FORM", "SAMPLE_FILLED_FORM", "SAMPLE_DATA", "REFERENCE_DOC"] as const;
-const FILE_KIND_LABELS: Record<string, string> = {
-  BLANK_FORM: "Pre-form (แบบฟอร์มเปล่า)",
-  SAMPLE_FILLED_FORM: "Preview (ตัวอย่างที่กรอกแล้ว)",
-  SAMPLE_DATA: "Sample Data (ไฟล์ข้อมูลตัวอย่าง)",
-  REFERENCE_DOC: "เอกสารอ้างอิงเพิ่มเติม",
-};
-const STATUS_LABEL: Record<string, string> = {
-  DRAFT: "แบบร่าง",
-  PUBLISHED: "เผยแพร่แล้ว",
-  ARCHIVED: "เก็บถาวร",
-};
-const ACCESS_LABEL: Record<string, string> = {
-  PUBLIC: "สาธารณะ",
-  RESTRICTED: "จำกัดสิทธิ์",
-  PRIVATE: "ส่วนตัว",
-};
 
 function formatBytes(bytes: number): string {
   if (!Number.isFinite(bytes) || bytes <= 0) return "0 B";
@@ -83,6 +68,8 @@ function formatBytes(bytes: number): string {
 }
 
 export default function ReportDetailView({ reportId, isAdmin }: { reportId: string; isAdmin: boolean }) {
+  const t = useTranslations("reports.detail");
+  const tc = useTranslations("common");
   const [loading, setLoading] = React.useState(true);
   const [notFound, setNotFound] = React.useState(false);
   const [report, setReport] = React.useState<ReportDetailData | null>(null);
@@ -164,9 +151,9 @@ export default function ReportDetailView({ reportId, isAdmin }: { reportId: stri
 
   if (loading) {
     return (
-      <ContentLayout title="รายละเอียดรายงาน">
+      <ContentLayout title={t("pageTitle")}>
         <div className="flex items-center justify-center py-24 text-muted-foreground">
-          <Loader2 className="h-5 w-5 animate-spin mr-2" /> กำลังโหลด...
+          <Loader2 className="h-5 w-5 animate-spin mr-2" /> {t("loading")}
         </div>
       </ContentLayout>
     );
@@ -174,10 +161,10 @@ export default function ReportDetailView({ reportId, isAdmin }: { reportId: stri
 
   if (notFound || !report) {
     return (
-      <ContentLayout title="รายละเอียดรายงาน">
+      <ContentLayout title={t("pageTitle")}>
         <div className="py-24 text-center text-muted-foreground space-y-1">
-          <p>ไม่พบรายงาน</p>
-          {adminEmail && <p className="text-sm">หากคิดว่านี่คือข้อผิดพลาด กรุณาติดต่อ {adminEmail}</p>}
+          <p>{t("notFoundTitle")}</p>
+          {adminEmail && <p className="text-sm">{t("notFoundContact", { email: adminEmail })}</p>}
         </div>
       </ContentLayout>
     );
@@ -190,18 +177,18 @@ export default function ReportDetailView({ reportId, isAdmin }: { reportId: stri
   })).filter((g) => g.files.length > 0);
 
   return (
-    <ContentLayout title="รายละเอียดรายงาน">
+    <ContentLayout title={t("pageTitle")}>
       <Breadcrumb>
         <BreadcrumbList>
           <BreadcrumbItem>
             <BreadcrumbLink asChild>
-              <Link href="/dashboard">แดชบอร์ด</Link>
+              <Link href="/dashboard">{tc("breadcrumbDashboard")}</Link>
             </BreadcrumbLink>
           </BreadcrumbItem>
           <BreadcrumbSeparator />
           <BreadcrumbItem>
             <BreadcrumbLink asChild>
-              <Link href="/reports/report-list">รายงาน</Link>
+              <Link href="/reports/report-list">{t("breadcrumbReports")}</Link>
             </BreadcrumbLink>
           </BreadcrumbItem>
           <BreadcrumbSeparator />
@@ -221,11 +208,11 @@ export default function ReportDetailView({ reportId, isAdmin }: { reportId: stri
               </div>
               <div className="flex flex-wrap items-center gap-2">
                 <Badge variant="outline">{report.code}</Badge>
-                <Badge>{STATUS_LABEL[report.status] ?? report.status}</Badge>
-                <Badge variant="secondary">{ACCESS_LABEL[report.access_level] ?? report.access_level}</Badge>
+                <Badge>{t(`status.${report.status}`)}</Badge>
+                <Badge variant="secondary">{t(`access.${report.access_level}`)}</Badge>
                 {isAdmin && (
                   <Button size="sm" variant="outline" onClick={() => setPermissionsOpen(true)}>
-                    <ShieldCheck className="h-4 w-4 mr-1" /> จัดการสิทธิ์
+                    <ShieldCheck className="h-4 w-4 mr-1" /> {t("managePermissions")}
                   </Button>
                 )}
               </div>
@@ -236,27 +223,27 @@ export default function ReportDetailView({ reportId, isAdmin }: { reportId: stri
             <Separator />
             <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 text-sm">
               <div>
-                <p className="text-muted-foreground">หมวดหมู่</p>
+                <p className="text-muted-foreground">{t("categoryLabel")}</p>
                 <p>{report.categories?.name ?? "-"}</p>
               </div>
               <div>
-                <p className="text-muted-foreground">แผนก</p>
+                <p className="text-muted-foreground">{t("departmentLabel")}</p>
                 <p>{report.departments?.name ?? "-"}</p>
               </div>
               <div>
-                <p className="text-muted-foreground">เวอร์ชัน</p>
+                <p className="text-muted-foreground">{t("versionLabel")}</p>
                 <p>{report.version}</p>
               </div>
               <div>
-                <p className="text-muted-foreground">เข้าชม / ดาวน์โหลด</p>
+                <p className="text-muted-foreground">{t("viewsDownloadsLabel")}</p>
                 <p>{report.view_count} / {report.download_count}</p>
               </div>
               <div>
-                <p className="text-muted-foreground">สร้างเมื่อ</p>
+                <p className="text-muted-foreground">{t("createdAtLabel")}</p>
                 <p>{formatDateTime(report.created_at)}</p>
               </div>
               <div>
-                <p className="text-muted-foreground">แก้ไขล่าสุด</p>
+                <p className="text-muted-foreground">{t("updatedAtLabel")}</p>
                 <p>{formatDateTime(report.updated_at)}</p>
               </div>
             </div>
@@ -265,15 +252,15 @@ export default function ReportDetailView({ reportId, isAdmin }: { reportId: stri
 
         <Card>
           <CardHeader>
-            <CardTitle>ไฟล์รายงาน</CardTitle>
+            <CardTitle>{t("filesTitle")}</CardTitle>
           </CardHeader>
           <CardContent className="space-y-6">
             {groupedFiles.length === 0 && (
-              <p className="text-sm text-muted-foreground">ไม่มีไฟล์สำหรับรายงานนี้</p>
+              <p className="text-sm text-muted-foreground">{t("noFiles")}</p>
             )}
             {groupedFiles.map(({ kind, files }) => (
               <div key={kind} className="space-y-2">
-                <h3 className="text-sm font-medium">{FILE_KIND_LABELS[kind] ?? kind}</h3>
+                <h3 className="text-sm font-medium">{t(`fileKind.${kind}`)}</h3>
                 <div className="space-y-1">
                   {files.map((file) => (
                     <div
@@ -287,7 +274,7 @@ export default function ReportDetailView({ reportId, isAdmin }: { reportId: stri
                       </div>
                       <div className="flex gap-1">
                         <Button size="sm" variant="ghost" onClick={() => setPreviewFileId(file.id)}>
-                          <Eye className="h-4 w-4 mr-1" /> ดูตัวอย่าง
+                          <Eye className="h-4 w-4 mr-1" /> {t("preview")}
                         </Button>
                         {report.acl.can_export && (
                           <Button size="sm" variant="ghost" asChild>
@@ -296,13 +283,13 @@ export default function ReportDetailView({ reportId, isAdmin }: { reportId: stri
                               target="_blank"
                               rel="noreferrer"
                             >
-                              <Download className="h-4 w-4 mr-1" /> ดาวน์โหลด
+                              <Download className="h-4 w-4 mr-1" /> {t("download")}
                             </a>
                           </Button>
                         )}
                         {report.acl.can_print && isPdfFile(file) && (
                           <Button size="sm" variant="ghost" onClick={() => handlePrint(file.id)}>
-                            <Printer className="h-4 w-4 mr-1" /> พิมพ์
+                            <Printer className="h-4 w-4 mr-1" /> {t("print")}
                           </Button>
                         )}
                       </div>
@@ -323,23 +310,23 @@ export default function ReportDetailView({ reportId, isAdmin }: { reportId: stri
         {isAdmin && (
           <Card>
             <CardHeader>
-              <CardTitle>คำสั่ง SQL (Queries)</CardTitle>
-              <CardDescription>สำหรับผู้ดูแลระบบเท่านั้น — เอกสารอ้างอิง ไม่ถูกรันโดยระบบ</CardDescription>
+              <CardTitle>{t("queriesTitle")}</CardTitle>
+              <CardDescription>{t("queriesDescription")}</CardDescription>
             </CardHeader>
             <CardContent className="space-y-4">
               {queries === null && (
                 <div className="flex items-center text-sm text-muted-foreground">
-                  <Loader2 className="h-4 w-4 animate-spin mr-2" /> กำลังโหลด...
+                  <Loader2 className="h-4 w-4 animate-spin mr-2" /> {t("loading")}
                 </div>
               )}
               {queries !== null && queries.length === 0 && (
-                <p className="text-sm text-muted-foreground">ไม่มีคำสั่ง SQL สำหรับรายงานนี้</p>
+                <p className="text-sm text-muted-foreground">{t("noQueries")}</p>
               )}
               {queries?.map((q) => (
                 <div key={q.id} className="space-y-1">
                   <div className="flex items-center gap-2">
                     <span className="text-sm font-medium">{q.name}</span>
-                    {q.is_main && <Badge className="text-[10px]">หลัก</Badge>}
+                    {q.is_main && <Badge className="text-[10px]">{t("mainBadge")}</Badge>}
                     <span className="text-xs text-muted-foreground">v{q.version}</span>
                   </div>
                   <SqlBlock sql={q.sql_text} maxHeight="16rem" />

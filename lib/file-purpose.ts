@@ -16,12 +16,16 @@ export const FILE_PURPOSE_LABEL: Record<FilePurpose, string> = {
   REFERENCE_DOC: "Reference doc",
 };
 
-export const FILE_PURPOSE_DESCRIPTION: Record<FilePurpose, string> = {
-  BLANK_FORM: "แบบฟอร์มเปล่าไว้โหลดไปกรอก",
-  SAMPLE_FILLED_FORM: "เอกสารไว้พรีวิว (เช่นตัวอย่างที่กรอกแล้ว)",
-  SAMPLE_DATA: "ตัวอย่างข้อมูล (Excel/CSV)",
-  REFERENCE_DOC: "เอกสารอ้างอิงอื่นๆ (มีได้หลายไฟล์)",
-};
+/**
+ * Descriptions are prose (unlike the short FILE_PURPOSE_LABEL tags above,
+ * which stay untranslated by design - same convention as the Info/Param/
+ * Query/Sub/Doc tab labels), so they come from the "reports.filePurpose"
+ * message namespace instead of a hardcoded Thai record - pass the `t`
+ * from useTranslations("reports.filePurpose").
+ */
+export function getFilePurposeDescription(t: (key: string) => string, purpose: FilePurpose): string {
+  return t(`${purpose}.description`);
+}
 
 /** Only REFERENCE_DOC allows more than one current file at a time. */
 export function isMultiFilePurpose(purpose: FilePurpose): boolean {

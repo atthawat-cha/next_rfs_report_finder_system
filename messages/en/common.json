@@ -22,6 +22,10 @@
   "createdAt": "Created At",
   "noResults": "No results.",
   "back": "Back",
+  "copy": "Copy",
+  "copied": "Copied",
+  "searchPlaceholder": "Search...",
+  "resultsCount": "{count} results",
   "breadcrumbHome": "Home",
   "breadcrumbDashboard": "Dashboard",
   "blankPage": {

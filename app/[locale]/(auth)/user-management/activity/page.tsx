@@ -43,6 +43,7 @@ const PAGE_SIZE = 20;
 
 export default function UsersActivityLog() {
   const t = useTranslations('userManagement.activity');
+  const tc = useTranslations('common');
   const [logs, setLogs] = useState<ActivityLogRow[]>([]);
   const [users, setUsers] = useState<ActivityLogUser[]>([]);
   const [page, setPage] = useState(1);
@@ -96,7 +97,11 @@ export default function UsersActivityLog() {
   return (
     <ContentLayout title={t('pageTitle')}>
       <div className="w-full item-center my-2">
-        <DefaultBreadcrumb />
+        <DefaultBreadcrumb items={[
+          { label: tc('breadcrumbDashboard'), href: '/dashboard' },
+          { label: t('breadcrumbUsersManagement'), href: '/user-management/user-list' },
+          { label: t('pageTitle') },
+        ]} />
       </div>
 
       <Card className="container mx-auto py-10 gap-6 mt-5">

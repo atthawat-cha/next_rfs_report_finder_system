@@ -44,5 +44,14 @@
     "selectRolePlaceholder": "เลือกบทบาท",
     "saveSuccess": "บันทึกสิทธิ์เรียบร้อย",
     "saveError": "บันทึกไม่สำเร็จ"
+  },
+  "form": {
+    "heading": "สิทธิ์การใช้งาน",
+    "description": "เลือกสิทธิ์ที่ต้องการ",
+    "selectAll": "เลือกทั้งหมด",
+    "view": "ดู",
+    "create": "สร้าง",
+    "update": "แก้ไข",
+    "delete": "ลบ"
   }
 }

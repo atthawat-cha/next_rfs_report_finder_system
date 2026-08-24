@@ -4,6 +4,7 @@ import {
     InputGroupInput,
 } from "@/components/ui/input-group"
 import { Search } from "lucide-react"
+import { useTranslations } from "next-intl"
 
 type Prop = {
     onSearch: (search: string) => void;
@@ -12,17 +13,18 @@ type Prop = {
 }
 
 export function SearchInput({ onSearch, countRes, defaultValue }: Prop) {
+    const tc = useTranslations("common");
     return (
         <InputGroup className="max-w-xs">
             <InputGroupInput
-                placeholder="ค้นหา..."
+                placeholder={tc("searchPlaceholder")}
                 defaultValue={defaultValue}
                 onChange={(e) => onSearch(e.target.value)}
             />
             <InputGroupAddon>
                 <Search />
             </InputGroupAddon>
-            <InputGroupAddon align="inline-end">{countRes} รายการ</InputGroupAddon>
+            <InputGroupAddon align="inline-end">{tc("resultsCount", { count: countRes })}</InputGroupAddon>
         </InputGroup>
     )
 }

@@ -1,1 +1,228 @@
-{}
+{
+  "list": {
+    "pageTitle": "รายการรายงาน",
+    "viewList": "รายการ",
+    "viewCard": "การ์ด",
+    "createButton": "สร้างรายงาน",
+    "pageInfo": "หน้า {page} จาก {totalPages}",
+    "previous": "ก่อนหน้า",
+    "next": "ถัดไป",
+    "addFavoriteFailed": "เพิ่มรายการโปรดไม่สำเร็จ",
+    "addFavoriteSuccess": "เพิ่มเป็นรายการโปรดแล้ว",
+    "columns": {
+      "department": "แผนก",
+      "version": "เวอร์ชัน",
+      "noData": "ไม่มีข้อมูล",
+      "view": "ดู",
+      "preview": "ดูตัวอย่าง",
+      "download": "ดาวน์โหลด",
+      "permissions": "สิทธิ์การใช้งาน",
+      "addToFavorites": "เพิ่มในรายการโปรด"
+    }
+  },
+  "favorites": {
+    "pageTitle": "รายงานโปรด",
+    "removeFailed": "ลบออกจากรายการโปรดไม่สำเร็จ",
+    "removeSuccess": "ลบออกจากรายการโปรดแล้ว",
+    "removeFromFavorites": "นำออกจากรายการโปรด"
+  },
+  "categories": {
+    "pageTitle": "หมวดหมู่รายงาน",
+    "newCategory": "เพิ่มหมวดหมู่",
+    "form": {
+      "editTitle": "แก้ไขหมวดหมู่",
+      "createTitle": "สร้างหมวดหมู่ใหม่",
+      "description": "จัดการหมวดหมู่รายงาน",
+      "missingFields": "กรุณากรอกชื่อและโค้ด",
+      "saveFailed": "บันทึกไม่สำเร็จ",
+      "editSuccess": "แก้ไขหมวดหมู่เรียบร้อย",
+      "createSuccess": "สร้างหมวดหมู่เรียบร้อย"
+    },
+    "delete": {
+      "title": "ลบหมวดหมู่",
+      "description": "ลบ \"{name}\" ({code}) — ลบไม่ได้ถ้ามีรายงานหรือหมวดหมู่ย่อยอ้างอิงอยู่",
+      "deleteFailed": "ลบไม่สำเร็จ",
+      "deleteSuccess": "ลบหมวดหมู่เรียบร้อย"
+    }
+  },
+  "tags": {
+    "pageTitle": "แท็กรายงาน",
+    "newTag": "เพิ่มแท็ก",
+    "form": {
+      "editTitle": "แก้ไขแท็ก",
+      "createTitle": "สร้างแท็กใหม่",
+      "description": "จัดการแท็กรายงาน",
+      "missingFields": "กรุณากรอกชื่อและ slug",
+      "saveFailed": "บันทึกไม่สำเร็จ",
+      "editSuccess": "แก้ไขแท็กเรียบร้อย",
+      "createSuccess": "สร้างแท็กเรียบร้อย"
+    },
+    "delete": {
+      "title": "ลบแท็ก",
+      "description": "ลบ \"{name}\" — รายงานที่มีแท็กนี้จะถูกตัดออกจากแท็กนี้ (ไม่กระทบตัวรายงาน)",
+      "deleteFailed": "ลบไม่สำเร็จ",
+      "deleteSuccess": "ลบแท็กเรียบร้อย"
+    }
+  },
+  "detail": {
+    "pageTitle": "รายละเอียดรายงาน",
+    "loading": "กำลังโหลด...",
+    "notFoundTitle": "ไม่พบรายงาน",
+    "notFoundContact": "หากคิดว่านี่คือข้อผิดพลาด กรุณาติดต่อ {email}",
+    "breadcrumbReports": "รายงาน",
+    "managePermissions": "จัดการสิทธิ์",
+    "categoryLabel": "หมวดหมู่",
+    "departmentLabel": "แผนก",
+    "versionLabel": "เวอร์ชัน",
+    "viewsDownloadsLabel": "เข้าชม / ดาวน์โหลด",
+    "createdAtLabel": "สร้างเมื่อ",
+    "updatedAtLabel": "แก้ไขล่าสุด",
+    "filesTitle": "ไฟล์รายงาน",
+    "noFiles": "ไม่มีไฟล์สำหรับรายงานนี้",
+    "preview": "ดูตัวอย่าง",
+    "download": "ดาวน์โหลด",
+    "print": "พิมพ์",
+    "queriesTitle": "คำสั่ง SQL (Queries)",
+    "queriesDescription": "สำหรับผู้ดูแลระบบเท่านั้น — เอกสารอ้างอิง ไม่ถูกรันโดยระบบ",
+    "noQueries": "ไม่มีคำสั่ง SQL สำหรับรายงานนี้",
+    "mainBadge": "หลัก",
+    "status": {
+      "DRAFT": "แบบร่าง",
+      "PUBLISHED": "เผยแพร่แล้ว",
+      "ARCHIVED": "เก็บถาวร"
+    },
+    "access": {
+      "PUBLIC": "สาธารณะ",
+      "RESTRICTED": "จำกัดสิทธิ์",
+      "PRIVATE": "ส่วนตัว"
+    },
+    "fileKind": {
+      "BLANK_FORM": "Pre-form (แบบฟอร์มเปล่า)",
+      "SAMPLE_FILLED_FORM": "Preview (ตัวอย่างที่กรอกแล้ว)",
+      "SAMPLE_DATA": "Sample Data (ไฟล์ข้อมูลตัวอย่าง)",
+      "REFERENCE_DOC": "เอกสารอ้างอิงเพิ่มเติม"
+    }
+  },
+  "filePurpose": {
+    "BLANK_FORM": { "description": "แบบฟอร์มเปล่าไว้โหลดไปกรอก" },
+    "SAMPLE_FILLED_FORM": { "description": "เอกสารไว้พรีวิว (เช่นตัวอย่างที่กรอกแล้ว)" },
+    "SAMPLE_DATA": { "description": "ตัวอย่างข้อมูล (Excel/CSV)" },
+    "REFERENCE_DOC": { "description": "เอกสารอ้างอิงอื่นๆ (มีได้หลายไฟล์)" }
+  },
+  "permissionsDrawer": {
+    "title": "จัดการสิทธิ์การเข้าถึงรายงาน",
+    "description": "กำหนดสิทธิ์ดู/แก้ไข/ลบ/บุ๊กมาร์ก/ส่งออก/พิมพ์ ต่อผู้ใช้หรือบทบาท — สิทธิ์รายบุคคลมีผลเหนือกว่าสิทธิ์ตามบทบาทเสมอ",
+    "loading": "กำลังโหลด...",
+    "forbidden": "คุณไม่มีสิทธิ์เข้าถึงส่วนนี้",
+    "flags": {
+      "can_view": "ดู",
+      "can_edit": "แก้ไข",
+      "can_delete": "ลบ",
+      "can_favorite": "รายการโปรด",
+      "can_export": "ส่งออก",
+      "can_print": "พิมพ์"
+    },
+    "grantedTo": "สิทธิ์ของ",
+    "noGrants": "ยังไม่มีสิทธิ์ที่กำหนดไว้",
+    "delete": "ลบ",
+    "cancel": "ยกเลิก",
+    "addNewTitle": "เพิ่มสิทธิ์ใหม่",
+    "subjectTypeUser": "ผู้ใช้",
+    "subjectTypeRole": "บทบาท",
+    "searchUserPlaceholder": "ค้นหาผู้ใช้...",
+    "searchRolePlaceholder": "ค้นหาบทบาท...",
+    "noSubjectResults": "ไม่พบรายการ",
+    "errors": {
+      "saveFailed": "บันทึกไม่สำเร็จ",
+      "addFailed": "เพิ่มสิทธิ์ไม่สำเร็จ",
+      "deleteFailed": "ลบไม่สำเร็จ"
+    }
+  },
+  "previewDialog": {
+    "loading": "กำลังโหลด...",
+    "noFiles": "ไม่มีไฟล์สำหรับรายงานนี้",
+    "print": "พิมพ์",
+    "download": "ดาวน์โหลด"
+  },
+  "filePreview": {
+    "loadingTable": "กำลังโหลดตาราง...",
+    "previewFailed": "ไม่สามารถแสดงตัวอย่างไฟล์นี้ได้",
+    "unsupported": "ไฟล์ประเภทนี้ไม่รองรับการแสดงตัวอย่าง — ดาวน์โหลดเพื่อเปิดไฟล์"
+  },
+  "editor": {
+    "createPageTitle": "สร้างรายงาน",
+    "editPageTitle": "แก้ไขรายงาน",
+    "createHeading": "สร้างรายงาน",
+    "editHeading": "แก้ไขรายงาน",
+    "createSubtitleLocked": "บันทึกข้อมูลพื้นฐานสำเร็จแล้ว — จัดการ Param/Query/Sub/Doc/History ต่อได้เลย",
+    "createSubtitleUnlocked": "กรอกรายละเอียดด้านล่างเพื่อแชร์รายงานให้กับองค์กรของคุณ",
+    "outputTypeSummary": "ประเภทผลลัพธ์: {type} (กำหนดตอนสร้าง แก้ไม่ได้)",
+    "managePermissions": "จัดการสิทธิ์",
+    "saveFirstHint": "บันทึกข้อมูลพื้นฐานก่อน",
+    "cardTitle": "ข้อมูลรายงาน",
+    "cardDescription": "ข้อมูลพื้นฐานของรายงาน",
+    "codeLabel": "รหัส",
+    "codePlaceholder": "เช่น Anes-0001",
+    "codeHint": "รูปแบบ: แผนก-XXXX",
+    "nameLabel": "ชื่อ",
+    "namePlaceholder": "ระบุชื่อรายงาน",
+    "categoryLabel": "หมวดหมู่",
+    "categoryPlaceholder": "เลือกหมวดหมู่",
+    "departmentLabel": "แผนก",
+    "departmentPlaceholder": "เลือกแผนก",
+    "outputTypeLabel": "ประเภทผลลัพธ์",
+    "outputTypePlaceholder": "เลือกประเภทผลลัพธ์",
+    "outputTypeHint": "กำหนดครั้งเดียวตอนสร้าง เปลี่ยนไม่ได้ทีหลัง",
+    "outputTypeHintEdit": "กำหนดตอนสร้าง แก้ไม่ได้",
+    "accessLevelLabel": "ระดับการเข้าถึง",
+    "accessLevelPlaceholder": "เลือกระดับการเข้าถึง",
+    "accessLevelHint": "PUBLIC เผยแพร่ให้ผู้ใช้ทั่วไปเห็นได้ · RESTRICTED/PRIVATE ต้องกำหนดสิทธิ์เพิ่มทีหลัง",
+    "statusLabel": "สถานะ",
+    "statusPlaceholder": "เลือกสถานะ",
+    "fileLabel": "ไฟล์แนบ",
+    "descriptionLabel": "คำอธิบาย",
+    "descriptionPlaceholder": "เพิ่มข้อมูลเพิ่มเติมเกี่ยวกับรายงานนี้…",
+    "isDownloadable": "ดาวน์โหลดได้",
+    "isEditable": "แก้ไขได้",
+    "cancel": "ยกเลิก",
+    "createButton": "สร้างรายงาน",
+    "creating": "กำลังส่ง…",
+    "saveButton": "บันทึกการเปลี่ยนแปลง",
+    "saving": "กำลังบันทึก…",
+    "createdBannerPrefix": "สร้างรายงานสำเร็จแล้ว ข้อมูลพื้นฐานด้านล่างนี้เป็นแบบอ่านอย่างเดียว — แก้ไขเพิ่มเติมได้ที่หน้า",
+    "editReportLink": "แก้ไขรายงาน",
+    "errors": {
+      "missingFiles": "กรุณาเลือกไฟล์อย่างน้อย 1 ไฟล์",
+      "createFailed": "สร้างรายงานไม่สำเร็จ",
+      "loadFailed": "โหลดข้อมูลรายงานไม่สำเร็จ",
+      "notFound": "ไม่พบรายงาน",
+      "saveFailed": "บันทึกรายงานไม่สำเร็จ"
+    },
+    "success": {
+      "create": "สร้างรายงานสำเร็จ — จัดการ Param/Query/Sub/Doc/History ต่อได้จากแท็บด้านซ้ายเลย",
+      "save": "อัปเดตรายงานสำเร็จ"
+    },
+    "tabs": {
+      "info": "Info",
+      "param": "Param",
+      "query": "Query",
+      "sub": "Sub",
+      "doc": "Doc",
+      "history": "History"
+    }
+  },
+  "fileUpload": {
+    "defaultLabel": "อัปโหลดไฟล์",
+    "currentFile": "ไฟล์ปัจจุบัน",
+    "view": "ดู",
+    "dropHere": "วางไฟล์ที่นี่…",
+    "clickToSelect": "คลิกเพื่อเลือก",
+    "orDragDrop": "หรือลากไฟล์มาวาง",
+    "maxSize": "สูงสุด {maxSize} MB",
+    "multipleAllowed": "เลือกได้หลายไฟล์",
+    "errors": {
+      "invalidType": "\"{name}\" ไม่ใช่ประเภทไฟล์ที่อนุญาต",
+      "tooLarge": "\"{name}\" มีขนาดเกิน {maxSize} MB"
+    }
+  }
+}

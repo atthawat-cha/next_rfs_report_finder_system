@@ -12,8 +12,11 @@ import { SkeletonTable } from '@/components/shared/skeletonTable'
 import { CategoryFormDialog } from './components/categoryFormDialog'
 import { DeleteCategoryDialog } from './components/deleteCategoryDialog'
 import type { CategoryRow } from './components/categoryTypes'
+import { useTranslations } from 'next-intl'
 
 export default function ReportCategories() {
+  const t = useTranslations('reports.categories')
+  const tc = useTranslations('common')
   const [categories, setCategories] = React.useState<CategoryRow[]>([]);
   const [loading, setLoading] = React.useState(true);
   const [formOpen, setFormOpen] = React.useState(false);
@@ -41,27 +44,31 @@ export default function ReportCategories() {
           setEditingCategory(row);
           setFormOpen(true);
         },
-        (row) => setDeletingCategory(row)
+        (row) => setDeletingCategory(row),
+        tc
       ),
-    []
+    [tc]
   );
 
   return (
-    <ContentLayout title="หมวดหมู่รายงาน">
+    <ContentLayout title={t("pageTitle")}>
       <div className="w-full item-center my-2">
-        <DefaultBreadcrumb />
+        <DefaultBreadcrumb items={[
+          { label: tc("breadcrumbDashboard"), href: "/dashboard" },
+          { label: t("pageTitle") },
+        ]} />
       </div>
 
       <Card className="container mx-auto py-10 gap-6 mt-5">
         <div className="flex items-center justify-between">
-          <h4 className="text-xl md:text-3xl font-bold">หมวดหมู่รายงาน</h4>
+          <h4 className="text-xl md:text-3xl font-bold">{t("pageTitle")}</h4>
           <Button
             onClick={() => {
               setEditingCategory(null);
               setFormOpen(true);
             }}
           >
-            <Plus className="h-4 w-4 mr-2" /> เพิ่มหมวดหมู่
+            <Plus className="h-4 w-4 mr-2" /> {t("newCategory")}
           </Button>
         </div>
         <Separator className="my-5" />

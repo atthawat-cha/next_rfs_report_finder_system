@@ -91,7 +91,10 @@ export default function MenusManagementPage() {
   return (
     <ContentLayout title={t("pageTitle")}>
       <div className="w-full item-center my-2">
-        <DefaultBreadcrumb />
+        <DefaultBreadcrumb items={[
+          { label: tc('breadcrumbDashboard'), href: '/dashboard' },
+          { label: t('pageTitle') },
+        ]} />
       </div>
 
       <Card className="container mx-auto py-10 gap-6 mt-5 px-6">

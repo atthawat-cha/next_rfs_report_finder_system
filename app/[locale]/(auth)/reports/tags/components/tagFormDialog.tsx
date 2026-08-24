@@ -15,6 +15,7 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Loader2 } from "lucide-react";
 import toast from "react-hot-toast";
+import { useTranslations } from "next-intl";
 import type { TagRow } from "./tagTypes";
 
 interface FormState {
@@ -46,6 +47,8 @@ export function TagFormDialog({
   tag: TagRow | null;
   onSaved: () => void;
 }) {
+  const t = useTranslations("reports.tags.form");
+  const tc = useTranslations("common");
   const [form, setForm] = React.useState<FormState>(EMPTY_FORM);
   const [saving, setSaving] = React.useState(false);
 
@@ -57,7 +60,7 @@ export function TagFormDialog({
 
   const handleSubmit = async () => {
     if (!form.name.trim() || !form.slug.trim()) {
-      toast.error("กรุณากรอกชื่อและ slug");
+      toast.error(t("missingFields"));
       return;
     }
     setSaving(true);
@@ -76,10 +79,10 @@ export function TagFormDialog({
       const json = await res.json();
       if (!res.ok || !json?.success) {
         const message = Array.isArray(json?.error) ? json.error[0]?.message : json?.error;
-        toast.error(message ?? "บันทึกไม่สำเร็จ");
+        toast.error(message ?? t("saveFailed"));
         return;
       }
-      toast.success(isEdit ? "แก้ไขแท็กเรียบร้อย" : "สร้างแท็กเรียบร้อย");
+      toast.success(isEdit ? t("editSuccess") : t("createSuccess"));
       onOpenChange(false);
       onSaved();
     } finally {
@@ -91,13 +94,13 @@ export function TagFormDialog({
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-lg">
         <DialogHeader>
-          <DialogTitle>{isEdit ? "แก้ไขแท็ก" : "สร้างแท็กใหม่"}</DialogTitle>
-          <DialogDescription>จัดการแท็กรายงาน</DialogDescription>
+          <DialogTitle>{isEdit ? t("editTitle") : t("createTitle")}</DialogTitle>
+          <DialogDescription>{t("description")}</DialogDescription>
         </DialogHeader>
 
         <div className="space-y-3">
           <div className="space-y-1.5">
-            <Label htmlFor="tag_name">ชื่อ</Label>
+            <Label htmlFor="tag_name">{tc("name")}</Label>
             <Input
               id="tag_name"
               value={form.name}
@@ -115,7 +118,7 @@ export function TagFormDialog({
             />
           </div>
           <div className="space-y-1.5">
-            <Label htmlFor="tag_description">คำอธิบาย</Label>
+            <Label htmlFor="tag_description">{tc("description")}</Label>
             <Textarea
               id="tag_description"
               rows={3}
@@ -128,11 +131,11 @@ export function TagFormDialog({
 
         <DialogFooter>
           <Button variant="outline" onClick={() => onOpenChange(false)} disabled={saving}>
-            ยกเลิก
+            {tc("cancel")}
           </Button>
           <Button onClick={handleSubmit} disabled={saving}>
             {saving && <Loader2 className="h-4 w-4 mr-2 animate-spin" />}
-            บันทึก
+            {tc("save")}
           </Button>
         </DialogFooter>
       </DialogContent>

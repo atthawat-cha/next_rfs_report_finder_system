@@ -7,6 +7,7 @@ import { FieldDescription, FieldLabel } from "@/components/ui/field";
 import { FILE_PURPOSE_LABEL, type FilePurpose } from "@/lib/file-purpose";
 import { History as HistoryIcon } from "lucide-react";
 import toast from "react-hot-toast";
+import { useTranslations } from "next-intl";
 
 interface HistoryFileRow {
   id: string;
@@ -36,6 +37,7 @@ interface VersionHistory {
 const EMPTY_HISTORY: VersionHistory = { files: {}, queries: [] };
 
 export function HistoryTab({ reportId }: { reportId: string }) {
+  const tHistory = useTranslations("reportEditor.historyTab");
   const [history, setHistory] = React.useState<VersionHistory>(EMPTY_HISTORY);
 
   const fetchAll = useCallback(async () => {
@@ -58,10 +60,10 @@ export function HistoryTab({ reportId }: { reportId: string }) {
       body: JSON.stringify({ target: "file", report_files_id: row.id }),
     });
     if (!res.ok) {
-      toast.error("ย้อนกลับไม่สำเร็จ");
+      toast.error(tHistory("errors.rollbackFailed"));
       return;
     }
-    toast.success(`ย้อนกลับไปยังเวอร์ชัน v${row.version} แล้ว`);
+    toast.success(tHistory("success.rollback", { version: row.version }));
     fetchAll();
   };
 
@@ -73,10 +75,10 @@ export function HistoryTab({ reportId }: { reportId: string }) {
       body: JSON.stringify({ target: "query", version_id: version.id }),
     });
     if (!res.ok) {
-      toast.error("ย้อนกลับไม่สำเร็จ");
+      toast.error(tHistory("errors.rollbackFailed"));
       return;
     }
-    toast.success(`ย้อนกลับไปยังเวอร์ชัน v${version.version} แล้ว`);
+    toast.success(tHistory("success.rollback", { version: version.version }));
     fetchAll();
   };
 
@@ -87,13 +89,13 @@ export function HistoryTab({ reportId }: { reportId: string }) {
       <CardHeader className="pb-4">
         <div className="flex items-center gap-2">
           <HistoryIcon className="h-4 w-4 text-muted-foreground" />
-          <CardTitle className="text-base">ประวัติเวอร์ชัน</CardTitle>
+          <CardTitle className="text-base">{tHistory("title")}</CardTitle>
         </div>
-        <CardDescription>ประวัติไฟล์และคิวรี่ทุกเวอร์ชัน — กดย้อนกลับเพื่อย้อนกลับไปเวอร์ชันเก่า</CardDescription>
+        <CardDescription>{tHistory("description")}</CardDescription>
       </CardHeader>
       <CardContent className="space-y-6">
         {fileKinds.length === 0 && history.queries.length === 0 && (
-          <FieldDescription>ยังไม่มีประวัติเวอร์ชัน</FieldDescription>
+          <FieldDescription>{tHistory("noHistory")}</FieldDescription>
         )}
 
         {fileKinds.map((kind) => {
@@ -108,12 +110,12 @@ export function HistoryTab({ reportId }: { reportId: string }) {
                     <div className="flex items-center gap-2">
                       <span className="truncate">{r.file_name} (v{r.version})</span>
                       {r.is_current && (
-                        <span className="text-xs rounded bg-primary/10 text-primary px-1.5 py-0.5">ปัจจุบัน</span>
+                        <span className="text-xs rounded bg-primary/10 text-primary px-1.5 py-0.5">{tHistory("current")}</span>
                       )}
                     </div>
                     {!r.is_current && (
                       <Button type="button" size="sm" variant="ghost" onClick={() => handleRollbackFile(r)}>
-                        ย้อนกลับ
+                        {tHistory("rollback")}
                       </Button>
                     )}
                   </div>
@@ -125,9 +127,9 @@ export function HistoryTab({ reportId }: { reportId: string }) {
 
         {history.queries.map((q) => (
           <div key={q.id} className="space-y-2">
-            <FieldLabel>{q.name} (คิวรี่)</FieldLabel>
+            <FieldLabel>{tHistory("queryLabel", { name: q.name })}</FieldLabel>
             {q.report_query_versions.length === 0 ? (
-              <FieldDescription>ยังไม่มีประวัติการแก้ไข</FieldDescription>
+              <FieldDescription>{tHistory("noEditHistory")}</FieldDescription>
             ) : (
               <div className="space-y-1">
                 {q.report_query_versions.map((v) => (
@@ -137,7 +139,7 @@ export function HistoryTab({ reportId }: { reportId: string }) {
                       {v.change_log && <span className="text-muted-foreground truncate"> — {v.change_log}</span>}
                     </div>
                     <Button type="button" size="sm" variant="ghost" onClick={() => handleRollbackQuery(v)}>
-                      ย้อนกลับ
+                      {tHistory("rollback")}
                     </Button>
                   </div>
                 ))}

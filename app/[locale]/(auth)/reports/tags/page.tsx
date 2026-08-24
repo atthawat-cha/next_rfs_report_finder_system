@@ -12,8 +12,11 @@ import { SkeletonTable } from '@/components/shared/skeletonTable'
 import { TagFormDialog } from './components/tagFormDialog'
 import { DeleteTagDialog } from './components/deleteTagDialog'
 import type { TagRow } from './components/tagTypes'
+import { useTranslations } from 'next-intl'
 
 export default function ReportTags() {
+  const t = useTranslations('reports.tags')
+  const tc = useTranslations('common')
   const [tags, setTags] = React.useState<TagRow[]>([]);
   const [loading, setLoading] = React.useState(true);
   const [formOpen, setFormOpen] = React.useState(false);
@@ -41,27 +44,31 @@ export default function ReportTags() {
           setEditingTag(row);
           setFormOpen(true);
         },
-        (row) => setDeletingTag(row)
+        (row) => setDeletingTag(row),
+        tc
       ),
-    []
+    [tc]
   );
 
   return (
-    <ContentLayout title="แท็กรายงาน">
+    <ContentLayout title={t("pageTitle")}>
       <div className="w-full item-center my-2">
-        <DefaultBreadcrumb />
+        <DefaultBreadcrumb items={[
+          { label: tc("breadcrumbDashboard"), href: "/dashboard" },
+          { label: t("pageTitle") },
+        ]} />
       </div>
 
       <Card className="container mx-auto py-10 gap-6 mt-5">
         <div className="flex items-center justify-between">
-          <h4 className="text-xl md:text-3xl font-bold">แท็กรายงาน</h4>
+          <h4 className="text-xl md:text-3xl font-bold">{t("pageTitle")}</h4>
           <Button
             onClick={() => {
               setEditingTag(null);
               setFormOpen(true);
             }}
           >
-            <Plus className="h-4 w-4 mr-2" /> เพิ่มแท็ก
+            <Plus className="h-4 w-4 mr-2" /> {t("newTag")}
           </Button>
         </div>
         <Separator className="my-5" />

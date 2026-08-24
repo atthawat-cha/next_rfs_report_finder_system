@@ -1,1 +1,166 @@
-{}
+{
+  "paramTab": {
+    "title": "พารามิเตอร์",
+    "description": "ตัวแปรที่ใช้ในรายงานนี้ — ระบุได้ว่าใช้กับรายงานหลัก หรือ sub-report ตัวไหน",
+    "mainScopeTitle": "พารามิเตอร์ของรายงานหลัก",
+    "subScopeTitle": "พารามิเตอร์ของรายงานย่อย: {name}",
+    "noParamsInScope": "ยังไม่มีพารามิเตอร์ในขอบเขตนี้",
+    "namePlaceholder": "ชื่อ",
+    "labelPlaceholder": "ป้ายกำกับ",
+    "dataTypePlaceholder": "ชนิดข้อมูล",
+    "defaultValuePlaceholder": "ค่าเริ่มต้น",
+    "sortOrderPlaceholder": "ลำดับการแสดง",
+    "required": "จำเป็น",
+    "addNewParameter": "เพิ่มพารามิเตอร์ใหม่",
+    "mainReport": "รายงานหลัก",
+    "subReportOption": "รายงานย่อย: {name}",
+    "addParameterButton": "เพิ่มพารามิเตอร์",
+    "errors": {
+      "missingName": "กรุณากรอกชื่อ",
+      "addFailed": "เพิ่มพารามิเตอร์ไม่สำเร็จ",
+      "saveFailed": "บันทึกพารามิเตอร์ไม่สำเร็จ",
+      "deleteFailed": "ลบพารามิเตอร์ไม่สำเร็จ"
+    },
+    "success": {
+      "add": "เพิ่มพารามิเตอร์สำเร็จ",
+      "save": "บันทึกพารามิเตอร์สำเร็จ",
+      "delete": "ลบพารามิเตอร์สำเร็จ"
+    }
+  },
+  "queryTab": {
+    "namePlaceholder": "ชื่อคิวรี่",
+    "sqlPlaceholder": "ข้อความ SQL",
+    "changeLogPlaceholder": "บันทึกการเปลี่ยนแปลง (ไม่บังคับ บันทึกไว้กับเวอร์ชันนี้)",
+    "mainQueryLabel": "คิวรี่หลัก",
+    "mainReport": "รายงานหลัก",
+    "subReportOption": "รายงานย่อย: {name}",
+    "containerDescription": "ใช้เป็นข้อมูลอ้างอิงเท่านั้น — ระบบไม่รันคิวรี่เหล่านี้จริง",
+    "mainQuerySectionTitle": "คิวรี่หลัก",
+    "subQueriesSectionTitle": "คิวรี่ย่อย",
+    "mainBadge": "หลัก",
+    "noMainQuery": "ยังไม่มี main query ในขอบเขตนี้",
+    "noSubQueries": "ยังไม่มี sub query",
+    "setAsMain": "ตั้งเป็นหลัก",
+    "addQueryTitle": "เพิ่มคิวรี่",
+    "addQueryDescription": "เลือกขอบเขต (รายงานหลัก หรือรายงานย่อย) แล้วติ๊ก \"คิวรี่หลัก\" ถ้าต้องการให้เป็นคิวรี่หลักของขอบเขตนั้น",
+    "addQueryButton": "เพิ่มคิวรี่",
+    "errors": {
+      "missingFields": "กรุณากรอกชื่อและข้อความ SQL",
+      "addFailed": "เพิ่มคิวรี่ไม่สำเร็จ",
+      "saveFailed": "บันทึกคิวรี่ไม่สำเร็จ",
+      "setMainFailed": "ตั้งเป็นคิวรี่หลักไม่สำเร็จ",
+      "deleteFailed": "ลบคิวรี่ไม่สำเร็จ"
+    },
+    "success": {
+      "add": "เพิ่มคิวรี่สำเร็จ",
+      "save": "บันทึกคิวรี่สำเร็จ",
+      "setMain": "ตั้ง \"{name}\" เป็นคิวรี่หลักแล้ว",
+      "delete": "ลบคิวรี่สำเร็จ"
+    }
+  },
+  "subTab": {
+    "title": "รายงานย่อย",
+    "description": "รายงานย่อยที่ฝังอยู่ภายในรายงานนี้ — อัปโหลดไฟล์ดีไซน์ย่อย (.jrxml/.rpt/.pdf) หรือลิงก์ไปยังรายงานอื่นที่มีอยู่แล้ว จัดวางตามตำแหน่ง (slot)",
+    "slot": {
+      "HEADER": "แถบส่วนหัว (Header)",
+      "DETAIL": "แถบรายละเอียด (Detail)",
+      "FOOTER": "แถบส่วนท้าย (Footer)"
+    },
+    "noSubReportsInSlot": "ยังไม่มีรายงานย่อยในตำแหน่งนี้",
+    "namePlaceholder": "ชื่อ",
+    "uploadedFile": "อัปโหลดไฟล์ · {fileName}",
+    "linkedReport": "ลิงก์รายงาน: {report}",
+    "addNewSubReport": "เพิ่มรายงานย่อย",
+    "sourceType": {
+      "upload": "อัปโหลดไฟล์ดีไซน์ย่อย (.jrxml / .rpt / .pdf)",
+      "linked": "ลิงก์รายงานที่มีอยู่แล้ว"
+    },
+    "selectLinkedReportPlaceholder": "เลือกรายงานที่ต้องการลิงก์",
+    "addButton": "+ เพิ่มรายงานย่อย",
+    "errors": {
+      "missingName": "กรุณากรอกชื่อ",
+      "missingFile": "กรุณาเลือกไฟล์ที่จะอัปโหลด",
+      "missingLinkedReport": "กรุณาเลือกรายงานที่จะลิงก์",
+      "addFailed": "เพิ่มรายงานย่อยไม่สำเร็จ",
+      "saveFailed": "บันทึกรายงานย่อยไม่สำเร็จ",
+      "deleteFailed": "ลบรายงานย่อยไม่สำเร็จ"
+    },
+    "success": {
+      "add": "เพิ่มรายงานย่อยสำเร็จ",
+      "save": "บันทึกรายงานย่อยสำเร็จ",
+      "delete": "ลบรายงานย่อยสำเร็จ"
+    }
+  },
+  "docTab": {
+    "documentsTitle": "เอกสาร",
+    "documentsDescription": "ไม่ผูกกับ output_type — อัปโหลดไฟล์แล้วเลือกว่าจะใช้เพื่ออะไร ไฟล์ล่าสุดของแต่ละประเภทถูกใช้งานอัตโนมัติ",
+    "documentTypeLabel": "ประเภทเอกสาร",
+    "uploadButton": "อัปโหลด",
+    "activeFileBadge": "ใช้งานอยู่ 1 ไฟล์",
+    "noDocumentsOfType": "ยังไม่มีเอกสารประเภทนี้",
+    "sharingTitle": "การแชร์",
+    "sharingDescription": "แชร์รายงานนี้ให้ผู้ใช้/แผนก หรือสร้างลิงก์สาธารณะ (ไม่ต้อง login)",
+    "shareTypeLabel": {
+      "USER": "ผู้ใช้",
+      "DEPARTMENT": "แผนก",
+      "LINK": "ลิงก์"
+    },
+    "canDownloadBadge": "ดาวน์โหลดได้",
+    "canEditBadge": "แก้ไขได้",
+    "expiresLabel": "หมดอายุ {date}",
+    "revoke": "เพิกถอน",
+    "createNewShare": "สร้างการแชร์ใหม่",
+    "shareTypePlaceholder": "ประเภทการแชร์",
+    "shareTypeOptions": {
+      "LINK": "ลิงก์สาธารณะ",
+      "USER": "ผู้ใช้",
+      "DEPARTMENT": "แผนก"
+    },
+    "selectUserPlaceholder": "เลือกผู้ใช้",
+    "selectDepartmentPlaceholder": "เลือกแผนก",
+    "canDownloadLabel": "ดาวน์โหลดได้",
+    "canEditLabel": "แก้ไขได้",
+    "expiresDateLabel": "วันหมดอายุ",
+    "createShareButton": "สร้างการแชร์",
+    "errors": {
+      "selectFileFirst": "กรุณาเลือกไฟล์ก่อน",
+      "uploadFailedCount": "อัปโหลดไม่สำเร็จ {count} ไฟล์",
+      "deleteFileFailed": "ลบไฟล์ไม่สำเร็จ",
+      "chooseUser": "กรุณาเลือกผู้ใช้",
+      "chooseDepartment": "กรุณาเลือกแผนก",
+      "createShareFailed": "สร้างการแชร์ไม่สำเร็จ",
+      "revokeShareFailed": "ยกเลิกการแชร์ไม่สำเร็จ"
+    },
+    "success": {
+      "upload": "อัปโหลดสำเร็จ",
+      "deleteFile": "ลบไฟล์แล้ว",
+      "createShare": "สร้างการแชร์สำเร็จ",
+      "revokeShare": "ยกเลิกการแชร์สำเร็จ",
+      "copyLink": "คัดลอกลิงก์แล้ว"
+    }
+  },
+  "historyTab": {
+    "title": "ประวัติเวอร์ชัน",
+    "description": "ประวัติไฟล์และคิวรี่ทุกเวอร์ชัน — กดย้อนกลับเพื่อย้อนกลับไปเวอร์ชันเก่า",
+    "noHistory": "ยังไม่มีประวัติเวอร์ชัน",
+    "current": "ปัจจุบัน",
+    "rollback": "ย้อนกลับ",
+    "queryLabel": "{name} (คิวรี่)",
+    "noEditHistory": "ยังไม่มีประวัติการแก้ไข",
+    "errors": {
+      "rollbackFailed": "ย้อนกลับไม่สำเร็จ"
+    },
+    "success": {
+      "rollback": "ย้อนกลับไปยังเวอร์ชัน v{version} แล้ว"
+    }
+  },
+  "querySummary": {
+    "none": "— ไม่มี",
+    "tables": "ตาราง",
+    "fields": "ฟิลด์",
+    "conditions": "เงื่อนไข",
+    "cannotAnalyze": "ไม่สามารถวิเคราะห์ SQL นี้ได้ ดู SQL เต็มแทน",
+    "hideFull": "ซ่อน SQL เต็ม",
+    "showFull": "ดู SQL เต็ม"
+  }
+}

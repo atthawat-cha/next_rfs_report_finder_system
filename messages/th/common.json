@@ -22,6 +22,10 @@
   "createdAt": "วันที่สร้าง",
   "noResults": "ไม่พบข้อมูล",
   "back": "ย้อนกลับ",
+  "copy": "คัดลอก",
+  "copied": "คัดลอกแล้ว",
+  "searchPlaceholder": "ค้นหา...",
+  "resultsCount": "{count} รายการ",
   "breadcrumbHome": "หน้าหลัก",
   "breadcrumbDashboard": "แดชบอร์ด",
   "blankPage": {

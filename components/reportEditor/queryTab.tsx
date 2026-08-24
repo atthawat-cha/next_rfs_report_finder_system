@@ -18,6 +18,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { QuerySummary } from "@/components/shared/querySummary";
 import { Database } from "lucide-react";
 import toast from "react-hot-toast";
+import { useTranslations } from "next-intl";
 
 interface ReportQueryRow {
   id: string;
@@ -49,23 +50,25 @@ function QueryEditForm({
   onCancel: () => void;
   onSave: () => void;
 }) {
+  const tq = useTranslations("reportEditor.queryTab");
+  const tc = useTranslations("common");
   return (
     <div className="space-y-2">
       <Input
         value={draft.name}
         onChange={(e) => setDraft((prev) => ({ ...prev, name: e.target.value }))}
-        placeholder="ชื่อคิวรี่"
+        placeholder={tq("namePlaceholder")}
       />
       <Textarea
         className="resize-none min-h-[80px] font-mono text-xs"
         value={draft.sql_text}
         onChange={(e) => setDraft((prev) => ({ ...prev, sql_text: e.target.value }))}
-        placeholder="ข้อความ SQL"
+        placeholder={tq("sqlPlaceholder")}
       />
       <Input
         value={draft.change_log}
         onChange={(e) => setDraft((prev) => ({ ...prev, change_log: e.target.value }))}
-        placeholder="บันทึกการเปลี่ยนแปลง (ไม่บังคับ บันทึกไว้กับเวอร์ชันนี้)"
+        placeholder={tq("changeLogPlaceholder")}
       />
       <div className="flex items-center gap-2">
         <Checkbox
@@ -73,14 +76,14 @@ function QueryEditForm({
           checked={draft.is_main}
           onCheckedChange={(v) => setDraft((prev) => ({ ...prev, is_main: v === true }))}
         />
-        <FieldLabel htmlFor="q-draft-main" className="font-normal">คิวรี่หลัก</FieldLabel>
+        <FieldLabel htmlFor="q-draft-main" className="font-normal">{tq("mainQueryLabel")}</FieldLabel>
       </div>
       <div className="flex justify-end gap-2">
         <Button type="button" size="sm" variant="outline" onClick={onCancel}>
-          ยกเลิก
+          {tc("cancel")}
         </Button>
         <Button type="button" size="sm" onClick={onSave}>
-          บันทึก
+          {tc("save")}
         </Button>
       </div>
     </div>
@@ -88,6 +91,8 @@ function QueryEditForm({
 }
 
 export function QueryTab({ reportId, onDataChange }: { reportId: string; onDataChange?: () => void }) {
+  const tq = useTranslations("reportEditor.queryTab");
+  const tc = useTranslations("common");
   const [queries, setQueries] = React.useState<ReportQueryRow[]>([]);
   const [subReports, setSubReports] = React.useState<SubReportOption[]>([]);
   const [newQuery, setNewQuery] = React.useState(EMPTY_NEW_QUERY);
@@ -116,7 +121,7 @@ export function QueryTab({ reportId, onDataChange }: { reportId: string; onDataC
 
   const handleAddQuery = async () => {
     if (!newQuery.name.trim() || !newQuery.sql_text.trim()) {
-      toast.error("กรุณากรอกชื่อและข้อความ SQL");
+      toast.error(tq("errors.missingFields"));
       return;
     }
     const res = await fetch(`/api/reports/${reportId}/queries`, {
@@ -132,10 +137,10 @@ export function QueryTab({ reportId, onDataChange }: { reportId: string; onDataC
     });
     if (!res.ok) {
       const body = await res.json().catch(() => null);
-      toast.error(body?.error ?? "เพิ่มคิวรี่ไม่สำเร็จ");
+      toast.error(body?.error ?? tq("errors.addFailed"));
       return;
     }
-    toast.success("เพิ่มคิวรี่สำเร็จ");
+    toast.success(tq("success.add"));
     setNewQuery(EMPTY_NEW_QUERY);
     fetchAll();
   };
@@ -155,10 +160,10 @@ export function QueryTab({ reportId, onDataChange }: { reportId: string; onDataC
     });
     if (!res.ok) {
       const body = await res.json().catch(() => null);
-      toast.error(body?.error ?? "บันทึกคิวรี่ไม่สำเร็จ");
+      toast.error(body?.error ?? tq("errors.saveFailed"));
       return;
     }
-    toast.success("บันทึกคิวรี่สำเร็จ");
+    toast.success(tq("success.save"));
     setEditingQueryId(null);
     fetchAll();
   };
@@ -171,10 +176,10 @@ export function QueryTab({ reportId, onDataChange }: { reportId: string; onDataC
       body: JSON.stringify({ id: row.id, is_main: true }),
     });
     if (!res.ok) {
-      toast.error("ตั้งเป็นคิวรี่หลักไม่สำเร็จ");
+      toast.error(tq("errors.setMainFailed"));
       return;
     }
-    toast.success(`ตั้ง "${row.name}" เป็นคิวรี่หลักแล้ว`);
+    toast.success(tq("success.setMain", { name: row.name }));
     fetchAll();
   };
 
@@ -184,16 +189,16 @@ export function QueryTab({ reportId, onDataChange }: { reportId: string; onDataC
       credentials: "include",
     });
     if (!res.ok) {
-      toast.error("ลบคิวรี่ไม่สำเร็จ");
+      toast.error(tq("errors.deleteFailed"));
       return;
     }
-    toast.success("ลบคิวรี่สำเร็จ");
+    toast.success(tq("success.delete"));
     fetchAll();
   };
 
   const containers = [
-    { key: null as string | null, title: "รายงานหลัก" },
-    ...subReports.map((sr) => ({ key: sr.id, title: `รายงานย่อย: ${sr.name}` })),
+    { key: null as string | null, title: tq("mainReport") },
+    ...subReports.map((sr) => ({ key: sr.id, title: tq("subReportOption", { name: sr.name }) })),
   ];
 
   return (
@@ -211,12 +216,12 @@ export function QueryTab({ reportId, onDataChange }: { reportId: string; onDataC
                 <CardTitle className="text-base">{container.title}</CardTitle>
               </div>
               <CardDescription>
-                ใช้เป็นข้อมูลอ้างอิงเท่านั้น — ระบบไม่รันคิวรี่เหล่านี้จริง
+                {tq("containerDescription")}
               </CardDescription>
             </CardHeader>
             <CardContent className="space-y-4">
               <div>
-                <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground mb-2">คิวรี่หลัก</p>
+                <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground mb-2">{tq("mainQuerySectionTitle")}</p>
                 {mainQuery ? (
                   <div className="border rounded-md p-3 space-y-2">
                     {editingQueryId === mainQuery.id ? (
@@ -226,12 +231,12 @@ export function QueryTab({ reportId, onDataChange }: { reportId: string; onDataC
                         <div className="flex items-center justify-between">
                           <div className="flex items-center gap-2">
                             <span className="font-medium text-sm">{mainQuery.name}</span>
-                            <span className="text-xs rounded bg-primary/10 text-primary px-1.5 py-0.5">หลัก</span>
+                            <span className="text-xs rounded bg-primary/10 text-primary px-1.5 py-0.5">{tq("mainBadge")}</span>
                             <span className="text-xs text-muted-foreground">v{mainQuery.version}</span>
                           </div>
                           <div className="flex gap-2">
-                            <Button type="button" size="sm" variant="ghost" onClick={() => startEditQuery(mainQuery)}>แก้ไข</Button>
-                            <Button type="button" size="sm" variant="ghost" onClick={() => handleDeleteQuery(mainQuery)}>ลบ</Button>
+                            <Button type="button" size="sm" variant="ghost" onClick={() => startEditQuery(mainQuery)}>{tc("edit")}</Button>
+                            <Button type="button" size="sm" variant="ghost" onClick={() => handleDeleteQuery(mainQuery)}>{tc("delete")}</Button>
                           </div>
                         </div>
                         <QuerySummary sql={mainQuery.sql_text} maxHeight="16rem" />
@@ -239,13 +244,13 @@ export function QueryTab({ reportId, onDataChange }: { reportId: string; onDataC
                     )}
                   </div>
                 ) : (
-                  <FieldDescription>ยังไม่มี main query ในขอบเขตนี้</FieldDescription>
+                  <FieldDescription>{tq("noMainQuery")}</FieldDescription>
                 )}
               </div>
 
               <div>
-                <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground mb-2">คิวรี่ย่อย</p>
-                {subQueries.length === 0 && <FieldDescription>ยังไม่มี sub query</FieldDescription>}
+                <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground mb-2">{tq("subQueriesSectionTitle")}</p>
+                {subQueries.length === 0 && <FieldDescription>{tq("noSubQueries")}</FieldDescription>}
                 <div className="space-y-2">
                   {subQueries.map((q) => (
                     <div key={q.id} className="border rounded-md p-3 space-y-2">
@@ -259,9 +264,9 @@ export function QueryTab({ reportId, onDataChange }: { reportId: string; onDataC
                               <span className="text-xs text-muted-foreground">v{q.version}</span>
                             </div>
                             <div className="flex gap-2">
-                              <Button type="button" size="sm" variant="ghost" onClick={() => handleSetMainQuery(q)}>ตั้งเป็นหลัก</Button>
-                              <Button type="button" size="sm" variant="ghost" onClick={() => startEditQuery(q)}>แก้ไข</Button>
-                              <Button type="button" size="sm" variant="ghost" onClick={() => handleDeleteQuery(q)}>ลบ</Button>
+                              <Button type="button" size="sm" variant="ghost" onClick={() => handleSetMainQuery(q)}>{tq("setAsMain")}</Button>
+                              <Button type="button" size="sm" variant="ghost" onClick={() => startEditQuery(q)}>{tc("edit")}</Button>
+                              <Button type="button" size="sm" variant="ghost" onClick={() => handleDeleteQuery(q)}>{tc("delete")}</Button>
                             </div>
                           </div>
                           <QuerySummary sql={q.sql_text} maxHeight="16rem" />
@@ -278,8 +283,8 @@ export function QueryTab({ reportId, onDataChange }: { reportId: string; onDataC
 
       <Card>
         <CardHeader className="pb-4">
-          <CardTitle className="text-base">เพิ่มคิวรี่</CardTitle>
-          <CardDescription>เลือกขอบเขต (รายงานหลัก หรือรายงานย่อย) แล้วติ๊ก &quot;คิวรี่หลัก&quot; ถ้าต้องการให้เป็นคิวรี่หลักของขอบเขตนั้น</CardDescription>
+          <CardTitle className="text-base">{tq("addQueryTitle")}</CardTitle>
+          <CardDescription>{tq("addQueryDescription")}</CardDescription>
         </CardHeader>
         <CardContent className="space-y-2">
           <Select
@@ -291,9 +296,9 @@ export function QueryTab({ reportId, onDataChange }: { reportId: string; onDataC
             </SelectTrigger>
             <SelectContent>
               <SelectGroup>
-                <SelectItem value={MAIN_SCOPE}>รายงานหลัก</SelectItem>
+                <SelectItem value={MAIN_SCOPE}>{tq("mainReport")}</SelectItem>
                 {subReports.map((sr) => (
-                  <SelectItem key={sr.id} value={sr.id}>รายงานย่อย: {sr.name}</SelectItem>
+                  <SelectItem key={sr.id} value={sr.id}>{tq("subReportOption", { name: sr.name })}</SelectItem>
                 ))}
               </SelectGroup>
             </SelectContent>
@@ -301,13 +306,13 @@ export function QueryTab({ reportId, onDataChange }: { reportId: string; onDataC
           <Input
             value={newQuery.name}
             onChange={(e) => setNewQuery((prev) => ({ ...prev, name: e.target.value }))}
-            placeholder="ชื่อคิวรี่"
+            placeholder={tq("namePlaceholder")}
           />
           <Textarea
             className="resize-none min-h-[80px] font-mono text-xs"
             value={newQuery.sql_text}
             onChange={(e) => setNewQuery((prev) => ({ ...prev, sql_text: e.target.value }))}
-            placeholder="ข้อความ SQL"
+            placeholder={tq("sqlPlaceholder")}
           />
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-2">
@@ -316,10 +321,10 @@ export function QueryTab({ reportId, onDataChange }: { reportId: string; onDataC
                 checked={newQuery.is_main}
                 onCheckedChange={(v) => setNewQuery((prev) => ({ ...prev, is_main: v === true }))}
               />
-              <FieldLabel htmlFor="new-q-main" className="font-normal">คิวรี่หลัก</FieldLabel>
+              <FieldLabel htmlFor="new-q-main" className="font-normal">{tq("mainQueryLabel")}</FieldLabel>
             </div>
             <Button type="button" size="sm" variant="outline" onClick={handleAddQuery}>
-              เพิ่มคิวรี่
+              {tq("addQueryButton")}
             </Button>
           </div>
         </CardContent>

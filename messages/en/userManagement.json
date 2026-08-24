@@ -1,6 +1,7 @@
 {
   "activity": {
     "pageTitle": "Activity Log",
+    "breadcrumbUsersManagement": "Users Management",
     "cardTitle": "Activity Log",
     "totalCount": "{count} total entries",
     "userLabel": "User",

@@ -15,9 +15,10 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import FileUpload, { AllowedFileType } from "@/components/shared/fileuploading";
-import { FILE_PURPOSE_ORDER, FILE_PURPOSE_LABEL, FILE_PURPOSE_DESCRIPTION, isMultiFilePurpose, type FilePurpose } from "@/lib/file-purpose";
+import { FILE_PURPOSE_ORDER, FILE_PURPOSE_LABEL, getFilePurposeDescription, isMultiFilePurpose, type FilePurpose } from "@/lib/file-purpose";
 import { FolderOpen, Share2, Copy } from "lucide-react";
 import toast from "react-hot-toast";
+import { useTranslations } from "next-intl";
 
 type SelectOption = { id: string; name: string };
 
@@ -56,6 +57,9 @@ const ACCEPT_BY_PURPOSE: Record<FilePurpose, AllowedFileType> = {
 };
 
 export function DocTab({ reportId }: { reportId: string }) {
+  const td = useTranslations("reportEditor.docTab");
+  const tfp = useTranslations("reports.filePurpose");
+  const tc = useTranslations("common");
   const [currentFiles, setCurrentFiles] = React.useState<ReportFileRow[]>([]);
   const [shares, setShares] = React.useState<ReportShareRow[]>([]);
   const [userOptions, setUserOptions] = React.useState<SelectOption[]>([]);
@@ -104,7 +108,7 @@ export function DocTab({ reportId }: { reportId: string }) {
 
   const handleUpload = async () => {
     if (pendingUpload.length === 0) {
-      toast.error("กรุณาเลือกไฟล์ก่อน");
+      toast.error(td("errors.selectFileFirst"));
       return;
     }
     const filesToUpload = isMultiFilePurpose(uploadPurpose) ? pendingUpload : [pendingUpload[0]];
@@ -121,9 +125,9 @@ export function DocTab({ reportId }: { reportId: string }) {
       if (!res.ok) failed += 1;
     }
     if (failed > 0) {
-      toast.error(`อัปโหลดไม่สำเร็จ ${failed} ไฟล์`);
+      toast.error(td("errors.uploadFailedCount", { count: failed }));
     } else {
-      toast.success("อัปโหลดสำเร็จ");
+      toast.success(td("success.upload"));
     }
     setPendingUpload([]);
     fetchAll();
@@ -135,16 +139,16 @@ export function DocTab({ reportId }: { reportId: string }) {
       credentials: "include",
     });
     if (!res.ok) {
-      toast.error("ลบไฟล์ไม่สำเร็จ");
+      toast.error(td("errors.deleteFileFailed"));
       return;
     }
-    toast.success("ลบไฟล์แล้ว");
+    toast.success(td("success.deleteFile"));
     fetchAll();
   };
 
   const handleAddShare = async () => {
     if (newShare.share_type !== "LINK" && !newShare.shared_with) {
-      toast.error(newShare.share_type === "USER" ? "กรุณาเลือกผู้ใช้" : "กรุณาเลือกแผนก");
+      toast.error(newShare.share_type === "USER" ? td("errors.chooseUser") : td("errors.chooseDepartment"));
       return;
     }
     const res = await fetch(`/api/reports/${reportId}/shares`, {
@@ -161,10 +165,10 @@ export function DocTab({ reportId }: { reportId: string }) {
     });
     if (!res.ok) {
       const body = await res.json().catch(() => null);
-      toast.error(body?.error ?? "สร้างการแชร์ไม่สำเร็จ");
+      toast.error(body?.error ?? td("errors.createShareFailed"));
       return;
     }
-    toast.success("สร้างการแชร์สำเร็จ");
+    toast.success(td("success.createShare"));
     setNewShare(EMPTY_NEW_SHARE);
     fetchAll();
   };
@@ -175,17 +179,17 @@ export function DocTab({ reportId }: { reportId: string }) {
       credentials: "include",
     });
     if (!res.ok) {
-      toast.error("ยกเลิกการแชร์ไม่สำเร็จ");
+      toast.error(td("errors.revokeShareFailed"));
       return;
     }
-    toast.success("ยกเลิกการแชร์สำเร็จ");
+    toast.success(td("success.revokeShare"));
     fetchAll();
   };
 
   const handleCopyLink = (token: string) => {
     const url = `${window.location.origin}/shares/${token}`;
     navigator.clipboard.writeText(url);
-    toast.success("คัดลอกลิงก์แล้ว");
+    toast.success(td("success.copyLink"));
   };
 
   return (
@@ -194,15 +198,15 @@ export function DocTab({ reportId }: { reportId: string }) {
         <CardHeader className="pb-4">
           <div className="flex items-center gap-2">
             <FolderOpen className="h-4 w-4 text-muted-foreground" />
-            <CardTitle className="text-base">เอกสาร</CardTitle>
+            <CardTitle className="text-base">{td("documentsTitle")}</CardTitle>
           </div>
           <CardDescription>
-            ไม่ผูกกับ output_type — อัปโหลดไฟล์แล้วเลือกว่าจะใช้เพื่ออะไร ไฟล์ล่าสุดของแต่ละประเภทถูกใช้งานอัตโนมัติ
+            {td("documentsDescription")}
           </CardDescription>
         </CardHeader>
         <CardContent className="space-y-6">
           <div className="space-y-2 border rounded-md p-3 bg-muted/30">
-            <FieldLabel>ประเภทเอกสาร</FieldLabel>
+            <FieldLabel>{td("documentTypeLabel")}</FieldLabel>
             <Select value={uploadPurpose} onValueChange={(v) => { setUploadPurpose(v as FilePurpose); setPendingUpload([]); }}>
               <SelectTrigger>
                 <SelectValue />
@@ -211,7 +215,7 @@ export function DocTab({ reportId }: { reportId: string }) {
                 <SelectGroup>
                   {FILE_PURPOSE_ORDER.map((purpose) => (
                     <SelectItem key={purpose} value={purpose}>
-                      {FILE_PURPOSE_LABEL[purpose]} — {FILE_PURPOSE_DESCRIPTION[purpose]}
+                      {FILE_PURPOSE_LABEL[purpose]} — {getFilePurposeDescription(tfp, purpose)}
                     </SelectItem>
                   ))}
                 </SelectGroup>
@@ -225,7 +229,7 @@ export function DocTab({ reportId }: { reportId: string }) {
             />
             <div className="flex justify-end">
               <Button type="button" size="sm" variant="outline" disabled={pendingUpload.length === 0} onClick={handleUpload}>
-                อัปโหลด
+                {td("uploadButton")}
               </Button>
             </div>
           </div>
@@ -238,18 +242,18 @@ export function DocTab({ reportId }: { reportId: string }) {
                 <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
                   {FILE_PURPOSE_LABEL[purpose]}
                   {!isMulti && rows.length > 0 && (
-                    <span className="ml-2 normal-case rounded bg-primary/10 text-primary px-1.5 py-0.5 text-[10px]">ใช้งานอยู่ 1 ไฟล์</span>
+                    <span className="ml-2 normal-case rounded bg-primary/10 text-primary px-1.5 py-0.5 text-[10px]">{td("activeFileBadge")}</span>
                   )}
                 </p>
                 {rows.length === 0 ? (
-                  <FieldDescription>ยังไม่มีเอกสารประเภทนี้</FieldDescription>
+                  <FieldDescription>{td("noDocumentsOfType")}</FieldDescription>
                 ) : (
                   <div className="space-y-1">
                     {rows.map((f) => (
                       <div key={f.id} className="flex items-center justify-between text-sm bg-muted/40 rounded px-3 py-2">
                         <span className="truncate">{f.file_name} (v{f.version})</span>
                         <Button type="button" variant="ghost" size="sm" onClick={() => handleDeleteFile(f.id)}>
-                          ลบ
+                          {tc("delete")}
                         </Button>
                       </div>
                     ))}
@@ -265,9 +269,9 @@ export function DocTab({ reportId }: { reportId: string }) {
         <CardHeader className="pb-4">
           <div className="flex items-center gap-2">
             <Share2 className="h-4 w-4 text-muted-foreground" />
-            <CardTitle className="text-base">การแชร์</CardTitle>
+            <CardTitle className="text-base">{td("sharingTitle")}</CardTitle>
           </div>
-          <CardDescription>แชร์รายงานนี้ให้ผู้ใช้/แผนก หรือสร้างลิงก์สาธารณะ (ไม่ต้อง login)</CardDescription>
+          <CardDescription>{td("sharingDescription")}</CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
           {shares.map((s) => (
@@ -275,13 +279,13 @@ export function DocTab({ reportId }: { reportId: string }) {
               <div className="min-w-0 flex-1">
                 <div className="flex items-center gap-2">
                   <span className="text-xs rounded bg-muted px-1.5 py-0.5">
-                    {s.share_type === "USER" ? "ผู้ใช้" : s.share_type === "DEPARTMENT" ? "แผนก" : "ลิงก์"}
+                    {td(`shareTypeLabel.${s.share_type}`)}
                   </span>
-                  {s.can_download && <span className="text-xs rounded bg-primary/10 text-primary px-1.5 py-0.5">ดาวน์โหลดได้</span>}
-                  {s.can_edit && <span className="text-xs rounded bg-primary/10 text-primary px-1.5 py-0.5">แก้ไขได้</span>}
+                  {s.can_download && <span className="text-xs rounded bg-primary/10 text-primary px-1.5 py-0.5">{td("canDownloadBadge")}</span>}
+                  {s.can_edit && <span className="text-xs rounded bg-primary/10 text-primary px-1.5 py-0.5">{td("canEditBadge")}</span>}
                   {s.expires_at && (
                     <span className="text-xs text-muted-foreground">
-                      หมดอายุ {new Date(s.expires_at).toLocaleDateString("th-TH")}
+                      {td("expiresLabel", { date: new Date(s.expires_at).toLocaleDateString("th-TH") })}
                     </span>
                   )}
                 </div>
@@ -298,26 +302,26 @@ export function DocTab({ reportId }: { reportId: string }) {
                 )}
               </div>
               <Button type="button" size="sm" variant="ghost" onClick={() => handleRevokeShare(s)}>
-                เพิกถอน
+                {td("revoke")}
               </Button>
             </div>
           ))}
 
           <div className="border-t pt-4 space-y-3">
-            <FieldLabel>สร้างการแชร์ใหม่</FieldLabel>
+            <FieldLabel>{td("createNewShare")}</FieldLabel>
             <div className="grid grid-cols-2 gap-2">
               <Select
                 value={newShare.share_type}
                 onValueChange={(v) => setNewShare((prev) => ({ ...prev, share_type: v as ReportShareRow["share_type"], shared_with: "" }))}
               >
                 <SelectTrigger>
-                  <SelectValue placeholder="ประเภทการแชร์" />
+                  <SelectValue placeholder={td("shareTypePlaceholder")} />
                 </SelectTrigger>
                 <SelectContent>
                   <SelectGroup>
-                    <SelectItem value="LINK">ลิงก์สาธารณะ</SelectItem>
-                    <SelectItem value="USER">ผู้ใช้</SelectItem>
-                    <SelectItem value="DEPARTMENT">แผนก</SelectItem>
+                    <SelectItem value="LINK">{td("shareTypeOptions.LINK")}</SelectItem>
+                    <SelectItem value="USER">{td("shareTypeOptions.USER")}</SelectItem>
+                    <SelectItem value="DEPARTMENT">{td("shareTypeOptions.DEPARTMENT")}</SelectItem>
                   </SelectGroup>
                 </SelectContent>
               </Select>
@@ -327,7 +331,7 @@ export function DocTab({ reportId }: { reportId: string }) {
                   onValueChange={(v) => setNewShare((prev) => ({ ...prev, shared_with: v }))}
                 >
                   <SelectTrigger>
-                    <SelectValue placeholder={newShare.share_type === "USER" ? "เลือกผู้ใช้" : "เลือกแผนก"} />
+                    <SelectValue placeholder={newShare.share_type === "USER" ? td("selectUserPlaceholder") : td("selectDepartmentPlaceholder")} />
                   </SelectTrigger>
                   <SelectContent>
                     <SelectGroup>
@@ -346,7 +350,7 @@ export function DocTab({ reportId }: { reportId: string }) {
                   checked={newShare.can_download}
                   onCheckedChange={(c) => setNewShare((prev) => ({ ...prev, can_download: c === true }))}
                 />
-                <FieldLabel htmlFor="new-share-download" className="font-normal">ดาวน์โหลดได้</FieldLabel>
+                <FieldLabel htmlFor="new-share-download" className="font-normal">{td("canDownloadLabel")}</FieldLabel>
               </div>
               <div className="flex items-center gap-2">
                 <Checkbox
@@ -354,10 +358,10 @@ export function DocTab({ reportId }: { reportId: string }) {
                   checked={newShare.can_edit}
                   onCheckedChange={(c) => setNewShare((prev) => ({ ...prev, can_edit: c === true }))}
                 />
-                <FieldLabel htmlFor="new-share-edit" className="font-normal">แก้ไขได้</FieldLabel>
+                <FieldLabel htmlFor="new-share-edit" className="font-normal">{td("canEditLabel")}</FieldLabel>
               </div>
               <div className="flex items-center gap-2">
-                <FieldLabel htmlFor="new-share-expires" className="font-normal">วันหมดอายุ</FieldLabel>
+                <FieldLabel htmlFor="new-share-expires" className="font-normal">{td("expiresDateLabel")}</FieldLabel>
                 <Input
                   id="new-share-expires"
                   type="date"
@@ -369,7 +373,7 @@ export function DocTab({ reportId }: { reportId: string }) {
             </div>
             <div className="flex justify-end">
               <Button type="button" size="sm" variant="outline" onClick={handleAddShare}>
-                สร้างการแชร์
+                {td("createShareButton")}
               </Button>
             </div>
           </div>

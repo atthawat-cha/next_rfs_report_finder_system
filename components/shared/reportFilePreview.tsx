@@ -1,6 +1,7 @@
 "use client";
 
 import * as React from "react";
+import { useTranslations } from "next-intl";
 import {
   Table,
   TableBody,
@@ -52,6 +53,7 @@ export function ReportFilePreview({
   file: ReportFilePreviewFile;
   className?: string;
 }) {
+  const t = useTranslations("reports.filePreview");
   const [table, setTable] = React.useState<PreviewTable | null>(null);
   const [loading, setLoading] = React.useState(false);
   const [error, setError] = React.useState<string | null>(null);
@@ -68,12 +70,12 @@ export function ReportFilePreview({
         if (json?.success) {
           setTable(json.data);
         } else {
-          setError(json?.error ?? "ไม่สามารถแสดงตัวอย่างไฟล์นี้ได้");
+          setError(json?.error ?? t("previewFailed"));
         }
       })
-      .catch(() => setError("ไม่สามารถแสดงตัวอย่างไฟล์นี้ได้"))
+      .catch(() => setError(t("previewFailed")))
       .finally(() => setLoading(false));
-  }, [reportId, file]);
+  }, [reportId, file, t]);
 
   if (isPdfFile(file)) {
     return (
@@ -89,7 +91,7 @@ export function ReportFilePreview({
     if (loading) {
       return (
         <div className="flex items-center justify-center py-12 text-muted-foreground">
-          <Loader2 className="h-5 w-5 animate-spin mr-2" /> กำลังโหลดตาราง...
+          <Loader2 className="h-5 w-5 animate-spin mr-2" /> {t("loadingTable")}
         </div>
       );
     }
@@ -123,7 +125,7 @@ export function ReportFilePreview({
 
   return (
     <p className="py-8 text-center text-muted-foreground">
-      ไฟล์ประเภทนี้ไม่รองรับการแสดงตัวอย่าง — ดาวน์โหลดเพื่อเปิดไฟล์
+      {t("unsupported")}
     </p>
   );
 }

@@ -11,10 +11,13 @@ import { Button } from "@/components/ui/button";
 import { Link, usePathname, useRouter } from "@/i18n/navigation";
 import { useSearchParams } from "next/navigation";
 import { SkeletonTable } from "@/components/shared/skeletonTable";
+import { useTranslations } from "next-intl";
 
 const PAGE_SIZE = 20;
 
 export default function ReportList() {
+  const t = useTranslations("reports.list");
+  const tc = useTranslations("common");
   const router = useRouter();
   const pathname = usePathname();
   const searchParams = useSearchParams();
@@ -81,9 +84,12 @@ export default function ReportList() {
   };
 
   return (
-    <ContentLayout title="รายการรายงาน">
+    <ContentLayout title={t("pageTitle")}>
       <div className="w-full item-center my-2">
-        <DefaultBreadcrumb />
+        <DefaultBreadcrumb items={[
+          { label: tc("breadcrumbDashboard"), href: "/dashboard" },
+          { label: t("pageTitle") },
+        ]} />
       </div>
 
       <div className="container mx-auto py-10 gap-6">
@@ -95,17 +101,17 @@ export default function ReportList() {
             onValueChange={hanelerViewChange}
           >
             <ToggleGroupItem value="table" aria-label="Toggle all">
-              รายการ
+              {t("viewList")}
             </ToggleGroupItem>
             <ToggleGroupItem value="card" aria-label="Toggle missed">
-              การ์ด
+              {t("viewCard")}
             </ToggleGroupItem>
           </ToggleGroup>
 
           <div className="flex gap-2 item-center">
             <SearchInput countRes={total.toString()} defaultValue={q} onSearch={hanelerSearch} />
             <Button asChild >
-              <Link href="/reports/report-create">สร้างรายงาน</Link>
+              <Link href="/reports/report-create">{t("createButton")}</Link>
             </Button>
           </div>
         </div>
@@ -123,14 +129,14 @@ export default function ReportList() {
         {!loading && totalPages > 1 && (
           <div className="mt-4 flex items-center justify-between">
             <span className="text-sm text-muted-foreground">
-              หน้า {page} จาก {totalPages}
+              {t("pageInfo", { page, totalPages })}
             </span>
             <div className="flex gap-2">
               <Button variant="outline" size="sm" disabled={page <= 1} onClick={() => setPage((p) => p - 1)}>
-                ก่อนหน้า
+                {t("previous")}
               </Button>
               <Button variant="outline" size="sm" disabled={page >= totalPages} onClick={() => setPage((p) => p + 1)}>
-                ถัดไป
+                {t("next")}
               </Button>
             </div>
           </div>

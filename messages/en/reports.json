@@ -1,1 +1,228 @@
-{}
+{
+  "list": {
+    "pageTitle": "Report List",
+    "viewList": "List",
+    "viewCard": "Card",
+    "createButton": "Create Report",
+    "pageInfo": "Page {page} of {totalPages}",
+    "previous": "Previous",
+    "next": "Next",
+    "addFavoriteFailed": "Failed to add favorite",
+    "addFavoriteSuccess": "Added to favorites",
+    "columns": {
+      "department": "Department",
+      "version": "Version",
+      "noData": "No data",
+      "view": "View",
+      "preview": "Preview",
+      "download": "Download",
+      "permissions": "Permissions",
+      "addToFavorites": "Add to Favorites"
+    }
+  },
+  "favorites": {
+    "pageTitle": "Favorite Reports",
+    "removeFailed": "Failed to remove favorite",
+    "removeSuccess": "Removed from favorites",
+    "removeFromFavorites": "Remove from Favorites"
+  },
+  "categories": {
+    "pageTitle": "Report Categories",
+    "newCategory": "New Category",
+    "form": {
+      "editTitle": "Edit Category",
+      "createTitle": "Create Category",
+      "description": "Manage report categories",
+      "missingFields": "Enter a name and code",
+      "saveFailed": "Save failed",
+      "editSuccess": "Category updated successfully",
+      "createSuccess": "Category created successfully"
+    },
+    "delete": {
+      "title": "Delete Category",
+      "description": "Delete \"{name}\" ({code}) - cannot be deleted if referenced by a report or sub-category",
+      "deleteFailed": "Delete failed",
+      "deleteSuccess": "Category deleted successfully"
+    }
+  },
+  "tags": {
+    "pageTitle": "Report Tags",
+    "newTag": "New Tag",
+    "form": {
+      "editTitle": "Edit Tag",
+      "createTitle": "Create Tag",
+      "description": "Manage report tags",
+      "missingFields": "Enter a name and slug",
+      "saveFailed": "Save failed",
+      "editSuccess": "Tag updated successfully",
+      "createSuccess": "Tag created successfully"
+    },
+    "delete": {
+      "title": "Delete Tag",
+      "description": "Delete \"{name}\" - reports tagged with this will just lose the tag (the reports themselves are unaffected)",
+      "deleteFailed": "Delete failed",
+      "deleteSuccess": "Tag deleted successfully"
+    }
+  },
+  "detail": {
+    "pageTitle": "Report Detail",
+    "loading": "Loading...",
+    "notFoundTitle": "Report not found",
+    "notFoundContact": "If you believe this is an error, please contact {email}",
+    "breadcrumbReports": "Reports",
+    "managePermissions": "Manage Permissions",
+    "categoryLabel": "Category",
+    "departmentLabel": "Department",
+    "versionLabel": "Version",
+    "viewsDownloadsLabel": "Views / Downloads",
+    "createdAtLabel": "Created At",
+    "updatedAtLabel": "Last Updated",
+    "filesTitle": "Report Files",
+    "noFiles": "No files for this report",
+    "preview": "Preview",
+    "download": "Download",
+    "print": "Print",
+    "queriesTitle": "SQL Queries",
+    "queriesDescription": "Admin only - reference only, never executed by the system",
+    "noQueries": "No SQL queries for this report",
+    "mainBadge": "Main",
+    "status": {
+      "DRAFT": "Draft",
+      "PUBLISHED": "Published",
+      "ARCHIVED": "Archived"
+    },
+    "access": {
+      "PUBLIC": "Public",
+      "RESTRICTED": "Restricted",
+      "PRIVATE": "Private"
+    },
+    "fileKind": {
+      "BLANK_FORM": "Pre-form (Blank Form)",
+      "SAMPLE_FILLED_FORM": "Preview (Filled Sample)",
+      "SAMPLE_DATA": "Sample Data (Sample Data File)",
+      "REFERENCE_DOC": "Additional Reference Documents"
+    }
+  },
+  "filePurpose": {
+    "BLANK_FORM": { "description": "A blank form to download and fill out" },
+    "SAMPLE_FILLED_FORM": { "description": "A document for preview (e.g. a filled-out sample)" },
+    "SAMPLE_DATA": { "description": "Sample data (Excel/CSV)" },
+    "REFERENCE_DOC": { "description": "Other reference documents (multiple files allowed)" }
+  },
+  "permissionsDrawer": {
+    "title": "Manage Report Access",
+    "description": "Set view/edit/delete/favorite/export/print permissions per user or role - individual permissions always override role-based permissions",
+    "loading": "Loading...",
+    "forbidden": "You do not have access to this section",
+    "flags": {
+      "can_view": "View",
+      "can_edit": "Edit",
+      "can_delete": "Delete",
+      "can_favorite": "Favorite",
+      "can_export": "Export",
+      "can_print": "Print"
+    },
+    "grantedTo": "Granted To",
+    "noGrants": "No permissions have been set yet",
+    "delete": "Delete",
+    "cancel": "Cancel",
+    "addNewTitle": "Add New Permission",
+    "subjectTypeUser": "User",
+    "subjectTypeRole": "Role",
+    "searchUserPlaceholder": "Search users...",
+    "searchRolePlaceholder": "Search roles...",
+    "noSubjectResults": "No results",
+    "errors": {
+      "saveFailed": "Save failed",
+      "addFailed": "Failed to add permission",
+      "deleteFailed": "Delete failed"
+    }
+  },
+  "previewDialog": {
+    "loading": "Loading...",
+    "noFiles": "No files for this report",
+    "print": "Print",
+    "download": "Download"
+  },
+  "filePreview": {
+    "loadingTable": "Loading table...",
+    "previewFailed": "Unable to preview this file",
+    "unsupported": "This file type does not support preview - download it to open"
+  },
+  "editor": {
+    "createPageTitle": "Create Report",
+    "editPageTitle": "Edit Report",
+    "createHeading": "Create Report",
+    "editHeading": "Edit Report",
+    "createSubtitleLocked": "Basic info saved successfully - you can continue managing Param/Query/Sub/Doc/History",
+    "createSubtitleUnlocked": "Fill in the details below to share this report with your organization",
+    "outputTypeSummary": "Output Type: {type} (set at creation, cannot be changed)",
+    "managePermissions": "Manage Permissions",
+    "saveFirstHint": "Save basic info first",
+    "cardTitle": "Report Information",
+    "cardDescription": "Basic information for this report",
+    "codeLabel": "Code",
+    "codePlaceholder": "e.g. Anes-0001",
+    "codeHint": "Format: Department-XXXX",
+    "nameLabel": "Name",
+    "namePlaceholder": "Enter report name",
+    "categoryLabel": "Category",
+    "categoryPlaceholder": "Select category",
+    "departmentLabel": "Department",
+    "departmentPlaceholder": "Select department",
+    "outputTypeLabel": "Output Type",
+    "outputTypePlaceholder": "Select output type",
+    "outputTypeHint": "Set once at creation - cannot be changed later",
+    "outputTypeHintEdit": "Set at creation - cannot be changed",
+    "accessLevelLabel": "Access Level",
+    "accessLevelPlaceholder": "Select access level",
+    "accessLevelHint": "PUBLIC is visible to all users - RESTRICTED/PRIVATE require permissions to be set afterwards",
+    "statusLabel": "Status",
+    "statusPlaceholder": "Select status",
+    "fileLabel": "Attachments",
+    "descriptionLabel": "Description",
+    "descriptionPlaceholder": "Add more details about this report...",
+    "isDownloadable": "Downloadable",
+    "isEditable": "Editable",
+    "cancel": "Cancel",
+    "createButton": "Create Report",
+    "creating": "Submitting...",
+    "saveButton": "Save Changes",
+    "saving": "Saving...",
+    "createdBannerPrefix": "Report created successfully. The basic info below is read-only - further edits are available on the",
+    "editReportLink": "Edit Report",
+    "errors": {
+      "missingFiles": "Please select at least 1 file",
+      "createFailed": "Failed to create report",
+      "loadFailed": "Failed to load report data",
+      "notFound": "Report not found",
+      "saveFailed": "Failed to save report"
+    },
+    "success": {
+      "create": "Report created successfully - you can continue managing Param/Query/Sub/Doc/History from the tabs on the left",
+      "save": "Report updated successfully"
+    },
+    "tabs": {
+      "info": "Info",
+      "param": "Param",
+      "query": "Query",
+      "sub": "Sub",
+      "doc": "Doc",
+      "history": "History"
+    }
+  },
+  "fileUpload": {
+    "defaultLabel": "Upload File",
+    "currentFile": "Current file",
+    "view": "View",
+    "dropHere": "Drop files here...",
+    "clickToSelect": "Click to select",
+    "orDragDrop": "or drag and drop",
+    "maxSize": "max {maxSize} MB",
+    "multipleAllowed": "multiple files allowed",
+    "errors": {
+      "invalidType": "\"{name}\" is not an allowed file type",
+      "tooLarge": "\"{name}\" exceeds {maxSize} MB"
+    }
+  }
+}

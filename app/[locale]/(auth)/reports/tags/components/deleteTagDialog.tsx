@@ -12,6 +12,7 @@ import {
 import { Button } from "@/components/ui/button";
 import { Loader2, AlertTriangle } from "lucide-react";
 import toast from "react-hot-toast";
+import { useTranslations } from "next-intl";
 import type { TagRow } from "./tagTypes";
 
 /**
@@ -28,6 +29,8 @@ export function DeleteTagDialog({
   onOpenChange: (open: boolean) => void;
   onDeleted: () => void;
 }) {
+  const t = useTranslations("reports.tags.delete");
+  const tc = useTranslations("common");
   const [deleting, setDeleting] = React.useState(false);
 
   const handleConfirm = async () => {
@@ -40,10 +43,10 @@ export function DeleteTagDialog({
       });
       const json = await res.json();
       if (!res.ok || !json?.success) {
-        toast.error(json?.error ?? "ลบไม่สำเร็จ");
+        toast.error(json?.error ?? t("deleteFailed"));
         return;
       }
-      toast.success("ลบแท็กเรียบร้อย");
+      toast.success(t("deleteSuccess"));
       onOpenChange(false);
       onDeleted();
     } finally {
@@ -56,20 +59,20 @@ export function DeleteTagDialog({
       <DialogContent className="sm:max-w-md">
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
-            <AlertTriangle className="h-5 w-5 text-destructive" /> ลบแท็ก
+            <AlertTriangle className="h-5 w-5 text-destructive" /> {t("title")}
           </DialogTitle>
           <DialogDescription>
-            ลบ &ldquo;{tag?.name}&rdquo; — รายงานที่มีแท็กนี้จะถูกตัดออกจากแท็กนี้ (ไม่กระทบตัวรายงาน)
+            {t("description", { name: tag?.name ?? "" })}
           </DialogDescription>
         </DialogHeader>
 
         <DialogFooter>
           <Button variant="outline" onClick={() => onOpenChange(false)} disabled={deleting}>
-            ยกเลิก
+            {tc("cancel")}
           </Button>
           <Button variant="destructive" onClick={handleConfirm} disabled={deleting}>
             {deleting && <Loader2 className="h-4 w-4 mr-2 animate-spin" />}
-            ยืนยันลบ
+            {tc("confirmDelete")}
           </Button>
         </DialogFooter>
       </DialogContent>

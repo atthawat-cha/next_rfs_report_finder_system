@@ -12,6 +12,7 @@ import {
 import { Button } from "@/components/ui/button";
 import { Loader2, AlertTriangle } from "lucide-react";
 import toast from "react-hot-toast";
+import { useTranslations } from "next-intl";
 import type { CategoryRow } from "./categoryTypes";
 
 /**
@@ -29,6 +30,8 @@ export function DeleteCategoryDialog({
   onOpenChange: (open: boolean) => void;
   onDeleted: () => void;
 }) {
+  const t = useTranslations("reports.categories.delete");
+  const tc = useTranslations("common");
   const [deleting, setDeleting] = React.useState(false);
 
   const handleConfirm = async () => {
@@ -41,10 +44,10 @@ export function DeleteCategoryDialog({
       });
       const json = await res.json();
       if (!res.ok || !json?.success) {
-        toast.error(json?.error ?? "ลบไม่สำเร็จ");
+        toast.error(json?.error ?? t("deleteFailed"));
         return;
       }
-      toast.success("ลบหมวดหมู่เรียบร้อย");
+      toast.success(t("deleteSuccess"));
       onOpenChange(false);
       onDeleted();
     } finally {
@@ -57,20 +60,20 @@ export function DeleteCategoryDialog({
       <DialogContent className="sm:max-w-md">
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
-            <AlertTriangle className="h-5 w-5 text-destructive" /> ลบหมวดหมู่
+            <AlertTriangle className="h-5 w-5 text-destructive" /> {t("title")}
           </DialogTitle>
           <DialogDescription>
-            ลบ &ldquo;{category?.name}&rdquo; ({category?.code}) — ลบไม่ได้ถ้ามีรายงานหรือหมวดหมู่ย่อยอ้างอิงอยู่
+            {t("description", { name: category?.name ?? "", code: category?.code ?? "" })}
           </DialogDescription>
         </DialogHeader>
 
         <DialogFooter>
           <Button variant="outline" onClick={() => onOpenChange(false)} disabled={deleting}>
-            ยกเลิก
+            {tc("cancel")}
           </Button>
           <Button variant="destructive" onClick={handleConfirm} disabled={deleting}>
             {deleting && <Loader2 className="h-4 w-4 mr-2 animate-spin" />}
-            ยืนยันลบ
+            {tc("confirmDelete")}
           </Button>
         </DialogFooter>
       </DialogContent>

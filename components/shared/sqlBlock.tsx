@@ -1,6 +1,7 @@
 "use client";
 
 import * as React from "react";
+import { useTranslations } from "next-intl";
 import { Button } from "@/components/ui/button";
 import { Copy, Check } from "lucide-react";
 import { cn } from "@/lib/utils";
@@ -42,6 +43,7 @@ export function SqlBlock({
   maxHeight?: string;
   className?: string;
 }) {
+  const tc = useTranslations("common");
   const [copied, setCopied] = React.useState(false);
   const lines = React.useMemo(() => splitIntoLines(tokenizeSql(sql)), [sql]);
 
@@ -60,7 +62,7 @@ export function SqlBlock({
       <div className="flex items-center justify-end border-b px-2 py-1">
         <Button type="button" size="sm" variant="ghost" className="h-7 px-2" onClick={handleCopy}>
           {copied ? <Check className="h-3.5 w-3.5 mr-1" /> : <Copy className="h-3.5 w-3.5 mr-1" />}
-          {copied ? "คัดลอกแล้ว" : "คัดลอก"}
+          {copied ? tc("copied") : tc("copy")}
         </Button>
       </div>
       <div className="overflow-auto" style={{ maxHeight }}>

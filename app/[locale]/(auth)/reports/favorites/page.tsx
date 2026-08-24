@@ -10,8 +10,12 @@ import { Card } from '@/components/ui/card';
 import { ReportGetDataType } from '@/lib/types';
 import toast from 'react-hot-toast';
 import { SkeletonTable } from '@/components/shared/skeletonTable';
+import { useTranslations } from 'next-intl';
 
 export default function ReportFavorites() {
+  const t = useTranslations('reports.favorites');
+  const tList = useTranslations('reports.list');
+  const tc = useTranslations('common');
 
   const [reportView, setReportView] = React.useState("table");
   const [favorites, setFavorites] = React.useState<ReportGetDataType[]>([]);
@@ -50,14 +54,14 @@ export default function ReportFavorites() {
         credentials: "include",
       });
       if (!res.ok) {
-        toast.error("ลบออกจากรายการโปรดไม่สำเร็จ");
+        toast.error(t("removeFailed"));
         return;
       }
       setFavorites((prev) => prev.filter((r) => r.id !== reportId));
-      toast.success("ลบออกจากรายการโปรดแล้ว");
+      toast.success(t("removeSuccess"));
     } catch (error) {
       console.error("Error removing favorite:", error);
-      toast.error("ลบออกจากรายการโปรดไม่สำเร็จ");
+      toast.error(t("removeFailed"));
     }
   };
 
@@ -75,9 +79,12 @@ export default function ReportFavorites() {
     setReportView(view)
   }
   return (
-    <ContentLayout title="รายงานโปรด">
+    <ContentLayout title={t("pageTitle")}>
       <div className="w-full item-center my-2">
-        <DefaultBreadcrumb />
+        <DefaultBreadcrumb items={[
+          { label: tc("breadcrumbDashboard"), href: "/dashboard" },
+          { label: t("pageTitle") },
+        ]} />
       </div>
       <Card className="container mx-auto py-10 gap-6 mt-5">
         <div className="w-full flex item-center justify-between mt-5">
@@ -88,10 +95,10 @@ export default function ReportFavorites() {
             onValueChange={hanelerViewChange}
           >
             <ToggleGroupItem value="table" aria-label="Toggle all">
-              รายการ
+              {tList("viewList")}
             </ToggleGroupItem>
             <ToggleGroupItem value="card" aria-label="Toggle missed">
-              การ์ด
+              {tList("viewCard")}
             </ToggleGroupItem>
           </ToggleGroup>
 

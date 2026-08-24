@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useCallback, useEffect, useRef, useState } from "react";
+import { useTranslations } from "next-intl";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
@@ -199,7 +200,7 @@ function FileItem({ file, onRemove, disabled }: FileItemProps) {
 // ─────────────────────────────────────────────
 
 export function FileUpload({
-  label = "อัปโหลดไฟล์",
+  label,
   description,
   accept = "all",
   maxSizeMB = 20,
@@ -211,6 +212,8 @@ export function FileUpload({
   className,
   required = false,
 }: FileUploadProps) {
+  const t = useTranslations("reports.fileUpload");
+  const resolvedLabel = label ?? t("defaultLabel");
   const inputRef = useRef<HTMLInputElement>(null);
   const [files, setFiles] = useState<File[]>([]);
   const [isDragging, setIsDragging] = useState(false);
@@ -236,11 +239,11 @@ export function FileUpload({
 
       for (const f of incoming) {
         if (!isFileAccepted(f, accept)) {
-          newErrors.push(`"${f.name}" ไม่ใช่ประเภทไฟล์ที่อนุญาต`);
+          newErrors.push(t("errors.invalidType", { name: f.name }));
           continue;
         }
         if (f.size > maxBytes) {
-          newErrors.push(`"${f.name}" มีขนาดเกิน ${maxSizeMB} MB`);
+          newErrors.push(t("errors.tooLarge", { name: f.name, maxSize: maxSizeMB }));
           continue;
         }
         valid.push(f);
@@ -264,7 +267,7 @@ export function FileUpload({
         return [valid[0]];
       });
     },
-    [accept, maxSizeMB, multiple]
+    [accept, maxSizeMB, multiple, t]
   );
 
   // Input change
@@ -308,7 +311,7 @@ export function FileUpload({
     <div className={cn("space-y-2", className)}>
       {/* Label */}
       <Label className="text-sm font-medium">
-        {label}
+        {resolvedLabel}
         {required && <span className="ml-1 text-destructive">*</span>}
       </Label>
 
@@ -323,7 +326,7 @@ export function FileUpload({
             <p className="truncate text-sm font-medium text-primary">
               {existingFile.name}
             </p>
-            <p className="text-xs text-muted-foreground">ไฟล์ปัจจุบัน</p>
+            <p className="text-xs text-muted-foreground">{t("currentFile")}</p>
           </div>
           {existingFile.url && (
             <a
@@ -332,7 +335,7 @@ export function FileUpload({
               rel="noopener noreferrer"
               className="text-xs text-primary hover:underline"
             >
-              ดู
+              {t("view")}
             </a>
           )}
           {!disabled && (
@@ -388,16 +391,16 @@ export function FileUpload({
           <div className="space-y-0.5">
             <p className="text-sm font-medium">
               {isDragging ? (
-                "วางไฟล์ที่นี่…"
+                t("dropHere")
               ) : (
                 <>
-                  <span className="text-primary">คลิกเพื่อเลือก</span> หรือลากไฟล์มาวาง
+                  <span className="text-primary">{t("clickToSelect")}</span> {t("orDragDrop")}
                 </>
               )}
             </p>
             <p className="text-xs text-muted-foreground">
-              {ACCEPT_LABEL_MAP[accept]} · สูงสุด {maxSizeMB} MB
-              {multiple && " · เลือกได้หลายไฟล์"}
+              {ACCEPT_LABEL_MAP[accept]} · {t("maxSize", { maxSize: maxSizeMB })}
+              {multiple && ` · ${t("multipleAllowed")}`}
             </p>
           </div>
 

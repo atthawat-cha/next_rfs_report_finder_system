@@ -1,6 +1,7 @@
 "use client";
 
 import * as React from "react";
+import { useTranslations } from "next-intl";
 import {
   Dialog,
   DialogContent,
@@ -44,6 +45,7 @@ export function ReportPreviewDialog({
   open: boolean;
   onOpenChange: (open: boolean) => void;
 }) {
+  const t = useTranslations("reports.previewDialog");
   const [loading, setLoading] = React.useState(false);
   const [report, setReport] = React.useState<ReportDetail | null>(null);
   const [activeFileId, setActiveFileId] = React.useState<string | null>(null);
@@ -73,18 +75,18 @@ export function ReportPreviewDialog({
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-w-4xl max-h-[85vh] flex flex-col">
         <DialogHeader>
-          <DialogTitle>{report?.name_th ?? "กำลังโหลด..."}</DialogTitle>
+          <DialogTitle>{report?.name_th ?? t("loading")}</DialogTitle>
           <DialogDescription>{report?.description}</DialogDescription>
         </DialogHeader>
 
         {loading && (
           <div className="flex items-center justify-center py-12 text-muted-foreground">
-            <Loader2 className="h-5 w-5 animate-spin mr-2" /> กำลังโหลด...
+            <Loader2 className="h-5 w-5 animate-spin mr-2" /> {t("loading")}
           </div>
         )}
 
         {!loading && report && report.files.length === 0 && (
-          <p className="py-8 text-center text-muted-foreground">ไม่มีไฟล์สำหรับรายงานนี้</p>
+          <p className="py-8 text-center text-muted-foreground">{t("noFiles")}</p>
         )}
 
         {!loading && report && report.files.length > 0 && (
@@ -112,11 +114,11 @@ export function ReportPreviewDialog({
           {activeFile && (
             <>
               <Button variant="outline" onClick={() => window.print()}>
-                <Printer className="h-4 w-4 mr-2" /> พิมพ์
+                <Printer className="h-4 w-4 mr-2" /> {t("print")}
               </Button>
               <Button asChild>
                 <a href={`/api/reports/${reportId}/files/${activeFile.id}/download`} target="_blank" rel="noreferrer">
-                  <Download className="h-4 w-4 mr-2" /> ดาวน์โหลด
+                  <Download className="h-4 w-4 mr-2" /> {t("download")}
                 </a>
               </Button>
             </>

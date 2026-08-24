@@ -2,6 +2,7 @@
 
 import React, { useCallback } from "react";
 import { useParams } from "next/navigation";
+import { useTranslations } from "next-intl";
 import { useRouter } from "@/i18n/navigation";
 import { ContentLayout } from "@/components/layouts/content-layout";
 import DefaultBreadcrumb from "@/components/shared/breadcrumb";
@@ -59,6 +60,8 @@ interface EditFormState {
 }
 
 export default function ReportEdit() {
+  const t = useTranslations("reports.editor");
+  const tc = useTranslations("common");
   const router = useRouter();
   const params = useParams<{ id: string }>();
   const reportId = params.id;
@@ -95,12 +98,12 @@ export default function ReportEdit() {
       ]);
 
       if (!reportRes.ok) {
-        toast.error("โหลดข้อมูลรายงานไม่สำเร็จ");
+        toast.error(t("errors.loadFailed"));
         return;
       }
       const reportJson = await reportRes.json();
       if (!reportJson?.success) {
-        toast.error("ไม่พบรายงาน");
+        toast.error(t("errors.notFound"));
         return;
       }
       const report = reportJson.data;
@@ -132,7 +135,7 @@ export default function ReportEdit() {
     } finally {
       setLoading(false);
     }
-  }, [reportId]);
+  }, [reportId, t]);
 
   React.useEffect(() => {
     fetchAll();
@@ -158,14 +161,14 @@ export default function ReportEdit() {
         body: JSON.stringify(formData),
       });
       if (!res.ok) {
-        toast.error("บันทึกรายงานไม่สำเร็จ");
+        toast.error(t("errors.saveFailed"));
         return;
       }
-      toast.success("อัปเดตรายงานสำเร็จ");
+      toast.success(t("success.save"));
       router.push("/reports/report-list");
     } catch (error) {
       console.error(error);
-      toast.error("บันทึกรายงานไม่สำเร็จ");
+      toast.error(t("errors.saveFailed"));
     } finally {
       setIsSubmitting(false);
     }
@@ -173,7 +176,7 @@ export default function ReportEdit() {
 
   if (loading) {
     return (
-      <ContentLayout title="แก้ไขรายงาน">
+      <ContentLayout title={t("editPageTitle")}>
         <div className="flex items-center justify-center h-64">
           <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
         </div>
@@ -182,19 +185,24 @@ export default function ReportEdit() {
   }
 
   return (
-    <ContentLayout title="แก้ไขรายงาน">
-      <DefaultBreadcrumb />
+    <ContentLayout title={t("editPageTitle")}>
+      <DefaultBreadcrumb
+        items={[
+          { label: tc("breadcrumbDashboard"), href: "/dashboard" },
+          { label: t("editPageTitle") },
+        ]}
+      />
       <Separator className="my-5" />
 
       <div className="mb-6 flex flex-wrap items-start justify-between gap-2">
         <div>
-          <h1 className="text-xl font-semibold tracking-tight">แก้ไขรายงาน</h1>
+          <h1 className="text-xl font-semibold tracking-tight">{t("editHeading")}</h1>
           <p className="text-sm text-muted-foreground mt-1">
-            ประเภทผลลัพธ์: <span className="font-medium">{outputType}</span> (กำหนดตอนสร้าง แก้ไม่ได้)
+            {t("outputTypeSummary", { type: outputType })}
           </p>
         </div>
         <Button type="button" variant="outline" onClick={() => setPermissionsOpen(true)}>
-          <Shield className="h-4 w-4 mr-2" /> จัดการสิทธิ์
+          <Shield className="h-4 w-4 mr-2" /> {t("managePermissions")}
         </Button>
       </div>
 
@@ -206,23 +214,23 @@ export default function ReportEdit() {
 
       <Tabs defaultValue="info" orientation="vertical" className="group flex items-start gap-6">
         <TabsList className="w-48 flex-none sticky top-4">
-          <TabsTrigger value="info">Info</TabsTrigger>
+          <TabsTrigger value="info">{t("tabs.info")}</TabsTrigger>
           <TabsTrigger value="param">
-            <span>Param</span>
+            <span>{t("tabs.param")}</span>
             {counts.param > 0 && <span className="text-xs text-muted-foreground">{counts.param}</span>}
           </TabsTrigger>
           <TabsTrigger value="query">
-            <span>Query</span>
+            <span>{t("tabs.query")}</span>
             {counts.queryMain + counts.querySub > 0 && (
               <span className="text-xs text-muted-foreground">{counts.queryMain}+{counts.querySub}</span>
             )}
           </TabsTrigger>
           <TabsTrigger value="sub">
-            <span>Sub</span>
+            <span>{t("tabs.sub")}</span>
             {counts.sub > 0 && <span className="text-xs text-muted-foreground">{counts.sub}</span>}
           </TabsTrigger>
-          <TabsTrigger value="doc">Doc</TabsTrigger>
-          <TabsTrigger value="history">History</TabsTrigger>
+          <TabsTrigger value="doc">{t("tabs.doc")}</TabsTrigger>
+          <TabsTrigger value="history">{t("tabs.history")}</TabsTrigger>
         </TabsList>
 
         {/* ══════════════════ INFO ══════════════════ */}
@@ -232,27 +240,27 @@ export default function ReportEdit() {
               <CardHeader className="pb-4">
                 <div className="flex items-center gap-2">
                   <FileText className="h-4 w-4 text-muted-foreground" />
-                  <CardTitle className="text-base">ข้อมูลรายงาน</CardTitle>
+                  <CardTitle className="text-base">{t("cardTitle")}</CardTitle>
                 </div>
-                <CardDescription>ข้อมูลพื้นฐานของรายงาน</CardDescription>
+                <CardDescription>{t("cardDescription")}</CardDescription>
               </CardHeader>
               <CardContent className="space-y-4">
                 <Field>
-                  <FieldLabel htmlFor="code">รหัส</FieldLabel>
+                  <FieldLabel htmlFor="code">{t("codeLabel")}</FieldLabel>
                   <Input id="code" value={formData.code} onChange={handleInputChange} />
                 </Field>
 
                 <Field>
-                  <FieldLabel htmlFor="name_th">ชื่อ</FieldLabel>
+                  <FieldLabel htmlFor="name_th">{t("nameLabel")}</FieldLabel>
                   <Input id="name_th" value={formData.name_th} onChange={handleInputChange} />
                 </Field>
 
                 <div className="grid grid-cols-2 gap-3">
                   <Field>
-                    <FieldLabel htmlFor="rp_catagory">หมวดหมู่</FieldLabel>
+                    <FieldLabel htmlFor="rp_catagory">{t("categoryLabel")}</FieldLabel>
                     <Select value={formData.category_id} onValueChange={(v) => handleSelectChange("category_id", v)}>
                       <SelectTrigger id="rp_catagory">
-                        <SelectValue placeholder="เลือกหมวดหมู่" />
+                        <SelectValue placeholder={t("categoryPlaceholder")} />
                       </SelectTrigger>
                       <SelectContent>
                         <SelectGroup>
@@ -265,10 +273,10 @@ export default function ReportEdit() {
                   </Field>
 
                   <Field>
-                    <FieldLabel htmlFor="rp_department">แผนก</FieldLabel>
+                    <FieldLabel htmlFor="rp_department">{t("departmentLabel")}</FieldLabel>
                     <Select value={formData.department_id} onValueChange={(v) => handleSelectChange("department_id", v)}>
                       <SelectTrigger id="rp_department">
-                        <SelectValue placeholder="เลือกแผนก" />
+                        <SelectValue placeholder={t("departmentPlaceholder")} />
                       </SelectTrigger>
                       <SelectContent>
                         <SelectGroup>
@@ -283,7 +291,7 @@ export default function ReportEdit() {
 
                 <div className="grid grid-cols-2 gap-3">
                   <Field>
-                    <FieldLabel htmlFor="rp_output_type">ประเภทผลลัพธ์</FieldLabel>
+                    <FieldLabel htmlFor="rp_output_type">{t("outputTypeLabel")}</FieldLabel>
                     <Select value={outputType} disabled>
                       <SelectTrigger id="rp_output_type">
                         <SelectValue />
@@ -294,14 +302,14 @@ export default function ReportEdit() {
                         </SelectGroup>
                       </SelectContent>
                     </Select>
-                    <FieldDescription>กำหนดตอนสร้าง แก้ไม่ได้</FieldDescription>
+                    <FieldDescription>{t("outputTypeHintEdit")}</FieldDescription>
                   </Field>
 
                   <Field>
-                    <FieldLabel htmlFor="rp_access_level">ระดับการเข้าถึง</FieldLabel>
+                    <FieldLabel htmlFor="rp_access_level">{t("accessLevelLabel")}</FieldLabel>
                     <Select value={formData.access_level} onValueChange={(v) => handleSelectChange("access_level", v)}>
                       <SelectTrigger id="rp_access_level">
-                        <SelectValue placeholder="เลือกระดับการเข้าถึง" />
+                        <SelectValue placeholder={t("accessLevelPlaceholder")} />
                       </SelectTrigger>
                       <SelectContent>
                         <SelectGroup>
@@ -315,10 +323,10 @@ export default function ReportEdit() {
                 </div>
 
                 <Field>
-                  <FieldLabel htmlFor="rp_status">สถานะ</FieldLabel>
+                  <FieldLabel htmlFor="rp_status">{t("statusLabel")}</FieldLabel>
                   <Select value={formData.status} onValueChange={(v) => handleSelectChange("status", v)}>
                     <SelectTrigger id="rp_status">
-                      <SelectValue placeholder="เลือกสถานะ" />
+                      <SelectValue placeholder={t("statusPlaceholder")} />
                     </SelectTrigger>
                     <SelectContent>
                       <SelectGroup>
@@ -331,7 +339,7 @@ export default function ReportEdit() {
                 </Field>
 
                 <Field>
-                  <FieldLabel htmlFor="description">คำอธิบาย</FieldLabel>
+                  <FieldLabel htmlFor="description">{t("descriptionLabel")}</FieldLabel>
                   <Textarea
                     id="description"
                     className="resize-none min-h-[96px]"
@@ -347,7 +355,7 @@ export default function ReportEdit() {
                       checked={formData.is_downloadable}
                       onCheckedChange={(v) => handleSelectChange("is_downloadable", v === true)}
                     />
-                    <FieldLabel htmlFor="is_downloadable" className="font-normal">ดาวน์โหลดได้</FieldLabel>
+                    <FieldLabel htmlFor="is_downloadable" className="font-normal">{t("isDownloadable")}</FieldLabel>
                   </Field>
                   <Field orientation="horizontal">
                     <Checkbox
@@ -355,7 +363,7 @@ export default function ReportEdit() {
                       checked={formData.is_editable}
                       onCheckedChange={(v) => handleSelectChange("is_editable", v === true)}
                     />
-                    <FieldLabel htmlFor="is_editable" className="font-normal">แก้ไขได้</FieldLabel>
+                    <FieldLabel htmlFor="is_editable" className="font-normal">{t("isEditable")}</FieldLabel>
                   </Field>
                 </div>
               </CardContent>
@@ -363,16 +371,16 @@ export default function ReportEdit() {
 
             <div className="mt-6 flex items-center justify-end gap-3">
               <Button variant="outline" type="button" onClick={() => router.push("/reports/report-list")}>
-                ยกเลิก
+                {t("cancel")}
               </Button>
               <Button type="submit" disabled={isSubmitting}>
                 {isSubmitting ? (
                   <>
                     <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                    กำลังบันทึก…
+                    {t("saving")}
                   </>
                 ) : (
-                  "บันทึกการเปลี่ยนแปลง"
+                  t("saveButton")
                 )}
               </Button>
             </div>

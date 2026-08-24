@@ -1,6 +1,8 @@
 "use client";
 
 import React, { useCallback } from "react";
+import { useTranslations } from "next-intl";
+import { Link } from "@/i18n/navigation";
 import { ContentLayout } from "@/components/layouts/content-layout";
 import DefaultBreadcrumb from "@/components/shared/breadcrumb";
 import { Button } from "@/components/ui/button";
@@ -50,6 +52,8 @@ interface BaseSelect {
 
 // ─── Component ───────────────────────────────────────────────────────────────
 export default function ReportCreate() {
+  const t = useTranslations("reports.editor");
+  const tc = useTranslations("common");
   const [baseSelect, setBaseSelect] = React.useState<BaseSelect>({
     departments: [],
     status: [],
@@ -124,7 +128,7 @@ export default function ReportCreate() {
       formData.append("output_type", reportData.output_type);
 
       if (reportData.files.length === 0) {
-        toast.error("กรุณาเลือกไฟล์อย่างน้อย 1 ไฟล์");
+        toast.error(t("errors.missingFiles"));
         return;
       }
       reportData.files.forEach((file) => {
@@ -143,13 +147,13 @@ export default function ReportCreate() {
       const data = await res.json();
       if (!data?.success) throw new Error("Operation unsuccessful");
 
-      toast.success("สร้างรายงานสำเร็จ — จัดการ Param/Query/Sub/Doc/History ต่อได้จากแท็บด้านซ้ายเลย");
+      toast.success(t("success.create"));
       setCreatedId(data.data.id);
     } catch (error) {
       if (process.env.NODE_ENV === "development") {
         console.error("Failed to create report", error);
       }
-      toast.error("สร้างรายงานไม่สำเร็จ");
+      toast.error(t("errors.createFailed"));
     } finally {
       setIsSubmitting(false);
     }
@@ -173,47 +177,50 @@ export default function ReportCreate() {
   const locked = !createdId;
 
   return (
-    <ContentLayout title="สร้างรายงาน">
-      <DefaultBreadcrumb />
+    <ContentLayout title={t("createPageTitle")}>
+      <DefaultBreadcrumb
+        items={[
+          { label: tc("breadcrumbDashboard"), href: "/dashboard" },
+          { label: t("createPageTitle") },
+        ]}
+      />
       <Separator className="my-5" />
 
       {/* Page header */}
       <div className="mb-6">
-        <h1 className="text-xl font-semibold tracking-tight">สร้างรายงาน</h1>
+        <h1 className="text-xl font-semibold tracking-tight">{t("createHeading")}</h1>
         <p className="text-sm text-muted-foreground mt-1">
-          {createdId
-            ? "บันทึกข้อมูลพื้นฐานสำเร็จแล้ว — จัดการ Param/Query/Sub/Doc/History ต่อได้เลย"
-            : "กรอกรายละเอียดด้านล่างเพื่อแชร์รายงานให้กับองค์กรของคุณ"}
+          {createdId ? t("createSubtitleLocked") : t("createSubtitleUnlocked")}
         </p>
       </div>
 
       <Tabs defaultValue="info" orientation="vertical" className="group flex items-start gap-6">
         <TabsList className="w-48 flex-none sticky top-4">
-          <TabsTrigger value="info">Info</TabsTrigger>
-          <TabsTrigger value="param" disabled={locked} title={locked ? "บันทึกข้อมูลพื้นฐานก่อน" : undefined}>
-            <span>Param</span>
+          <TabsTrigger value="info">{t("tabs.info")}</TabsTrigger>
+          <TabsTrigger value="param" disabled={locked} title={locked ? t("saveFirstHint") : undefined}>
+            <span>{t("tabs.param")}</span>
             {counts.param > 0 && <span className="text-xs text-muted-foreground">{counts.param}</span>}
           </TabsTrigger>
-          <TabsTrigger value="query" disabled={locked} title={locked ? "บันทึกข้อมูลพื้นฐานก่อน" : undefined}>
-            <span>Query</span>
+          <TabsTrigger value="query" disabled={locked} title={locked ? t("saveFirstHint") : undefined}>
+            <span>{t("tabs.query")}</span>
             {counts.queryMain + counts.querySub > 0 && (
               <span className="text-xs text-muted-foreground">{counts.queryMain}+{counts.querySub}</span>
             )}
           </TabsTrigger>
-          <TabsTrigger value="sub" disabled={locked} title={locked ? "บันทึกข้อมูลพื้นฐานก่อน" : undefined}>
-            <span>Sub</span>
+          <TabsTrigger value="sub" disabled={locked} title={locked ? t("saveFirstHint") : undefined}>
+            <span>{t("tabs.sub")}</span>
             {counts.sub > 0 && <span className="text-xs text-muted-foreground">{counts.sub}</span>}
           </TabsTrigger>
-          <TabsTrigger value="doc" disabled={locked} title={locked ? "บันทึกข้อมูลพื้นฐานก่อน" : undefined}>Doc</TabsTrigger>
-          <TabsTrigger value="history" disabled={locked} title={locked ? "บันทึกข้อมูลพื้นฐานก่อน" : undefined}>History</TabsTrigger>
+          <TabsTrigger value="doc" disabled={locked} title={locked ? t("saveFirstHint") : undefined}>{t("tabs.doc")}</TabsTrigger>
+          <TabsTrigger value="history" disabled={locked} title={locked ? t("saveFirstHint") : undefined}>{t("tabs.history")}</TabsTrigger>
         </TabsList>
 
         <TabsContent value="info" className="mt-0 flex-1 min-w-0">
           {createdId && (
             <div className="mb-4 flex items-center gap-2 rounded-md border border-primary/30 bg-primary/5 px-3 py-2 text-sm text-primary">
               <CheckCircle2 className="h-4 w-4 flex-none" />
-              สร้างรายงานสำเร็จแล้ว ข้อมูลพื้นฐานด้านล่างนี้เป็นแบบอ่านอย่างเดียว — แก้ไขเพิ่มเติมได้ที่หน้า{" "}
-              <a href={`/reports/report-edit/${createdId}`} className="underline font-medium">แก้ไขรายงาน</a>
+              {t("createdBannerPrefix")}{" "}
+              <Link href={`/reports/report-edit/${createdId}`} className="underline font-medium">{t("editReportLink")}</Link>
             </div>
           )}
           <form onSubmit={handleSubmit} noValidate>
@@ -221,39 +228,39 @@ export default function ReportCreate() {
               <CardHeader className="pb-4">
                 <div className="flex items-center gap-2">
                   <FileText className="h-4 w-4 text-muted-foreground" />
-                  <CardTitle className="text-base">ข้อมูลรายงาน</CardTitle>
+                  <CardTitle className="text-base">{t("cardTitle")}</CardTitle>
                 </div>
-                <CardDescription>ข้อมูลพื้นฐานของรายงาน</CardDescription>
+                <CardDescription>{t("cardDescription")}</CardDescription>
               </CardHeader>
               <CardContent className="space-y-4">
 
                 {/* Code */}
                 <Field>
                   <FieldLabel htmlFor="code">
-                    รหัส <span className="text-destructive ml-0.5">*</span>
+                    {t("codeLabel")} <span className="text-destructive ml-0.5">*</span>
                   </FieldLabel>
                   <Input
                     id="code"
                     name="code"
-                    placeholder="เช่น Anes-0001"
+                    placeholder={t("codePlaceholder")}
                     required
                     autoComplete="off"
                     disabled={!!createdId}
                     value={reportData?.code}
                     onChange={handleInputChange}
                   />
-                  <FieldDescription>รูปแบบ: แผนก-XXXX</FieldDescription>
+                  <FieldDescription>{t("codeHint")}</FieldDescription>
                 </Field>
 
                 {/* Name */}
                 <Field>
                   <FieldLabel htmlFor="name">
-                    ชื่อ <span className="text-destructive ml-0.5">*</span>
+                    {t("nameLabel")} <span className="text-destructive ml-0.5">*</span>
                   </FieldLabel>
                   <Input
                     id="name"
                     name="name"
-                    placeholder="ระบุชื่อรายงาน"
+                    placeholder={t("namePlaceholder")}
                     required
                     autoComplete="off"
                     disabled={!!createdId}
@@ -265,10 +272,10 @@ export default function ReportCreate() {
                 {/* Category + Department – inline 2-col */}
                 <div className="grid grid-cols-2 gap-3">
                   <Field>
-                    <FieldLabel htmlFor="rp_catagory">หมวดหมู่</FieldLabel>
+                    <FieldLabel htmlFor="rp_catagory">{t("categoryLabel")}</FieldLabel>
                     <Select disabled={!!createdId} value={reportData?.category} onValueChange={(e) => handleSelectChange("category", e)}>
                       <SelectTrigger id="rp_catagory">
-                        <SelectValue placeholder="เลือกหมวดหมู่" />
+                        <SelectValue placeholder={t("categoryPlaceholder")} />
                       </SelectTrigger>
                       <SelectContent>
                         <SelectGroup>
@@ -283,10 +290,10 @@ export default function ReportCreate() {
                   </Field>
 
                   <Field>
-                    <FieldLabel htmlFor="rp_department">แผนก</FieldLabel>
+                    <FieldLabel htmlFor="rp_department">{t("departmentLabel")}</FieldLabel>
                     <Select disabled={!!createdId} value={reportData?.department} onValueChange={(e) => handleSelectChange("department", e)}>
                       <SelectTrigger id="rp_department">
-                        <SelectValue placeholder="เลือกแผนก" />
+                        <SelectValue placeholder={t("departmentPlaceholder")} />
                       </SelectTrigger>
                       <SelectContent>
                         <SelectGroup>
@@ -304,10 +311,10 @@ export default function ReportCreate() {
                 {/* Output Type + Access Level – inline 2-col */}
                 <div className="grid grid-cols-2 gap-3">
                   <Field>
-                    <FieldLabel htmlFor="rp_output_type">ประเภทผลลัพธ์</FieldLabel>
+                    <FieldLabel htmlFor="rp_output_type">{t("outputTypeLabel")}</FieldLabel>
                     <Select disabled={!!createdId} value={reportData?.output_type} onValueChange={(e) => handleSelectChange("output_type", e)}>
                       <SelectTrigger id="rp_output_type">
-                        <SelectValue placeholder="เลือกประเภทผลลัพธ์" />
+                        <SelectValue placeholder={t("outputTypePlaceholder")} />
                       </SelectTrigger>
                       <SelectContent>
                         <SelectGroup>
@@ -319,14 +326,14 @@ export default function ReportCreate() {
                         </SelectGroup>
                       </SelectContent>
                     </Select>
-                    <FieldDescription>กำหนดครั้งเดียวตอนสร้าง เปลี่ยนไม่ได้ทีหลัง</FieldDescription>
+                    <FieldDescription>{t("outputTypeHint")}</FieldDescription>
                   </Field>
 
                   <Field>
-                    <FieldLabel htmlFor="rp_access_level">ระดับการเข้าถึง</FieldLabel>
+                    <FieldLabel htmlFor="rp_access_level">{t("accessLevelLabel")}</FieldLabel>
                     <Select disabled={!!createdId} value={reportData?.access_level} onValueChange={(e) => handleSelectChange("access_level", e)}>
                       <SelectTrigger id="rp_access_level">
-                        <SelectValue placeholder="เลือกระดับการเข้าถึง" />
+                        <SelectValue placeholder={t("accessLevelPlaceholder")} />
                       </SelectTrigger>
                       <SelectContent>
                         <SelectGroup>
@@ -339,17 +346,17 @@ export default function ReportCreate() {
                       </SelectContent>
                     </Select>
                     <FieldDescription>
-                      PUBLIC เผยแพร่ให้ผู้ใช้ทั่วไปเห็นได้ · RESTRICTED/PRIVATE ต้องกำหนดสิทธิ์เพิ่มทีหลัง
+                      {t("accessLevelHint")}
                     </FieldDescription>
                   </Field>
                 </div>
 
                 {/* Status */}
                 <Field>
-                  <FieldLabel htmlFor="rp_status">สถานะ</FieldLabel>
+                  <FieldLabel htmlFor="rp_status">{t("statusLabel")}</FieldLabel>
                   <Select disabled={!!createdId} value={reportData?.status} onValueChange={(e) => handleSelectChange("status", e)}>
                     <SelectTrigger id="rp_status">
-                      <SelectValue placeholder="เลือกสถานะ" />
+                      <SelectValue placeholder={t("statusPlaceholder")} />
                     </SelectTrigger>
                     <SelectContent>
                       <SelectGroup>
@@ -365,7 +372,7 @@ export default function ReportCreate() {
 
                 {/* File Upload */}
                 <FileUpload
-                  label="ไฟล์แนบ"
+                  label={t("fileLabel")}
                   accept="all"
                   multiple
                   maxSizeMB={20}
@@ -376,11 +383,11 @@ export default function ReportCreate() {
 
                 {/* Description */}
                 <Field>
-                  <FieldLabel htmlFor="description">คำอธิบาย</FieldLabel>
+                  <FieldLabel htmlFor="description">{t("descriptionLabel")}</FieldLabel>
                   <Textarea
                     id="description"
                     name="description"
-                    placeholder="เพิ่มข้อมูลเพิ่มเติมเกี่ยวกับรายงานนี้…"
+                    placeholder={t("descriptionPlaceholder")}
                     className="resize-none min-h-[96px]"
                     disabled={!!createdId}
                     value={reportData?.description}
@@ -392,13 +399,13 @@ export default function ReportCreate() {
                   <Field orientation="horizontal">
                     <Checkbox id="is_downloadable" disabled={!!createdId} checked={reportData?.is_downloadable} onCheckedChange={(e) => handleSelectChange("is_downloadable", e)} />
                     <FieldLabel htmlFor="is_downloadable" className="font-normal">
-                      ดาวน์โหลดได้
+                      {t("isDownloadable")}
                     </FieldLabel>
                   </Field>
                   <Field orientation="horizontal">
                     <Checkbox id="is_editable" disabled={!!createdId} checked={reportData?.is_editable} onCheckedChange={(e) => handleSelectChange("is_editable", e)} />
                     <FieldLabel htmlFor="is_editable" className="font-normal">
-                      แก้ไขได้
+                      {t("isEditable")}
                     </FieldLabel>
                   </Field>
                 </div>
@@ -410,16 +417,16 @@ export default function ReportCreate() {
             {!createdId && (
               <div className="mt-6 flex items-center justify-end gap-3">
                 <Button variant="outline" type="button">
-                  ยกเลิก
+                  {t("cancel")}
                 </Button>
                 <Button type="submit" disabled={isSubmitting}>
                   {isSubmitting ? (
                     <>
                       <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                      กำลังส่ง…
+                      {t("creating")}
                     </>
                   ) : (
-                    "สร้างรายงาน"
+                    t("createButton")
                   )}
                 </Button>
               </div>

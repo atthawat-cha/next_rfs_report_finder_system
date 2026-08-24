@@ -44,5 +44,14 @@
     "selectRolePlaceholder": "Select a role",
     "saveSuccess": "Permissions saved successfully",
     "saveError": "Save failed"
+  },
+  "form": {
+    "heading": "Permissions",
+    "description": "Select the permissions you want to grant",
+    "selectAll": "Select All",
+    "view": "View",
+    "create": "Create",
+    "update": "Edit",
+    "delete": "Delete"
   }
 }

@@ -8,12 +8,13 @@ import { TagRow } from './tagTypes'
 
 export function getTagColumn(
     onEdit: (row: TagRow) => void,
-    onDelete: (row: TagRow) => void
+    onDelete: (row: TagRow) => void,
+    tc: (key: string) => string
 ): ColumnDef<TagRow>[] {
     return [
         {
             accessorKey: "name",
-            header: "ชื่อ",
+            header: tc("name"),
         },
         {
             accessorKey: "slug",
@@ -21,29 +22,29 @@ export function getTagColumn(
         },
         {
             accessorKey: "description",
-            header: "คำอธิบาย",
+            header: tc("description"),
         },
         {
             accessorKey: "created_at",
-            header: "วันที่สร้าง",
+            header: tc("createdAt"),
             cell: ({ row }) => formatDateTime(row.original.created_at),
         },
         {
             id: "actions",
-            header: "การจัดการ",
+            header: tc("actions"),
             cell: ({ row }) => {
                 return (
                     <DropdownMenu>
                         <DropdownMenuTrigger asChild>
                             <Button variant="ghost" className="h-8 w-8 p-0">
-                                <span className="sr-only">เปิดเมนู</span>
+                                <span className="sr-only">{tc("openMenu")}</span>
                                 <MoreHorizontal className="h-4 w-4" />
                             </Button>
                         </DropdownMenuTrigger>
                         <DropdownMenuContent align="end">
-                            <DropdownMenuLabel>การจัดการ</DropdownMenuLabel>
-                            <DropdownMenuItem onClick={() => onEdit(row.original)}>แก้ไข</DropdownMenuItem>
-                            <DropdownMenuItem onClick={() => onDelete(row.original)}>ลบ</DropdownMenuItem>
+                            <DropdownMenuLabel>{tc("actions")}</DropdownMenuLabel>
+                            <DropdownMenuItem onClick={() => onEdit(row.original)}>{tc("edit")}</DropdownMenuItem>
+                            <DropdownMenuItem onClick={() => onDelete(row.original)}>{tc("delete")}</DropdownMenuItem>
                         </DropdownMenuContent>
                     </DropdownMenu>
                 )

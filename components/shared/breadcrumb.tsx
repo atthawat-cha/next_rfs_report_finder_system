@@ -1,27 +1,36 @@
+import { Fragment } from "react";
 import { Link } from "@/i18n/navigation";
 import { Breadcrumb, BreadcrumbItem, BreadcrumbLink, BreadcrumbList, BreadcrumbPage, BreadcrumbSeparator } from "../ui/breadcrumb";
 
+export interface BreadcrumbTrailItem {
+    label: string;
+    href?: string;
+}
 
-export default function DefaultBreadcrumb() {
+/**
+ * Previously hardcoded the same "Dashboard / Management / Reports" trail for
+ * every one of its ~10 importers regardless of which page rendered it (found
+ * during Phase 9a, fixed here during Phase 11c since every caller needed
+ * translating anyway) - each page now passes its own real trail.
+ */
+export default function DefaultBreadcrumb({ items }: { items: BreadcrumbTrailItem[] }) {
     return (
-
         <Breadcrumb>
             <BreadcrumbList>
-                <BreadcrumbItem>
-                    <BreadcrumbLink asChild>
-                        <Link href="/">แดชบอร์ด</Link>
-                    </BreadcrumbLink>
-                </BreadcrumbItem>
-                <BreadcrumbSeparator />
-                <BreadcrumbItem>
-                    <BreadcrumbLink asChild>
-                        <Link href="/dashboard">การจัดการ</Link>
-                    </BreadcrumbLink>
-                </BreadcrumbItem>
-                <BreadcrumbSeparator />
-                <BreadcrumbItem>
-                    <BreadcrumbPage>รายงาน</BreadcrumbPage>
-                </BreadcrumbItem>
+                {items.map((item, index) => (
+                    <Fragment key={index}>
+                        <BreadcrumbItem>
+                            {item.href ? (
+                                <BreadcrumbLink asChild>
+                                    <Link href={item.href}>{item.label}</Link>
+                                </BreadcrumbLink>
+                            ) : (
+                                <BreadcrumbPage>{item.label}</BreadcrumbPage>
+                            )}
+                        </BreadcrumbItem>
+                        {index < items.length - 1 && <BreadcrumbSeparator />}
+                    </Fragment>
+                ))}
             </BreadcrumbList>
         </Breadcrumb>
     )

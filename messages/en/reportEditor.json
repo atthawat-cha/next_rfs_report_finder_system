@@ -1,1 +1,166 @@
-{}
+{
+  "paramTab": {
+    "title": "Parameters",
+    "description": "Variables used in this report - scope each one to the main report or a specific sub-report",
+    "mainScopeTitle": "Main report parameters",
+    "subScopeTitle": "Sub-report parameters: {name}",
+    "noParamsInScope": "No parameters in this scope yet",
+    "namePlaceholder": "Name",
+    "labelPlaceholder": "Label",
+    "dataTypePlaceholder": "Data type",
+    "defaultValuePlaceholder": "Default value",
+    "sortOrderPlaceholder": "Sort order",
+    "required": "Required",
+    "addNewParameter": "Add new parameter",
+    "mainReport": "Main report",
+    "subReportOption": "Sub-report: {name}",
+    "addParameterButton": "Add Parameter",
+    "errors": {
+      "missingName": "Enter a name",
+      "addFailed": "Failed to add parameter",
+      "saveFailed": "Failed to save parameter",
+      "deleteFailed": "Failed to delete parameter"
+    },
+    "success": {
+      "add": "Parameter added successfully",
+      "save": "Parameter saved successfully",
+      "delete": "Parameter deleted successfully"
+    }
+  },
+  "queryTab": {
+    "namePlaceholder": "Query name",
+    "sqlPlaceholder": "SQL text",
+    "changeLogPlaceholder": "Change note (optional, saved with this version)",
+    "mainQueryLabel": "Main Query",
+    "mainReport": "Main report",
+    "subReportOption": "Sub-report: {name}",
+    "containerDescription": "Reference only - these queries are never actually executed by the system",
+    "mainQuerySectionTitle": "Main Query",
+    "subQueriesSectionTitle": "Sub Queries",
+    "mainBadge": "Main",
+    "noMainQuery": "No main query in this scope yet",
+    "noSubQueries": "No sub queries yet",
+    "setAsMain": "Set as main",
+    "addQueryTitle": "Add Query",
+    "addQueryDescription": "Choose a scope (main report or a sub-report), then check \"Main Query\" if this should be the scope's main query",
+    "addQueryButton": "Add Query",
+    "errors": {
+      "missingFields": "Enter a name and SQL text",
+      "addFailed": "Failed to add query",
+      "saveFailed": "Failed to save query",
+      "setMainFailed": "Failed to set as main query",
+      "deleteFailed": "Failed to delete query"
+    },
+    "success": {
+      "add": "Query added successfully",
+      "save": "Query saved successfully",
+      "setMain": "\"{name}\" set as the main query",
+      "delete": "Query deleted successfully"
+    }
+  },
+  "subTab": {
+    "title": "Sub-reports",
+    "description": "Sub-reports embedded within this report - upload a sub-design file (.jrxml/.rpt/.pdf) or link to another existing report, placed by slot",
+    "slot": {
+      "HEADER": "Header",
+      "DETAIL": "Detail",
+      "FOOTER": "Footer"
+    },
+    "noSubReportsInSlot": "No sub-reports in this slot yet",
+    "namePlaceholder": "Name",
+    "uploadedFile": "Uploaded file · {fileName}",
+    "linkedReport": "Linked report: {report}",
+    "addNewSubReport": "Add new sub-report",
+    "sourceType": {
+      "upload": "Upload a sub-design file (.jrxml / .rpt / .pdf)",
+      "linked": "Link to an existing report"
+    },
+    "selectLinkedReportPlaceholder": "Select a report to link",
+    "addButton": "+ Add Sub-report",
+    "errors": {
+      "missingName": "Enter a name",
+      "missingFile": "Select a file to upload",
+      "missingLinkedReport": "Select a report to link",
+      "addFailed": "Failed to add sub-report",
+      "saveFailed": "Failed to save sub-report",
+      "deleteFailed": "Failed to delete sub-report"
+    },
+    "success": {
+      "add": "Sub-report added successfully",
+      "save": "Sub-report saved successfully",
+      "delete": "Sub-report deleted successfully"
+    }
+  },
+  "docTab": {
+    "documentsTitle": "Documents",
+    "documentsDescription": "Not tied to output_type - upload a file and tag what it's for. Each type's latest file is used automatically",
+    "documentTypeLabel": "Document Type",
+    "uploadButton": "Upload",
+    "activeFileBadge": "1 file active",
+    "noDocumentsOfType": "No documents of this type yet",
+    "sharingTitle": "Sharing",
+    "sharingDescription": "Share this report with a user/department, or create a public link (no login required)",
+    "shareTypeLabel": {
+      "USER": "User",
+      "DEPARTMENT": "Department",
+      "LINK": "Link"
+    },
+    "canDownloadBadge": "Can download",
+    "canEditBadge": "Can edit",
+    "expiresLabel": "Expires {date}",
+    "revoke": "Revoke",
+    "createNewShare": "Create new share",
+    "shareTypePlaceholder": "Share type",
+    "shareTypeOptions": {
+      "LINK": "Public Link",
+      "USER": "User",
+      "DEPARTMENT": "Department"
+    },
+    "selectUserPlaceholder": "Select a user",
+    "selectDepartmentPlaceholder": "Select a department",
+    "canDownloadLabel": "Can download",
+    "canEditLabel": "Can edit",
+    "expiresDateLabel": "Expires",
+    "createShareButton": "Create Share",
+    "errors": {
+      "selectFileFirst": "Select a file first",
+      "uploadFailedCount": "{count} file(s) failed to upload",
+      "deleteFileFailed": "Failed to delete file",
+      "chooseUser": "Choose a user",
+      "chooseDepartment": "Choose a department",
+      "createShareFailed": "Failed to create share",
+      "revokeShareFailed": "Failed to revoke share"
+    },
+    "success": {
+      "upload": "Upload successful",
+      "deleteFile": "File deleted",
+      "createShare": "Share created",
+      "revokeShare": "Share revoked",
+      "copyLink": "Link copied to clipboard"
+    }
+  },
+  "historyTab": {
+    "title": "Version History",
+    "description": "History of every file and query version - click Rollback to revert to an older version",
+    "noHistory": "No version history yet",
+    "current": "Current",
+    "rollback": "Rollback",
+    "queryLabel": "{name} (Query)",
+    "noEditHistory": "No edit history yet",
+    "errors": {
+      "rollbackFailed": "Rollback failed"
+    },
+    "success": {
+      "rollback": "Rolled back to version v{version}"
+    }
+  },
+  "querySummary": {
+    "none": "— None",
+    "tables": "Tables",
+    "fields": "Fields",
+    "conditions": "Conditions",
+    "cannotAnalyze": "Unable to analyze this SQL. Showing full SQL instead.",
+    "hideFull": "Hide full SQL",
+    "showFull": "View full SQL"
+  }
+}

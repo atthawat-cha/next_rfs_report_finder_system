@@ -1,6 +1,7 @@
 "use client";
 
 import * as React from "react";
+import { useTranslations } from "next-intl";
 import {
   Sheet,
   SheetContent,
@@ -51,14 +52,7 @@ interface SubjectOption {
   label: string;
 }
 
-const FLAGS: { key: FlagKey; label: string }[] = [
-  { key: "can_view", label: "ดู" },
-  { key: "can_edit", label: "แก้ไข" },
-  { key: "can_delete", label: "ลบ" },
-  { key: "can_favorite", label: "รายการโปรด" },
-  { key: "can_export", label: "ส่งออก" },
-  { key: "can_print", label: "พิมพ์" },
-];
+const FLAG_KEYS: FlagKey[] = ["can_view", "can_edit", "can_delete", "can_favorite", "can_export", "can_print"];
 
 /**
  * Per-report ACL editor over the four report_permissions handlers that have
@@ -85,6 +79,7 @@ export function ReportPermissionsDrawer({
   open: boolean;
   onOpenChange: (open: boolean) => void;
 }) {
+  const t = useTranslations("reports.permissionsDrawer");
   const [loading, setLoading] = React.useState(false);
   const [forbidden, setForbidden] = React.useState(false);
   const [grants, setGrants] = React.useState<Grant[] | null>(null);
@@ -176,7 +171,7 @@ export function ReportPermissionsDrawer({
       });
       const json = await res.json();
       if (!res.ok || !json?.success) {
-        toast.error(json?.error?.[0]?.message ?? json?.error ?? "บันทึกไม่สำเร็จ");
+        toast.error(json?.error?.[0]?.message ?? json?.error ?? t("errors.saveFailed"));
         return;
       }
       setGrants((prev) => prev?.map((g) => (g.id === grant.id ? { ...g, ...json.data } : g)) ?? prev);
@@ -199,7 +194,7 @@ export function ReportPermissionsDrawer({
       const json = await res.json();
       if (!res.ok || !json?.success) {
         const message = Array.isArray(json?.error) ? json.error[0]?.message : json?.error;
-        setAddError(message ?? "เพิ่มสิทธิ์ไม่สำเร็จ");
+        setAddError(message ?? t("errors.addFailed"));
         return;
       }
       setGrants((prev) => [...(prev ?? []), { ...json.data, subject_name: selectedSubject.label }]);
@@ -216,7 +211,7 @@ export function ReportPermissionsDrawer({
       credentials: "include",
     });
     if (!res.ok) {
-      toast.error("ลบไม่สำเร็จ");
+      toast.error(t("errors.deleteFailed"));
       return;
     }
     setGrants((prev) => prev?.filter((g) => g.id !== grant.id) ?? prev);
@@ -227,20 +222,20 @@ export function ReportPermissionsDrawer({
     <Sheet open={open} onOpenChange={onOpenChange}>
       <SheetContent side="right" className="w-full sm:max-w-2xl overflow-y-auto">
         <SheetHeader>
-          <SheetTitle>จัดการสิทธิ์การเข้าถึงรายงาน</SheetTitle>
+          <SheetTitle>{t("title")}</SheetTitle>
           <SheetDescription>
-            กำหนดสิทธิ์ดู/แก้ไข/ลบ/บุ๊กมาร์ก/ส่งออก/พิมพ์ ต่อผู้ใช้หรือบทบาท — สิทธิ์รายบุคคลมีผลเหนือกว่าสิทธิ์ตามบทบาทเสมอ
+            {t("description")}
           </SheetDescription>
         </SheetHeader>
 
         {loading && (
           <div className="flex items-center justify-center py-12 text-muted-foreground">
-            <Loader2 className="h-5 w-5 animate-spin mr-2" /> กำลังโหลด...
+            <Loader2 className="h-5 w-5 animate-spin mr-2" /> {t("loading")}
           </div>
         )}
 
         {!loading && forbidden && (
-          <p className="py-12 text-center text-muted-foreground">คุณไม่มีสิทธิ์เข้าถึงส่วนนี้</p>
+          <p className="py-12 text-center text-muted-foreground">{t("forbidden")}</p>
         )}
 
         {!loading && !forbidden && grants && (
@@ -249,10 +244,10 @@ export function ReportPermissionsDrawer({
               <Table>
                 <TableHeader>
                   <TableRow>
-                    <TableHead>สิทธิ์ของ</TableHead>
-                    {FLAGS.map((f) => (
-                      <TableHead key={f.key} className="text-center">
-                        {f.label}
+                    <TableHead>{t("grantedTo")}</TableHead>
+                    {FLAG_KEYS.map((key) => (
+                      <TableHead key={key} className="text-center">
+                        {t(`flags.${key}`)}
                       </TableHead>
                     ))}
                     <TableHead />
@@ -261,8 +256,8 @@ export function ReportPermissionsDrawer({
                 <TableBody>
                   {grants.length === 0 && (
                     <TableRow>
-                      <TableCell colSpan={FLAGS.length + 2} className="text-center text-muted-foreground">
-                        ยังไม่มีสิทธิ์ที่กำหนดไว้
+                      <TableCell colSpan={FLAG_KEYS.length + 2} className="text-center text-muted-foreground">
+                        {t("noGrants")}
                       </TableCell>
                     </TableRow>
                   )}
@@ -276,12 +271,12 @@ export function ReportPermissionsDrawer({
                           </Badge>
                         </div>
                       </TableCell>
-                      {FLAGS.map((f) => (
-                        <TableCell key={f.key} className="text-center">
+                      {FLAG_KEYS.map((key) => (
+                        <TableCell key={key} className="text-center">
                           <Checkbox
-                            checked={grant[f.key]}
+                            checked={grant[key]}
                             disabled={savingId === grant.id}
-                            onCheckedChange={() => toggleFlag(grant, f.key)}
+                            onCheckedChange={() => toggleFlag(grant, key)}
                           />
                         </TableCell>
                       ))}
@@ -289,10 +284,10 @@ export function ReportPermissionsDrawer({
                         {confirmDeleteId === grant.id ? (
                           <div className="flex gap-1">
                             <Button size="sm" variant="destructive" onClick={() => handleDelete(grant)}>
-                              ลบ
+                              {t("delete")}
                             </Button>
                             <Button size="sm" variant="ghost" onClick={() => setConfirmDeleteId(null)}>
-                              ยกเลิก
+                              {t("cancel")}
                             </Button>
                           </div>
                         ) : (
@@ -308,7 +303,7 @@ export function ReportPermissionsDrawer({
             </div>
 
             <div className="space-y-2 border-t pt-4">
-              <p className="text-sm font-medium">เพิ่มสิทธิ์ใหม่</p>
+              <p className="text-sm font-medium">{t("addNewTitle")}</p>
               <ToggleGroup
                 type="single"
                 variant="outline"
@@ -320,18 +315,18 @@ export function ReportPermissionsDrawer({
                   setAddError(null);
                 }}
               >
-                <ToggleGroupItem value="USER">ผู้ใช้</ToggleGroupItem>
-                <ToggleGroupItem value="ROLE">บทบาท</ToggleGroupItem>
+                <ToggleGroupItem value="USER">{t("subjectTypeUser")}</ToggleGroupItem>
+                <ToggleGroupItem value="ROLE">{t("subjectTypeRole")}</ToggleGroupItem>
               </ToggleGroup>
 
               <div className="flex gap-2">
                 <Combobox items={subjectOptions} value={selectedSubject} onValueChange={(v) => setSelectedSubject(v)}>
                   <ComboboxInput
                     className="flex-1"
-                    placeholder={subjectType === "USER" ? "ค้นหาผู้ใช้..." : "ค้นหาบทบาท..."}
+                    placeholder={subjectType === "USER" ? t("searchUserPlaceholder") : t("searchRolePlaceholder")}
                   />
                   <ComboboxContent>
-                    <ComboboxEmpty>ไม่พบรายการ</ComboboxEmpty>
+                    <ComboboxEmpty>{t("noSubjectResults")}</ComboboxEmpty>
                     <ComboboxList>
                       {(item: SubjectOption) => (
                         <ComboboxItem key={item.value} value={item}>

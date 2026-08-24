@@ -1,5 +1,6 @@
 import { ColumnDef, flexRender, getCoreRowModel, useReactTable } from '@tanstack/react-table'
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table'
+import { useTranslations } from 'next-intl'
 
 interface DataTableProps<TData, TValue> {
     columns: ColumnDef<TData, TValue>[]
@@ -10,6 +11,7 @@ export default function TagsTable<TData, TValue>({
     columns,
     data,
 }: DataTableProps<TData, TValue>) {
+    const tc = useTranslations('common')
     const table = useReactTable({
         data,
         columns,
@@ -58,7 +60,7 @@ export default function TagsTable<TData, TValue>({
                             colSpan={columns.length}
                             className="h-24 text-center"
                         >
-                            ไม่พบข้อมูล
+                            {tc('noResults')}
                         </TableCell>
                     </TableRow>
                 )}
