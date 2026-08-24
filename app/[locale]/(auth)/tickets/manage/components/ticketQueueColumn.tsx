@@ -11,51 +11,51 @@ function userLabel(user: TicketRow['requester']): string {
     return name || user.username
 }
 
-export function getTicketQueueColumns(onEdit: (row: TicketRow) => void): ColumnDef<TicketRow>[] {
+export function getTicketQueueColumns(onEdit: (row: TicketRow) => void, t: (key: string) => string): ColumnDef<TicketRow>[] {
     return [
         {
             accessorKey: 'ticket_number',
-            header: 'Ticket #',
+            header: t('ticketNumber'),
         },
         {
             accessorKey: 'subject',
-            header: 'Subject',
+            header: t('subject'),
         },
         {
             id: 'requester',
-            header: 'Requester',
+            header: t('requester'),
             cell: ({ row }) => userLabel(row.original.requester),
         },
         {
             accessorKey: 'category',
-            header: 'Category',
+            header: t('category'),
         },
         {
             accessorKey: 'priority',
-            header: 'Priority',
+            header: t('priority'),
             cell: ({ row }) => <PriorityBadge priority={row.original.priority} />,
         },
         {
             accessorKey: 'status',
-            header: 'Status',
+            header: t('status'),
             cell: ({ row }) => <StatusBadge status={row.original.status} />,
         },
         {
             id: 'assignee',
-            header: 'Assigned To',
+            header: t('assignedTo'),
             cell: ({ row }) => userLabel(row.original.assignee),
         },
         {
             accessorKey: 'created_at',
-            header: 'Created At',
+            header: t('createdAt'),
             cell: ({ row }) => formatDateTime(row.original.created_at),
         },
         {
             id: 'actions',
-            header: 'Actions',
+            header: t('actions'),
             cell: ({ row }) => (
                 <Button variant="outline" size="sm" onClick={() => onEdit(row.original)}>
-                    Manage
+                    {t('manage')}
                 </Button>
             ),
         },

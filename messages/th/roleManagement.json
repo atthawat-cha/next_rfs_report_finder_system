@@ -1,1 +1,48 @@
-{}
+{
+  "manage": {
+    "pageTitle": "จัดการบทบาท"
+  },
+  "roleForm": {
+    "pageTitle": "จัดการบทบาท",
+    "breadcrumbManagement": "การจัดการ",
+    "breadcrumbRoles": "บทบาท",
+    "heading": "บทบาท",
+    "back": "ย้อนกลับ",
+    "roleNameLabel": "ชื่อบทบาท",
+    "roleNamePlaceholder": "ชื่อบทบาท",
+    "roleNameHint": "กรอกชื่อบทบาทของคุณด้านบน",
+    "displayNameLabel": "ชื่อที่แสดง",
+    "displayNamePlaceholder": "ชื่อที่แสดง",
+    "reset": "ล้างข้อมูล",
+    "missingFields": "กรุณากรอกข้อมูลที่จำเป็นให้ครบถ้วน",
+    "createSuccess": "สร้างบทบาทสำเร็จ",
+    "createError": "เกิดข้อผิดพลาดในการส่งฟอร์ม"
+  },
+  "roles": {
+    "pageTitle": "จัดการบทบาท",
+    "breadcrumbManagement": "การจัดการ",
+    "breadcrumbRoles": "บทบาท",
+    "heading": "บทบาท",
+    "newRole": "เพิ่มบทบาท",
+    "columns": {
+      "code": "รหัส",
+      "displayName": "ชื่อที่แสดง",
+      "users": "ผู้ใช้งาน",
+      "created": "วันที่สร้าง",
+      "actions": "การจัดการ",
+      "modify": "แก้ไข",
+      "delete": "ลบ"
+    }
+  },
+  "permissions": {
+    "pageTitle": "จัดการสิทธิ์",
+    "breadcrumbManagement": "การจัดการ",
+    "breadcrumbPermissions": "สิทธิ์การใช้งาน",
+    "cardTitle": "จัดการสิทธิ์",
+    "cardDescription": "เลือกบทบาทเพื่อกำหนดสิทธิ์การเข้าถึงเมนูต่างๆ",
+    "forbidden": "คุณไม่มีสิทธิ์เข้าถึงหน้านี้",
+    "selectRolePlaceholder": "เลือกบทบาท",
+    "saveSuccess": "บันทึกสิทธิ์เรียบร้อย",
+    "saveError": "บันทึกไม่สำเร็จ"
+  }
+}

@@ -4,5 +4,30 @@
   "languageThai": "ไทย",
   "loading": "กำลังโหลด...",
   "cancel": "ยกเลิก",
-  "save": "บันทึก"
+  "save": "บันทึก",
+  "saving": "กำลังบันทึก...",
+  "create": "สร้าง",
+  "edit": "แก้ไข",
+  "delete": "ลบ",
+  "confirm": "ยืนยัน",
+  "confirmDelete": "ยืนยันการลบ",
+  "actions": "การจัดการ",
+  "openMenu": "เปิดเมนู",
+  "status": "สถานะ",
+  "active": "ใช้งาน",
+  "inactive": "ไม่ใช้งาน",
+  "name": "ชื่อ",
+  "description": "คำอธิบาย",
+  "code": "รหัส",
+  "createdAt": "วันที่สร้าง",
+  "noResults": "ไม่พบข้อมูล",
+  "back": "ย้อนกลับ",
+  "breadcrumbHome": "หน้าหลัก",
+  "breadcrumbDashboard": "แดชบอร์ด",
+  "blankPage": {
+    "title": "หน้าว่าง",
+    "description": "นี่คือหน้าเปล่า คุณสามารถเริ่มพัฒนา features ต่างๆ ได้จากที่นี่",
+    "developmentArea": "พื้นที่สำหรับพัฒนา",
+    "developmentAreaDescription": "เพิ่ม features และ components ของคุณที่นี่"
+  }
 }

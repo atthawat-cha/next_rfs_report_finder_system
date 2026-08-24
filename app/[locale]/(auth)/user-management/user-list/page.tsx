@@ -4,15 +4,21 @@ import { Breadcrumb, BreadcrumbItem, BreadcrumbLink, BreadcrumbList, BreadcrumbP
 import { Link } from '@/i18n/navigation'
 import React from 'react';
 import { UsersDataTable } from './users-data-table';
-import { users_columns } from './columns';
+import { getUsersColumns } from './columns';
 import { UserTableType } from '@/lib/types';
 import { Separator } from "@/components/ui/separator"
 import { Button } from '@/components/ui/button';
 import { SkeletonTable } from '@/components/shared/skeletonTable';
+import { useTranslations } from 'next-intl';
+
 
 
 
 export default function UserLists() {
+  const t = useTranslations('userManagement.userList');
+  const tc = useTranslations('common');
+  const tCol = useTranslations('userManagement.userList.columns');
+  const columns = React.useMemo(() => getUsersColumns(tCol), [tCol]);
 
   // State
   const [users, setUsers] = React.useState<UserTableType[]>([]);
@@ -54,39 +60,38 @@ export default function UserLists() {
 
 
   return (
-    <ContentLayout title="User Lists">
+    <ContentLayout title={t('pageTitle')}>
         <Breadcrumb>
             <BreadcrumbList>
             <BreadcrumbItem>
                 <BreadcrumbLink asChild>
-                <Link href="/">Dashboard</Link>
+                <Link href="/">{tc('breadcrumbDashboard')}</Link>
                 </BreadcrumbLink>
             </BreadcrumbItem>
             <BreadcrumbSeparator />
             <BreadcrumbItem>
                 <BreadcrumbLink asChild>
-                <Link href="/dashboard">Users Management</Link>
+                <Link href="/dashboard">{t('breadcrumbUsersManagement')}</Link>
                 </BreadcrumbLink>
             </BreadcrumbItem>
             <BreadcrumbSeparator />
             <BreadcrumbItem>
-                <BreadcrumbPage>User Lists</BreadcrumbPage>
+                <BreadcrumbPage>{t('listTitle')}</BreadcrumbPage>
             </BreadcrumbItem>
             </BreadcrumbList>
         </Breadcrumb>
 
       <div className="container mx-auto py-10 gap-6">
         <div className='flex items-center justify-between'>
-          <h3 className="text-3xl md:text-4xl font-bold">User Lists</h3>
-          {/* <Link href="/user-management/user-department" className='btn btn-primary'>Add User</Link> */}
+          <h3 className="text-3xl md:text-4xl font-bold">{t('listTitle')}</h3>
           <Button asChild>
             <Link href={'/user-management/user-form'}>
-              New User
+              {t('newUser')}
             </Link>
           </Button>
         </div>
         <Separator className='my-5'/>
-        {loading ? <SkeletonTable /> : <UsersDataTable columns={users_columns} data={users} />}
+        {loading ? <SkeletonTable /> : <UsersDataTable columns={columns} data={users} />}
       </div>
     </ContentLayout>
   )

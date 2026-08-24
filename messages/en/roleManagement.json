@@ -1,1 +1,48 @@
-{}
+{
+  "manage": {
+    "pageTitle": "Role Management"
+  },
+  "roleForm": {
+    "pageTitle": "Role Management",
+    "breadcrumbManagement": "Management",
+    "breadcrumbRoles": "Roles",
+    "heading": "Roles",
+    "back": "Back",
+    "roleNameLabel": "Role Name",
+    "roleNamePlaceholder": "Role Name",
+    "roleNameHint": "Enter your role name above.",
+    "displayNameLabel": "Display Name",
+    "displayNamePlaceholder": "Display Name",
+    "reset": "Reset",
+    "missingFields": "Please fill in all required fields",
+    "createSuccess": "Role has been created successfully",
+    "createError": "An error occurred while submitting the form"
+  },
+  "roles": {
+    "pageTitle": "Role Management",
+    "breadcrumbManagement": "Management",
+    "breadcrumbRoles": "Roles",
+    "heading": "Roles",
+    "newRole": "New Role",
+    "columns": {
+      "code": "Code",
+      "displayName": "Display Name",
+      "users": "Users",
+      "created": "Created",
+      "actions": "Actions",
+      "modify": "Modify",
+      "delete": "Delete"
+    }
+  },
+  "permissions": {
+    "pageTitle": "Permission Management",
+    "breadcrumbManagement": "Management",
+    "breadcrumbPermissions": "Permissions",
+    "cardTitle": "Permission Management",
+    "cardDescription": "Select a role to configure access permissions for each menu",
+    "forbidden": "You do not have access to this page",
+    "selectRolePlaceholder": "Select a role",
+    "saveSuccess": "Permissions saved successfully",
+    "saveError": "Save failed"
+  }
+}

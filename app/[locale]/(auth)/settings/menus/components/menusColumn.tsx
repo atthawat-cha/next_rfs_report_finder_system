@@ -47,55 +47,57 @@ function SortOrderCell({ row, onChange }: { row: MenuRow; onChange: (id: string,
 export function getMenusColumn(
   onEdit: (row: MenuRow) => void,
   onDelete: (row: MenuRow) => void,
-  onSortOrderChange: (id: string, sortOrder: number) => void
+  onSortOrderChange: (id: string, sortOrder: number) => void,
+  t: (key: string) => string,
+  tc: (key: string) => string
 ): ColumnDef<MenuRow>[] {
   return [
     {
       accessorKey: "group_label",
-      header: "Group",
+      header: t("columns.group"),
     },
     {
       accessorKey: "catagory_label",
-      header: "Category",
+      header: t("columns.category"),
     },
     {
       accessorKey: "menu_label",
-      header: "Menu",
+      header: t("columns.menu"),
       cell: ({ row }) => row.original.menu_label ?? <span className="text-muted-foreground">—</span>,
     },
     {
       accessorKey: "sub_menu_label",
-      header: "Sub-menu",
+      header: t("columns.subMenu"),
       cell: ({ row }) => row.original.sub_menu_label ?? <span className="text-muted-foreground">—</span>,
     },
     {
       accessorKey: "href",
-      header: "Href",
+      header: t("columns.href"),
       cell: ({ row }) => <span className="text-xs text-muted-foreground">{row.original.href ?? "—"}</span>,
     },
     {
       accessorKey: "sort_order",
-      header: "Sort",
+      header: t("columns.sort"),
       cell: ({ row }) => <SortOrderCell row={row.original} onChange={onSortOrderChange} />,
     },
     {
       id: "actions",
-      header: "Actions",
+      header: tc("actions"),
       cell: ({ row }) => {
         const menu = row.original;
         return (
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
               <Button variant="ghost" className="h-8 w-8 p-0">
-                <span className="sr-only">Open menu</span>
+                <span className="sr-only">{tc("openMenu")}</span>
                 <MoreHorizontal className="h-4 w-4" />
               </Button>
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end">
-              <DropdownMenuLabel>Actions</DropdownMenuLabel>
-              <DropdownMenuItem onClick={() => onEdit(menu)}>Edit</DropdownMenuItem>
+              <DropdownMenuLabel>{tc("actions")}</DropdownMenuLabel>
+              <DropdownMenuItem onClick={() => onEdit(menu)}>{tc("edit")}</DropdownMenuItem>
               <DropdownMenuItem onClick={() => onDelete(menu)} className="text-destructive">
-                Delete
+                {tc("delete")}
               </DropdownMenuItem>
             </DropdownMenuContent>
           </DropdownMenu>

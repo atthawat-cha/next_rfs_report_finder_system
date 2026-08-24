@@ -17,6 +17,7 @@ import {
 } from '@/components/ui/select';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { SkeletonTable } from '@/components/shared/skeletonTable';
+import { useTranslations } from 'next-intl';
 
 interface ActivityLogUser {
   id: string;
@@ -41,6 +42,7 @@ const ENTITY_OPTIONS = ['report', 'user', 'department', 'role', 'auth'];
 const PAGE_SIZE = 20;
 
 export default function UsersActivityLog() {
+  const t = useTranslations('userManagement.activity');
   const [logs, setLogs] = useState<ActivityLogRow[]>([]);
   const [users, setUsers] = useState<ActivityLogUser[]>([]);
   const [page, setPage] = useState(1);
@@ -92,21 +94,21 @@ export default function UsersActivityLog() {
   const handleFilterChange = () => setPage(1);
 
   return (
-    <ContentLayout title="Activity Log">
+    <ContentLayout title={t('pageTitle')}>
       <div className="w-full item-center my-2">
         <DefaultBreadcrumb />
       </div>
 
       <Card className="container mx-auto py-10 gap-6 mt-5">
         <div className="flex items-center justify-between px-6">
-          <h4 className="text-xl md:text-3xl font-bold">Activity Log</h4>
-          <span className="text-sm text-muted-foreground">ทั้งหมด {total.toLocaleString()} รายการ</span>
+          <h4 className="text-xl md:text-3xl font-bold">{t('cardTitle')}</h4>
+          <span className="text-sm text-muted-foreground">{t('totalCount', { count: total.toLocaleString() })}</span>
         </div>
         <Separator className="my-5" />
 
         <div className="grid grid-cols-2 gap-4 px-6 md:grid-cols-4">
           <div className="space-y-1.5">
-            <Label>ผู้ใช้</Label>
+            <Label>{t('userLabel')}</Label>
             <Select
               value={userId}
               onValueChange={(v) => {
@@ -115,10 +117,10 @@ export default function UsersActivityLog() {
               }}
             >
               <SelectTrigger>
-                <SelectValue placeholder="ทั้งหมด" />
+                <SelectValue placeholder={t('allOption')} />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="all">ทั้งหมด</SelectItem>
+                <SelectItem value="all">{t('allOption')}</SelectItem>
                 {users.map((u) => (
                   <SelectItem key={u.id} value={u.id}>
                     {u.username}
@@ -129,7 +131,7 @@ export default function UsersActivityLog() {
           </div>
 
           <div className="space-y-1.5">
-            <Label>Entity</Label>
+            <Label>{t('entityLabel')}</Label>
             <Select
               value={entity}
               onValueChange={(v) => {
@@ -138,10 +140,10 @@ export default function UsersActivityLog() {
               }}
             >
               <SelectTrigger>
-                <SelectValue placeholder="ทั้งหมด" />
+                <SelectValue placeholder={t('allOption')} />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="all">ทั้งหมด</SelectItem>
+                <SelectItem value="all">{t('allOption')}</SelectItem>
                 {ENTITY_OPTIONS.map((e) => (
                   <SelectItem key={e} value={e}>
                     {e}
@@ -152,7 +154,7 @@ export default function UsersActivityLog() {
           </div>
 
           <div className="space-y-1.5">
-            <Label>ตั้งแต่วันที่</Label>
+            <Label>{t('fromDateLabel')}</Label>
             <Input
               type="date"
               value={from}
@@ -164,7 +166,7 @@ export default function UsersActivityLog() {
           </div>
 
           <div className="space-y-1.5">
-            <Label>ถึงวันที่</Label>
+            <Label>{t('toDateLabel')}</Label>
             <Input
               type="date"
               value={to}
@@ -185,12 +187,12 @@ export default function UsersActivityLog() {
             <Table>
               <TableHeader>
                 <TableRow>
-                  <TableHead>เวลา</TableHead>
-                  <TableHead>ผู้ใช้</TableHead>
-                  <TableHead>Action</TableHead>
-                  <TableHead>Entity</TableHead>
-                  <TableHead>รายละเอียด</TableHead>
-                  <TableHead>IP</TableHead>
+                  <TableHead>{t('columns.time')}</TableHead>
+                  <TableHead>{t('columns.user')}</TableHead>
+                  <TableHead>{t('columns.action')}</TableHead>
+                  <TableHead>{t('columns.entity')}</TableHead>
+                  <TableHead>{t('columns.description')}</TableHead>
+                  <TableHead>{t('columns.ip')}</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
@@ -210,7 +212,7 @@ export default function UsersActivityLog() {
                 ) : (
                   <TableRow>
                     <TableCell colSpan={6} className="h-24 text-center text-muted-foreground">
-                      ไม่มีข้อมูล
+                      {t('noData')}
                     </TableCell>
                   </TableRow>
                 )}
@@ -221,14 +223,14 @@ export default function UsersActivityLog() {
 
         <div className="mt-4 flex items-center justify-between px-6">
           <span className="text-sm text-muted-foreground">
-            หน้า {page} จาก {totalPages}
+            {t('pageInfo', { page, totalPages })}
           </span>
           <div className="flex gap-2">
             <Button variant="outline" size="sm" disabled={page <= 1} onClick={() => setPage((p) => p - 1)}>
-              ก่อนหน้า
+              {t('previous')}
             </Button>
             <Button variant="outline" size="sm" disabled={page >= totalPages} onClick={() => setPage((p) => p + 1)}>
-              ถัดไป
+              {t('next')}
             </Button>
           </div>
         </div>

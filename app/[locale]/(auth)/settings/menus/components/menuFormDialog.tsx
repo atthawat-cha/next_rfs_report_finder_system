@@ -14,6 +14,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Loader2 } from "lucide-react";
 import toast from "react-hot-toast";
+import { useTranslations } from "next-intl";
 import type { MenuRow } from "./menusColumn";
 
 interface FormState {
@@ -70,6 +71,8 @@ export function MenuFormDialog({
   menu: MenuRow | null;
   onSaved: () => void;
 }) {
+  const t = useTranslations("settings.menus.form");
+  const tc = useTranslations("common");
   const [form, setForm] = React.useState<FormState>(EMPTY_FORM);
   const [saving, setSaving] = React.useState(false);
 
@@ -85,7 +88,7 @@ export function MenuFormDialog({
 
   const handleSubmit = async () => {
     if (!form.group_label.trim() || !form.catagory_label.trim()) {
-      toast.error("กรุณากรอก Group และ Category");
+      toast.error(t("missingGroupOrCategory"));
       return;
     }
     setSaving(true);
@@ -109,10 +112,10 @@ export function MenuFormDialog({
       const json = await res.json();
       if (!res.ok || !json?.success) {
         const message = Array.isArray(json?.error) ? json.error[0]?.message : json?.error;
-        toast.error(message ?? "บันทึกไม่สำเร็จ");
+        toast.error(message ?? t("saveFailed"));
         return;
       }
-      toast.success(isEdit ? "แก้ไขเมนูเรียบร้อย" : "สร้างเมนูเรียบร้อย");
+      toast.success(isEdit ? t("editSuccess") : t("createSuccess"));
       onOpenChange(false);
       onSaved();
     } finally {
@@ -124,50 +127,50 @@ export function MenuFormDialog({
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-lg">
         <DialogHeader>
-          <DialogTitle>{isEdit ? "แก้ไขเมนู" : "สร้างเมนูใหม่"}</DialogTitle>
+          <DialogTitle>{isEdit ? t("editTitle") : t("createTitle")}</DialogTitle>
           <DialogDescription>
-            แถวเหล่านี้ขับเคลื่อนโมเดลสิทธิ์ (permissions/role_permissions) เท่านั้น — ไม่กระทบเมนู sidebar จริง
+            {t("description")}
           </DialogDescription>
         </DialogHeader>
 
         <div className="grid grid-cols-2 gap-3">
           <div className="space-y-1.5 col-span-2 sm:col-span-1">
-            <Label htmlFor="group_label">Group *</Label>
+            <Label htmlFor="group_label">{t("groupLabel")}</Label>
             <Input id="group_label" value={form.group_label} onChange={handleChange("group_label")} />
           </div>
           <div className="space-y-1.5 col-span-2 sm:col-span-1">
-            <Label htmlFor="catagory_label">Category *</Label>
+            <Label htmlFor="catagory_label">{t("categoryLabel")}</Label>
             <Input id="catagory_label" value={form.catagory_label} onChange={handleChange("catagory_label")} />
           </div>
           <div className="space-y-1.5 col-span-2 sm:col-span-1">
-            <Label htmlFor="menu_label">Menu (ว่าง = เป็นรายการระดับบนสุด)</Label>
+            <Label htmlFor="menu_label">{t("menuLabel")}</Label>
             <Input id="menu_label" value={form.menu_label} onChange={handleChange("menu_label")} />
           </div>
           <div className="space-y-1.5 col-span-2 sm:col-span-1">
-            <Label htmlFor="sub_menu_label">Sub-menu</Label>
+            <Label htmlFor="sub_menu_label">{t("subMenuLabel")}</Label>
             <Input id="sub_menu_label" value={form.sub_menu_label} onChange={handleChange("sub_menu_label")} />
           </div>
           <div className="space-y-1.5 col-span-2 sm:col-span-1">
-            <Label htmlFor="href">Href</Label>
+            <Label htmlFor="href">{t("hrefLabel")}</Label>
             <Input id="href" value={form.href} onChange={handleChange("href")} placeholder="/example/path" />
           </div>
           <div className="space-y-1.5 col-span-2 sm:col-span-1">
-            <Label htmlFor="icon">Icon (lucide name)</Label>
+            <Label htmlFor="icon">{t("iconLabel")}</Label>
             <Input id="icon" value={form.icon} onChange={handleChange("icon")} placeholder="Settings" />
           </div>
           <div className="space-y-1.5 col-span-2 sm:col-span-1">
-            <Label htmlFor="sort_order">Sort order</Label>
+            <Label htmlFor="sort_order">{t("sortOrderLabel")}</Label>
             <Input id="sort_order" type="number" value={form.sort_order} onChange={handleChange("sort_order")} />
           </div>
         </div>
 
         <DialogFooter>
           <Button variant="outline" onClick={() => onOpenChange(false)} disabled={saving}>
-            ยกเลิก
+            {tc("cancel")}
           </Button>
           <Button onClick={handleSubmit} disabled={saving}>
             {saving && <Loader2 className="h-4 w-4 mr-2 animate-spin" />}
-            บันทึก
+            {tc("save")}
           </Button>
         </DialogFooter>
       </DialogContent>

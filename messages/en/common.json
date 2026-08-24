@@ -4,5 +4,30 @@
   "languageThai": "Thai",
   "loading": "Loading...",
   "cancel": "Cancel",
-  "save": "Save"
+  "save": "Save",
+  "saving": "Saving...",
+  "create": "Create",
+  "edit": "Edit",
+  "delete": "Delete",
+  "confirm": "Confirm",
+  "confirmDelete": "Confirm Delete",
+  "actions": "Actions",
+  "openMenu": "Open menu",
+  "status": "Status",
+  "active": "Active",
+  "inactive": "Inactive",
+  "name": "Name",
+  "description": "Description",
+  "code": "Code",
+  "createdAt": "Created At",
+  "noResults": "No results.",
+  "back": "Back",
+  "breadcrumbHome": "Home",
+  "breadcrumbDashboard": "Dashboard",
+  "blankPage": {
+    "title": "Blank Page",
+    "description": "This is a blank page. You can start building features from here.",
+    "developmentArea": "Development Area",
+    "developmentAreaDescription": "Add your features and components here."
+  }
 }

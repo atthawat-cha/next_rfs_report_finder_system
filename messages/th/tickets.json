@@ -1,1 +1,59 @@
-{}
+{
+  "priority": {
+    "LOW": "ต่ำ",
+    "MEDIUM": "ปานกลาง",
+    "HIGH": "สูง",
+    "CRITICAL": "วิกฤต"
+  },
+  "status": {
+    "OPEN": "เปิด",
+    "IN_PROGRESS": "กำลังดำเนินการ",
+    "RESOLVED": "แก้ไขแล้ว",
+    "CLOSED": "ปิดแล้ว"
+  },
+  "columns": {
+    "ticketNumber": "เลขที่ตั๋ว",
+    "subject": "หัวข้อ",
+    "category": "หมวดหมู่",
+    "priority": "ความสำคัญ",
+    "status": "สถานะ",
+    "createdAt": "วันที่สร้าง",
+    "requester": "ผู้แจ้ง",
+    "assignedTo": "ผู้รับผิดชอบ",
+    "actions": "การจัดการ",
+    "manage": "จัดการ"
+  },
+  "myTickets": {
+    "pageTitle": "ตั๋วของฉัน",
+    "cardTitle": "คำขอ/แจ้งปัญหาของฉัน",
+    "newButton": "แจ้งปัญหาใหม่"
+  },
+  "createDialog": {
+    "title": "แจ้งปัญหา / ขอรายงานใหม่",
+    "description": "ทีมผู้ดูแลระบบจะได้รับการแจ้งเตือนทันที",
+    "subjectLabel": "หัวข้อ",
+    "categoryLabel": "หมวดหมู่",
+    "categoryPlaceholder": "เช่น รายงานผิด, ขอรายงานใหม่, ปัญหาการเข้าถึง",
+    "priorityLabel": "ความสำคัญ",
+    "descriptionLabel": "รายละเอียด",
+    "missingFields": "กรุณากรอกหัวข้อ รายละเอียด และหมวดหมู่",
+    "createFailed": "ส่งคำขอไม่สำเร็จ",
+    "createSuccess": "สร้าง Ticket {ticketNumber} เรียบร้อย",
+    "submit": "ส่งคำขอ"
+  },
+  "queue": {
+    "pageTitle": "คิวตั๋ว",
+    "cardTitle": "คิวตั๋ว",
+    "allStatuses": "ทุกสถานะ",
+    "allPriorities": "ทุกความสำคัญ"
+  },
+  "editDialog": {
+    "statusLabel": "สถานะ",
+    "priorityLabel": "ความสำคัญ",
+    "assignedToLabel": "ผู้รับผิดชอบ",
+    "assigneePlaceholder": "เลือกผู้รับผิดชอบ",
+    "unassigned": "ยังไม่มอบหมาย",
+    "saveFailed": "บันทึกไม่สำเร็จ",
+    "saveSuccess": "อัปเดต ticket เรียบร้อย"
+  }
+}

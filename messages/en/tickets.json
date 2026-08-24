@@ -1,1 +1,59 @@
-{}
+{
+  "priority": {
+    "LOW": "Low",
+    "MEDIUM": "Medium",
+    "HIGH": "High",
+    "CRITICAL": "Critical"
+  },
+  "status": {
+    "OPEN": "Open",
+    "IN_PROGRESS": "In Progress",
+    "RESOLVED": "Resolved",
+    "CLOSED": "Closed"
+  },
+  "columns": {
+    "ticketNumber": "Ticket #",
+    "subject": "Subject",
+    "category": "Category",
+    "priority": "Priority",
+    "status": "Status",
+    "createdAt": "Created At",
+    "requester": "Requester",
+    "assignedTo": "Assigned To",
+    "actions": "Actions",
+    "manage": "Manage"
+  },
+  "myTickets": {
+    "pageTitle": "My Tickets",
+    "cardTitle": "My Requests/Issues",
+    "newButton": "New Request"
+  },
+  "createDialog": {
+    "title": "Report an Issue / Request a Report",
+    "description": "The admin team will be notified right away",
+    "subjectLabel": "Subject",
+    "categoryLabel": "Category",
+    "categoryPlaceholder": "e.g. Incorrect report, New report request, Access issue",
+    "priorityLabel": "Priority",
+    "descriptionLabel": "Description",
+    "missingFields": "Enter a subject, description, and category",
+    "createFailed": "Failed to submit request",
+    "createSuccess": "Ticket {ticketNumber} created successfully",
+    "submit": "Submit Request"
+  },
+  "queue": {
+    "pageTitle": "Ticket Queue",
+    "cardTitle": "Ticket Queue",
+    "allStatuses": "All Statuses",
+    "allPriorities": "All Priorities"
+  },
+  "editDialog": {
+    "statusLabel": "Status",
+    "priorityLabel": "Priority",
+    "assignedToLabel": "Assigned To",
+    "assigneePlaceholder": "Select an assignee",
+    "unassigned": "Unassigned",
+    "saveFailed": "Save failed",
+    "saveSuccess": "Ticket updated successfully"
+  }
+}

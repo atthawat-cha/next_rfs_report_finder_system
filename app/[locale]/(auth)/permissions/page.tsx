@@ -26,6 +26,7 @@ import { PermissionTemplateType, RolePermissionsType, RolesType } from '@/lib/ty
 import { perConvertToCheckbox } from '@/lib/user-management'
 import { Loader2 } from 'lucide-react'
 import toast from 'react-hot-toast'
+import { useTranslations } from 'next-intl'
 
 /**
  * Fills in the app/(auth)/permissions/page.tsx stub. Reuses
@@ -39,6 +40,8 @@ import toast from 'react-hot-toast'
  * boundary; a non-admin here sees a plain "no access" message instead.
  */
 export default function PermissionManagement() {
+  const t = useTranslations('roleManagement.permissions')
+  const tc = useTranslations('common')
   const [roles, setRoles] = React.useState<RolesType[]>([])
   const [loadingRoles, setLoadingRoles] = React.useState(true)
   const [forbidden, setForbidden] = React.useState(false)
@@ -98,33 +101,33 @@ export default function PermissionManagement() {
       })
       const json = await res.json()
       if (!res.ok || !json?.success) {
-        toast.error(json?.error ?? 'บันทึกไม่สำเร็จ')
+        toast.error(json?.error ?? t('saveError'))
         return
       }
-      toast.success('บันทึกสิทธิ์เรียบร้อย')
+      toast.success(t('saveSuccess'))
     } finally {
       setSaving(false)
     }
   }
 
   return (
-    <ContentLayout title="Permission Management">
+    <ContentLayout title={t('pageTitle')}>
       <Breadcrumb>
         <BreadcrumbList>
           <BreadcrumbItem>
             <BreadcrumbLink asChild>
-              <Link href="/">Dashboard</Link>
+              <Link href="/">{tc('breadcrumbDashboard')}</Link>
             </BreadcrumbLink>
           </BreadcrumbItem>
           <BreadcrumbSeparator />
           <BreadcrumbItem>
             <BreadcrumbLink asChild>
-              <Link href="/dashboard">Management</Link>
+              <Link href="/dashboard">{t('breadcrumbManagement')}</Link>
             </BreadcrumbLink>
           </BreadcrumbItem>
           <BreadcrumbSeparator />
           <BreadcrumbItem>
-            <BreadcrumbPage>Permissions</BreadcrumbPage>
+            <BreadcrumbPage>{t('breadcrumbPermissions')}</BreadcrumbPage>
           </BreadcrumbItem>
         </BreadcrumbList>
       </Breadcrumb>
@@ -132,11 +135,11 @@ export default function PermissionManagement() {
       <div className="container mx-auto py-10">
         <Card>
           <CardHeader>
-            <CardTitle>Permission Management</CardTitle>
-            <CardDescription>เลือกบทบาทเพื่อกำหนดสิทธิ์การเข้าถึงเมนูต่างๆ</CardDescription>
+            <CardTitle>{t('cardTitle')}</CardTitle>
+            <CardDescription>{t('cardDescription')}</CardDescription>
           </CardHeader>
           <CardContent className="space-y-6">
-            {forbidden && <p className="text-muted-foreground">คุณไม่มีสิทธิ์เข้าถึงหน้านี้</p>}
+            {forbidden && <p className="text-muted-foreground">{t('forbidden')}</p>}
 
             {!forbidden && (
               <>
@@ -145,7 +148,7 @@ export default function PermissionManagement() {
                 ) : (
                   <Select value={selectedRoleId} onValueChange={setSelectedRoleId}>
                     <SelectTrigger className="max-w-sm">
-                      <SelectValue placeholder="เลือกบทบาท" />
+                      <SelectValue placeholder={t('selectRolePlaceholder')} />
                     </SelectTrigger>
                     <SelectContent>
                       <SelectGroup>
@@ -161,7 +164,7 @@ export default function PermissionManagement() {
 
                 {loadingTemplate && (
                   <div className="flex items-center text-muted-foreground">
-                    <Loader2 className="h-5 w-5 animate-spin mr-2" /> กำลังโหลด...
+                    <Loader2 className="h-5 w-5 animate-spin mr-2" /> {tc('loading')}
                   </div>
                 )}
 
@@ -175,7 +178,7 @@ export default function PermissionManagement() {
                       initialSelected={initialSelected}
                     />
                     <Button onClick={handleSave} disabled={saving}>
-                      {saving ? 'กำลังบันทึก...' : 'บันทึก'}
+                      {saving ? tc('saving') : tc('save')}
                     </Button>
                   </>
                 )}

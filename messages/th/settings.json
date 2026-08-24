@@ -1,1 +1,83 @@
-{}
+{
+  "general": {
+    "pageTitle": "ตั้งค่าระบบ",
+    "forbidden": "คุณไม่มีสิทธิ์เข้าถึงหน้านี้",
+    "cardTitle": "การตั้งค่าระบบทั่วไป",
+    "cardDescription": "ขีดจำกัดพื้นที่จัดเก็บ, โหมดปิดปรับปรุงระบบ, และค่าองค์กร",
+    "storageLimitLabel": "ขีดจำกัดพื้นที่จัดเก็บไฟล์รายงาน (GB)",
+    "storageLimitDescription": "เมื่อพื้นที่ใช้ไปถึงขีดจำกัดนี้ ผู้ดูแลระบบจะได้รับการแจ้งเตือน",
+    "maintenanceModeLabel": "โหมดปิดปรับปรุงระบบ",
+    "maintenanceModeDescription": "เปิดใช้งานเพื่อแจ้งเตือนผู้ใช้ทุกคนว่าระบบกำลังปิดปรับปรุง (ไม่ได้ปิดกั้นการใช้งานจริง)",
+    "orgNameLabel": "ชื่อองค์กร",
+    "orgNameDescription": "แสดงบนหน้าเข้าสู่ระบบ",
+    "adminEmailLabel": "อีเมลผู้ดูแลระบบ",
+    "adminEmailDescription": "แสดงเป็นช่องทางติดต่อเมื่อเกิดข้อผิดพลาด",
+    "defaultPageSizeLabel": "ขนาดหน้าเริ่มต้น (รายการ/หน้า)",
+    "defaultShareExpiryLabel": "วันหมดอายุลิงก์แชร์เริ่มต้น (0 = ไม่หมดอายุ)",
+    "errors": {
+      "invalidStorageLimit": "กรุณาระบุขนาดพื้นที่จัดเก็บเป็นตัวเลขมากกว่า 0",
+      "invalidPageSize": "ขนาดหน้าเริ่มต้นต้องเป็นตัวเลข 1-200",
+      "invalidShareExpiry": "จำนวนวันหมดอายุลิงก์แชร์ต้องเป็นตัวเลข 0 หรือมากกว่า",
+      "invalidAdminEmail": "อีเมลผู้ดูแลระบบไม่ถูกต้อง",
+      "saveFailed": "บันทึกไม่สำเร็จ"
+    },
+    "saveSuccess": "บันทึกการตั้งค่าเรียบร้อย"
+  },
+  "storage": {
+    "pageTitle": "ตั้งค่าที่เก็บไฟล์",
+    "forbidden": "คุณไม่มีสิทธิ์เข้าถึงหน้านี้",
+    "cardTitle": "ที่จัดเก็บไฟล์รายงาน",
+    "cardDescription": "ตำแหน่งที่ไฟล์รายงาน (report_files) ถูกเขียนและอ่าน และขนาดไฟล์สูงสุดต่อประเภท",
+    "uploadBasePathLabel": "Upload Base Path",
+    "uploadBasePathDescription": "พาธสัมพัทธ์ (จาก root โปรเจกต์) หรือพาธเต็ม — ต้องเป็นไดเรกทอรีที่มีอยู่จริงและเขียนได้ ไฟล์ที่เก็บนอก <code>public/</code> จะเข้าถึงผ่าน endpoint ดาวน์โหลด/พรีวิวเท่านั้น ไม่ใช่ URL ตรง",
+    "maxBlankFormLabel": "ฟอร์มเปล่า (MB)",
+    "maxSampleFilledFormLabel": "ตัวอย่างที่กรอกแล้ว (MB)",
+    "maxSampleDataLabel": "ไฟล์ข้อมูลตัวอย่าง (MB)",
+    "errors": {
+      "missingUploadBasePath": "กรุณาระบุ Upload Base Path",
+      "invalidMaxSize": "ขนาดไฟล์สูงสุดต้องเป็นตัวเลขมากกว่า 0",
+      "saveFailed": "บันทึกไม่สำเร็จ"
+    },
+    "saveSuccess": "บันทึกการตั้งค่าเรียบร้อย"
+  },
+  "menus": {
+    "pageTitle": "จัดการเมนู",
+    "cardTitle": "จัดการเมนู",
+    "newMenu": "เพิ่มเมนู",
+    "noteText": "แถวในตารางนี้ขับเคลื่อนโมเดลสิทธิ์ (หน้า Permission Management) เท่านั้น — <strong>ไม่กระทบเมนู sidebar จริง</strong> ซึ่งยังคงอ่านจาก <code>lib/menu-list.ts</code> เหมือนเดิม",
+    "forbidden": "คุณไม่มีสิทธิ์เข้าถึงหน้านี้",
+    "sortOrderUpdateFailed": "อัปเดตลำดับไม่สำเร็จ",
+    "columns": {
+      "group": "Group",
+      "category": "Category",
+      "menu": "Menu",
+      "subMenu": "Sub-menu",
+      "href": "Href",
+      "sort": "Sort"
+    },
+    "form": {
+      "editTitle": "แก้ไขเมนู",
+      "createTitle": "สร้างเมนูใหม่",
+      "description": "แถวเหล่านี้ขับเคลื่อนโมเดลสิทธิ์ (permissions/role_permissions) เท่านั้น — ไม่กระทบเมนู sidebar จริง",
+      "groupLabel": "Group *",
+      "categoryLabel": "Category *",
+      "menuLabel": "Menu (ว่าง = เป็นรายการระดับบนสุด)",
+      "subMenuLabel": "Sub-menu",
+      "hrefLabel": "Href",
+      "iconLabel": "Icon (lucide name)",
+      "sortOrderLabel": "Sort order",
+      "missingGroupOrCategory": "กรุณากรอก Group และ Category",
+      "saveFailed": "บันทึกไม่สำเร็จ",
+      "editSuccess": "แก้ไขเมนูเรียบร้อย",
+      "createSuccess": "สร้างเมนูเรียบร้อย"
+    },
+    "delete": {
+      "title": "ลบเมนู",
+      "description": "ลบ \"{label}\" ({group})",
+      "checkingImpact": "กำลังตรวจสอบผลกระทบ...",
+      "impactWarning": "การลบนี้จะลบ <strong>{permissionsCount}</strong> permission และ <strong>{rolePermissionsCount}</strong> role_permissions (สิทธิ์ของทุก role ที่เคยกำหนดไว้บนเมนูนี้) ไปด้วย — กู้คืนไม่ได้",
+      "deleteFailed": "ลบไม่สำเร็จ",
+      "deleteSuccess": "ลบเมนูเรียบร้อย"
+    }
+  }
+}

@@ -1,6 +1,6 @@
 'use client'
 import { ColumnDef } from '@tanstack/react-table'
-import { UserTableType } from '@/lib/types' 
+import { UserTableType } from '@/lib/types'
 
 
 // Actions
@@ -18,28 +18,27 @@ import {
 import { Badge } from '@/components/ui/badge'
 import { formatDateTime } from '@/lib/utils'
 
-
-
-export const users_columns: ColumnDef<UserTableType>[] = [
+export function getUsersColumns(t: (key: string) => string): ColumnDef<UserTableType>[] {
+  return [
     {
         accessorKey: 'username',
-        header: 'Username',
+        header: t('username'),
     },
     {
         accessorKey: 'first_name',
-        header: 'First Name',
+        header: t('firstName'),
     },
     {
         accessorKey: 'last_name',
-        header: 'Last Name',
+        header: t('lastName'),
     },
     {
         accessorKey: 'department_id',
-        header: 'Department',    
+        header: t('department'),
     },
     {
         accessorKey: 'status',
-        header: 'Status',
+        header: t('status'),
         cell: ({ row }) => {
           const status = row.original.status
           return (
@@ -54,7 +53,7 @@ export const users_columns: ColumnDef<UserTableType>[] = [
     },
     {
         accessorKey: 'created_at',
-        header: 'Created At',
+        header: t('createdAt'),
         cell: ({ row }) => {
           const createdAt = row?.original?.created_at
           return (
@@ -65,27 +64,25 @@ export const users_columns: ColumnDef<UserTableType>[] = [
     {
         id:'action',
         accessorKey: 'action',
-        header: 'Action',
+        header: t('action'),
         cell: () => {
           return (
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
                 <Button variant="ghost" className="h-8 w-8 p-0">
-                  <span className="sr-only">Open menu</span>
+                  <span className="sr-only">{t('action')}</span>
                   <MoreHorizontal className="h-4 w-4" />
                 </Button>
               </DropdownMenuTrigger>
               <DropdownMenuContent align="end">
-                <DropdownMenuLabel>Actions</DropdownMenuLabel>
-                {/* <DropdownMenuItem onClick={() => navigator.clipboard.writeText(payment.id)}>
-                  Copy payment ID
-                </DropdownMenuItem> */}
+                <DropdownMenuLabel>{t('action')}</DropdownMenuLabel>
                 <DropdownMenuSeparator />
-                <DropdownMenuItem>View Detail</DropdownMenuItem>
-                <DropdownMenuItem>Modify</DropdownMenuItem>
+                <DropdownMenuItem>{t('viewDetail')}</DropdownMenuItem>
+                <DropdownMenuItem>{t('modify')}</DropdownMenuItem>
               </DropdownMenuContent>
             </DropdownMenu>
           )
         },
     }
-]
+  ]
+}

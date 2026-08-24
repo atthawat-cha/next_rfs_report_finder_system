@@ -1,1 +1,102 @@
-{}
+{
+  "activity": {
+    "pageTitle": "บันทึกกิจกรรม",
+    "cardTitle": "บันทึกกิจกรรม",
+    "totalCount": "ทั้งหมด {count} รายการ",
+    "userLabel": "ผู้ใช้",
+    "allOption": "ทั้งหมด",
+    "entityLabel": "Entity",
+    "fromDateLabel": "ตั้งแต่วันที่",
+    "toDateLabel": "ถึงวันที่",
+    "columns": {
+      "time": "เวลา",
+      "user": "ผู้ใช้",
+      "action": "Action",
+      "entity": "Entity",
+      "description": "รายละเอียด",
+      "ip": "IP"
+    },
+    "noData": "ไม่มีข้อมูล",
+    "pageInfo": "หน้า {page} จาก {totalPages}",
+    "previous": "ก่อนหน้า",
+    "next": "ถัดไป"
+  },
+  "department": {
+    "pageTitle": "แผนก",
+    "breadcrumbManagement": "การจัดการ",
+    "breadcrumbDepartment": "แผนก",
+    "listTitle": "แผนก",
+    "newDialogTitle": "เพิ่มแผนกใหม่",
+    "newDialogDescription": "เพิ่มแผนกใหม่",
+    "newButtonText": "เพิ่มแผนก",
+    "forbidden": "คุณไม่มีสิทธิ์เข้าถึงหน้านี้",
+    "columns": {
+      "name": "ชื่อแผนก",
+      "code": "รหัสแผนก",
+      "status": "สถานะ",
+      "createdAt": "วันที่สร้าง",
+      "updatedAt": "วันที่แก้ไข"
+    },
+    "form": {
+      "nameLabel": "ชื่อ",
+      "namePlaceholder": "ชื่อ",
+      "nameHint": "ชื่อแผนกต้องมีอย่างน้อย 3 ตัวอักษร",
+      "codeLabel": "รหัส",
+      "codePlaceholder": "รหัส",
+      "codeHint": "รหัสต้องเป็นตัวพิมพ์ใหญ่",
+      "statusLabel": "สถานะ",
+      "noPermission": "คุณไม่มีสิทธิ์เข้าถึงหน้านี้",
+      "createError": "เกิดข้อผิดพลาดในการสร้างแผนก",
+      "createSuccess": "สร้างแผนกสำเร็จ",
+      "saving": "กำลังบันทึก...",
+      "saveChanges": "บันทึกการเปลี่ยนแปลง"
+    }
+  },
+  "userForm": {
+    "createTitle": "สร้างผู้ใช้งาน",
+    "updateTitle": "แก้ไขผู้ใช้งาน",
+    "breadcrumbUsersManagement": "จัดการผู้ใช้งาน",
+    "usernameLabel": "ชื่อผู้ใช้",
+    "usernamePlaceholder": "ชื่อผู้ใช้",
+    "usernameHint": "ชื่อผู้ใช้ต้องไม่ซ้ำกัน",
+    "passwordLabel": "รหัสผ่าน",
+    "passwordPlaceholder": "รหัสผ่าน",
+    "roleLabel": "บทบาท",
+    "rolePlaceholder": "เลือกบทบาท",
+    "roleHint": "เลือกบทบาทตามลักษณะงาน",
+    "departmentLabel": "แผนก",
+    "departmentPlaceholder": "เลือกแผนก",
+    "departmentHint": "เลือกแผนกหรือหน่วยงานของคุณ",
+    "statusLabel": "สถานะ",
+    "statusPlaceholder": "เลือกสถานะ",
+    "statusHint": "เลือกสถานะของผู้ใช้งาน",
+    "personalInfo": "ข้อมูลส่วนตัว",
+    "firstNameLabel": "ชื่อจริง",
+    "firstNamePlaceholder": "ชื่อจริง",
+    "lastNameLabel": "นามสกุล",
+    "lastNamePlaceholder": "นามสกุล",
+    "emailLabel": "อีเมล",
+    "emailPlaceholder": "อีเมล",
+    "back": "ย้อนกลับ",
+    "reset": "รีเซ็ต",
+    "createSuccess": "สร้างผู้ใช้งานสำเร็จ",
+    "createError": "เกิดข้อผิดพลาดในการสร้างผู้ใช้งาน"
+  },
+  "userList": {
+    "pageTitle": "รายชื่อผู้ใช้งาน",
+    "breadcrumbUsersManagement": "จัดการผู้ใช้งาน",
+    "listTitle": "รายชื่อผู้ใช้งาน",
+    "newUser": "เพิ่มผู้ใช้งาน",
+    "columns": {
+      "username": "ชื่อผู้ใช้",
+      "firstName": "ชื่อจริง",
+      "lastName": "นามสกุล",
+      "department": "แผนก",
+      "status": "สถานะ",
+      "createdAt": "วันที่สร้าง",
+      "action": "การจัดการ",
+      "viewDetail": "ดูรายละเอียด",
+      "modify": "แก้ไข"
+    }
+  }
+}

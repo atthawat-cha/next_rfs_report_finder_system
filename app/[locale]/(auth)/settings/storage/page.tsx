@@ -9,6 +9,7 @@ import { Button } from '@/components/ui/button';
 import { Separator } from '@/components/ui/separator';
 import toast from 'react-hot-toast';
 import { Loader2 } from 'lucide-react';
+import { useTranslations } from 'next-intl';
 
 /**
  * Admin-only storage settings (Phase 5e) - fills in the page
@@ -19,6 +20,8 @@ import { Loader2 } from 'lucide-react';
  * this repo's established pattern of relying on the API's 403.
  */
 export default function StorageSettingsPage() {
+  const t = useTranslations('settings.storage');
+  const tc = useTranslations('common');
   const [uploadBasePath, setUploadBasePath] = React.useState('');
   const [maxBlankForm, setMaxBlankForm] = React.useState('');
   const [maxSampleFilledForm, setMaxSampleFilledForm] = React.useState('');
@@ -52,11 +55,11 @@ export default function StorageSettingsPage() {
     const filledMb = Number(maxSampleFilledForm);
     const dataMb = Number(maxSampleData);
     if (!uploadBasePath.trim()) {
-      toast.error('กรุณาระบุ Upload Base Path');
+      toast.error(t('errors.missingUploadBasePath'));
       return;
     }
     if (![blankMb, filledMb, dataMb].every((v) => Number.isFinite(v) && v > 0)) {
-      toast.error('ขนาดไฟล์สูงสุดต้องเป็นตัวเลขมากกว่า 0');
+      toast.error(t('errors.invalidMaxSize'));
       return;
     }
 
@@ -75,10 +78,10 @@ export default function StorageSettingsPage() {
       });
       const json = await res.json();
       if (!res.ok) {
-        toast.error(json.error?.[0]?.message ?? json.error ?? 'บันทึกไม่สำเร็จ');
+        toast.error(json.error?.[0]?.message ?? json.error ?? t('errors.saveFailed'));
         return;
       }
-      toast.success('บันทึกการตั้งค่าเรียบร้อย');
+      toast.success(t('saveSuccess'));
     } finally {
       setSaving(false);
     }
@@ -86,19 +89,19 @@ export default function StorageSettingsPage() {
 
   if (forbidden) {
     return (
-      <ContentLayout title="File Storage Settings">
-        <p className="text-muted-foreground">คุณไม่มีสิทธิ์เข้าถึงหน้านี้</p>
+      <ContentLayout title={t('pageTitle')}>
+        <p className="text-muted-foreground">{t('forbidden')}</p>
       </ContentLayout>
     );
   }
 
   return (
-    <ContentLayout title="File Storage Settings">
+    <ContentLayout title={t('pageTitle')}>
       <Card>
         <CardHeader>
-          <CardTitle>ที่จัดเก็บไฟล์รายงาน</CardTitle>
+          <CardTitle>{t('cardTitle')}</CardTitle>
           <CardDescription>
-            ตำแหน่งที่ไฟล์รายงาน (report_files) ถูกเขียนและอ่าน และขนาดไฟล์สูงสุดต่อประเภท
+            {t('cardDescription')}
           </CardDescription>
         </CardHeader>
         <CardContent className="space-y-6">
@@ -107,7 +110,7 @@ export default function StorageSettingsPage() {
           ) : (
             <>
               <div className="space-y-2">
-                <Label htmlFor="upload-base-path">Upload Base Path</Label>
+                <Label htmlFor="upload-base-path">{t('uploadBasePathLabel')}</Label>
                 <Input
                   id="upload-base-path"
                   value={uploadBasePath}
@@ -116,8 +119,7 @@ export default function StorageSettingsPage() {
                   placeholder="public"
                 />
                 <p className="text-sm text-muted-foreground">
-                  พาธสัมพัทธ์ (จาก root โปรเจกต์) หรือพาธเต็ม — ต้องเป็นไดเรกทอรีที่มีอยู่จริงและเขียนได้
-                  ไฟล์ที่เก็บนอก <code>public/</code> จะเข้าถึงผ่าน endpoint ดาวน์โหลด/พรีวิวเท่านั้น ไม่ใช่ URL ตรง
+                  {t.rich('uploadBasePathDescription', { code: (chunks) => <code>{chunks}</code> })}
                 </p>
               </div>
 
@@ -125,22 +127,22 @@ export default function StorageSettingsPage() {
 
               <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 max-w-2xl">
                 <div className="space-y-2">
-                  <Label htmlFor="max-blank-form">ฟอร์มเปล่า (MB)</Label>
+                  <Label htmlFor="max-blank-form">{t('maxBlankFormLabel')}</Label>
                   <Input id="max-blank-form" type="number" min="1" value={maxBlankForm} onChange={(e) => setMaxBlankForm(e.target.value)} />
                 </div>
                 <div className="space-y-2">
-                  <Label htmlFor="max-sample-filled">ตัวอย่างที่กรอกแล้ว (MB)</Label>
+                  <Label htmlFor="max-sample-filled">{t('maxSampleFilledFormLabel')}</Label>
                   <Input id="max-sample-filled" type="number" min="1" value={maxSampleFilledForm} onChange={(e) => setMaxSampleFilledForm(e.target.value)} />
                 </div>
                 <div className="space-y-2">
-                  <Label htmlFor="max-sample-data">ไฟล์ข้อมูลตัวอย่าง (MB)</Label>
+                  <Label htmlFor="max-sample-data">{t('maxSampleDataLabel')}</Label>
                   <Input id="max-sample-data" type="number" min="1" value={maxSampleData} onChange={(e) => setMaxSampleData(e.target.value)} />
                 </div>
               </div>
 
               <Button onClick={save} disabled={saving}>
                 {saving && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-                บันทึก
+                {tc('save')}
               </Button>
             </>
           )}

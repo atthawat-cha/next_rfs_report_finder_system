@@ -19,9 +19,12 @@ import { Separator } from "@/components/ui/separator";
 import { PermissionTemplateType, RolePermissionsType } from "@/lib/types";
 import toast from "react-hot-toast";
 import { Link, useRouter } from "@/i18n/navigation";
+import { useTranslations } from "next-intl";
 
 
 export default function RolesFormManage() {
+  const t = useTranslations("roleManagement.roleForm");
+  const tc = useTranslations("common");
   const [isLoading, setIsLoading] = React.useState(false);
   const [params, setParams] = React.useState<RolePermissionsType>({role:{name:"", display_name:""}, permissions: []});
   const [roleTemplate, setRoleTemplate] = React.useState<PermissionTemplateType[]>();
@@ -31,7 +34,7 @@ export default function RolesFormManage() {
   const handleSubmit = async () => {
     setIsLoading(true);
     if(!params.role.name || !params.role.display_name) {
-      toast.error("Please fill in all required fields");
+      toast.error(t("missingFields"));
       setIsLoading(false);
       return;
     }
@@ -55,7 +58,7 @@ export default function RolesFormManage() {
       if (!data?.success) {
         return;
       }
-      toast.success("Role has been created successfully");
+      toast.success(t("createSuccess"));
       setIsLoading(false);
       setParams({
         role: { name: "", display_name: "" },
@@ -64,7 +67,7 @@ export default function RolesFormManage() {
       redirect.push("/role-management/roles");
     } catch (error) {
       console.error("Error creating user:", error);
-      toast.error("An error occurred while submitting the form");
+      toast.error(t("createError"));
     } finally {
       setIsLoading(false);
     }
@@ -102,32 +105,32 @@ export default function RolesFormManage() {
   }, []);
 
   return (
-    <ContentLayout title="Role Management">
+    <ContentLayout title={t("pageTitle")}>
       <Breadcrumb>
         <BreadcrumbList>
           <BreadcrumbItem>
             <BreadcrumbLink asChild>
-              <Link href="/">Dashboard</Link>
+              <Link href="/">{tc("breadcrumbDashboard")}</Link>
             </BreadcrumbLink>
           </BreadcrumbItem>
           <BreadcrumbSeparator />
           <BreadcrumbItem>
             <BreadcrumbLink asChild>
-              <Link href="/dashboard">Management</Link>
+              <Link href="/dashboard">{t("breadcrumbManagement")}</Link>
             </BreadcrumbLink>
           </BreadcrumbItem>
           <BreadcrumbSeparator />
           <BreadcrumbItem>
-            <BreadcrumbPage>Roles</BreadcrumbPage>
+            <BreadcrumbPage>{t("breadcrumbRoles")}</BreadcrumbPage>
           </BreadcrumbItem>
         </BreadcrumbList>
       </Breadcrumb>
       <div className="container mx-auto py-10 gap-6">
         <div className="flex items-center justify-between">
-          <h5 className="text-xl md:text-3xl font-bold">Roles</h5>
+          <h5 className="text-xl md:text-3xl font-bold">{t("heading")}</h5>
           <Button asChild>
             <Link href="/role-management/roles" className="btn btn-primary">
-              Back
+              {t("back")}
             </Link>
           </Button>
         </div>
@@ -137,11 +140,11 @@ export default function RolesFormManage() {
             <CardContent>
               <div className="flex item-center justify-between my-2 gap-5">
                 <div className="w-full space-y-2">
-                  <Label htmlFor="name">Role Name</Label>
+                  <Label htmlFor="name">{t("roleNameLabel")}</Label>
                   <Input
                     id="name"
                     type="text"
-                    placeholder="Role Name"
+                    placeholder={t("roleNamePlaceholder")}
                     value={params?.role?.name ?? ''}
                     autoComplete="off"
                     onChange={(e) =>
@@ -151,16 +154,16 @@ export default function RolesFormManage() {
                     disabled={isLoading}
                   />
                   <FieldDescription className="text-sm text-muted-foreground pl-2">
-                    Enter you&apos;re role name to above.
+                    {t("roleNameHint")}
                   </FieldDescription>
                 </div>
 
                 <div className="w-full space-y-2">
-                  <Label htmlFor="name">Display Name</Label>
+                  <Label htmlFor="name">{t("displayNameLabel")}</Label>
                   <Input
                     id="display_name"
                     type="text"
-                    placeholder="Display Name"
+                    placeholder={t("displayNamePlaceholder")}
                     value={params?.role?.display_name ?? ''}
                     autoComplete="off"
                     onChange={(e) =>
@@ -184,12 +187,12 @@ export default function RolesFormManage() {
                   className="w-full"
                   disabled={isLoading}
                   onClick={handleSubmit}>
-                  {isLoading ? "กำลังบันทึก..." : "บันทึก"}
+                  {isLoading ? tc("saving") : tc("save")}
                 </Button>
 
                 <Button variant='outline' className="w-full" asChild>
                   <Link href="/user-management/user-list" className="hover:text-primary transition-colors">
-                    ล้างข้อมูล
+                    {t("reset")}
                   </Link>
                 </Button>
 

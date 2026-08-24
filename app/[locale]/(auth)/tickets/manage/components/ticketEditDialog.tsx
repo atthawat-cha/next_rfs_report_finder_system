@@ -14,6 +14,7 @@ import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectGroup, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Loader2 } from "lucide-react";
 import toast from "react-hot-toast";
+import { useTranslations } from "next-intl";
 import type { TicketPriority, TicketRow, TicketStatus } from "../../components/ticketTypes";
 
 interface AssigneeOption {
@@ -34,6 +35,10 @@ export function TicketEditDialog({
   onOpenChange: (open: boolean) => void;
   onSaved: () => void;
 }) {
+  const t = useTranslations("tickets.editDialog");
+  const tc = useTranslations("common");
+  const tp = useTranslations("tickets.priority");
+  const ts = useTranslations("tickets.status");
   const [status, setStatus] = React.useState<TicketStatus>("OPEN");
   const [priority, setPriority] = React.useState<TicketPriority>("MEDIUM");
   const [assignedTo, setAssignedTo] = React.useState<string>("__unassigned__");
@@ -81,10 +86,10 @@ export function TicketEditDialog({
       const json = await res.json();
       if (!res.ok || !json?.success) {
         const message = Array.isArray(json?.error) ? json.error[0]?.message : json?.error;
-        toast.error(message ?? "บันทึกไม่สำเร็จ");
+        toast.error(message ?? t("saveFailed"));
         return;
       }
-      toast.success("อัปเดต ticket เรียบร้อย");
+      toast.success(t("saveSuccess"));
       onOpenChange(false);
       onSaved();
     } finally {
@@ -104,48 +109,48 @@ export function TicketEditDialog({
           <p className="text-sm text-muted-foreground whitespace-pre-wrap">{ticket?.description}</p>
 
           <div className="space-y-1.5">
-            <Label htmlFor="ticket_edit_status">Status</Label>
+            <Label htmlFor="ticket_edit_status">{t("statusLabel")}</Label>
             <Select value={status} onValueChange={(v) => setStatus(v as TicketStatus)} disabled={saving}>
               <SelectTrigger id="ticket_edit_status">
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>
                 <SelectGroup>
-                  <SelectItem value="OPEN">Open</SelectItem>
-                  <SelectItem value="IN_PROGRESS">In Progress</SelectItem>
-                  <SelectItem value="RESOLVED">Resolved</SelectItem>
-                  <SelectItem value="CLOSED">Closed</SelectItem>
+                  <SelectItem value="OPEN">{ts("OPEN")}</SelectItem>
+                  <SelectItem value="IN_PROGRESS">{ts("IN_PROGRESS")}</SelectItem>
+                  <SelectItem value="RESOLVED">{ts("RESOLVED")}</SelectItem>
+                  <SelectItem value="CLOSED">{ts("CLOSED")}</SelectItem>
                 </SelectGroup>
               </SelectContent>
             </Select>
           </div>
 
           <div className="space-y-1.5">
-            <Label htmlFor="ticket_edit_priority">Priority</Label>
+            <Label htmlFor="ticket_edit_priority">{t("priorityLabel")}</Label>
             <Select value={priority} onValueChange={(v) => setPriority(v as TicketPriority)} disabled={saving}>
               <SelectTrigger id="ticket_edit_priority">
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>
                 <SelectGroup>
-                  <SelectItem value="LOW">Low</SelectItem>
-                  <SelectItem value="MEDIUM">Medium</SelectItem>
-                  <SelectItem value="HIGH">High</SelectItem>
-                  <SelectItem value="CRITICAL">Critical</SelectItem>
+                  <SelectItem value="LOW">{tp("LOW")}</SelectItem>
+                  <SelectItem value="MEDIUM">{tp("MEDIUM")}</SelectItem>
+                  <SelectItem value="HIGH">{tp("HIGH")}</SelectItem>
+                  <SelectItem value="CRITICAL">{tp("CRITICAL")}</SelectItem>
                 </SelectGroup>
               </SelectContent>
             </Select>
           </div>
 
           <div className="space-y-1.5">
-            <Label htmlFor="ticket_edit_assignee">Assigned To</Label>
+            <Label htmlFor="ticket_edit_assignee">{t("assignedToLabel")}</Label>
             <Select value={assignedTo} onValueChange={setAssignedTo} disabled={saving || assignees === null}>
               <SelectTrigger id="ticket_edit_assignee">
-                <SelectValue placeholder="เลือกผู้รับผิดชอบ" />
+                <SelectValue placeholder={t("assigneePlaceholder")} />
               </SelectTrigger>
               <SelectContent>
                 <SelectGroup>
-                  <SelectItem value="__unassigned__">ยังไม่มอบหมาย</SelectItem>
+                  <SelectItem value="__unassigned__">{t("unassigned")}</SelectItem>
                   {(assignees ?? []).map((a) => (
                     <SelectItem key={a.id} value={a.id}>
                       {a.label}
@@ -159,11 +164,11 @@ export function TicketEditDialog({
 
         <DialogFooter>
           <Button variant="outline" onClick={() => onOpenChange(false)} disabled={saving}>
-            ยกเลิก
+            {tc("cancel")}
           </Button>
           <Button onClick={handleSubmit} disabled={saving}>
             {saving && <Loader2 className="h-4 w-4 mr-2 animate-spin" />}
-            บันทึก
+            {tc("save")}
           </Button>
         </DialogFooter>
       </DialogContent>

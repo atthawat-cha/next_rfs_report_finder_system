@@ -1,1 +1,83 @@
-{}
+{
+  "general": {
+    "pageTitle": "System Settings",
+    "forbidden": "You do not have access to this page",
+    "cardTitle": "General System Settings",
+    "cardDescription": "Storage limits, maintenance mode, and organization settings",
+    "storageLimitLabel": "Report file storage limit (GB)",
+    "storageLimitDescription": "Admins are notified when usage reaches this limit",
+    "maintenanceModeLabel": "Maintenance Mode",
+    "maintenanceModeDescription": "Notify all users the system is under maintenance (does not actually block usage)",
+    "orgNameLabel": "Organization Name",
+    "orgNameDescription": "Shown on the sign-in page",
+    "adminEmailLabel": "Admin Email",
+    "adminEmailDescription": "Shown as a contact when an error occurs",
+    "defaultPageSizeLabel": "Default Page Size (items/page)",
+    "defaultShareExpiryLabel": "Default Share Link Expiry (days, 0 = never)",
+    "errors": {
+      "invalidStorageLimit": "Enter a storage limit greater than 0",
+      "invalidPageSize": "Default page size must be a number between 1-200",
+      "invalidShareExpiry": "Share link expiry days must be 0 or greater",
+      "invalidAdminEmail": "Invalid admin email",
+      "saveFailed": "Save failed"
+    },
+    "saveSuccess": "Settings saved successfully"
+  },
+  "storage": {
+    "pageTitle": "File Storage Settings",
+    "forbidden": "You do not have access to this page",
+    "cardTitle": "Report File Storage",
+    "cardDescription": "Where report files (report_files) are written/read from, and max file size per type",
+    "uploadBasePathLabel": "Upload Base Path",
+    "uploadBasePathDescription": "A relative path (from the project root) or absolute path - must be an existing, writable directory. Files stored outside <code>public/</code> are only reachable via the download/preview endpoints, not a direct URL.",
+    "maxBlankFormLabel": "Blank Form (MB)",
+    "maxSampleFilledFormLabel": "Filled Sample (MB)",
+    "maxSampleDataLabel": "Sample Data File (MB)",
+    "errors": {
+      "missingUploadBasePath": "Enter an Upload Base Path",
+      "invalidMaxSize": "Max file size must be a number greater than 0",
+      "saveFailed": "Save failed"
+    },
+    "saveSuccess": "Settings saved successfully"
+  },
+  "menus": {
+    "pageTitle": "Menu Management",
+    "cardTitle": "Menu Management",
+    "newMenu": "New Menu",
+    "noteText": "Rows in this table only drive the permission model (Permission Management page) - <strong>they do not affect the real sidebar menu</strong>, which still reads from <code>lib/menu-list.ts</code> as before.",
+    "forbidden": "You do not have access to this page",
+    "sortOrderUpdateFailed": "Failed to update sort order",
+    "columns": {
+      "group": "Group",
+      "category": "Category",
+      "menu": "Menu",
+      "subMenu": "Sub-menu",
+      "href": "Href",
+      "sort": "Sort"
+    },
+    "form": {
+      "editTitle": "Edit Menu",
+      "createTitle": "Create Menu",
+      "description": "These rows only drive the permission model (permissions/role_permissions) - they do not affect the real sidebar menu",
+      "groupLabel": "Group *",
+      "categoryLabel": "Category *",
+      "menuLabel": "Menu (empty = top-level item)",
+      "subMenuLabel": "Sub-menu",
+      "hrefLabel": "Href",
+      "iconLabel": "Icon (lucide name)",
+      "sortOrderLabel": "Sort order",
+      "missingGroupOrCategory": "Enter a Group and Category",
+      "saveFailed": "Save failed",
+      "editSuccess": "Menu updated successfully",
+      "createSuccess": "Menu created successfully"
+    },
+    "delete": {
+      "title": "Delete Menu",
+      "description": "Delete \"{label}\" ({group})",
+      "checkingImpact": "Checking impact...",
+      "impactWarning": "This will also delete <strong>{permissionsCount}</strong> permission and <strong>{rolePermissionsCount}</strong> role_permissions (every role's grant ever set on this menu) - this cannot be undone.",
+      "deleteFailed": "Delete failed",
+      "deleteSuccess": "Menu deleted successfully"
+    }
+  }
+}

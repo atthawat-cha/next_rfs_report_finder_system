@@ -9,6 +9,7 @@ import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
 import { Loader2, Plus, Info } from "lucide-react";
 import toast from "react-hot-toast";
+import { useTranslations } from "next-intl";
 import { getMenusColumn, type MenuRow } from "./components/menusColumn";
 import { MenuFormDialog } from "./components/menuFormDialog";
 import { DeleteMenuDialog } from "./components/deleteMenuDialog";
@@ -26,6 +27,8 @@ import { DeleteMenuDialog } from "./components/deleteMenuDialog";
  * relying on the API's 403 as the real boundary.
  */
 export default function MenusManagementPage() {
+  const t = useTranslations("settings.menus");
+  const tc = useTranslations("common");
   const [menus, setMenus] = React.useState<MenuRow[]>([]);
   const [loading, setLoading] = React.useState(true);
   const [forbidden, setForbidden] = React.useState(false);
@@ -62,12 +65,12 @@ export default function MenusManagementPage() {
         body: JSON.stringify({ sort_order: sortOrder }),
       });
       if (!res.ok) {
-        toast.error("อัปเดตลำดับไม่สำเร็จ");
+        toast.error(t("sortOrderUpdateFailed"));
         return;
       }
       fetchMenus();
     },
-    [fetchMenus]
+    [fetchMenus, t]
   );
 
   const columns = React.useMemo(
@@ -78,45 +81,49 @@ export default function MenusManagementPage() {
           setFormOpen(true);
         },
         (row) => setDeletingMenu(row),
-        handleSortOrderChange
+        handleSortOrderChange,
+        t,
+        tc
       ),
-    [handleSortOrderChange]
+    [handleSortOrderChange, t, tc]
   );
 
   return (
-    <ContentLayout title="Menu Management">
+    <ContentLayout title={t("pageTitle")}>
       <div className="w-full item-center my-2">
         <DefaultBreadcrumb />
       </div>
 
       <Card className="container mx-auto py-10 gap-6 mt-5 px-6">
         <div className="flex items-center justify-between">
-          <h4 className="text-xl md:text-3xl font-bold">Menu Management</h4>
+          <h4 className="text-xl md:text-3xl font-bold">{t("cardTitle")}</h4>
           <Button
             onClick={() => {
               setEditingMenu(null);
               setFormOpen(true);
             }}
           >
-            <Plus className="h-4 w-4 mr-2" /> New Menu
+            <Plus className="h-4 w-4 mr-2" /> {t("newMenu")}
           </Button>
         </div>
 
         <div className="flex items-start gap-2 rounded-md border bg-muted/40 p-3 text-sm text-muted-foreground mt-4">
           <Info className="h-4 w-4 mt-0.5 shrink-0" />
           <p>
-            แถวในตารางนี้ขับเคลื่อนโมเดลสิทธิ์ (หน้า Permission Management) เท่านั้น — <strong>ไม่กระทบเมนู sidebar จริง</strong>{" "}
-            ซึ่งยังคงอ่านจาก <code>lib/menu-list.ts</code> เหมือนเดิม
+            {t.rich("noteText", {
+              strong: (chunks) => <strong>{chunks}</strong>,
+              code: (chunks) => <code>{chunks}</code>,
+            })}
           </p>
         </div>
 
         <Separator className="my-5" />
 
-        {forbidden && <p className="text-muted-foreground">คุณไม่มีสิทธิ์เข้าถึงหน้านี้</p>}
+        {forbidden && <p className="text-muted-foreground">{t("forbidden")}</p>}
 
         {!forbidden && loading && (
           <div className="flex items-center justify-center py-12 text-muted-foreground">
-            <Loader2 className="h-5 w-5 animate-spin mr-2" /> กำลังโหลด...
+            <Loader2 className="h-5 w-5 animate-spin mr-2" /> {tc("loading")}
           </div>
         )}
 

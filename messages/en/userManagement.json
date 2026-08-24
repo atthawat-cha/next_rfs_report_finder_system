@@ -1,1 +1,102 @@
-{}
+{
+  "activity": {
+    "pageTitle": "Activity Log",
+    "cardTitle": "Activity Log",
+    "totalCount": "{count} total entries",
+    "userLabel": "User",
+    "allOption": "All",
+    "entityLabel": "Entity",
+    "fromDateLabel": "From Date",
+    "toDateLabel": "To Date",
+    "columns": {
+      "time": "Time",
+      "user": "User",
+      "action": "Action",
+      "entity": "Entity",
+      "description": "Description",
+      "ip": "IP"
+    },
+    "noData": "No data",
+    "pageInfo": "Page {page} of {totalPages}",
+    "previous": "Previous",
+    "next": "Next"
+  },
+  "department": {
+    "pageTitle": "User Department",
+    "breadcrumbManagement": "Management",
+    "breadcrumbDepartment": "Department",
+    "listTitle": "Departments",
+    "newDialogTitle": "New Department",
+    "newDialogDescription": "Add new department",
+    "newButtonText": "New Department",
+    "forbidden": "You don't have permission to access this page",
+    "columns": {
+      "name": "Department Name",
+      "code": "Department Code",
+      "status": "Status",
+      "createdAt": "Created At",
+      "updatedAt": "Updated At"
+    },
+    "form": {
+      "nameLabel": "Name",
+      "namePlaceholder": "Name",
+      "nameHint": "The Department name must be at least 3 characters long",
+      "codeLabel": "Code",
+      "codePlaceholder": "Code",
+      "codeHint": "The code must be uppercase",
+      "statusLabel": "Status",
+      "noPermission": "You don't have permission to access this page",
+      "createError": "Error creating department",
+      "createSuccess": "Department has been created successfully",
+      "saving": "Saving...",
+      "saveChanges": "Save changes"
+    }
+  },
+  "userForm": {
+    "createTitle": "User Create",
+    "updateTitle": "User Update",
+    "breadcrumbUsersManagement": "Users Management",
+    "usernameLabel": "Username",
+    "usernamePlaceholder": "Username",
+    "usernameHint": "The username must be unique",
+    "passwordLabel": "Password",
+    "passwordPlaceholder": "Password",
+    "roleLabel": "Role",
+    "rolePlaceholder": "Choose role",
+    "roleHint": "Select role area of work.",
+    "departmentLabel": "Department",
+    "departmentPlaceholder": "Choose department",
+    "departmentHint": "Select your department or area of work.",
+    "statusLabel": "Status",
+    "statusPlaceholder": "Choose status",
+    "statusHint": "Select the user's status.",
+    "personalInfo": "Personal Information",
+    "firstNameLabel": "First Name",
+    "firstNamePlaceholder": "First Name",
+    "lastNameLabel": "Last Name",
+    "lastNamePlaceholder": "Last Name",
+    "emailLabel": "Email",
+    "emailPlaceholder": "Email",
+    "back": "Back",
+    "reset": "Reset",
+    "createSuccess": "User has been created successfully",
+    "createError": "Error creating user"
+  },
+  "userList": {
+    "pageTitle": "User Lists",
+    "breadcrumbUsersManagement": "Users Management",
+    "listTitle": "User Lists",
+    "newUser": "New User",
+    "columns": {
+      "username": "Username",
+      "firstName": "First Name",
+      "lastName": "Last Name",
+      "department": "Department",
+      "status": "Status",
+      "createdAt": "Created At",
+      "action": "Action",
+      "viewDetail": "View Detail",
+      "modify": "Modify"
+    }
+  }
+}

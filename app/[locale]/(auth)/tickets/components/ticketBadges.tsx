@@ -1,3 +1,4 @@
+import { useTranslations } from 'next-intl';
 import { Badge } from '@/components/ui/badge';
 import type { TicketPriority, TicketStatus } from './ticketTypes';
 
@@ -16,9 +17,11 @@ const STATUS_VARIANT: Record<TicketStatus, 'default' | 'secondary' | 'destructiv
 };
 
 export function PriorityBadge({ priority }: { priority: TicketPriority }) {
-    return <Badge variant={PRIORITY_VARIANT[priority]}>{priority}</Badge>;
+    const t = useTranslations('tickets.priority');
+    return <Badge variant={PRIORITY_VARIANT[priority]}>{t(priority)}</Badge>;
 }
 
 export function StatusBadge({ status }: { status: TicketStatus }) {
-    return <Badge variant={STATUS_VARIANT[status]}>{status.replace('_', ' ')}</Badge>;
+    const t = useTranslations('tickets.status');
+    return <Badge variant={STATUS_VARIANT[status]}>{t(status)}</Badge>;
 }

@@ -1,6 +1,6 @@
 import { getCurrentUser } from '@/lib/auth';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { getLocale } from 'next-intl/server';
+import { getLocale, getTranslations } from 'next-intl/server';
 import { redirect } from '@/i18n/navigation';
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
 import { ContentLayout } from '@/components/layouts/content-layout';
@@ -23,6 +23,8 @@ export default async function ProfilePage() {
     redirect({ href: '/login', locale });
   }
 
+  const t = await getTranslations('auth.profile');
+
   const getInitials = (name: string) => {
     return name
       .split(' ')
@@ -33,20 +35,20 @@ export default async function ProfilePage() {
   };
 
   return (
-    <ContentLayout title="Profile">
+    <ContentLayout title={t('pageTitle')}>
       <div className="max-w-3xl mx-auto space-y-6">
         <div>
-          <h1 className="text-3xl md:text-4xl font-bold">โปรไฟล์</h1>
+          <h1 className="text-3xl md:text-4xl font-bold">{t('heading')}</h1>
           <p className="text-muted-foreground mt-2">
-            จัดการข้อมูลส่วนตัวของคุณ
+            {t('subheading')}
           </p>
         </div>
 
         <Card>
           <CardHeader>
-            <CardTitle>ข้อมูลส่วนตัว</CardTitle>
+            <CardTitle>{t('accountInfoTitle')}</CardTitle>
             <CardDescription>
-              ข้อมูลบัญชีและโปรไฟล์ของคุณ
+              {t('accountInfoDescription')}
             </CardDescription>
           </CardHeader>
           <CardContent className="space-y-6">
@@ -64,21 +66,21 @@ export default async function ProfilePage() {
 
             <div className="space-y-4">
               <div className="grid gap-2">
-                <label className="text-sm font-medium">User ID</label>
+                <label className="text-sm font-medium">{t('userIdLabel')}</label>
                 <div className="px-3 py-2 bg-muted rounded-md text-sm">
                   {user.id}
                 </div>
               </div>
 
               <div className="grid gap-2">
-                <label className="text-sm font-medium">ชื่อ</label>
+                <label className="text-sm font-medium">{t('nameLabel')}</label>
                 <div className="px-3 py-2 bg-muted rounded-md text-sm">
                   {user.name}
                 </div>
               </div>
 
               <div className="grid gap-2">
-                <label className="text-sm font-medium">อีเมล</label>
+                <label className="text-sm font-medium">{t('emailLabel')}</label>
                 <div className="px-3 py-2 bg-muted rounded-md text-sm">
                   {user.username}
                 </div>
@@ -89,9 +91,9 @@ export default async function ProfilePage() {
 
         <Card>
           <CardHeader>
-            <CardTitle>ยืนยันตัวตนสองขั้นตอน (2FA)</CardTitle>
+            <CardTitle>{t('twoFactorTitle')}</CardTitle>
             <CardDescription>
-              เพิ่มความปลอดภัยให้บัญชีของคุณด้วยรหัสยืนยันจากแอปยืนยันตัวตน
+              {t('twoFactorDescription')}
             </CardDescription>
           </CardHeader>
           <CardContent>

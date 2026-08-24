@@ -20,6 +20,7 @@ import { Link, useRouter } from "@/i18n/navigation";
 import { useSearchParams } from "next/navigation";
 import React from "react";
 import toast from "react-hot-toast";
+import { useTranslations } from "next-intl";
 
 interface SelectOption {
   id: string;
@@ -33,6 +34,8 @@ interface UserFormBaseConfig {
 }
 
 export default function UserFormData() {
+  const t = useTranslations("userManagement.userForm");
+  const tc = useTranslations("common");
 
   const router = useRouter();
   const searchParams = useSearchParams();
@@ -106,12 +109,12 @@ const getConfigData = async () => {
       if (!data?.success) {
         return;
       }
-      toast.success("User has been created successfully");
+      toast.success(t("createSuccess"));
       setLoading(false);
       router.push(redirect);
       router.refresh();
     } catch {
-      toast.error("Error creating user");
+      toast.error(t("createError"));
       setLoading(false);
     }
     
@@ -123,24 +126,24 @@ const getConfigData = async () => {
 
 
   return (
-    <ContentLayout title={action == "create" ? "User Create" : "User Update"}>
+    <ContentLayout title={action == "create" ? t("createTitle") : t("updateTitle")}>
       <Breadcrumb>
         <BreadcrumbList>
           <BreadcrumbItem>
             <BreadcrumbLink asChild>
-              <Link href="/">Dashboard</Link>
+              <Link href="/">{tc("breadcrumbDashboard")}</Link>
             </BreadcrumbLink>
           </BreadcrumbItem>
           <BreadcrumbSeparator />
           <BreadcrumbItem>
             <BreadcrumbLink asChild>
-              <Link href="/dashboard">Users Management</Link>
+              <Link href="/dashboard">{t("breadcrumbUsersManagement")}</Link>
             </BreadcrumbLink>
           </BreadcrumbItem>
           <BreadcrumbSeparator />
           <BreadcrumbItem>
             <BreadcrumbPage>
-              {action == "create" ? "User Create" : "User Update"}
+              {action == "create" ? t("createTitle") : t("updateTitle")}
             </BreadcrumbPage>
           </BreadcrumbItem>
         </BreadcrumbList>
@@ -149,11 +152,10 @@ const getConfigData = async () => {
       <div className="container mx-auto py-10 gap-6">
         <div className="flex items-center justify-between">
           <h3 className="text-xl md:text-1xl font-bold">
-            {action == "create" ? "User Create" : "User Update"}
+            {action == "create" ? t("createTitle") : t("updateTitle")}
           </h3>
-          {/* <Link href="/user-management/user-department" className='btn btn-primary'>Add User</Link> */}
           <Button asChild>
-            <Link href={"/user-management/user-list"}>Back</Link>
+            <Link href={"/user-management/user-list"}>{t("back")}</Link>
           </Button>
         </div>
         <Separator className="my-5" />
@@ -163,11 +165,11 @@ const getConfigData = async () => {
             <CardContent className="w-full">
               <div className="flex item-center justify-between my-2 gap-5">
                 <div className="w-full space-y-2">
-                  <Label htmlFor="username">Username</Label>
+                  <Label htmlFor="username">{t("usernameLabel")}</Label>
                   <Input
                     id="username"
                     type="username"
-                    placeholder="Username"
+                    placeholder={t("usernamePlaceholder")}
                     value={userParams.username}
                     autoComplete="off"
                     onChange={(e) =>
@@ -177,16 +179,16 @@ const getConfigData = async () => {
                     disabled={isLoading}
                   />
                   <FieldDescription className="text-sm text-muted-foreground pl-2">
-                      The username must be unique
+                      {t("usernameHint")}
                   </FieldDescription>
                 </div>
 
                 <div className="w-full space-y-2">
-                  <Label htmlFor="password">Password</Label>
+                  <Label htmlFor="password">{t("passwordLabel")}</Label>
                   <Input
                     id="password"
                     type="password"
-                    placeholder="Password"
+                    placeholder={t("passwordPlaceholder")}
                     value={userParams.password}
                     autoComplete="off"
                     onChange={(e) =>
@@ -201,10 +203,10 @@ const getConfigData = async () => {
               <div className="flex item-center justify-between my-2 gap-5">
                 <div className="w-full space-y-2">
                   <Field className="w-full">
-                    <FieldLabel>Role</FieldLabel>
+                    <FieldLabel>{t("roleLabel")}</FieldLabel>
                     <Select value={userParams.role_id} onValueChange={(e) => setUserParams({ ...userParams, role_id: e })}>
                       <SelectTrigger>
-                        <SelectValue placeholder="Choose role" />
+                        <SelectValue placeholder={t("rolePlaceholder")} />
                       </SelectTrigger>
                       <SelectContent>
                         <SelectGroup>
@@ -217,17 +219,17 @@ const getConfigData = async () => {
                       </SelectContent>
                     </Select>
                     <FieldDescription>
-                      Select role area of work.
+                      {t("roleHint")}
                     </FieldDescription>
                   </Field>
                 </div>
 
                 <div className="w-full space-y-2">
                   <Field className="w-full">
-                    <FieldLabel>Department</FieldLabel>
+                    <FieldLabel>{t("departmentLabel")}</FieldLabel>
                     <Select value={userParams.department_id} onValueChange={(e) => setUserParams({ ...userParams, department_id: e })}>
                       <SelectTrigger>
-                        <SelectValue placeholder="Choose department" />
+                        <SelectValue placeholder={t("departmentPlaceholder")} />
                       </SelectTrigger>
                       <SelectContent>
                         <SelectGroup>
@@ -240,7 +242,7 @@ const getConfigData = async () => {
                       </SelectContent>
                     </Select>
                     <FieldDescription>
-                      Select your department or area of work.
+                      {t("departmentHint")}
                     </FieldDescription>
                   </Field>
                 </div>
@@ -249,10 +251,10 @@ const getConfigData = async () => {
               <div className="flex item-center justify-between my-2 gap-5">
                 <div className="w-full space-y-2">
                   <Field className="w-full">
-                    <FieldLabel>Status</FieldLabel>
+                    <FieldLabel>{t("statusLabel")}</FieldLabel>
                     <Select value={userParams.status} onValueChange={(e) => setUserParams({ ...userParams, status: e })}>
                       <SelectTrigger>
-                        <SelectValue placeholder="Choose department" />
+                        <SelectValue placeholder={t("statusPlaceholder")} />
                       </SelectTrigger>
                       <SelectContent>
                         <SelectGroup>
@@ -265,20 +267,20 @@ const getConfigData = async () => {
                       </SelectContent>
                     </Select>
                     <FieldDescription>
-                      Select your department or area of work.
+                      {t("statusHint")}
                     </FieldDescription>
                   </Field>
                 </div>
               </div>
 
-              <FieldSeparator className="my-4">Personal Information</FieldSeparator>
+              <FieldSeparator className="my-4">{t("personalInfo")}</FieldSeparator>
               <div className="flex item-center justify-between my-2 gap-5">
                 <div className="w-full space-y-2">
-                  <Label htmlFor="first_name">First Name</Label>
+                  <Label htmlFor="first_name">{t("firstNameLabel")}</Label>
                   <Input
                     id="first_name"
                     type="text"
-                    placeholder="firstname"
+                    placeholder={t("firstNamePlaceholder")}
                     value={userParams.first_name}
                     autoComplete="off"
                     onChange={(e) =>
@@ -293,11 +295,11 @@ const getConfigData = async () => {
                 </div>
 
                 <div className="w-full space-y-2">
-                  <Label htmlFor="last_name">Last Name</Label>
+                  <Label htmlFor="last_name">{t("lastNameLabel")}</Label>
                   <Input
                     id="last_name"
                     type="text"
-                    placeholder="Last Name"
+                    placeholder={t("lastNamePlaceholder")}
                     value={userParams.last_name}
                     autoComplete="off"
                     onChange={(e) =>
@@ -314,11 +316,11 @@ const getConfigData = async () => {
 
               <div className="flex item-center justify-between my-2 gap-5">
                 <div className="w-full space-y-2">
-                  <Label htmlFor="email">Email</Label>
+                  <Label htmlFor="email">{t("emailLabel")}</Label>
                   <Input
                     id="email"
                     type="text"
-                    placeholder="email"
+                    placeholder={t("emailPlaceholder")}
                     value={userParams?.email || ''}
                     autoComplete="off"
                     onChange={(e) =>
@@ -336,7 +338,7 @@ const getConfigData = async () => {
             <CardFooter className="flex w-full gap-4 items-center justify-end">
               <div className="flex item-center justify-end my-2 gap-5">
                 <Button type="button" className="w-full" disabled={isLoading} onClick={handleSubmit}>
-                  {isLoading ? "กำลังบันทึก..." : "บันทึก"}
+                  {isLoading ? tc("saving") : tc("save")}
                 </Button>
 
                 <div className="text-sm text-center text-muted-foreground">
@@ -345,7 +347,7 @@ const getConfigData = async () => {
                       href="/user-management/user-list"
                       className="hover:text-primary transition-colors"
                     >
-                      Reset
+                      {t("reset")}
                     </Link>
                   </Button>
                 </div>

@@ -8,19 +8,23 @@ import React from 'react'
 //  Data Table
 import { DeptDataTable } from './dept-data-table'
 import { DepartmentType } from '@/lib/types'
-import { department_columns } from './dep-columns'
+import { getDepartmentColumns } from './dep-columns'
 import { DrawerDialogDemo } from '@/components/shared/dialog-drawer'
 import toast from 'react-hot-toast'
 import DeptForm from './components/deptForm'
 import { SkeletonTable } from '@/components/shared/skeletonTable'
+import { useTranslations } from 'next-intl'
 
 export default function UserDepartment() {
+  const t = useTranslations('userManagement.department');
+  const tc = useTranslations('common');
+  const columns = React.useMemo(() => getDepartmentColumns(t, tc), [t, tc]);
 
   const [deptData, setDeptData] = React.useState<DepartmentType[]>([]);
   const [loading, setLoading] = React.useState(true);
   const [openDialog] = React.useState(false);
 
-  const fetchDepartments = async () => {
+  const fetchDepartments = React.useCallback(async () => {
     try {
       const response = await fetch('/api/users/departments');
       if (!response.ok && response.status !== 403 && response.status !== 404) {
@@ -28,7 +32,7 @@ export default function UserDepartment() {
       }
 
       if (response.status === 403) {
-        return toast.error("You don't have permission to access this page");
+        return toast.error(t("forbidden"));
       }
 
       if (response.status === 404) {
@@ -44,44 +48,43 @@ export default function UserDepartment() {
     } finally {
       setLoading(false);
     }
-  };
+  }, [t]);
 
   React.useEffect(() => {
     fetchDepartments();
-  }, [])
+  }, [fetchDepartments])
 
 
   return (
-    <ContentLayout title="User Department">
+    <ContentLayout title={t("pageTitle")}>
       <Breadcrumb>
         <BreadcrumbList>
           <BreadcrumbItem>
             <BreadcrumbLink asChild>
-              <Link href="/">Dashboard</Link>
+              <Link href="/">{tc("breadcrumbDashboard")}</Link>
             </BreadcrumbLink>
           </BreadcrumbItem>
           <BreadcrumbSeparator />
           <BreadcrumbItem>
             <BreadcrumbLink asChild>
-              <Link href="/dashboard">Management</Link>
+              <Link href="/dashboard">{t("breadcrumbManagement")}</Link>
             </BreadcrumbLink>
           </BreadcrumbItem>
           <BreadcrumbSeparator />
           <BreadcrumbItem>
-            <BreadcrumbPage>Department</BreadcrumbPage>
+            <BreadcrumbPage>{t("breadcrumbDepartment")}</BreadcrumbPage>
           </BreadcrumbItem>
         </BreadcrumbList>
       </Breadcrumb>
       <div className="container mx-auto py-10 gap-6">
         <div className="flex items-center justify-between">
-          <h5 className="text-xl md:text-3xl font-bold">Departments</h5>
-          {/* <Link href="/user-management/user-department" className='btn btn-primary'>Add User</Link> */}
-          <DrawerDialogDemo isOpen={openDialog} title="New Department" description="Add new department" btnText="New Department">
+          <h5 className="text-xl md:text-3xl font-bold">{t("listTitle")}</h5>
+          <DrawerDialogDemo isOpen={openDialog} title={t("newDialogTitle")} description={t("newDialogDescription")} btnText={t("newButtonText")}>
             <DeptForm />
           </DrawerDialogDemo>
         </div>
         <Separator className="my-5" />
-        {loading ? <SkeletonTable /> : <DeptDataTable columns={department_columns} data={deptData} />}
+        {loading ? <SkeletonTable /> : <DeptDataTable columns={columns} data={deptData} />}
       </div>
     </ContentLayout>
   );

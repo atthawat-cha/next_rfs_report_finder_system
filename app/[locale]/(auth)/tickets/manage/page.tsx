@@ -7,6 +7,7 @@ import { Card } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
 import { Select, SelectContent, SelectGroup, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Loader2 } from "lucide-react";
+import { useTranslations } from "next-intl";
 import { TicketDataTable } from "../components/ticketTable";
 import { getTicketQueueColumns } from "./components/ticketQueueColumn";
 import { TicketEditDialog } from "./components/ticketEditDialog";
@@ -20,6 +21,11 @@ import type { TicketRow } from "../components/ticketTypes";
  * only, so a non-admin visiting this page just sees their own list here too.
  */
 export default function TicketQueuePage() {
+  const t = useTranslations("tickets.queue");
+  const tCol = useTranslations("tickets.columns");
+  const tc = useTranslations("common");
+  const tp = useTranslations("tickets.priority");
+  const ts = useTranslations("tickets.status");
   const [tickets, setTickets] = React.useState<TicketRow[]>([]);
   const [loading, setLoading] = React.useState(true);
   const [statusFilter, setStatusFilter] = React.useState("all");
@@ -43,17 +49,17 @@ export default function TicketQueuePage() {
     fetchTickets();
   }, [fetchTickets]);
 
-  const columns = React.useMemo(() => getTicketQueueColumns((row) => setEditingTicket(row)), []);
+  const columns = React.useMemo(() => getTicketQueueColumns((row) => setEditingTicket(row), tCol), [tCol]);
 
   return (
-    <ContentLayout title="Ticket Queue">
+    <ContentLayout title={t("pageTitle")}>
       <div className="w-full item-center my-2">
         <DefaultBreadcrumb />
       </div>
 
       <Card className="container mx-auto py-10 gap-6 mt-5 px-6">
         <div className="flex items-center justify-between">
-          <h4 className="text-xl md:text-3xl font-bold">Ticket Queue</h4>
+          <h4 className="text-xl md:text-3xl font-bold">{t("cardTitle")}</h4>
         </div>
 
         <div className="flex gap-3 mt-4">
@@ -63,11 +69,11 @@ export default function TicketQueuePage() {
             </SelectTrigger>
             <SelectContent>
               <SelectGroup>
-                <SelectItem value="all">ทุกสถานะ</SelectItem>
-                <SelectItem value="OPEN">Open</SelectItem>
-                <SelectItem value="IN_PROGRESS">In Progress</SelectItem>
-                <SelectItem value="RESOLVED">Resolved</SelectItem>
-                <SelectItem value="CLOSED">Closed</SelectItem>
+                <SelectItem value="all">{t("allStatuses")}</SelectItem>
+                <SelectItem value="OPEN">{ts("OPEN")}</SelectItem>
+                <SelectItem value="IN_PROGRESS">{ts("IN_PROGRESS")}</SelectItem>
+                <SelectItem value="RESOLVED">{ts("RESOLVED")}</SelectItem>
+                <SelectItem value="CLOSED">{ts("CLOSED")}</SelectItem>
               </SelectGroup>
             </SelectContent>
           </Select>
@@ -78,11 +84,11 @@ export default function TicketQueuePage() {
             </SelectTrigger>
             <SelectContent>
               <SelectGroup>
-                <SelectItem value="all">ทุกความสำคัญ</SelectItem>
-                <SelectItem value="LOW">Low</SelectItem>
-                <SelectItem value="MEDIUM">Medium</SelectItem>
-                <SelectItem value="HIGH">High</SelectItem>
-                <SelectItem value="CRITICAL">Critical</SelectItem>
+                <SelectItem value="all">{t("allPriorities")}</SelectItem>
+                <SelectItem value="LOW">{tp("LOW")}</SelectItem>
+                <SelectItem value="MEDIUM">{tp("MEDIUM")}</SelectItem>
+                <SelectItem value="HIGH">{tp("HIGH")}</SelectItem>
+                <SelectItem value="CRITICAL">{tp("CRITICAL")}</SelectItem>
               </SelectGroup>
             </SelectContent>
           </Select>
@@ -92,7 +98,7 @@ export default function TicketQueuePage() {
 
         {loading ? (
           <div className="flex items-center justify-center py-12 text-muted-foreground">
-            <Loader2 className="h-5 w-5 animate-spin mr-2" /> กำลังโหลด...
+            <Loader2 className="h-5 w-5 animate-spin mr-2" /> {tc("loading")}
           </div>
         ) : (
           <TicketDataTable columns={columns} data={tickets} />

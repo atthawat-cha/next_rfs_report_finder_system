@@ -16,6 +16,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectGroup, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Loader2 } from "lucide-react";
 import toast from "react-hot-toast";
+import { useTranslations } from "next-intl";
 import type { TicketPriority } from "./ticketTypes";
 
 const EMPTY_FORM = { subject: "", description: "", category: "", priority: "MEDIUM" as TicketPriority };
@@ -29,6 +30,9 @@ export function CreateTicketDialog({
   onOpenChange: (open: boolean) => void;
   onCreated: () => void;
 }) {
+  const t = useTranslations("tickets.createDialog");
+  const tc = useTranslations("common");
+  const tp = useTranslations("tickets.priority");
   const [form, setForm] = React.useState(EMPTY_FORM);
   const [saving, setSaving] = React.useState(false);
 
@@ -38,7 +42,7 @@ export function CreateTicketDialog({
 
   const handleSubmit = async () => {
     if (!form.subject.trim() || !form.description.trim() || !form.category.trim()) {
-      toast.error("กรุณากรอกหัวข้อ รายละเอียด และหมวดหมู่");
+      toast.error(t("missingFields"));
       return;
     }
     setSaving(true);
@@ -52,10 +56,10 @@ export function CreateTicketDialog({
       const json = await res.json();
       if (!res.ok || !json?.success) {
         const message = Array.isArray(json?.error) ? json.error[0]?.message : json?.error;
-        toast.error(message ?? "ส่งคำขอไม่สำเร็จ");
+        toast.error(message ?? t("createFailed"));
         return;
       }
-      toast.success(`สร้าง Ticket ${json.data.ticket_number} เรียบร้อย`);
+      toast.success(t("createSuccess", { ticketNumber: json.data.ticket_number }));
       onOpenChange(false);
       onCreated();
     } finally {
@@ -67,13 +71,13 @@ export function CreateTicketDialog({
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-lg">
         <DialogHeader>
-          <DialogTitle>แจ้งปัญหา / ขอรายงานใหม่</DialogTitle>
-          <DialogDescription>ทีมผู้ดูแลระบบจะได้รับการแจ้งเตือนทันที</DialogDescription>
+          <DialogTitle>{t("title")}</DialogTitle>
+          <DialogDescription>{t("description")}</DialogDescription>
         </DialogHeader>
 
         <div className="space-y-3">
           <div className="space-y-1.5">
-            <Label htmlFor="ticket_subject">หัวข้อ</Label>
+            <Label htmlFor="ticket_subject">{t("subjectLabel")}</Label>
             <Input
               id="ticket_subject"
               value={form.subject}
@@ -82,17 +86,17 @@ export function CreateTicketDialog({
             />
           </div>
           <div className="space-y-1.5">
-            <Label htmlFor="ticket_category">หมวดหมู่</Label>
+            <Label htmlFor="ticket_category">{t("categoryLabel")}</Label>
             <Input
               id="ticket_category"
-              placeholder="เช่น รายงานผิด, ขอรายงานใหม่, ปัญหาการเข้าถึง"
+              placeholder={t("categoryPlaceholder")}
               value={form.category}
               onChange={(e) => setForm((prev) => ({ ...prev, category: e.target.value }))}
               disabled={saving}
             />
           </div>
           <div className="space-y-1.5">
-            <Label htmlFor="ticket_priority">ความสำคัญ</Label>
+            <Label htmlFor="ticket_priority">{t("priorityLabel")}</Label>
             <Select
               value={form.priority}
               onValueChange={(value) => setForm((prev) => ({ ...prev, priority: value as TicketPriority }))}
@@ -103,16 +107,16 @@ export function CreateTicketDialog({
               </SelectTrigger>
               <SelectContent>
                 <SelectGroup>
-                  <SelectItem value="LOW">Low</SelectItem>
-                  <SelectItem value="MEDIUM">Medium</SelectItem>
-                  <SelectItem value="HIGH">High</SelectItem>
-                  <SelectItem value="CRITICAL">Critical</SelectItem>
+                  <SelectItem value="LOW">{tp("LOW")}</SelectItem>
+                  <SelectItem value="MEDIUM">{tp("MEDIUM")}</SelectItem>
+                  <SelectItem value="HIGH">{tp("HIGH")}</SelectItem>
+                  <SelectItem value="CRITICAL">{tp("CRITICAL")}</SelectItem>
                 </SelectGroup>
               </SelectContent>
             </Select>
           </div>
           <div className="space-y-1.5">
-            <Label htmlFor="ticket_description">รายละเอียด</Label>
+            <Label htmlFor="ticket_description">{t("descriptionLabel")}</Label>
             <Textarea
               id="ticket_description"
               rows={4}
@@ -125,11 +129,11 @@ export function CreateTicketDialog({
 
         <DialogFooter>
           <Button variant="outline" onClick={() => onOpenChange(false)} disabled={saving}>
-            ยกเลิก
+            {tc("cancel")}
           </Button>
           <Button onClick={handleSubmit} disabled={saving}>
             {saving && <Loader2 className="h-4 w-4 mr-2 animate-spin" />}
-            ส่งคำขอ
+            {t("submit")}
           </Button>
         </DialogFooter>
       </DialogContent>

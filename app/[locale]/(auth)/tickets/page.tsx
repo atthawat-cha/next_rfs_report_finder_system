@@ -7,8 +7,9 @@ import { Plus } from 'lucide-react'
 import React from 'react'
 import { Separator } from '@/components/ui/separator'
 import { SkeletonTable } from '@/components/shared/skeletonTable'
+import { useTranslations } from 'next-intl'
 import { TicketDataTable } from './components/ticketTable'
-import { myTicketColumns } from './components/ticketColumn'
+import { getMyTicketColumns } from './components/ticketColumn'
 import { CreateTicketDialog } from './components/createTicketDialog'
 import type { TicketRow } from './components/ticketTypes'
 
@@ -17,6 +18,8 @@ import type { TicketRow } from './components/ticketTypes'
  * every ticket lives at /tickets/manage.
  */
 export default function MyTicketsPage() {
+  const t = useTranslations('tickets.myTickets');
+  const tCol = useTranslations('tickets.columns');
   const [tickets, setTickets] = React.useState<TicketRow[]>([]);
   const [loading, setLoading] = React.useState(true);
   const [createOpen, setCreateOpen] = React.useState(false);
@@ -36,20 +39,20 @@ export default function MyTicketsPage() {
   }, [fetchTickets]);
 
   return (
-    <ContentLayout title="My Tickets">
+    <ContentLayout title={t('pageTitle')}>
       <div className="w-full item-center my-2">
         <DefaultBreadcrumb />
       </div>
 
       <Card className="container mx-auto py-10 gap-6 mt-5">
         <div className="flex items-center justify-between">
-          <h4 className="text-xl md:text-3xl font-bold">คำขอ/แจ้งปัญหาของฉัน</h4>
+          <h4 className="text-xl md:text-3xl font-bold">{t('cardTitle')}</h4>
           <Button onClick={() => setCreateOpen(true)}>
-            <Plus className="h-4 w-4 mr-2" /> แจ้งปัญหาใหม่
+            <Plus className="h-4 w-4 mr-2" /> {t('newButton')}
           </Button>
         </div>
         <Separator className="my-5" />
-        {loading ? <SkeletonTable /> : <TicketDataTable columns={myTicketColumns} data={tickets} />}
+        {loading ? <SkeletonTable /> : <TicketDataTable columns={getMyTicketColumns(tCol)} data={tickets} />}
       </Card>
 
       <CreateTicketDialog open={createOpen} onOpenChange={setCreateOpen} onCreated={fetchTickets} />
