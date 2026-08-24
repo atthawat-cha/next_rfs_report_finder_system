@@ -1,5 +1,14 @@
 # Phase 9 — Standardize UI Language to Thai
 
+> **2026-08-23 update (superseded):** 9a, 9b, and 9c shipped as planned (see `document/00-progress.md`
+> for commit hashes). Sub-phases 9d (user-management/role-management) and 9e (tickets/settings/misc)
+> were **never started** and are now superseded by `document/phase11-plan.md`'s sub-phase 11b — the
+> user reversed Phase 9's "no multi-language switching" decision and asked for real `next-intl`
+> infrastructure with English as the default locale, so all remaining content-string work now flows
+> through next-intl message keys instead of further inline Thai hardcoding. Do not pick up 9d/9e from
+> this file; see `phase11-plan.md` instead. 9f (final verification sweep) is likewise absorbed into
+> Phase 11d.
+
 > **2026-08-23 update:** this plan was written before Phase 10 (report editor tabbed redesign,
 > `phase10-plan.md`) shipped. Phase 10 restructured exactly the two files sub-phase 9b/9c call out as
 > the largest single sources of strings: `report-edit/[id]/page.tsx` shrank drastically and most of
