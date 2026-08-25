@@ -1,6 +1,7 @@
 'use client';
 
 import { useMemo, useState } from 'react';
+import { useTranslations } from 'next-intl';
 
 interface TrendPoint {
   date: string;
@@ -16,6 +17,7 @@ const MARGIN = { top: 16, right: 16, bottom: 24, left: 8 };
 
 /** Single-series line+area chart with crosshair/tooltip — daily download counts. */
 export function TrendAreaChart({ data, height = 220 }: TrendAreaChartProps) {
+  const tc = useTranslations('common');
   const [hoverIndex, setHoverIndex] = useState<number | null>(null);
   const width = 720;
 
@@ -33,7 +35,7 @@ export function TrendAreaChart({ data, height = 220 }: TrendAreaChartProps) {
   }, [data, height]);
 
   if (data.length === 0) {
-    return <div className="flex h-[220px] items-center justify-center text-sm text-muted-foreground">ไม่มีข้อมูล</div>;
+    return <div className="flex h-[220px] items-center justify-center text-sm text-muted-foreground">{tc('noData')}</div>;
   }
 
   const linePath = points.map((p, i) => `${i === 0 ? 'M' : 'L'} ${p.x} ${p.y}`).join(' ');
@@ -104,7 +106,7 @@ export function TrendAreaChart({ data, height = 220 }: TrendAreaChartProps) {
           }}
         >
           <div className="text-muted-foreground">{hovered.date}</div>
-          <div className="font-medium">{hovered.count.toLocaleString()} ดาวน์โหลด</div>
+          <div className="font-medium">{hovered.count.toLocaleString()} {tc('downloadsUnit')}</div>
         </div>
       )}
     </div>

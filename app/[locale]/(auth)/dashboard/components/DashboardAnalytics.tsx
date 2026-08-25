@@ -1,11 +1,13 @@
 'use client';
 
 import { useCallback, useEffect, useState } from 'react';
+import { useLocale, useTranslations } from 'next-intl';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { ToggleGroup, ToggleGroupItem } from '@/components/ui/toggle-group';
 import { TrendAreaChart } from '@/components/shared/charts/TrendAreaChart';
 import { BreakdownBarChart } from '@/components/shared/charts/BreakdownBarChart';
+import { toIntlLocale } from '@/lib/utils';
 
 type TrendGranularity = 'day' | 'month';
 
@@ -60,6 +62,9 @@ function formatBytes(bytes: number): string {
 
 /** Admin-only analytics view — /api/dashboard/* are routeAcceptted('admin'), see phase3-plan.md 3d. */
 export default function DashboardAnalytics() {
+  const t = useTranslations('dashboard.analytics');
+  const locale = useLocale();
+  const numberLocale = toIntlLocale(locale);
   const [summary, setSummary] = useState<DashboardSummary | null>(null);
   const [trends, setTrends] = useState<TrendPoint[]>([]);
   const [trendGranularity, setTrendGranularity] = useState<TrendGranularity>('day');
@@ -115,25 +120,25 @@ export default function DashboardAnalytics() {
       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
         <Card>
           <CardHeader className="pb-2">
-            <CardDescription>รายงานทั้งหมด</CardDescription>
-            <CardTitle className="text-3xl">{summary?.totals.reports.toLocaleString() ?? '—'}</CardTitle>
+            <CardDescription>{t('totalReports')}</CardDescription>
+            <CardTitle className="text-3xl">{summary?.totals.reports.toLocaleString(numberLocale) ?? '—'}</CardTitle>
           </CardHeader>
         </Card>
         <Card>
           <CardHeader className="pb-2">
-            <CardDescription>ผู้ใช้ที่ใช้งานอยู่</CardDescription>
-            <CardTitle className="text-3xl">{summary?.totals.active_users.toLocaleString() ?? '—'}</CardTitle>
+            <CardDescription>{t('activeUsers')}</CardDescription>
+            <CardTitle className="text-3xl">{summary?.totals.active_users.toLocaleString(numberLocale) ?? '—'}</CardTitle>
           </CardHeader>
         </Card>
         <Card>
           <CardHeader className="pb-2">
-            <CardDescription>ดาวน์โหลดทั้งหมด</CardDescription>
-            <CardTitle className="text-3xl">{summary?.totals.downloads.toLocaleString() ?? '—'}</CardTitle>
+            <CardDescription>{t('totalDownloads')}</CardDescription>
+            <CardTitle className="text-3xl">{summary?.totals.downloads.toLocaleString(numberLocale) ?? '—'}</CardTitle>
           </CardHeader>
         </Card>
         <Card>
           <CardHeader className="pb-2">
-            <CardDescription>พื้นที่จัดเก็บที่ใช้ไป</CardDescription>
+            <CardDescription>{t('storageUsed')}</CardDescription>
             <CardTitle className="text-3xl">
               {summary ? formatBytes(summary.totals.storage_bytes) : '—'}
             </CardTitle>
@@ -145,10 +150,10 @@ export default function DashboardAnalytics() {
         <CardHeader className="flex flex-row items-start justify-between gap-4">
           <div>
             <CardTitle>
-              แนวโน้มการดาวน์โหลด ({trendGranularity === 'day' ? '30 วันล่าสุด' : '12 เดือนล่าสุด'})
+              {t('downloadTrendTitle', { period: trendGranularity === 'day' ? t('last30Days') : t('last12Months') })}
             </CardTitle>
             <CardDescription>
-              {trendGranularity === 'day' ? 'จำนวนดาวน์โหลดรายวัน' : 'จำนวนดาวน์โหลดรายเดือน'}
+              {trendGranularity === 'day' ? t('dailyDownloads') : t('monthlyDownloads')}
             </CardDescription>
           </div>
           <ToggleGroup
@@ -157,11 +162,11 @@ export default function DashboardAnalytics() {
             value={trendGranularity}
             onValueChange={(value) => value && setTrendGranularity(value as TrendGranularity)}
           >
-            <ToggleGroupItem value="day" aria-label="รายวัน">
-              รายวัน
+            <ToggleGroupItem value="day" aria-label={t('daily')}>
+              {t('daily')}
             </ToggleGroupItem>
-            <ToggleGroupItem value="month" aria-label="รายเดือน">
-              รายเดือน
+            <ToggleGroupItem value="month" aria-label={t('monthly')}>
+              {t('monthly')}
             </ToggleGroupItem>
           </ToggleGroup>
         </CardHeader>
@@ -173,7 +178,7 @@ export default function DashboardAnalytics() {
       <div className="grid gap-4 lg:grid-cols-2">
         <Card>
           <CardHeader>
-            <CardTitle>รายงานแยกตามสถานะ</CardTitle>
+            <CardTitle>{t('byStatusTitle')}</CardTitle>
           </CardHeader>
           <CardContent>
             <BreakdownBarChart
@@ -189,7 +194,7 @@ export default function DashboardAnalytics() {
 
         <Card>
           <CardHeader>
-            <CardTitle>รายงานแยกตามหมวดหมู่</CardTitle>
+            <CardTitle>{t('byCategoryTitle')}</CardTitle>
           </CardHeader>
           <CardContent>
             <BreakdownBarChart
@@ -205,19 +210,19 @@ export default function DashboardAnalytics() {
 
       <Card>
         <CardHeader>
-          <CardTitle>รายงานที่ถูกใช้งานมากที่สุด (Top 10)</CardTitle>
-          <CardDescription>เรียงตามยอดดาวน์โหลด</CardDescription>
+          <CardTitle>{t('topReportsTitle')}</CardTitle>
+          <CardDescription>{t('topReportsDescription')}</CardDescription>
         </CardHeader>
         <CardContent>
           <div className="overflow-hidden rounded-md border">
             <Table>
               <TableHeader>
                 <TableRow>
-                  <TableHead>รหัส</TableHead>
-                  <TableHead>ชื่อรายงาน</TableHead>
-                  <TableHead>หมวดหมู่</TableHead>
-                  <TableHead className="text-right">ดาวน์โหลด</TableHead>
-                  <TableHead className="text-right">รายการโปรด</TableHead>
+                  <TableHead>{t('columnCode')}</TableHead>
+                  <TableHead>{t('columnReportName')}</TableHead>
+                  <TableHead>{t('columnCategory')}</TableHead>
+                  <TableHead className="text-right">{t('columnDownloads')}</TableHead>
+                  <TableHead className="text-right">{t('columnFavorites')}</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
@@ -227,14 +232,14 @@ export default function DashboardAnalytics() {
                       <TableCell className="font-mono text-xs">{r.code}</TableCell>
                       <TableCell>{r.name_th}</TableCell>
                       <TableCell>{r.category_name ?? '-'}</TableCell>
-                      <TableCell className="text-right tabular-nums">{r.download_count.toLocaleString()}</TableCell>
-                      <TableCell className="text-right tabular-nums">{r.favorite_count.toLocaleString()}</TableCell>
+                      <TableCell className="text-right tabular-nums">{r.download_count.toLocaleString(numberLocale)}</TableCell>
+                      <TableCell className="text-right tabular-nums">{r.favorite_count.toLocaleString(numberLocale)}</TableCell>
                     </TableRow>
                   ))
                 ) : (
                   <TableRow>
                     <TableCell colSpan={5} className="h-24 text-center text-muted-foreground">
-                      {loading ? 'กำลังโหลด...' : 'ไม่มีข้อมูล'}
+                      {loading ? t('loading') : t('noTopReports')}
                     </TableCell>
                   </TableRow>
                 )}
@@ -246,18 +251,18 @@ export default function DashboardAnalytics() {
 
       <Card>
         <CardHeader>
-          <CardTitle>ความผิดปกติของการเข้าสู่ระบบ (24 ชม. ล่าสุด)</CardTitle>
-          <CardDescription>IP ที่ล็อกอินผิดตั้งแต่ 5 ครั้งขึ้นไป</CardDescription>
+          <CardTitle>{t('authAlertsTitle')}</CardTitle>
+          <CardDescription>{t('authAlertsDescription')}</CardDescription>
         </CardHeader>
         <CardContent>
           <div className="overflow-hidden rounded-md border">
             <Table>
               <TableHeader>
                 <TableRow>
-                  <TableHead>IP Address</TableHead>
-                  <TableHead className="text-right">จำนวนครั้งที่ผิด</TableHead>
-                  <TableHead className="text-right">บัญชีที่ถูกพยายามเข้า</TableHead>
-                  <TableHead>ครั้งล่าสุด</TableHead>
+                  <TableHead>{t('columnIpAddress')}</TableHead>
+                  <TableHead className="text-right">{t('columnFailedAttempts')}</TableHead>
+                  <TableHead className="text-right">{t('columnTargetedAccounts')}</TableHead>
+                  <TableHead>{t('columnLastAttempt')}</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
@@ -265,15 +270,15 @@ export default function DashboardAnalytics() {
                   authAlerts.map((alert) => (
                     <TableRow key={alert.ip_address}>
                       <TableCell className="font-mono text-xs">{alert.ip_address}</TableCell>
-                      <TableCell className="text-right tabular-nums">{alert.attempts.toLocaleString()}</TableCell>
-                      <TableCell className="text-right tabular-nums">{alert.targeted_accounts.toLocaleString()}</TableCell>
-                      <TableCell className="text-xs">{new Date(alert.last_attempt_at).toLocaleString('th-TH')}</TableCell>
+                      <TableCell className="text-right tabular-nums">{alert.attempts.toLocaleString(numberLocale)}</TableCell>
+                      <TableCell className="text-right tabular-nums">{alert.targeted_accounts.toLocaleString(numberLocale)}</TableCell>
+                      <TableCell className="text-xs">{new Date(alert.last_attempt_at).toLocaleString(numberLocale)}</TableCell>
                     </TableRow>
                   ))
                 ) : (
                   <TableRow>
                     <TableCell colSpan={4} className="h-24 text-center text-muted-foreground">
-                      {loading ? 'กำลังโหลด...' : 'ไม่พบความผิดปกติ'}
+                      {loading ? t('loading') : t('noAnomalies')}
                     </TableCell>
                   </TableRow>
                 )}

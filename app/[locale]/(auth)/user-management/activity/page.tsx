@@ -17,7 +17,8 @@ import {
 } from '@/components/ui/select';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { SkeletonTable } from '@/components/shared/skeletonTable';
-import { useTranslations } from 'next-intl';
+import { useLocale, useTranslations } from 'next-intl';
+import { toIntlLocale } from '@/lib/utils';
 
 interface ActivityLogUser {
   id: string;
@@ -44,6 +45,7 @@ const PAGE_SIZE = 20;
 export default function UsersActivityLog() {
   const t = useTranslations('userManagement.activity');
   const tc = useTranslations('common');
+  const locale = useLocale();
   const [logs, setLogs] = useState<ActivityLogRow[]>([]);
   const [users, setUsers] = useState<ActivityLogUser[]>([]);
   const [page, setPage] = useState(1);
@@ -205,7 +207,7 @@ export default function UsersActivityLog() {
                   logs.map((log) => (
                     <TableRow key={log.id}>
                       <TableCell className="whitespace-nowrap text-xs tabular-nums">
-                        {new Date(log.created_at).toLocaleString('th-TH')}
+                        {new Date(log.created_at).toLocaleString(toIntlLocale(locale))}
                       </TableCell>
                       <TableCell>{log.users?.username ?? '-'}</TableCell>
                       <TableCell className="capitalize">{log.action}</TableCell>

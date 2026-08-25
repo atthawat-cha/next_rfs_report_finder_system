@@ -2,6 +2,7 @@
 
 import React from "react";
 import { useRouter } from "@/i18n/navigation";
+import { useTranslations } from "next-intl";
 import { Bell } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
@@ -26,6 +27,7 @@ const POLL_INTERVAL_MS = 30_000;
 
 export function NotificationBell() {
   const router = useRouter();
+  const t = useTranslations("nav.notifications");
   const [notifications, setNotifications] = React.useState<NotificationRow[]>([]);
   const [unreadCount, setUnreadCount] = React.useState(0);
 
@@ -70,10 +72,10 @@ export function NotificationBell() {
         </Button>
       </DropdownMenuTrigger>
       <DropdownMenuContent className="w-80" align="end" forceMount>
-        <DropdownMenuLabel>การแจ้งเตือน</DropdownMenuLabel>
+        <DropdownMenuLabel>{t("title")}</DropdownMenuLabel>
         <DropdownMenuSeparator />
         {notifications.length === 0 ? (
-          <div className="px-2 py-4 text-center text-sm text-muted-foreground">ไม่มีการแจ้งเตือน</div>
+          <div className="px-2 py-4 text-center text-sm text-muted-foreground">{t("empty")}</div>
         ) : (
           <div className="max-h-96 overflow-y-auto">
             {notifications.map((n) => (

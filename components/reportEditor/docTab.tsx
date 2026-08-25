@@ -18,7 +18,8 @@ import FileUpload, { AllowedFileType } from "@/components/shared/fileuploading";
 import { FILE_PURPOSE_ORDER, FILE_PURPOSE_LABEL, getFilePurposeDescription, isMultiFilePurpose, type FilePurpose } from "@/lib/file-purpose";
 import { FolderOpen, Share2, Copy } from "lucide-react";
 import toast from "react-hot-toast";
-import { useTranslations } from "next-intl";
+import { useLocale, useTranslations } from "next-intl";
+import { toIntlLocale } from "@/lib/utils";
 
 type SelectOption = { id: string; name: string };
 
@@ -60,6 +61,7 @@ export function DocTab({ reportId }: { reportId: string }) {
   const td = useTranslations("reportEditor.docTab");
   const tfp = useTranslations("reports.filePurpose");
   const tc = useTranslations("common");
+  const locale = useLocale();
   const [currentFiles, setCurrentFiles] = React.useState<ReportFileRow[]>([]);
   const [shares, setShares] = React.useState<ReportShareRow[]>([]);
   const [userOptions, setUserOptions] = React.useState<SelectOption[]>([]);
@@ -285,7 +287,7 @@ export function DocTab({ reportId }: { reportId: string }) {
                   {s.can_edit && <span className="text-xs rounded bg-primary/10 text-primary px-1.5 py-0.5">{td("canEditBadge")}</span>}
                   {s.expires_at && (
                     <span className="text-xs text-muted-foreground">
-                      {td("expiresLabel", { date: new Date(s.expires_at).toLocaleDateString("th-TH") })}
+                      {td("expiresLabel", { date: new Date(s.expires_at).toLocaleDateString(toIntlLocale(locale)) })}
                     </span>
                   )}
                 </div>

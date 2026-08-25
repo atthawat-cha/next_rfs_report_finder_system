@@ -1,5 +1,7 @@
 'use client';
 
+import { useTranslations } from 'next-intl';
+
 interface BarDatum {
   label: string;
   value: number;
@@ -17,8 +19,10 @@ const GAP = 10;
 
 /** Horizontal bar chart — value labels always visible (relief for sub-3:1 palette slots). */
 export function BreakdownBarChart({ data, showLegend = false }: BreakdownBarChartProps) {
+  const tc = useTranslations('common');
+
   if (data.length === 0) {
-    return <div className="flex h-24 items-center justify-center text-sm text-muted-foreground">ไม่มีข้อมูล</div>;
+    return <div className="flex h-24 items-center justify-center text-sm text-muted-foreground">{tc('noData')}</div>;
   }
 
   const maxValue = Math.max(1, ...data.map((d) => d.value));

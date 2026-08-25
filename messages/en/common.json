@@ -21,6 +21,8 @@
   "code": "Code",
   "createdAt": "Created At",
   "noResults": "No results.",
+  "noData": "No data",
+  "downloadsUnit": "downloads",
   "back": "Back",
   "copy": "Copy",
   "copied": "Copied",

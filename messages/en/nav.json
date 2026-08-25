@@ -34,5 +34,15 @@
   "support": {
     "myTickets": "My Tickets",
     "ticketQueue": "Ticket Queue (Admin)"
+  },
+  "userMenu": {
+    "profileTooltip": "Profile",
+    "dashboard": "Dashboard",
+    "account": "Account",
+    "logout": "Log out"
+  },
+  "notifications": {
+    "title": "Notifications",
+    "empty": "No notifications"
   }
 }

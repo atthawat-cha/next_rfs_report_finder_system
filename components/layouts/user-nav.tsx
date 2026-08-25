@@ -2,6 +2,7 @@
 "use client";
 
 import { Link, useRouter } from "@/i18n/navigation";
+import { useTranslations } from "next-intl";
 import { LayoutGrid, LogOut, User } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
@@ -29,6 +30,7 @@ interface UserNavProps {
 
 export function UserNav({user}: {user: UserNavProps | null}) {
     const router = useRouter();
+    const t = useTranslations("nav.userMenu");
 
     const handleLogout = async () => {
 try {
@@ -62,7 +64,7 @@ return (
             </Button>
         </DropdownMenuTrigger>
         </TooltipTrigger>
-        <TooltipContent side="bottom">โปรไฟล์</TooltipContent>
+        <TooltipContent side="bottom">{t("profileTooltip")}</TooltipContent>
     </Tooltip>
     </TooltipProvider>
 
@@ -80,20 +82,20 @@ return (
         <DropdownMenuItem className="hover:cursor-pointer" asChild>
         <Link href="/dashboard" className="flex items-center">
             <LayoutGrid className="w-4 h-4 mr-3 text-muted-foreground" />
-            แดชบอร์ด
+            {t("dashboard")}
         </Link>
         </DropdownMenuItem>
         <DropdownMenuItem className="hover:cursor-pointer" asChild>
         <Link href="/account" className="flex items-center">
             <User className="w-4 h-4 mr-3 text-muted-foreground" />
-            บัญชี
+            {t("account")}
         </Link>
         </DropdownMenuItem>
     </DropdownMenuGroup>
     <DropdownMenuSeparator />
     <DropdownMenuItem className="hover:cursor-pointer" onClick={handleLogout}>
         <LogOut className="w-4 h-4 mr-3 text-muted-foreground" />
-        ออกจากระบบ
+        {t("logout")}
     </DropdownMenuItem>
     </DropdownMenuContent>
 </DropdownMenu>

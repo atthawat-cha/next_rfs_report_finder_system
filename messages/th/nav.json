@@ -34,5 +34,15 @@
   "support": {
     "myTickets": "ตั๋วของฉัน",
     "ticketQueue": "คิวตั๋ว (ผู้ดูแลระบบ)"
+  },
+  "userMenu": {
+    "profileTooltip": "โปรไฟล์",
+    "dashboard": "แดชบอร์ด",
+    "account": "บัญชี",
+    "logout": "ออกจากระบบ"
+  },
+  "notifications": {
+    "title": "การแจ้งเตือน",
+    "empty": "ไม่มีการแจ้งเตือน"
   }
 }

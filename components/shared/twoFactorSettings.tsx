@@ -6,10 +6,12 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import toast from "react-hot-toast";
 import { Loader2, ShieldCheck, ShieldOff } from "lucide-react";
+import { useTranslations } from "next-intl";
 
 type Step = "idle" | "loading" | "qr" | "backup-codes" | "disable";
 
 export function TwoFactorSettings() {
+  const t = useTranslations("auth.twoFactorSetup");
   const [enabled, setEnabled] = React.useState<boolean | null>(null);
   const [step, setStep] = React.useState<Step>("idle");
   const [qrCodeDataUrl, setQrCodeDataUrl] = React.useState("");
@@ -31,7 +33,7 @@ export function TwoFactorSettings() {
       const res = await fetch("/api/auth/2fa/setup", { method: "POST", credentials: "include" });
       const json = await res.json();
       if (!res.ok) {
-        toast.error(json.error || "เกิดข้อผิดพลาด");
+        toast.error(json.error || t("genericError"));
         return;
       }
       setQrCodeDataUrl(json.data.qrCodeDataUrl);
@@ -53,7 +55,7 @@ export function TwoFactorSettings() {
       });
       const json = await res.json();
       if (!res.ok) {
-        toast.error(json.error || "รหัสไม่ถูกต้อง");
+        toast.error(json.error || t("invalidCode"));
         return;
       }
       setBackupCodes(json.data.backupCodes);
@@ -68,7 +70,7 @@ export function TwoFactorSettings() {
   const finishBackupCodes = () => {
     setStep("idle");
     setBackupCodes([]);
-    toast.success("เปิดใช้งาน 2FA แล้ว");
+    toast.success(t("enabledToast"));
   };
 
   const disable2fa = async () => {
@@ -82,13 +84,13 @@ export function TwoFactorSettings() {
       });
       const json = await res.json();
       if (!res.ok) {
-        toast.error(json.error || "รหัสผ่านไม่ถูกต้อง");
+        toast.error(json.error || t("invalidPassword"));
         return;
       }
       setEnabled(false);
       setStep("idle");
       setPassword("");
-      toast.success("ปิดใช้งาน 2FA แล้ว");
+      toast.success(t("disabledToast"));
     } finally {
       setBusy(false);
     }
@@ -97,7 +99,7 @@ export function TwoFactorSettings() {
   if (enabled === null) {
     return (
       <div className="flex items-center gap-2 text-muted-foreground">
-        <Loader2 className="h-4 w-4 animate-spin" /> กำลังโหลด...
+        <Loader2 className="h-4 w-4 animate-spin" /> {t("loading")}
       </div>
     );
   }
@@ -106,18 +108,18 @@ export function TwoFactorSettings() {
     return (
       <div className="space-y-4">
         <p className="text-sm text-muted-foreground">
-          สแกน QR code นี้ด้วยแอปยืนยันตัวตน (Google Authenticator, Authy ฯลฯ) แล้วกรอกรหัส 6 หลักเพื่อยืนยัน
+          {t("qrInstructions")}
         </p>
         {/* eslint-disable-next-line @next/next/no-img-element */}
         <img src={qrCodeDataUrl} alt="2FA QR code" className="w-48 h-48" />
-        <p className="text-xs text-muted-foreground break-all">Secret: {secret}</p>
+        <p className="text-xs text-muted-foreground break-all">{t("secretLabel")}: {secret}</p>
         <div className="space-y-2">
-          <Label htmlFor="confirm-code">รหัสยืนยัน</Label>
+          <Label htmlFor="confirm-code">{t("confirmCodeLabel")}</Label>
           <Input id="confirm-code" value={code} onChange={(e) => setCode(e.target.value)} placeholder="123456" />
         </div>
         <div className="flex gap-2">
-          <Button onClick={confirmSetup} disabled={busy || code.length !== 6}>ยืนยัน</Button>
-          <Button variant="outline" onClick={() => setStep("idle")}>ยกเลิก</Button>
+          <Button onClick={confirmSetup} disabled={busy || code.length !== 6}>{t("confirm")}</Button>
+          <Button variant="outline" onClick={() => setStep("idle")}>{t("cancel")}</Button>
         </div>
       </div>
     );
@@ -126,11 +128,11 @@ export function TwoFactorSettings() {
   if (step === "backup-codes") {
     return (
       <div className="space-y-4">
-        <p className="text-sm font-medium">บันทึก backup code เหล่านี้ไว้ในที่ปลอดภัย — จะไม่แสดงอีก</p>
+        <p className="text-sm font-medium">{t("backupCodesNotice")}</p>
         <div className="grid grid-cols-2 gap-2 p-4 bg-muted rounded-md font-mono text-sm">
           {backupCodes.map((c) => <div key={c}>{c}</div>)}
         </div>
-        <Button onClick={finishBackupCodes}>ฉันบันทึกโค้ดเหล่านี้แล้ว</Button>
+        <Button onClick={finishBackupCodes}>{t("backupCodesSaved")}</Button>
       </div>
     );
   }
@@ -138,11 +140,11 @@ export function TwoFactorSettings() {
   if (step === "disable") {
     return (
       <div className="space-y-4">
-        <Label htmlFor="disable-password">ยืนยันรหัสผ่านปัจจุบันเพื่อปิดใช้งาน 2FA</Label>
+        <Label htmlFor="disable-password">{t("disablePasswordLabel")}</Label>
         <Input id="disable-password" type="password" value={password} onChange={(e) => setPassword(e.target.value)} />
         <div className="flex gap-2">
-          <Button variant="destructive" onClick={disable2fa} disabled={busy || !password}>ปิดใช้งาน 2FA</Button>
-          <Button variant="outline" onClick={() => { setStep("idle"); setPassword(""); }}>ยกเลิก</Button>
+          <Button variant="destructive" onClick={disable2fa} disabled={busy || !password}>{t("disableConfirm")}</Button>
+          <Button variant="outline" onClick={() => { setStep("idle"); setPassword(""); }}>{t("cancel")}</Button>
         </div>
       </div>
     );
@@ -152,12 +154,12 @@ export function TwoFactorSettings() {
     <div className="flex items-center justify-between">
       <div className="flex items-center gap-2">
         {enabled ? <ShieldCheck className="h-5 w-5 text-green-600" /> : <ShieldOff className="h-5 w-5 text-muted-foreground" />}
-        <span className="text-sm">{enabled ? "เปิดใช้งาน 2FA อยู่" : "ยังไม่ได้เปิดใช้งาน 2FA"}</span>
+        <span className="text-sm">{enabled ? t("statusEnabled") : t("statusDisabled")}</span>
       </div>
       {enabled ? (
-        <Button variant="outline" onClick={() => setStep("disable")}>ปิดใช้งาน</Button>
+        <Button variant="outline" onClick={() => setStep("disable")}>{t("disable")}</Button>
       ) : (
-        <Button onClick={startSetup} disabled={busy}>เปิดใช้งาน 2FA</Button>
+        <Button onClick={startSetup} disabled={busy}>{t("enable")}</Button>
       )}
     </div>
   );

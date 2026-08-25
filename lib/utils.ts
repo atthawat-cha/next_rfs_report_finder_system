@@ -24,3 +24,9 @@ export function formatDateTime(dateString: string | Date | number, format: strin
 
   return dayjs(date).format(format);
 }
+
+
+/** Maps a next-intl locale ('en'/'th') to the Intl tag used by toLocaleString/toLocaleDateString. */
+export function toIntlLocale(locale: string): string {
+  return locale === 'th' ? 'th-TH' : 'en-US';
+}
