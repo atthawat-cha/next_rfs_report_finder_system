@@ -175,7 +175,7 @@
 | Dark/Light theme switch | Must | ✅ (`next-themes`, persist ต่อผู้ใช้แล้วดู FR-13) | — |
 | Sidebar/Navbar responsive layout | Must | ✅ | — |
 | Data table มาตรฐาน (`SharedDataTable`) พร้อม sort/pagination | Must | ⚠️ (client-side sort ใช้แพร่หลาย; server-side pagination ผ่าน `parsePagination` ตอนนี้ครอบ reports/browse, activity-logs, report/manage, favorites, departments, users/user, roles — 4 endpoint หลังเป็น opt-in คือคืน full list เหมือนเดิมถ้าไม่ส่ง `page`/`pageSize` มา เพราะมี combobox ที่พึ่ง full list อยู่ — `baseconfig/menus` ตั้งใจไม่ paginate เพราะพึ่ง full-list-adjacency ในการจัดกลุ่ม; 8d เพิ่ม pager UI จริงตัวที่ 2 ของระบบให้ `reports/report-list` ต่อจาก `user-management/activity` — เดิมหน้านี้ไม่มี pagination UI เลยทั้งที่ endpoint รองรับมาตั้งแต่ 7a) | 0/1/7b/8d |
-| i18n ไทย/อังกฤษเป็นระบบ (`next-intl`) | Should | ❌ (ปนกันแบบ hardcode) | 2+ |
+| i18n ไทย/อังกฤษเป็นระบบ (`next-intl`) | Should | ✅ (Phase 11a-11d: `[locale]` routing, English default, `localePrefix: as-needed`, ทุกหน้า/component chrome + reports domain + dashboard analytics แปลผ่าน `messages/{en,th}/*.json` ครบแล้ว รวมถึง dynamic date/number locale formatting) | 11a/11b/11c/11d |
 | Loading/skeleton state มาตรฐานทุกหน้า list | Should | ⚠️ (7b เพิ่ม `SkeletonTable` ให้อีก 5 หน้าที่ไม่มีมาก่อน — `favorites`/`user-department`/`user-list`/`reports/categories`/`reports/tags`; 8d เพิ่มอีก 2 หน้าที่เป็น gap จริงที่เหลือ — `reports/report-list`/`user-management/activity` — หน้าอื่นที่เหลือ (`role-management/roles` มี skeleton จาก 6b, `settings/menus` มี spinner ตั้งใจไม่เปลี่ยน, dashboard bounded-by-design) ไม่ใช่ gap จริงตามที่ audit ยืนยันแล้วใน Phase 8) | 1/7b/8d |
 | Toast notification สำหรับผลลัพธ์ action (`react-hot-toast`) | Must | ✅ | — |
 
@@ -198,8 +198,8 @@
 
 | สถานะ | จำนวน feature (จาก 100 รายการ) |
 |---|---|
-| ✅ ทำงานได้จริง | 86 |
+| ✅ ทำงานได้จริง | 87 |
 | ⚠️ มีบางส่วน/mock/schema เฉย ๆ | 7 |
-| ❌ ยังไม่มีเลย | 7 |
+| ❌ ยังไม่มีเลย | 6 |
 
-> ตัวเลขฐานนับจากตารางด้านบนจริงล่าสุด 2026-08-19 หลัง Phase 5a-5f (รวมทุกแถว feature ไม่รวมแถวหมายเหตุ/ดีไซน์โน้ต) รอบนี้ (2026-08-22) แก้เพิ่ม 7 แถวที่ Phase 7 เปลี่ยนสถานะจริง (ticket ×2, fuzzy search, cleanup job, monthly trend, dashboard cache, storage backend interface) — **ยังไม่ใช่การไล่ตรวจซ้ำทั้ง 100 แถว** แถวอื่นที่ Phase 6/7 อาจแตะไปแล้วบางส่วน (เช่น skeleton loading, structured logging) ปรับ justification text ให้ตรงแล้วแต่สัญลักษณ์ไม่เปลี่ยน ไม่ใช่ story-point estimation — ใช้สื่อสารสัดส่วนงานที่เหลือ ไม่ใช่ใช้วางแผน timeline โดยตรง งานที่เหลือส่วนใหญ่กระจุกอยู่ที่ i18n, E2E test, S3/MinIO backend จริง (interface มีแล้วตั้งแต่ 7d, ตัวจริงยังไม่มี), auth-provider selection (dropped), และ ClamAV AV scan (deferred)
+> ตัวเลขฐานนับจากตารางด้านบนจริงล่าสุด 2026-08-19 หลัง Phase 5a-5f (รวมทุกแถว feature ไม่รวมแถวหมายเหตุ/ดีไซน์โน้ต) รอบนี้ (2026-08-22) แก้เพิ่ม 7 แถวที่ Phase 7 เปลี่ยนสถานะจริง (ticket ×2, fuzzy search, cleanup job, monthly trend, dashboard cache, storage backend interface) — **ยังไม่ใช่การไล่ตรวจซ้ำทั้ง 100 แถว** แถวอื่นที่ Phase 6/7 อาจแตะไปแล้วบางส่วน (เช่น skeleton loading, structured logging) ปรับ justification text ให้ตรงแล้วแต่สัญลักษณ์ไม่เปลี่ยน ไม่ใช่ story-point estimation — ใช้สื่อสารสัดส่วนงานที่เหลือ ไม่ใช่ใช้วางแผน timeline โดยตรง (2026-08-24) i18n แถวเดียวเปลี่ยน ❌→✅ จริงหลัง Phase 11a-11d ปิดครบ นับเพิ่มในตารางสรุปนี้ด้วยแล้ว — งานที่เหลือส่วนใหญ่กระจุกอยู่ที่ E2E test, S3/MinIO backend จริง (interface มีแล้วตั้งแต่ 7d, ตัวจริงยังไม่มี), auth-provider selection (dropped), และ ClamAV AV scan (deferred)
