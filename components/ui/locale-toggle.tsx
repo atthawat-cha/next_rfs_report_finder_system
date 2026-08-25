@@ -38,6 +38,7 @@ export function LocaleToggle() {
             className="rounded-full h-8 px-3 bg-background mr-2 text-xs font-semibold uppercase"
             variant="outline"
             onClick={handleToggle}
+            data-testid="locale-toggle"
           >
             {locale}
             <span className="sr-only">{t("language")}</span>

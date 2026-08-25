@@ -8,6 +8,16 @@
 # testing
 /coverage
 
+# playwright (Phase 12a)
+/playwright-report/
+/test-results/
+/blob-report/
+/playwright/.cache/
+
+# prisma/seed-ci.ts writes its E2E fixture file here at seed time - generated,
+# not tracked (mirrors the rest of public/'s uploaded-file directories).
+/public/e2e/
+
 # next.js
 /.next/
 /out/

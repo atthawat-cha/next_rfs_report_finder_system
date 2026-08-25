@@ -56,6 +56,7 @@ return (
             <Button
             variant="outline"
             className="relative h-8 w-8 rounded-full"
+            data-testid="user-nav-trigger"
             >
             <Avatar className="h-8 w-8">
                 <AvatarImage src="#" alt="Avatar" />

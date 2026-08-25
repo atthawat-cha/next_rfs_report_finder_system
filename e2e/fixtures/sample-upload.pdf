@@ -1,0 +1,3 @@
+%PDF-1.4
+% Playwright E2E fixture upload — not a real PDF, just non-empty bytes for
+% FileUpload's hidden <input type="file"> in e2e/report-admin-crud.spec.ts.

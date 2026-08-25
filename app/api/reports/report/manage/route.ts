@@ -2,7 +2,7 @@ import prisma from '@/lib/prisma';
 import { NextRequest, NextResponse } from 'next/server';
 import { getAuthFromRequest, getCurrentUser, requireRole, routeAcceptted } from '@/lib/auth';
 import z from 'zod';
-import { uploadImageFile, uploadMultipleImages } from '@/lib/fileUploadServices';
+import { uploadReportFile } from '@/lib/reportFileUploadServices';
 import { faker } from '@faker-js/faker';
 import { parsePagination } from '@/lib/pagination';
 import { logActivity } from '@/lib/activity-log';
@@ -136,35 +136,45 @@ export async function POST(req: NextRequest) {
             return NextResponse.json({ success: false, error: validate.error.errors }, { status: 400 });
         }
 
-        // Multiple files — only reports.file_path/file_name/file_size (one slot per
-        // report, pre-dates the report_files multi-file model from Phase 2) get
-        // populated from the first successfully uploaded file; any others that fail
-        // are reported back but don't block report creation.
-        if (files.length > 1) {
-            const multipleFiles = await uploadMultipleImages(files);
-            const primary = multipleFiles.success[0];
-            if (!primary) {
-                return NextResponse.json(
-                    { success: false, error: "Failed to upload files", failed: multipleFiles.failed },
-                    { status: 500 }
-                );
+        // reports.file_path/file_name/file_size (one slot per report, pre-dates
+        // the report_files multi-file model from Phase 2) gets populated from
+        // the first successfully uploaded file; any others that fail are
+        // reported back but don't block report creation. Uploaded as
+        // FileKind.REFERENCE_DOC via lib/reportFileUploadServices.ts — the
+        // broadest allow-list of the existing per-kind rules (pdf/doc/docx/
+        // xlsx/xls/csv/jpg/jpeg/png), matching what an "Attachments" field
+        // should actually accept. Previously routed through
+        // lib/fileUploadServices.ts's uploadImageFile()/uploadMultipleImages(),
+        // which only accepts images (jpg/png/webp) and silently rejected the
+        // PDF/Excel files reports actually exist to hold — a real bug found
+        // while writing Phase 12a's E2E admin-create spec, fixed here.
+        const uploadResults = await Promise.allSettled(
+            files.map((file) => uploadReportFile(file, 'REFERENCE_DOC'))
+        );
+        const failed: { fileName: string; error: string }[] = [];
+        let primary: { filePath: string; fileName: string; fileType: string; fileSize: number } | undefined;
+        uploadResults.forEach((result, index) => {
+            const fileName = files[index]?.name ?? `file_${index}`;
+            if (result.status !== 'fulfilled') {
+                failed.push({ fileName, error: String(result.reason) });
+                return;
             }
-            fileDes.file_path = primary.filePath;
-            fileDes.file_name = primary.fileName;
-            fileDes.file_type = '';
-            fileDes.file_size = primary.size;
-        } else {
-            // Single file
-            const file = files[0];
-            const singleFile = await uploadImageFile(file);
-            if (!singleFile.success) {
-                return NextResponse.json({ success: false, error: singleFile.error }, { status: 500 });
+            if (!result.value.success) {
+                failed.push({ fileName, error: result.value.error });
+                return;
             }
-            fileDes.file_path = singleFile.data.filePath;
-            fileDes.file_name = singleFile.data.fileName;
-            fileDes.file_type = '';
-            fileDes.file_size = singleFile.data.size;
+            if (!primary) primary = result.value.data;
+        });
+        if (!primary) {
+            return NextResponse.json(
+                { success: false, error: "Failed to upload files", failed },
+                { status: 500 }
+            );
         }
+        fileDes.file_path = primary.filePath;
+        fileDes.file_name = primary.fileName;
+        fileDes.file_type = primary.fileType;
+        fileDes.file_size = primary.fileSize;
 
         const createParams = {
             id: faker.string.uuid(),
