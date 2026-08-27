@@ -42,28 +42,61 @@ const nextConfig = {
     // actually configured (Phase 12c) - don't loosen CSP for everyone when
     // the feature is off.
     const connectSrc = sentryDsnConfigured ? "connect-src 'self' https://*.ingest.sentry.io" : "connect-src 'self'"
-    return [{
-      source: '/(.*)',
-      headers: [
-        { key: 'X-Content-Type-Options', value: 'nosniff' },
-        { key: 'X-Frame-Options', value: 'DENY' },
-        { key: 'Referrer-Policy', value: 'strict-origin-when-cross-origin' },
-        { key: 'Permissions-Policy', value: 'camera=(), microphone=(), geolocation=()' },
-        { key: 'Strict-Transport-Security', value: 'max-age=63072000; includeSubDomains; preload' },
-        {
-          key: 'Content-Security-Policy',
-          // object-src 'self' (not 'none') is required for inline PDF preview -
-          // components/shared/reportFilePreview.tsx and the report-list card
-          // view both render <embed type="application/pdf">, which the
-          // object-src directive governs (not default-src/frame-src). This
-          // was 'none' since Phase 4a and silently broke every such <embed>
-          // in every browser that enforces CSP - found while wiring up a new
-          // one and hitting the same "blocked by object-src 'none'" console
-          // error. Still same-origin only, so no third-party embed is opened up.
-          value: `default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob:; font-src 'self' data:; ${connectSrc}; frame-ancestors 'none'; object-src 'self'; base-uri 'self'`,
-        },
-      ],
-    }];
+    return [
+      {
+        source: '/(.*)',
+        headers: [
+          { key: 'X-Content-Type-Options', value: 'nosniff' },
+          { key: 'X-Frame-Options', value: 'DENY' },
+          { key: 'Referrer-Policy', value: 'strict-origin-when-cross-origin' },
+          { key: 'Permissions-Policy', value: 'camera=(), microphone=(), geolocation=()' },
+          { key: 'Strict-Transport-Security', value: 'max-age=63072000; includeSubDomains; preload' },
+          {
+            key: 'Content-Security-Policy',
+            // object-src 'self' (not 'none') is required for inline PDF preview -
+            // components/shared/reportFilePreview.tsx and the report-list card
+            // view both render <embed type="application/pdf">, which the
+            // object-src directive governs (not default-src/frame-src). This
+            // was 'none' since Phase 4a and silently broke every such <embed>
+            // in every browser that enforces CSP - found while wiring up a new
+            // one and hitting the same "blocked by object-src 'none'" console
+            // error. Still same-origin only, so no third-party embed is opened up.
+            value: `default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob:; font-src 'self' data:; ${connectSrc}; frame-ancestors 'none'; object-src 'self'; base-uri 'self'`,
+          },
+        ],
+      },
+      // The two routes an <embed> actually points at (reportFilePreview.tsx,
+      // report-list's card view) need to be frame-able by our own pages, or
+      // fixing object-src above wasn't enough - Chrome's built-in PDF viewer
+      // treats an embedded PDF like nested browsing content and honors
+      // X-Frame-Options/frame-ancestors on *that response*, not just the
+      // page doing the embedding. DENY/'none' (the blanket rule above) tells
+      // it to refuse rendering embedded anywhere, including here. A later
+      // entry with a more specific `source` overrides the same header key
+      // for matching paths (Next.js headers() docs), so this only relaxes
+      // framing for these two file-serving endpoints - every other route,
+      // including the rest of the API surface, stays at the strict default.
+      {
+        source: '/api/reports/:id/download',
+        headers: [
+          { key: 'X-Frame-Options', value: 'SAMEORIGIN' },
+          {
+            key: 'Content-Security-Policy',
+            value: `default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob:; font-src 'self' data:; ${connectSrc}; frame-ancestors 'self'; object-src 'self'; base-uri 'self'`,
+          },
+        ],
+      },
+      {
+        source: '/api/reports/:id/files/:fileId/download',
+        headers: [
+          { key: 'X-Frame-Options', value: 'SAMEORIGIN' },
+          {
+            key: 'Content-Security-Policy',
+            value: `default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob:; font-src 'self' data:; ${connectSrc}; frame-ancestors 'self'; object-src 'self'; base-uri 'self'`,
+          },
+        ],
+      },
+    ];
   },
 }
 
