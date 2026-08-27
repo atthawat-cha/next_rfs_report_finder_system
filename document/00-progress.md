@@ -1,6 +1,6 @@
 # ความคืบหน้าโครงการ — RFS Report Finder System
 
-> **อัปเดตล่าสุด:** 2026-08-27 · **Branch:** `feature/phase11` · **HEAD:** `453fc63` (+ Phase 12c, ยังไม่ commit)
+> **อัปเดตล่าสุด:** 2026-08-27 · **Branch:** `feature/phase11` · **HEAD:** `93c648a` (+ Playwright tab-switching spec, ยังไม่ commit)
 >
 > ไฟล์นี้ตอบคำถามเดียว: **"ตอนนี้ถึงไหนแล้ว และเหลืออะไร"** สถานะทุกแถวอ้างอิง commit จริงใน git log เป็นหลักฐาน ไม่ใช่การอ่านโค้ดเดา
 >
@@ -23,6 +23,8 @@
 > **อัปเดต (2026-08-22, Phase 8):** ย้ายมาทำงานบน `feature/phase8` แล้ว — ระหว่างปิด Phase 7 มีเหตุการณ์ที่ local checkout ถูกสลับไป branch `development` โดยไม่ได้ตั้งใจ (ไม่ใช่คำสั่งที่ assistant สั่งเอง เจอตอน commit แล้วสังเกตว่า branch เปลี่ยน) แต่เป็น fast-forward ของ `feature/phase5` เข้า `development` ไม่มีอะไรหายหรือ diverge จากนั้นมี branch `feature/phase8` ใหม่ถูกสร้างขึ้น (ตรงตาม naming convention เดิมของโปรเจกต์) ให้ทำงานต่อ commit ประวัติเดียวกันทั้งหมด ดู git log ถ้าสงสัย
 >
 > **อัปเดต (2026-08-23, ระหว่าง Phase 10→9):** เหตุการณ์เดียวกันเกิดซ้ำอีกครั้ง — local checkout ถูกสลับจาก `refactor/create-update-report` ไป `development` เองระหว่าง commit (ไม่ใช่คำสั่งที่ assistant สั่ง เจอผ่าน `git reflog`: `checkout: moving from refactor/create-update-report to development` ตามด้วย fast-forward merge อัตโนมัติ) ยืนยันจาก reflog ว่าเป็น fast-forward ล้วนๆ ไม่มีอะไรหายหรือ diverge เหมือนครั้งก่อน รอบนี้สลับกลับมา `refactor/create-update-report` ทันทีด้วย `git checkout` + `git merge --ff-only` (ผู้ใช้ยืนยันให้ทำแบบนี้แทนที่จะสร้าง branch ใหม่) เพราะต่างกันแค่ 1 commit เท่านั้น ยังไม่ทราบสาเหตุที่แท้จริงว่าเครื่องมือ/โปรเซสไหนสลับ branch ให้ — ถ้าเกิดซ้ำอีกควรสงสัยเครื่องมือ background (เช่น IDE source control auto-sync) มากกว่า assistant
+>
+> **อัปเดต (2026-08-27, หลัง Phase 12c commit):** เหตุการณ์เดียวกันเกิดซ้ำเป็นครั้งที่ 3 — local checkout ถูกสลับจาก `feature/phase11` ไป `development` เอง (ไม่ใช่คำสั่งที่ assistant สั่ง เจอตอนจะ commit spec ใหม่แล้วสังเกตว่า `git status` ขึ้น "On branch development") `git reflog` ยืนยันรูปแบบเดิมทุกจุด: `checkout: moving from feature/phase11 to development` ตามด้วย `merge feature/phase11: Fast-forward` อัตโนมัติทันที — ตรวจสอบด้วย `git merge-base development feature/phase11` แล้วพบว่าทั้งสอง branch ชี้ commit เดียวกันพอดี (`93c648a`) ไม่มี divergence ไม่มีอะไรหาย ปลอดภัย 100% เหมือน 2 ครั้งก่อน สลับกลับมา `feature/phase11` ทันทีด้วย `git checkout feature/phase11` เฉยๆ (ไม่ต้อง merge เพราะเป็น commit เดียวกันอยู่แล้ว) — สาเหตุยังไม่ทราบแน่ชัดเหมือนเดิม แพทเทิร์นที่สังเกตได้ทั้ง 3 ครั้ง: เกิดขึ้นตอนใกล้จะ/หลัง commit เสร็จ ต้องสงสัยเครื่องมือ background (เช่น IDE source control auto-sync ที่ sync กับ `development` เป็น default) มากกว่า assistant สั่งเอง
 
 **ค้างอยู่:** ไม่มีงานเฟส 0-3 ค้างแล้ว — **Phase 4d ปิดจบสมบูรณ์แล้ว 100%** (ดูล่างนี้ — full login-flow ยืนยันสดแล้ว 2026-08-18 หลังแก้ Redis connectivity) — **`dependency-upgrade-plan.md` ปิดครบทั้ง 4 stage แล้ว** (Next 14→16.3.1, React 18→19.2.8, sharp 0.34→0.35.3, postcss top-level 8.4→8.5.26) — `next`/`postcss`/`sharp` ทุก CVE ที่ตั้งใจปิดในแผนนี้หายหมดจริง เหลือแค่ 2 ของค้างที่ไม่เกี่ยวกับแผนนี้เลย (#9 `deepmerge-ts`/Prisma, `uuid`/`exceljs` เดิมตั้งแต่ 4c) — **baseline TypeScript error 2 ตัวสุดท้ายก็แก้จบแล้วเช่นกัน (2026-08-18)** ระหว่างทางเจอบั๊ก runtime จริงที่ยังไม่เคยมีใครเจอมาก่อน (multi-file upload พังเงียบๆมาตลอด, `status` field ไม่มี enum validation) แก้พร้อมกันหมด — `npx tsc --noEmit` = 0 error, `npm run build` = exit 0 สำเร็จเต็มรูปแบบเป็นครั้งแรกของ repo นี้ ปิดของค้าง #2/#12 ไปด้วย
 
@@ -50,9 +52,11 @@
 
 **งานถัดไปที่ควรทำ (เรียงตามลำดับ):**
 1. **Phase 12 ปิดครบทุก sub-phase แล้ว (12a/12b/12c)** — ไม่มีงานที่วางแผนไว้เหลือค้างในตอนนี้ นอกจาก follow-up ที่ต้องให้ผู้ใช้ทำเอง: ตั้ง `SENTRY_DSN`/`NEXT_PUBLIC_SENTRY_DSN` จริงถ้าต้องการใช้ error tracking จริง (ดู `SETUP.md`) — ดู [`phase12-plan.md`](./phase12-plan.md) สำหรับรายละเอียดทั้งหมด
-2. **ยืนยันว่า CI workflow รันจริงบน GitHub** — พักไว้ตามที่ผู้ใช้เลือก (2026-08-22): เครื่องนี้ไม่มี `gh` CLI/token ให้สร้าง PR อัตโนมัติ, ให้ลิงก์ compare (`main...feature/phase5`) ไว้ให้ผู้ใช้เปิดเองแล้ว รอผู้ใช้เปิด PR หรือขอให้ลองติดตั้ง `gh` — Phase 12a เพิ่ม `e2e` job ใหม่เข้าไปด้วย ยังไม่เคยเห็นรันจริงบน GitHub Actions เช่นกัน — CI's `e2e`/`build-test` job ยังไม่ได้ตั้ง `STORAGE_BACKEND=s3`/MinIO service เพราะ default `local` ยังใช้งานได้ปกติ ไม่ใช่ blocker
-3. **ของค้าง #9** (`deepmerge-ts`/Prisma) — รอ Prisma ออก patch จริงหรือ Prisma 8 GA ไม่มีอะไรให้ทำตอนนี้
-4. **ของค้างใหม่จาก Phase 10** (ดูใต้ตาราง Phase 10): การยืนยันแท็บ UI (สลับแท็บ, สถานะฟอร์มไม่หายตอนสลับแท็บ) ยังเป็นการตรวจโค้ด + curl/tsc/build เท่านั้น — Playwright (12a) ยังไม่มี spec คลุม report-editor tab-switching โดยตรง ยังนับเป็นของค้างอยู่
+2. **ยืนยันว่า CI workflow รันจริงบน GitHub** — พักไว้ตามที่ผู้ใช้เลือก (2026-08-22): เครื่องนี้ไม่มี `gh` CLI/token ให้สร้าง PR อัตโนมัติ — push `feature/phase11` ขึ้น origin แล้ว (2026-08-27) และให้ลิงก์ compare (`main...feature/phase11`) ไว้ให้ผู้ใช้เปิดเองแล้ว รอผู้ใช้เปิด PR จริง — Phase 12a เพิ่ม `e2e` job ใหม่เข้าไปด้วย ยังไม่เคยเห็นรันจริงบน GitHub Actions เช่นกัน — CI's `e2e`/`build-test` job ยังไม่ได้ตั้ง `STORAGE_BACKEND=s3`/MinIO service เพราะ default `local` ยังใช้งานได้ปกติ ไม่ใช่ blocker
+3. **ของค้าง #9** (`deepmerge-ts`/Prisma) — รอ Prisma ออก patch จริงหรือ Prisma 8 GA ไม่มีอะไรให้ทำตอนนี้ — ของค้างเดียวที่เหลือจริงตอนนี้ นอกนั้นปิดหมดแล้ว
+
+**ของค้างที่ปิดแล้ว (เก็บไว้เป็นประวัติ):**
+- ~~ของค้างจาก Phase 10: Playwright ไม่มี spec คลุม report-editor tab-switching~~ — **ปิดแล้ว (2026-08-27, ยังไม่ commit)**: เพิ่ม `e2e/report-editor-tabs.spec.ts` ยืนยันสด 2 เรื่องพร้อมกัน — (1) ทั้ง 6 แท็บ (Info/Param/Query/Sub/Doc/History) แสดงเนื้อหาต่างกันจริงเมื่อคลิกสลับ (2) แก้ไขชื่อรายงานในแท็บ Info โดยไม่กด Save แล้วสลับไปแท็บอื่นครบทุกแท็บก่อนกลับมา Info ยืนยันว่าค่าที่แก้ยังอยู่ — พิสูจน์ว่าแม้ `components/ui/tabs.tsx` (Radix `TabsContent` ไม่มี `forceMount` = unmount จริงตอนสลับแท็บ) จะ unmount/remount DOM ของแท็บ Info แต่ form state ไม่หาย เพราะ state ถูก lift ไปอยู่ที่ page component ไม่ใช่ local ใน tab — รันผ่านจริงทั้งไฟล์เดี่ยวและทั้ง suite (8/8 ผ่าน รวม spec เดิมจาก 12a) — `tsc`/`eslint`/`npm test` ยัง 0/0/37-passing
 
 ---
 
