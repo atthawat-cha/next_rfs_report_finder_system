@@ -52,7 +52,15 @@ const nextConfig = {
         { key: 'Strict-Transport-Security', value: 'max-age=63072000; includeSubDomains; preload' },
         {
           key: 'Content-Security-Policy',
-          value: `default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob:; font-src 'self' data:; ${connectSrc}; frame-ancestors 'none'; object-src 'none'; base-uri 'self'`,
+          // object-src 'self' (not 'none') is required for inline PDF preview -
+          // components/shared/reportFilePreview.tsx and the report-list card
+          // view both render <embed type="application/pdf">, which the
+          // object-src directive governs (not default-src/frame-src). This
+          // was 'none' since Phase 4a and silently broke every such <embed>
+          // in every browser that enforces CSP - found while wiring up a new
+          // one and hitting the same "blocked by object-src 'none'" console
+          // error. Still same-origin only, so no third-party embed is opened up.
+          value: `default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob:; font-src 'self' data:; ${connectSrc}; frame-ancestors 'none'; object-src 'self'; base-uri 'self'`,
         },
       ],
     }];

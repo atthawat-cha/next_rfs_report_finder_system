@@ -100,10 +100,14 @@ export default function ReportList() {
             defaultValue="table"
             onValueChange={hanelerViewChange}
           >
-            <ToggleGroupItem value="table" aria-label="Toggle all">
+            {/* No aria-label needed - the visible text ("List"/"Card") is
+                already the correct accessible name. The previous labels
+                ("Toggle all"/"Toggle missed") were leftover shadcn demo
+                copy that contradicted what these buttons actually do. */}
+            <ToggleGroupItem value="table">
               {t("viewList")}
             </ToggleGroupItem>
-            <ToggleGroupItem value="card" aria-label="Toggle missed">
+            <ToggleGroupItem value="card">
               {t("viewCard")}
             </ToggleGroupItem>
           </ToggleGroup>
