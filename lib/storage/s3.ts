@@ -11,33 +11,44 @@ import type { StorageBackend } from "./types";
  * time, so a `local`-backend deployment is unaffected by their absence.
  */
 
+function requireEnv(name: string): string {
+  const value = process.env[name];
+  if (!value) throw new Error(`${name} is not set`);
+  return value;
+}
+
+// Strips a leading slash/backslash so a historical file_path (may have been
+// written with one, see lib/storage-path.ts's resolveStoredFile()) and a
+// clean relative path resolve to the same S3 key either way.
+function toKey(relPath: string): string {
+  return relPath.replace(/^[/\\]+/, "");
+}
+
 let client: S3Client | undefined;
 
 function getClient(): S3Client {
   if (client) return client;
-  const endpoint = process.env.S3_ENDPOINT;
-  if (!endpoint) throw new Error("S3_ENDPOINT is not set");
   client = new S3Client({
-    endpoint,
+    endpoint: requireEnv("S3_ENDPOINT"),
     region: process.env.S3_REGION || "us-east-1",
     forcePathStyle: true,
     credentials: {
-      accessKeyId: process.env.S3_ACCESS_KEY_ID ?? (() => { throw new Error("S3_ACCESS_KEY_ID is not set"); })(),
-      secretAccessKey: process.env.S3_SECRET_ACCESS_KEY ?? (() => { throw new Error("S3_SECRET_ACCESS_KEY is not set"); })(),
+      accessKeyId: requireEnv("S3_ACCESS_KEY_ID"),
+      secretAccessKey: requireEnv("S3_SECRET_ACCESS_KEY"),
     },
   });
   return client;
 }
 
 function getBucket(): string {
-  return process.env.S3_BUCKET ?? (() => { throw new Error("S3_BUCKET is not set"); })();
+  return requireEnv("S3_BUCKET");
 }
 
 export const s3Storage: StorageBackend = {
   async write(relPath, buffer) {
     await getClient().send(new PutObjectCommand({
       Bucket: getBucket(),
-      Key: relPath.replace(/^[/\\]+/, ""),
+      Key: toKey(relPath),
       Body: buffer,
     }));
   },
@@ -45,7 +56,7 @@ export const s3Storage: StorageBackend = {
   async read(relPath) {
     const result = await getClient().send(new GetObjectCommand({
       Bucket: getBucket(),
-      Key: relPath.replace(/^[/\\]+/, ""),
+      Key: toKey(relPath),
     }));
     if (!result.Body) throw new Error(`S3 object not found: ${relPath}`);
     return Buffer.from(await result.Body.transformToByteArray());
@@ -54,7 +65,7 @@ export const s3Storage: StorageBackend = {
   async delete(relPath) {
     await getClient().send(new DeleteObjectCommand({
       Bucket: getBucket(),
-      Key: relPath.replace(/^[/\\]+/, ""),
+      Key: toKey(relPath),
     }));
   },
 };

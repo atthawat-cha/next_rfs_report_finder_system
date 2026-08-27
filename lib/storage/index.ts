@@ -10,8 +10,8 @@ export type { StorageBackend } from "./types";
  * needed to affect the 5 call sites, since they all already go through this
  * module's `storage` export.
  */
-export const storage = process.env.STORAGE_BACKEND === "s3" ? s3Storage : localStorage;
-
 export function currentStorageBackend(): "local" | "s3" {
   return process.env.STORAGE_BACKEND === "s3" ? "s3" : "local";
 }
+
+export const storage = currentStorageBackend() === "s3" ? s3Storage : localStorage;

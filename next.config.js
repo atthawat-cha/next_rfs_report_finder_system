@@ -3,11 +3,15 @@ const { withSentryConfig } = require('@sentry/nextjs')
 
 const withNextIntl = createNextIntlPlugin('./i18n/request.ts')
 
-// Phase 12c: only wrap with Sentry's build plugin when a DSN is actually
-// configured, so a DSN-less build (today's default) isn't forced to talk to
-// Sentry's build-time API at all - see instrumentation.ts/
-// instrumentation-client.ts for the matching runtime-init guard.
-const sentryDsnConfigured = Boolean(process.env.SENTRY_DSN)
+// Phase 12c: only wrap with Sentry's build plugin / widen the CSP when a DSN
+// is actually configured, so a DSN-less build (today's default) isn't
+// forced to talk to Sentry's build-time API at all - see instrumentation.ts/
+// instrumentation-client.ts for the matching runtime-init guard. Checks
+// both vars (not just SENTRY_DSN) since SETUP.md documents them as
+// independently settable - a client-only NEXT_PUBLIC_SENTRY_DSN still needs
+// the CSP opened up, or instrumentation-client.ts's Sentry.init has nothing
+// it can actually reach.
+const sentryDsnConfigured = Boolean(process.env.SENTRY_DSN || process.env.NEXT_PUBLIC_SENTRY_DSN)
 
 /** @type {import('next').NextConfig} */
 const nextConfig = {
