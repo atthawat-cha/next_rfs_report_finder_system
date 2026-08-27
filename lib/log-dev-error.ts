@@ -1,3 +1,4 @@
+import * as Sentry from "@sentry/nextjs";
 import logger from "@/lib/logger";
 
 /**
@@ -10,6 +11,12 @@ import logger from "@/lib/logger";
  * (formerly `middleware.ts`) also runs on Node, so this restriction is no
  * longer about runtime compatibility - it's just that logDevError() has
  * never had a reason to be called from there.
+ *
+ * Phase 12c adds Sentry.captureException alongside the existing logger call
+ * - this alone covers all existing call sites with no other file needing to
+ * change. Safe to call unconditionally: without a configured DSN, Sentry has
+ * no client to send to, so this is a no-op (see instrumentation.ts, the only
+ * place Sentry.init actually runs).
  */
 export function logDevError(error: unknown): void {
   if (process.env.NODE_ENV === "development") {
@@ -17,4 +24,5 @@ export function logDevError(error: unknown): void {
     return;
   }
   logger.error({ error }, "route handler error");
+  Sentry.captureException(error);
 }

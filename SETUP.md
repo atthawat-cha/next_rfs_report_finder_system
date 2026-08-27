@@ -75,7 +75,21 @@ Leave `STORAGE_BACKEND` unset to keep using `local` - nothing else changes. To r
 `lib/storage/s3.test.ts`'s real integration test (write/read/delete against MinIO) also set
 `S3_TEST_ENDPOINT=http://localhost:9000`; it's skipped otherwise.
 
-## 6. Run
+## 6. Error tracking (optional)
+
+The app runs identically with these unset (today's default) - no `Sentry.init()` call happens at
+all, so zero Sentry SDK network activity. To turn on error reporting to a real Sentry project, set:
+
+```env
+SENTRY_DSN=<your server-side DSN>
+NEXT_PUBLIC_SENTRY_DSN=<your client-side DSN>
+```
+
+`SENTRY_DSN` covers server/edge errors (`instrumentation.ts`) and every existing
+`logDevError()` call site; `NEXT_PUBLIC_SENTRY_DSN` covers browser errors
+(`instrumentation-client.ts`). Both are optional and independent - set either, both, or neither.
+
+## 7. Run
 
 ```bash
 npm run dev
