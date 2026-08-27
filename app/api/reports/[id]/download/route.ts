@@ -26,6 +26,13 @@ const MIME_TYPES: Record<string, string> = {
  * GET /api/reports/[id]/download
  * Checks visibility + is_downloadable, streams the file through the server
  * (never a direct static link) so the ACL check + downloads log always happen first.
+ *
+ * `?disposition=inline` switches Content-Disposition from the default
+ * `attachment` to `inline` - used by report-list's card-view preview
+ * (an <embed>) so the browser renders the PDF in place instead of prompting
+ * a save dialog, same as GET .../files/[fileId]/download already does
+ * unconditionally for report_files-backed previews. The plain Download
+ * action (reportColumn.tsx) omits the param and keeps forcing a real download.
  */
 export async function GET(req: NextRequest, props: { params: Promise<{ id: string }> }) {
     const params = await props.params;
@@ -103,12 +110,13 @@ export async function GET(req: NextRequest, props: { params: Promise<{ id: strin
 
         const ext = path.extname(report.file_name || report.file_path).replace('.', '').toLowerCase();
         const contentType = MIME_TYPES[ext] ?? 'application/octet-stream';
+        const disposition = req.nextUrl.searchParams.get('disposition') === 'inline' ? 'inline' : 'attachment';
 
         return new NextResponse(new Uint8Array(fileBuffer), {
             status: 200,
             headers: {
                 'Content-Type': contentType,
-                'Content-Disposition': `attachment; filename="${encodeURIComponent(report.file_name || 'download')}"`,
+                'Content-Disposition': `${disposition}; filename="${encodeURIComponent(report.file_name || 'download')}"`,
             },
         });
     } catch (error) {

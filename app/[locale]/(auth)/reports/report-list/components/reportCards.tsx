@@ -114,7 +114,7 @@ export default function ReportCardView({ reports }: { reports: ReportGetDataType
 
                     {previewReport && (
                         <embed
-                            src={`/api/reports/${previewReport.id}/download`}
+                            src={`/api/reports/${previewReport.id}/download?disposition=inline`}
                             type="application/pdf"
                             className="w-full h-[60vh] flex-1"
                         />
