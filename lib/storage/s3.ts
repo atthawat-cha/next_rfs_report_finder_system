@@ -1,21 +1,60 @@
+import { S3Client, PutObjectCommand, GetObjectCommand, DeleteObjectCommand } from "@aws-sdk/client-s3";
 import type { StorageBackend } from "./types";
 
 /**
- * Unimplemented on purpose (Phase 7d decision). No S3/MinIO credentials or
- * self-hosted instance exist in any environment this project has access to
- * - writing a "working" implementation now would be untested code
- * pretending to work, the same line Phase 4c drew for AV scanning. This
- * exists to prove the StorageBackend interface shape is real (a second
- * implementation compiles against it), not to be switched to yet.
+ * Real S3-compatible backend (Phase 12b). Configured for MinIO by default
+ * (forcePathStyle: true - required for MinIO, harmless against real AWS S3)
+ * via the S3_ENDPOINT/S3_REGION/S3_ACCESS_KEY_ID/S3_SECRET_ACCESS_KEY/
+ * S3_BUCKET env vars documented in SETUP.md. Only constructed/used when
+ * lib/storage/index.ts selects it via STORAGE_BACKEND=s3 - importing this
+ * module with those env vars unset throws at first call, not at import
+ * time, so a `local`-backend deployment is unaffected by their absence.
  */
+
+let client: S3Client | undefined;
+
+function getClient(): S3Client {
+  if (client) return client;
+  const endpoint = process.env.S3_ENDPOINT;
+  if (!endpoint) throw new Error("S3_ENDPOINT is not set");
+  client = new S3Client({
+    endpoint,
+    region: process.env.S3_REGION || "us-east-1",
+    forcePathStyle: true,
+    credentials: {
+      accessKeyId: process.env.S3_ACCESS_KEY_ID ?? (() => { throw new Error("S3_ACCESS_KEY_ID is not set"); })(),
+      secretAccessKey: process.env.S3_SECRET_ACCESS_KEY ?? (() => { throw new Error("S3_SECRET_ACCESS_KEY is not set"); })(),
+    },
+  });
+  return client;
+}
+
+function getBucket(): string {
+  return process.env.S3_BUCKET ?? (() => { throw new Error("S3_BUCKET is not set"); })();
+}
+
 export const s3Storage: StorageBackend = {
-  async write(): Promise<void> {
-    throw new Error("S3 storage backend not implemented");
+  async write(relPath, buffer) {
+    await getClient().send(new PutObjectCommand({
+      Bucket: getBucket(),
+      Key: relPath.replace(/^[/\\]+/, ""),
+      Body: buffer,
+    }));
   },
-  async read(): Promise<Buffer> {
-    throw new Error("S3 storage backend not implemented");
+
+  async read(relPath) {
+    const result = await getClient().send(new GetObjectCommand({
+      Bucket: getBucket(),
+      Key: relPath.replace(/^[/\\]+/, ""),
+    }));
+    if (!result.Body) throw new Error(`S3 object not found: ${relPath}`);
+    return Buffer.from(await result.Body.transformToByteArray());
   },
-  async delete(): Promise<void> {
-    throw new Error("S3 storage backend not implemented");
+
+  async delete(relPath) {
+    await getClient().send(new DeleteObjectCommand({
+      Bucket: getBucket(),
+      Key: relPath.replace(/^[/\\]+/, ""),
+    }));
   },
 };

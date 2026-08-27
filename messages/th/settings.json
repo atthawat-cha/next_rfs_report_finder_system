@@ -38,7 +38,12 @@
       "invalidMaxSize": "ขนาดไฟล์สูงสุดต้องเป็นตัวเลขมากกว่า 0",
       "saveFailed": "บันทึกไม่สำเร็จ"
     },
-    "saveSuccess": "บันทึกการตั้งค่าเรียบร้อย"
+    "saveSuccess": "บันทึกการตั้งค่าเรียบร้อย",
+    "backendCardTitle": "Storage Backend ปัจจุบัน",
+    "backendCardDescription": "กำหนดโดยตัวแปรสภาพแวดล้อม STORAGE_BACKEND ตอน deploy — แก้จากหน้านี้ไม่ได้",
+    "backendLabel": "Backend",
+    "backendLocal": "Local (ดิสก์ของเซิร์ฟเวอร์)",
+    "backendS3": "S3 / MinIO"
   },
   "menus": {
     "pageTitle": "จัดการเมนู",

@@ -157,7 +157,7 @@
 |---|---|---|---|
 | หน้า Settings อ่าน/เขียนตาราง `settings` จริง | Should | ✅ (`GET`/`PUT /api/settings/system` ตัวใช้งานจริงตัวแรกตั้งแต่ 4e เก็บแค่ 2 คีย์ ขยายเป็น 10 คีย์ครอบ storage+general ใน 5e; `GET /api/settings/public` ใหม่สำหรับค่าที่ต้องแสดงก่อน login เช่น `ORG_NAME`) | 4e/5e |
 | ตั้งค่าวิธี login (provider selection) | Should | ❌ (ตัดสินใจตัดออกจากสโคปแล้ว — aspirational, ไม่ทำ) | 4d (dropped) |
-| ตั้งค่า storage backend (local/MinIO/S3) | Should | ⚠️ (7d เพิ่ม `StorageBackend` interface จริง — `local` ใช้งานได้เต็มรูปแบบ, `s3.ts` เป็น stub throw "not implemented" ตั้งใจเพราะไม่มี MinIO/S3 จริงให้ทดสอบ — ยังสลับ backend จริงไม่ได้ในทางปฏิบัติ) | 4/5e/7d |
+| ตั้งค่า storage backend (local/MinIO/S3) | Should | ✅ (12b: `lib/storage/s3.ts` implement จริงด้วย `@aws-sdk/client-s3` ต่อ MinIO local ผ่าน `docker-compose.yml`'s `minio` service, สลับได้จริงด้วย env var `STORAGE_BACKEND=s3` — ยืนยัน integration test จริงกับ MinIO ที่รันอยู่ [write/read/delete ผ่านหมด] และยืนยัน `local` เดิมไม่พังผ่าน live download จริง — หน้า `/settings/storage` มีการ์ด read-only แสดง backend ปัจจุบัน) | 4/5e/7d/12b |
 | Persist ธีม (dark/light) ต่อผู้ใช้ฝั่ง server | Should | ✅ (`users.theme_preference` + `/api/settings/theme`, ไม่ใช้ตาราง `settings` เดิมตามที่ตัดสินใจไว้) | 3 |
 | จำกัดขนาดไฟล์อัปโหลดสูงสุดต่อ `file_kind` แบบตั้งค่าได้ | Could | ✅ (ตั้งค่าได้จริงผ่านหน้า `/settings/storage` + `PUT /api/settings/system`, มี cache invalidation ทันทีหลัง save — ปิดของค้างที่ 4e ทำได้แค่ค่าคงที่ในโค้ด) | 4e/5e |
 
@@ -198,8 +198,8 @@
 
 | สถานะ | จำนวน feature (จาก 100 รายการ) |
 |---|---|
-| ✅ ทำงานได้จริง | 87 |
-| ⚠️ มีบางส่วน/mock/schema เฉย ๆ | 7 |
+| ✅ ทำงานได้จริง | 88 |
+| ⚠️ มีบางส่วน/mock/schema เฉย ๆ | 6 |
 | ❌ ยังไม่มีเลย | 6 |
 
-> ตัวเลขฐานนับจากตารางด้านบนจริงล่าสุด 2026-08-19 หลัง Phase 5a-5f (รวมทุกแถว feature ไม่รวมแถวหมายเหตุ/ดีไซน์โน้ต) รอบนี้ (2026-08-22) แก้เพิ่ม 7 แถวที่ Phase 7 เปลี่ยนสถานะจริง (ticket ×2, fuzzy search, cleanup job, monthly trend, dashboard cache, storage backend interface) — **ยังไม่ใช่การไล่ตรวจซ้ำทั้ง 100 แถว** แถวอื่นที่ Phase 6/7 อาจแตะไปแล้วบางส่วน (เช่น skeleton loading, structured logging) ปรับ justification text ให้ตรงแล้วแต่สัญลักษณ์ไม่เปลี่ยน ไม่ใช่ story-point estimation — ใช้สื่อสารสัดส่วนงานที่เหลือ ไม่ใช่ใช้วางแผน timeline โดยตรง (2026-08-24) i18n แถวเดียวเปลี่ยน ❌→✅ จริงหลัง Phase 11a-11d ปิดครบ นับเพิ่มในตารางสรุปนี้ด้วยแล้ว — งานที่เหลือส่วนใหญ่กระจุกอยู่ที่ E2E test, S3/MinIO backend จริง (interface มีแล้วตั้งแต่ 7d, ตัวจริงยังไม่มี), auth-provider selection (dropped), และ ClamAV AV scan (deferred)
+> ตัวเลขฐานนับจากตารางด้านบนจริงล่าสุด 2026-08-19 หลัง Phase 5a-5f (รวมทุกแถว feature ไม่รวมแถวหมายเหตุ/ดีไซน์โน้ต) รอบนี้ (2026-08-22) แก้เพิ่ม 7 แถวที่ Phase 7 เปลี่ยนสถานะจริง (ticket ×2, fuzzy search, cleanup job, monthly trend, dashboard cache, storage backend interface) — **ยังไม่ใช่การไล่ตรวจซ้ำทั้ง 100 แถว** แถวอื่นที่ Phase 6/7 อาจแตะไปแล้วบางส่วน (เช่น skeleton loading, structured logging) ปรับ justification text ให้ตรงแล้วแต่สัญลักษณ์ไม่เปลี่ยน ไม่ใช่ story-point estimation — ใช้สื่อสารสัดส่วนงานที่เหลือ ไม่ใช่ใช้วางแผน timeline โดยตรง (2026-08-24) i18n แถวเดียวเปลี่ยน ❌→✅ จริงหลัง Phase 11a-11d ปิดครบ นับเพิ่มในตารางสรุปนี้ด้วยแล้ว (2026-08-27) storage backend แถวเดียวเปลี่ยน ⚠️→✅ จริงหลัง Phase 12b ปิด (S3/MinIO ใช้งานได้จริงแล้ว ไม่ใช่ stub) — งานที่เหลือส่วนใหญ่กระจุกอยู่ที่ Sentry (12c), auth-provider selection (dropped), และ ClamAV AV scan (deferred)

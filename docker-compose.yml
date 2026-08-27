@@ -1,4 +1,4 @@
-# Redis only - rate limiting (lib/rate-limit.ts, fail-open) and the 2FA
+# Redis - rate limiting (lib/rate-limit.ts, fail-open) and the 2FA
 # pending-token store (lib/two-factor.ts, fail-closed). Both are purely
 # ephemeral state (see document/00-progress.md's dev-environment note from
 # Phase 4d), so no volume - a fresh, empty Redis on every `up` is correct,
@@ -7,6 +7,11 @@
 # Postgres is deliberately NOT included here: the dev DB is an existing
 # external instance (see CLAUDE.md), and a compose-managed one would invite
 # two sources of truth for DATABASE_URL.
+#
+# MinIO (Phase 12b) is the local stand-in for S3 when STORAGE_BACKEND=s3.
+# Unlike Redis's ephemeral rate-limit state, losing uploaded files on every
+# `docker compose up` would be a real dev-workflow regression, so this one
+# gets a named volume.
 services:
   redis:
     image: redis:7-alpine
@@ -14,3 +19,19 @@ services:
     ports:
       - "6380:6379"
     restart: unless-stopped
+  minio:
+    image: minio/minio
+    container_name: rfs-minio
+    command: server /data --console-address ":9001"
+    ports:
+      - "9000:9000"
+      - "9001:9001"
+    environment:
+      MINIO_ROOT_USER: rfsminioadmin
+      MINIO_ROOT_PASSWORD: rfsminioadmin
+    volumes:
+      - minio-data:/data
+    restart: unless-stopped
+
+volumes:
+  minio-data:

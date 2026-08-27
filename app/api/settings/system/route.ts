@@ -5,6 +5,7 @@ import { logActivity } from '@/lib/activity-log';
 import { createNotification } from '@/lib/notifications';
 import { invalidateSettingsCache } from '@/lib/system-settings';
 import { validateUploadBasePath } from '@/lib/storage-path';
+import { currentStorageBackend } from '@/lib/storage';
 import { faker } from '@faker-js/faker';
 import { z } from 'zod';
 import { logDevError } from '@/lib/log-dev-error';
@@ -66,6 +67,10 @@ export async function GET(req: NextRequest) {
                 admin_email: byKey.get(ADMIN_EMAIL_KEY) ?? '',
                 default_page_size: Number(byKey.get(DEFAULT_PAGE_SIZE_KEY) ?? DEFAULT_PAGE_SIZE),
                 default_share_expiry_days: Number(byKey.get(DEFAULT_SHARE_EXPIRY_DAYS_KEY) ?? DEFAULT_SHARE_EXPIRY_DAYS),
+                // Read-only - controlled by the STORAGE_BACKEND env var at
+                // deploy time, not editable here (see PUT's zod schema,
+                // which deliberately has no field for this).
+                storage_backend: currentStorageBackend(),
             },
         }, { status: 200 });
     } catch (error) {

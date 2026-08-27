@@ -38,7 +38,12 @@
       "invalidMaxSize": "Max file size must be a number greater than 0",
       "saveFailed": "Save failed"
     },
-    "saveSuccess": "Settings saved successfully"
+    "saveSuccess": "Settings saved successfully",
+    "backendCardTitle": "Current Storage Backend",
+    "backendCardDescription": "Set via the STORAGE_BACKEND environment variable at deploy time - not editable from this page",
+    "backendLabel": "Backend",
+    "backendLocal": "Local (server disk)",
+    "backendS3": "S3 / MinIO"
   },
   "menus": {
     "pageTitle": "Menu Management",

@@ -50,7 +50,32 @@ docker compose up -d
 docker compose ps     # confirm rfs-redis is Up
 ```
 
-## 5. Run
+## 5. Storage backend (optional)
+
+Report files are written/read through `lib/storage/`, which defaults to the local filesystem
+(`local`). To use the bundled MinIO container as an S3-compatible backend instead, start it (it's
+already declared in `docker-compose.yml` as the `minio` service):
+
+```bash
+docker compose up -d      # now also starts rfs-minio on 9000 (API) / 9001 (console)
+```
+
+Then set:
+
+```env
+STORAGE_BACKEND=s3
+S3_ENDPOINT=http://localhost:9000
+S3_REGION=us-east-1
+S3_BUCKET=<a bucket you've created via the MinIO console at http://localhost:9001>
+S3_ACCESS_KEY_ID=rfsminioadmin
+S3_SECRET_ACCESS_KEY=rfsminioadmin
+```
+
+Leave `STORAGE_BACKEND` unset to keep using `local` - nothing else changes. To run
+`lib/storage/s3.test.ts`'s real integration test (write/read/delete against MinIO) also set
+`S3_TEST_ENDPOINT=http://localhost:9000`; it's skipped otherwise.
+
+## 6. Run
 
 ```bash
 npm run dev

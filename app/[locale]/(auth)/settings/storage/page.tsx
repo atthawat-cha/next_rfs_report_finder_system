@@ -26,6 +26,7 @@ export default function StorageSettingsPage() {
   const [maxBlankForm, setMaxBlankForm] = React.useState('');
   const [maxSampleFilledForm, setMaxSampleFilledForm] = React.useState('');
   const [maxSampleData, setMaxSampleData] = React.useState('');
+  const [storageBackend, setStorageBackend] = React.useState<'local' | 's3'>('local');
   const [loading, setLoading] = React.useState(true);
   const [saving, setSaving] = React.useState(false);
   const [forbidden, setForbidden] = React.useState(false);
@@ -45,6 +46,7 @@ export default function StorageSettingsPage() {
           setMaxBlankForm(String(Math.round(json.data.max_upload_size_blank_form / 1024 / 1024)));
           setMaxSampleFilledForm(String(Math.round(json.data.max_upload_size_sample_filled_form / 1024 / 1024)));
           setMaxSampleData(String(Math.round(json.data.max_upload_size_sample_data / 1024 / 1024)));
+          setStorageBackend(json.data.storage_backend === 's3' ? 's3' : 'local');
         }
       })
       .finally(() => setLoading(false));
@@ -97,6 +99,22 @@ export default function StorageSettingsPage() {
 
   return (
     <ContentLayout title={t('pageTitle')}>
+      {!loading && (
+        <Card className="mb-6">
+          <CardHeader>
+            <CardTitle>{t('backendCardTitle')}</CardTitle>
+            <CardDescription>{t('backendCardDescription')}</CardDescription>
+          </CardHeader>
+          <CardContent>
+            <div className="flex items-center gap-2">
+              <span className="text-sm text-muted-foreground">{t('backendLabel')}:</span>
+              <span className="font-medium">
+                {storageBackend === 's3' ? t('backendS3') : t('backendLocal')}
+              </span>
+            </div>
+          </CardContent>
+        </Card>
+      )}
       <Card>
         <CardHeader>
           <CardTitle>{t('cardTitle')}</CardTitle>
