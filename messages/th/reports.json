@@ -50,6 +50,11 @@
     "emptyState": {
       "title": "ไม่พบรายงานที่ตรงกับเงื่อนไข",
       "description": "ลองล้างตัวกรองหรือค้นหาด้วยคำอื่น"
+    },
+    "resultsSectionTitle": "รายงานทั้งหมด",
+    "toolbar": {
+      "selectMultipleComingSoon": "เลือกหลายรายการ (เร็วๆ นี้)",
+      "detailsPanelComingSoon": "แผงรายละเอียด (เร็วๆ นี้)"
     }
   },
   "favorites": {

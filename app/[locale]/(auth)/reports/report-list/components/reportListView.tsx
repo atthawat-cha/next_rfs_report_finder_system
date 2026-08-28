@@ -22,7 +22,8 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Empty, EmptyHeader, EmptyMedia, EmptyTitle, EmptyDescription } from "@/components/ui/empty";
-import { SearchX, X, List, Grid2x2 } from "lucide-react";
+import { SearchX, X, List, Grid2x2, CheckSquare, Info } from "lucide-react";
+import { Tooltip, TooltipContent, TooltipTrigger, TooltipProvider } from "@/components/ui/tooltip";
 
 const PAGE_SIZE = 20;
 
@@ -182,8 +183,10 @@ export default function ReportListView({ isAdmin }: { isAdmin: boolean }) {
           isAdmin={isAdmin}
         />
 
-        <div className="w-full flex flex-wrap items-center justify-between gap-3 mt-5">
-          <div className="flex flex-wrap items-center gap-2">
+        <div className="w-full flex flex-wrap items-center gap-3 mt-5">
+          <h2 className="text-sm font-bold">{t("resultsSectionTitle")}</h2>
+
+          <div className="flex flex-nowrap items-center gap-2 ml-auto shrink-0">
             <SearchInput countRes={total.toString()} defaultValue={q} onSearch={hanelerSearch} />
             <Select value={departmentId || "__all__"} onValueChange={(v) => { setPage(1); setDepartmentId(v === "__all__" ? "" : v); }}>
               <SelectTrigger className="w-[180px]">
@@ -196,9 +199,7 @@ export default function ReportListView({ isAdmin }: { isAdmin: boolean }) {
                 ))}
               </SelectContent>
             </Select>
-          </div>
 
-          <div className="flex gap-2 item-center">
             <ToggleGroup
               variant="outline"
               type="single"
@@ -225,6 +226,39 @@ export default function ReportListView({ isAdmin }: { isAdmin: boolean }) {
                 <Grid2x2 className="h-4 w-4" />
               </ToggleGroupItem>
             </ToggleGroup>
+
+            {/* Matches the reference toolbar's icon count, but bulk-select and
+                a details panel don't exist anywhere in this app yet - rather
+                than fake working buttons, these are disabled with a tooltip
+                naming what they'll do once that's real. */}
+            <TooltipProvider disableHoverableContent>
+              <div className="flex items-center gap-1 rounded-full border p-1">
+                <Tooltip delayDuration={200}>
+                  <TooltipTrigger asChild>
+                    <span
+                      role="button"
+                      aria-disabled="true"
+                      className="flex h-8 w-8 cursor-not-allowed items-center justify-center rounded-full text-muted-foreground/50"
+                    >
+                      <CheckSquare className="h-4 w-4" />
+                    </span>
+                  </TooltipTrigger>
+                  <TooltipContent>{t("toolbar.selectMultipleComingSoon")}</TooltipContent>
+                </Tooltip>
+                <Tooltip delayDuration={200}>
+                  <TooltipTrigger asChild>
+                    <span
+                      role="button"
+                      aria-disabled="true"
+                      className="flex h-8 w-8 cursor-not-allowed items-center justify-center rounded-full text-muted-foreground/50"
+                    >
+                      <Info className="h-4 w-4" />
+                    </span>
+                  </TooltipTrigger>
+                  <TooltipContent>{t("toolbar.detailsPanelComingSoon")}</TooltipContent>
+                </Tooltip>
+              </div>
+            </TooltipProvider>
           </div>
         </div>
 

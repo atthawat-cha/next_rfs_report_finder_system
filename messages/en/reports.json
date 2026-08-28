@@ -50,6 +50,11 @@
     "emptyState": {
       "title": "No reports found",
       "description": "Try clearing filters or searching with different keywords."
+    },
+    "resultsSectionTitle": "All Reports",
+    "toolbar": {
+      "selectMultipleComingSoon": "Select multiple (coming soon)",
+      "detailsPanelComingSoon": "Details panel (coming soon)"
     }
   },
   "favorites": {
