@@ -22,7 +22,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Empty, EmptyHeader, EmptyMedia, EmptyTitle, EmptyDescription } from "@/components/ui/empty";
-import { SearchX, X } from "lucide-react";
+import { SearchX, X, List, Grid2x2 } from "lucide-react";
 
 const PAGE_SIZE = 20;
 
@@ -204,16 +204,25 @@ export default function ReportListView({ isAdmin }: { isAdmin: boolean }) {
               type="single"
               defaultValue="table"
               onValueChange={hanelerViewChange}
+              className="rounded-full border p-1 gap-1"
             >
-              {/* No aria-label needed - the visible text ("List"/"Card") is
-                  already the correct accessible name. The previous labels
-                  ("Toggle all"/"Toggle missed") were leftover shadcn demo
-                  copy that contradicted what these buttons actually do. */}
-              <ToggleGroupItem value="table">
-                {t("viewList")}
+              {/* Icon-only, matching the reference layout's compact view-toggle
+                  cluster - aria-label carries the accessible name now that
+                  there's no visible text ("List"/"Card" labels were the
+                  previous shape of this same toggle). */}
+              <ToggleGroupItem
+                value="table"
+                aria-label={t("viewList")}
+                className="h-8 w-8 rounded-full p-0 border-0 data-[state=on]:bg-foreground data-[state=on]:text-background"
+              >
+                <List className="h-4 w-4" />
               </ToggleGroupItem>
-              <ToggleGroupItem value="card">
-                {t("viewCard")}
+              <ToggleGroupItem
+                value="card"
+                aria-label={t("viewCard")}
+                className="h-8 w-8 rounded-full p-0 border-0 data-[state=on]:bg-foreground data-[state=on]:text-background"
+              >
+                <Grid2x2 className="h-4 w-4" />
               </ToggleGroupItem>
             </ToggleGroup>
           </div>
