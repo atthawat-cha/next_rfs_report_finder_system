@@ -13,6 +13,9 @@ import { useTranslations } from 'next-intl';
 import { List, Grid2x2, CheckSquare, Info, HeartCrack } from 'lucide-react';
 import { Tooltip, TooltipContent, TooltipTrigger, TooltipProvider } from '@/components/ui/tooltip';
 import { Empty, EmptyHeader, EmptyMedia, EmptyTitle, EmptyDescription } from '@/components/ui/empty';
+import { Button } from '@/components/ui/button';
+
+const PAGE_SIZE = 20;
 
 export default function ReportFavorites() {
   const t = useTranslations('reports.favorites');
@@ -23,10 +26,20 @@ export default function ReportFavorites() {
   const [favorites, setFavorites] = React.useState<ReportGetDataType[]>([]);
   const [loading, setLoading] = React.useState(true);
   const [search, setSearch] = React.useState("");
+  const [page, setPage] = React.useState(1);
+  const [total, setTotal] = React.useState(0);
+  const [totalPages, setTotalPages] = React.useState(1);
+  const searchDebounceRef = React.useRef<ReturnType<typeof setTimeout> | undefined>(undefined);
 
-  const fetchFavorites = React.useCallback(async () => {
+  const fetchFavorites = React.useCallback(async (query: string, pageNum: number) => {
+    setLoading(true);
     try {
-      const res = await fetch("/api/reports/favorites", {
+      const params = new URLSearchParams();
+      if (query) params.set("q", query);
+      params.set("page", String(pageNum));
+      params.set("pageSize", String(PAGE_SIZE));
+
+      const res = await fetch(`/api/reports/favorites?${params.toString()}`, {
         method: "GET",
         headers: { "Content-Type": "application/json" },
         credentials: "include",
@@ -38,6 +51,8 @@ export default function ReportFavorites() {
       const data = await res.json();
       if (!data?.success) return;
       setFavorites(data?.data ?? []);
+      setTotal(data?.meta?.total ?? 0);
+      setTotalPages(data?.meta?.totalPages ?? 1);
     } catch (error) {
       console.error("Error fetching favorites:", error);
     } finally {
@@ -46,8 +61,8 @@ export default function ReportFavorites() {
   }, []);
 
   React.useEffect(() => {
-    fetchFavorites();
-  }, [fetchFavorites]);
+    fetchFavorites(search, page);
+  }, [search, page, fetchFavorites]);
 
   const handleUnfavorite = async (reportId: string) => {
     try {
@@ -59,7 +74,14 @@ export default function ReportFavorites() {
         toast.error(t("removeFailed"));
         return;
       }
-      setFavorites((prev) => prev.filter((r) => r.id !== reportId));
+      // Removing the last favorite on a page beyond page 1 would otherwise
+      // strand the view on a now-empty page - step back a page instead of
+      // refetching the same (now out-of-range) page number.
+      if (favorites.length === 1 && page > 1) {
+        setPage(page - 1);
+      } else {
+        await fetchFavorites(search, page);
+      }
       toast.success(t("removeSuccess"));
     } catch (error) {
       console.error("Error removing favorite:", error);
@@ -67,14 +89,12 @@ export default function ReportFavorites() {
     }
   };
 
-  const filteredFavorites = search
-    ? favorites.filter((r) =>
-        `${r.name_th} ${r.name_en ?? ""} ${r.code}`.toLowerCase().includes(search.toLowerCase())
-      )
-    : favorites;
-
   const hanelerSearch = (value: string) => {
-    setSearch(value)
+    clearTimeout(searchDebounceRef.current);
+    searchDebounceRef.current = setTimeout(() => {
+      setPage(1);
+      setSearch(value);
+    }, 300);
   }
 
   const hanelerViewChange = (view: string) => {
@@ -93,7 +113,7 @@ export default function ReportFavorites() {
           <h2 className="text-sm font-bold">{t("sectionTitle")}</h2>
 
           <div className="flex flex-nowrap items-center gap-2 ml-auto shrink-0">
-            <SearchInput countRes={filteredFavorites.length.toString()} onSearch={hanelerSearch} />
+            <SearchInput countRes={total.toString()} onSearch={hanelerSearch} />
 
             <ToggleGroup
               variant="outline"
@@ -154,7 +174,7 @@ export default function ReportFavorites() {
         <div className="w-full mt-5">
           {loading ? (
             <SkeletonTable />
-          ) : filteredFavorites.length === 0 ? (
+          ) : favorites.length === 0 ? (
             <Empty className="border border-dashed rounded-xl">
               <EmptyHeader>
                 <EmptyMedia variant="icon">
@@ -165,11 +185,27 @@ export default function ReportFavorites() {
               </EmptyHeader>
             </Empty>
           ) : reportView === "table" ? (
-            <FavReportMainTableView reports={filteredFavorites} onUnfavorite={handleUnfavorite} />
+            <FavReportMainTableView reports={favorites} onUnfavorite={handleUnfavorite} />
           ) : (
-            <FavReportCardView reports={filteredFavorites} onUnfavorite={handleUnfavorite} />
+            <FavReportCardView reports={favorites} onUnfavorite={handleUnfavorite} />
           )}
         </div>
+
+        {!loading && totalPages > 1 && (
+          <div className="mt-4 flex items-center justify-between">
+            <span className="text-sm text-muted-foreground">
+              {tList("pageInfo", { page, totalPages })}
+            </span>
+            <div className="flex gap-2">
+              <Button variant="outline" size="sm" disabled={page <= 1} onClick={() => setPage((p) => p - 1)}>
+                {tList("previous")}
+              </Button>
+              <Button variant="outline" size="sm" disabled={page >= totalPages} onClick={() => setPage((p) => p + 1)}>
+                {tList("next")}
+              </Button>
+            </div>
+          </div>
+        )}
       </div>
 
     </ContentLayout>

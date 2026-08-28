@@ -29,7 +29,19 @@ export async function GET(req: NextRequest) {
         // getting the full list, same as before this endpoint supported paging at all.
         const isPaged = searchParams.has('page') || searchParams.has('pageSize');
         const { page, pageSize, skip, take } = await parsePagination(searchParams);
-        const where = { user_id: authResult.user.id };
+        const q = searchParams.get('q')?.trim();
+        const where = {
+            user_id: authResult.user.id,
+            ...(q && {
+                reports: {
+                    OR: [
+                        { name_th: { contains: q, mode: 'insensitive' as const } },
+                        { name_en: { contains: q, mode: 'insensitive' as const } },
+                        { code: { contains: q, mode: 'insensitive' as const } },
+                    ],
+                },
+            }),
+        };
 
         const [favorites, total] = await Promise.all([
             prisma.favorites.findMany({
