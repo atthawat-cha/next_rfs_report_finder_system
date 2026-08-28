@@ -85,6 +85,10 @@
       "description": "Delete \"{name}\" ({code}) - cannot be deleted if referenced by a report or sub-category",
       "deleteFailed": "Delete failed",
       "deleteSuccess": "Category deleted successfully"
+    },
+    "emptyState": {
+      "title": "No categories found",
+      "description": "Try a different search or create a new category."
     }
   },
   "tags": {
@@ -104,6 +108,10 @@
       "description": "Delete \"{name}\" - reports tagged with this will just lose the tag (the reports themselves are unaffected)",
       "deleteFailed": "Delete failed",
       "deleteSuccess": "Tag deleted successfully"
+    },
+    "emptyState": {
+      "title": "No tags found",
+      "description": "Try a different search or create a new tag."
     }
   },
   "detail": {

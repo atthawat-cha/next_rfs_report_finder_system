@@ -19,13 +19,23 @@ export async function GET(req: NextRequest) {
         const searchParams = req.nextUrl.searchParams;
         const isPaged = searchParams.has('page') || searchParams.has('pageSize');
         const { page, pageSize, skip, take } = await parsePagination(searchParams);
+        const q = searchParams.get('q')?.trim();
+        const where = q
+            ? {
+                OR: [
+                    { name: { contains: q, mode: 'insensitive' as const } },
+                    { slug: { contains: q, mode: 'insensitive' as const } },
+                ],
+            }
+            : {};
 
         const [tags, total] = await Promise.all([
             prisma.tags.findMany({
+                where,
                 orderBy: { name: 'asc' },
                 ...(isPaged ? { skip, take } : {}),
             }),
-            prisma.tags.count(),
+            prisma.tags.count({ where }),
         ]);
 
         const meta = isPaged
