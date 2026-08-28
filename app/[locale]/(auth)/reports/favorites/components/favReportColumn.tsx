@@ -7,6 +7,7 @@ import { Button } from '@/components/ui/button'
 import { MoreHorizontal } from 'lucide-react'
 import { formatDateTime } from '@/lib/utils'
 import { Link } from '@/i18n/navigation'
+import { ReportStatusPill } from '@/components/shared/reportDisplayMeta'
 
 export function getFavReportColumn(
     onUnfavorite: (reportId: string) => void,
@@ -46,6 +47,10 @@ export function getFavReportColumn(
     {
         accessorKey: 'status',
         header: tc('status'),
+        cell: ({ row }) => {
+            const status = row.original.status
+            return <ReportStatusPill status={status} label={tList(`status.${status}`)} />
+        },
     },
     {
         accessorKey: 'version',

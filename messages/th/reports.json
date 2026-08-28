@@ -61,7 +61,12 @@
     "pageTitle": "รายงานโปรด",
     "removeFailed": "ลบออกจากรายการโปรดไม่สำเร็จ",
     "removeSuccess": "ลบออกจากรายการโปรดแล้ว",
-    "removeFromFavorites": "นำออกจากรายการโปรด"
+    "removeFromFavorites": "นำออกจากรายการโปรด",
+    "sectionTitle": "รายงานที่บันทึกไว้",
+    "emptyState": {
+      "title": "ยังไม่มีรายการโปรด",
+      "description": "รายงานที่คุณกดดาวไว้จะแสดงที่นี่"
+    }
   },
   "categories": {
     "pageTitle": "หมวดหมู่รายงาน",

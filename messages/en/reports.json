@@ -61,7 +61,12 @@
     "pageTitle": "Favorite Reports",
     "removeFailed": "Failed to remove favorite",
     "removeSuccess": "Removed from favorites",
-    "removeFromFavorites": "Remove from Favorites"
+    "removeFromFavorites": "Remove from Favorites",
+    "sectionTitle": "Saved Reports",
+    "emptyState": {
+      "title": "No favorites yet",
+      "description": "Reports you star will show up here."
+    }
   },
   "categories": {
     "pageTitle": "Report Categories",

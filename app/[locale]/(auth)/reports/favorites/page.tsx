@@ -6,11 +6,13 @@ import DefaultBreadcrumb from '@/components/shared/breadcrumb';
 import FavReportMainTableView from './components/favReportMainTable';
 import { ToggleGroup, ToggleGroupItem } from '@/components/ui/toggle-group';
 import { SearchInput } from '@/components/shared/searchInput';
-import { Card } from '@/components/ui/card';
 import { ReportGetDataType } from '@/lib/types';
 import toast from 'react-hot-toast';
 import { SkeletonTable } from '@/components/shared/skeletonTable';
 import { useTranslations } from 'next-intl';
+import { List, Grid2x2, CheckSquare, Info, HeartCrack } from 'lucide-react';
+import { Tooltip, TooltipContent, TooltipTrigger, TooltipProvider } from '@/components/ui/tooltip';
+import { Empty, EmptyHeader, EmptyMedia, EmptyTitle, EmptyDescription } from '@/components/ui/empty';
 
 export default function ReportFavorites() {
   const t = useTranslations('reports.favorites');
@@ -86,38 +88,89 @@ export default function ReportFavorites() {
           { label: t("pageTitle") },
         ]} />
       </div>
-      <Card className="container mx-auto py-10 gap-6 mt-5">
-        <div className="w-full flex item-center justify-between mt-5">
-          <ToggleGroup
-            variant="outline"
-            type="single"
-            defaultValue="table"
-            onValueChange={hanelerViewChange}
-          >
-            <ToggleGroupItem value="table" aria-label="Toggle all">
-              {tList("viewList")}
-            </ToggleGroupItem>
-            <ToggleGroupItem value="card" aria-label="Toggle missed">
-              {tList("viewCard")}
-            </ToggleGroupItem>
-          </ToggleGroup>
+      <div className="container mx-auto py-10 gap-6">
+        <div className="w-full flex flex-wrap items-center gap-3 mt-5">
+          <h2 className="text-sm font-bold">{t("sectionTitle")}</h2>
 
-          <div className="flex gap-2 item-center">
+          <div className="flex flex-nowrap items-center gap-2 ml-auto shrink-0">
             <SearchInput countRes={filteredFavorites.length.toString()} onSearch={hanelerSearch} />
+
+            <ToggleGroup
+              variant="outline"
+              type="single"
+              defaultValue="table"
+              onValueChange={hanelerViewChange}
+              className="rounded-full border p-1 gap-1"
+            >
+              <ToggleGroupItem
+                value="table"
+                aria-label={tList("viewList")}
+                className="h-8 w-8 rounded-full p-0 border-0 data-[state=on]:bg-foreground data-[state=on]:text-background"
+              >
+                <List className="h-4 w-4" />
+              </ToggleGroupItem>
+              <ToggleGroupItem
+                value="card"
+                aria-label={tList("viewCard")}
+                className="h-8 w-8 rounded-full p-0 border-0 data-[state=on]:bg-foreground data-[state=on]:text-background"
+              >
+                <Grid2x2 className="h-4 w-4" />
+              </ToggleGroupItem>
+            </ToggleGroup>
+
+            {/* Same "coming soon" pair as reports/report-list - bulk-select
+                and a details panel don't exist anywhere in this app yet. */}
+            <TooltipProvider disableHoverableContent>
+              <div className="flex items-center gap-1 rounded-full border p-1">
+                <Tooltip delayDuration={200}>
+                  <TooltipTrigger asChild>
+                    <span
+                      role="button"
+                      aria-disabled="true"
+                      className="flex h-8 w-8 cursor-not-allowed items-center justify-center rounded-full text-muted-foreground/50"
+                    >
+                      <CheckSquare className="h-4 w-4" />
+                    </span>
+                  </TooltipTrigger>
+                  <TooltipContent>{tList("toolbar.selectMultipleComingSoon")}</TooltipContent>
+                </Tooltip>
+                <Tooltip delayDuration={200}>
+                  <TooltipTrigger asChild>
+                    <span
+                      role="button"
+                      aria-disabled="true"
+                      className="flex h-8 w-8 cursor-not-allowed items-center justify-center rounded-full text-muted-foreground/50"
+                    >
+                      <Info className="h-4 w-4" />
+                    </span>
+                  </TooltipTrigger>
+                  <TooltipContent>{tList("toolbar.detailsPanelComingSoon")}</TooltipContent>
+                </Tooltip>
+              </div>
+            </TooltipProvider>
           </div>
         </div>
-
 
         <div className="w-full mt-5">
           {loading ? (
             <SkeletonTable />
+          ) : filteredFavorites.length === 0 ? (
+            <Empty className="border border-dashed rounded-xl">
+              <EmptyHeader>
+                <EmptyMedia variant="icon">
+                  <HeartCrack />
+                </EmptyMedia>
+                <EmptyTitle>{t("emptyState.title")}</EmptyTitle>
+                <EmptyDescription>{t("emptyState.description")}</EmptyDescription>
+              </EmptyHeader>
+            </Empty>
           ) : reportView === "table" ? (
             <FavReportMainTableView reports={filteredFavorites} onUnfavorite={handleUnfavorite} />
           ) : (
-            <FavReportCardView reports={filteredFavorites} />
+            <FavReportCardView reports={filteredFavorites} onUnfavorite={handleUnfavorite} />
           )}
         </div>
-      </Card>
+      </div>
 
     </ContentLayout>
   )
