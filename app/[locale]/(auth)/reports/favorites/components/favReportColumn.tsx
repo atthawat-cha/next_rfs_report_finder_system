@@ -39,8 +39,9 @@ export function getFavReportColumn(
         header: tc('description'),
     },
     {
-        accessorKey: 'department',
+        id: 'department',
         header: tList('columns.department'),
+        cell: ({ row }) => row.original.departments?.name ?? tList('columns.noData'),
     },
     {
         accessorKey: 'status',

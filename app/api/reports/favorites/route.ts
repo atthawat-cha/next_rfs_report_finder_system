@@ -52,6 +52,7 @@ export async function GET(req: NextRequest) {
                             created_at: true,
                             status: true,
                             updated_at: true,
+                            version: true,
                         },
                     },
                 },

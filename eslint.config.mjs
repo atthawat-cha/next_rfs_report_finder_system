@@ -45,7 +45,11 @@ const eslintConfig = [
     // `build`; recorded in 00-progress.md as a real process gap. Phase 11a's
     // app/[locale] restructuring (see document/phase11-plan.md) moved every
     // one of these paths down one level - updated here, not re-added, since
-    // the underlying pattern/reasoning is unchanged.
+    // the underlying pattern/reasoning is unchanged. The report-list redesign
+    // (2026-08-28) split page.tsx into a thin server wrapper (isAdmin via
+    // getCurrentUser(), same pattern as report-detail/[id]/page.tsx) plus a
+    // client view holding the actual fetch-on-mount effects - the path below
+    // was updated to that new file, not re-added, same as the 11a moves.
     files: [
       "app/\\[locale\\]/(auth)/dashboard/components/DashboardAnalytics.tsx",
       "app/\\[locale\\]/(auth)/permissions/page.tsx",
@@ -54,7 +58,7 @@ const eslintConfig = [
       "app/\\[locale\\]/(auth)/reports/favorites/page.tsx",
       "app/\\[locale\\]/(auth)/reports/report-create/page.tsx",
       "app/\\[locale\\]/(auth)/reports/report-edit/\\[id\\]/page.tsx",
-      "app/\\[locale\\]/(auth)/reports/report-list/page.tsx",
+      "app/\\[locale\\]/(auth)/reports/report-list/components/reportListView.tsx",
       "app/\\[locale\\]/(auth)/reports/tags/components/tagFormDialog.tsx",
       "app/\\[locale\\]/(auth)/reports/tags/page.tsx",
       "app/\\[locale\\]/(auth)/role-management/role-form/page.tsx",

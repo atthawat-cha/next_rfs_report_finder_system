@@ -18,6 +18,38 @@
       "download": "ดาวน์โหลด",
       "permissions": "สิทธิ์การใช้งาน",
       "addToFavorites": "เพิ่มในรายการโปรด"
+    },
+    "quickActions": {
+      "create": "สร้างรายงานใหม่",
+      "createSubtitle": "เพิ่ม metadata และไฟล์แนบ",
+      "favorites": "รายการโปรด",
+      "favoritesSubtitle": "รายงานที่บันทึกไว้",
+      "categories": "หมวดหมู่",
+      "categoriesSubtitle": "จัดการโฟลเดอร์รายงาน",
+      "tags": "แท็ก",
+      "tagsSubtitle": "จัดการแท็กค้นหา"
+    },
+    "categoriesSectionTitle": "หมวดหมู่ยอดนิยม",
+    "manageCategories": "จัดการหมวดหมู่",
+    "reportCount": "{count} รายงาน",
+    "filters": {
+      "allDepartments": "ทุกหน่วยงาน",
+      "filteringBy": "กำลังกรองหมวดหมู่: {name}",
+      "clear": "ล้างตัวกรอง"
+    },
+    "status": {
+      "PUBLISHED": "เผยแพร่แล้ว",
+      "DRAFT": "ฉบับร่าง",
+      "ARCHIVED": "เก็บถาวร"
+    },
+    "access": {
+      "PUBLIC": "สาธารณะ",
+      "RESTRICTED": "จำกัดสิทธิ์",
+      "PRIVATE": "ส่วนตัว"
+    },
+    "emptyState": {
+      "title": "ไม่พบรายงานที่ตรงกับเงื่อนไข",
+      "description": "ลองล้างตัวกรองหรือค้นหาด้วยคำอื่น"
     }
   },
   "favorites": {
@@ -104,10 +136,18 @@
     }
   },
   "filePurpose": {
-    "BLANK_FORM": { "description": "แบบฟอร์มเปล่าไว้โหลดไปกรอก" },
-    "SAMPLE_FILLED_FORM": { "description": "เอกสารไว้พรีวิว (เช่นตัวอย่างที่กรอกแล้ว)" },
-    "SAMPLE_DATA": { "description": "ตัวอย่างข้อมูล (Excel/CSV)" },
-    "REFERENCE_DOC": { "description": "เอกสารอ้างอิงอื่นๆ (มีได้หลายไฟล์)" }
+    "BLANK_FORM": {
+      "description": "แบบฟอร์มเปล่าไว้โหลดไปกรอก"
+    },
+    "SAMPLE_FILLED_FORM": {
+      "description": "เอกสารไว้พรีวิว (เช่นตัวอย่างที่กรอกแล้ว)"
+    },
+    "SAMPLE_DATA": {
+      "description": "ตัวอย่างข้อมูล (Excel/CSV)"
+    },
+    "REFERENCE_DOC": {
+      "description": "เอกสารอ้างอิงอื่นๆ (มีได้หลายไฟล์)"
+    }
   },
   "permissionsDrawer": {
     "title": "จัดการสิทธิ์การเข้าถึงรายงาน",

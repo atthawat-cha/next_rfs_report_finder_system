@@ -14,6 +14,7 @@ import { formatDateTime } from '@/lib/utils'
 import { MoreHorizontal } from 'lucide-react'
 import toast from 'react-hot-toast'
 import { Link } from '@/i18n/navigation'
+import { ReportStatusPill } from '@/components/shared/reportDisplayMeta'
 
 async function addToFavorites(reportId: string, t: (key: string) => string) {
     try {
@@ -64,12 +65,17 @@ export function getReportColumn(
         header: tc('description'),
     },
     {
-        accessorKey: 'department',
+        id: 'department',
         header: t('columns.department'),
+        cell: ({ row }) => row.original.departments?.name ?? t('columns.noData'),
     },
     {
         accessorKey: 'status',
         header: tc('status'),
+        cell: ({ row }) => {
+            const status = row.original.status
+            return <ReportStatusPill status={status} label={t(`status.${status}`)} />
+        },
     },
     {
         accessorKey: 'version',

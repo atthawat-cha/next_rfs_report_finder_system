@@ -18,6 +18,38 @@
       "download": "Download",
       "permissions": "Permissions",
       "addToFavorites": "Add to Favorites"
+    },
+    "quickActions": {
+      "create": "Create Report",
+      "createSubtitle": "Add metadata and attachments",
+      "favorites": "Favorites",
+      "favoritesSubtitle": "Reports you've saved",
+      "categories": "Categories",
+      "categoriesSubtitle": "Manage report folders",
+      "tags": "Tags",
+      "tagsSubtitle": "Manage search tags"
+    },
+    "categoriesSectionTitle": "Popular Categories",
+    "manageCategories": "Manage categories",
+    "reportCount": "{count} reports",
+    "filters": {
+      "allDepartments": "All Departments",
+      "filteringBy": "Filtering by: {name}",
+      "clear": "Clear filter"
+    },
+    "status": {
+      "PUBLISHED": "Published",
+      "DRAFT": "Draft",
+      "ARCHIVED": "Archived"
+    },
+    "access": {
+      "PUBLIC": "Public",
+      "RESTRICTED": "Restricted access",
+      "PRIVATE": "Private"
+    },
+    "emptyState": {
+      "title": "No reports found",
+      "description": "Try clearing filters or searching with different keywords."
     }
   },
   "favorites": {
@@ -104,10 +136,18 @@
     }
   },
   "filePurpose": {
-    "BLANK_FORM": { "description": "A blank form to download and fill out" },
-    "SAMPLE_FILLED_FORM": { "description": "A document for preview (e.g. a filled-out sample)" },
-    "SAMPLE_DATA": { "description": "Sample data (Excel/CSV)" },
-    "REFERENCE_DOC": { "description": "Other reference documents (multiple files allowed)" }
+    "BLANK_FORM": {
+      "description": "A blank form to download and fill out"
+    },
+    "SAMPLE_FILLED_FORM": {
+      "description": "A document for preview (e.g. a filled-out sample)"
+    },
+    "SAMPLE_DATA": {
+      "description": "Sample data (Excel/CSV)"
+    },
+    "REFERENCE_DOC": {
+      "description": "Other reference documents (multiple files allowed)"
+    }
   },
   "permissionsDrawer": {
     "title": "Manage Report Access",

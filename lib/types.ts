@@ -231,8 +231,14 @@ export interface ReportGetDataType {
     file_name?: string;
     file_type?: string;
     file_size?: number;
-    category: string;
-    department: string;
+    // GET /api/reports/browse and GET /api/reports/favorites both select the
+    // categories/departments relations (nested {id,name}), not flat strings -
+    // this type used to claim `category`/`department` were plain strings,
+    // which meant every accessorKey: 'department' table column silently
+    // rendered blank (TanStack resolved a field that was never on the row).
+    categories?: { id: string; name: string } | null;
+    departments?: { id: string; name: string } | null;
+    report_tags?: { tags: { id: string; name: string; slug: string } }[];
     created_by_id?: string;
     status: string;
     "version"?: string;
