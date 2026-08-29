@@ -1,6 +1,6 @@
 # ความคืบหน้าโครงการ — RFS Report Finder System
 
-> **อัปเดตล่าสุด:** 2026-08-29 · **Branch:** `development` · **HEAD:** `9c6b601` (refactor: query editor UI in report create/edit, per demo mockup)
+> **อัปเดตล่าสุด:** 2026-08-30 · **Branch:** `development` · **HEAD:** `49af393` (feat: Phase 16 - security hardening round 2)
 >
 > ไฟล์นี้ตอบคำถามเดียว: **"ตอนนี้ถึงไหนแล้ว และเหลืออะไร"** สถานะทุกแถวอ้างอิง commit จริงใน git log เป็นหลักฐาน ไม่ใช่การอ่านโค้ดเดา
 >
@@ -16,7 +16,7 @@
 
 ## 👉 ตอนนี้อยู่ตรงไหน
 
-**โค้ดเสร็จแล้ว:** Phase 0 → 3e ทั้งหมด (14 sub-phase, verified จริง 39/39 บน DB `nextjs_rfs`) + **Phase 4a/4b/4c/4d/4e/4f เสร็จหมดแล้ว** (4e: i18n แยกเป็นแผนของตัวเองในอนาคต ไม่ใช่ของค้าง; 4f: dashboard cache/precompute deferred ตามแผนเดิม ไม่ใช่ของค้าง) — **Phase 4 ปิดครบทุก sub-phase**
+**โค้ดเสร็จแล้ว:** Phase 0 → 3e ทั้งหมด (14 sub-phase, verified จริง 39/39 บน DB `nextjs_rfs`) + **Phase 4a/4b/4c/4d/4e/4f เสร็จหมดแล้ว** (4e: i18n แยกเป็นแผนของตัวเองในอนาคต ไม่ใช่ของค้าง; 4f: dashboard cache/precompute deferred ตามแผนเดิม ไม่ใช่ของค้าง) — **Phase 4 ปิดครบทุก sub-phase** — **อัปเดต (2026-08-30): Phase 16 (security hardening round 2) ปิดครบทั้ง 4 sub-phase แล้ว** (`49af393`) ดูรายละเอียดที่หัวข้อ "### Phase 16" ด้านล่าง และแผนเต็มที่ [`phase16-plan.md`](./phase16-plan.md) — มาจากการตรวจสอบระบบทั้งระบบตาม [`system-checklist.md`](./system-checklist.md) ที่บันทึกไว้ใน [`system-audit-2026-08-30.md`](./system-audit-2026-08-30.md) ก่อนหน้านี้ในเซสชันเดียวกัน
 
 > หมายเหตุ branch: ย้ายมาทำงานบน `feature/phase4` แล้ว (เดิม `feature/phase3`) — commit ประวัติเดียวกัน ไม่มีอะไรหาย ดู git log ถ้าสงสัย
 >
@@ -536,6 +536,51 @@
 - ผู้ใช้ส่งภาพหน้าจอของ demo (ไม่ใช่แอปจริง แต่ breadcrumb บอกชัดว่า "Report Editor (demo v2)") มาให้เทียบ — ไล่โค้ดจริงแล้วพบ 2 จุดที่ไม่ตรงโดยไม่ต้องรอภาพแอปจริงเลย: (1) แท็บ Info ในโค้ดจริงยังเป็น **2 การ์ดแยกซ้าย-ขวา** (Report Information + Report Settings ที่เหลือแค่ข้อความว่างๆ) จากก่อน Phase 10 ทั้งที่ demo รวมเป็นการ์ดเดียว — ตอนแตก Param/Query/Sub/Doc/History ออกมาใน 10g ลืมรวมแท็บ Info ตาม; (2) แท็บ Param/Query/Sub ในโค้ดจริงไม่มีตัวเลขนับ (เช่น "Query 1+3") ต่อท้ายชื่อแท็บเหมือน demo
 - แก้ทั้งคู่: รวม Info เป็นการ์ดเดียว (Code, Name, [Category|Department], [Output Type|Access Level], Status, (create เท่านั้น) Attachments, Description, [Downloadable|Editable]) ทั้ง `report-create` และ `report-edit`; เพิ่ม `hook/useReportEditorCounts.ts` (fetch นับจำนวนแยกจาก tab component เอง) + ให้ `ParamTab`/`QueryTab`/`SubTab` รับ `onDataChange` optional เรียกท้าย `fetchAll` เพื่อให้ badge sync กับทุกการเพิ่ม/แก้/ลบอัตโนมัติ
 - `npx tsc --noEmit` = 0 error, `npm test` = 37/37 ผ่าน, `npm run build` = exit 0 — ยังไม่มี browser tool ยืนยัน visual จริงเหมือนเดิม รอผู้ใช้เช็คต่อ
+
+---
+
+### Phase 16 — Security Hardening Round 2 (P0 จาก audit 2026-08-30) ✅ ปิดครบทั้ง 4 sub-phase
+
+มาจาก `document/system-audit-2026-08-30.md` — audit ทั้งระบบเทียบกับ `system-checklist.md` (6 การตรวจสอบคู่ขนาน)
+เจอ 4 จุดที่ต้องแก้ทันที (severity สูงสุด) แผนเต็มอยู่ที่ [`phase16-plan.md`](./phase16-plan.md) commit แผนแยกก่อน
+(`6879f1e`) แล้วค่อย implement (`49af393`) ตาม workflow ปกติ
+
+- [x] **16a** — `app/api/users/user/[id]/route.ts` GET ไม่มีการเช็ค auth เลยมาตลอด (unauthenticated PII leak/IDOR
+  — ใครก็ตามเดา user id แล้วดึง username/email/ชื่อ-นามสกุล/status/department_id ออกมาได้) เพิ่ม
+  `requireRole(admin)` ให้ตรงกับ sibling list endpoint — verified สดแล้ว: ไม่ login → 401, login เป็น
+  non-admin → 403, login เป็น admin → 200 ข้อมูลถูกต้อง
+- [x] **16b** — ไฟล์รายงานที่ upload ไว้ (`report_files`/`report_sub_reports`) ถูก serve ซ้อนกัน 2 ทาง: ทางที่ถูกผ่าน
+  API ที่เช็ค ACL, และทางที่ผิดผ่าน static path ของ Next เพราะ `UPLOAD_BASE_PATH` default เป็น `"public"` มา
+  ตลอด ย้าย default เป็น `storage/uploads` (นอก `public/`) + ปฏิเสธค่าที่ resolve เข้าไปใน `public/` ผ่าน
+  `/settings/storage` + migrate ไฟล์จริงของ dev DB นี้ด้วย `scripts/migrate-report-storage-root.ts` (ย้ายไฟล์
+  จริง 7 ไฟล์สำเร็จ, ยืนยันสดว่า `curl` ไป path เดิมได้ 404 แล้ว)
+  - **เจอเพิ่มระหว่างทำจริง** (ไม่ใช่แค่ทฤษฎี — ยืนยันจาก data จริงในเซสชันเดียวกัน): `reports.file_path` (field
+    เก่าก่อนมี `report_files`, ยังใช้เป็น card thumbnail + เป็น field ที่ `app/api/reports/[id]/download`
+    อ่านตรงจาก `PUBLIC_DIR` มาตลอด) หลาย report ชี้เข้า `assest/report-files/` เดียวกับที่ย้าย ทำให้ thumbnail
+    กับ legacy download route พังถ้าไม่แก้ด้วย — แก้โดยเพิ่ม `lib/legacy-report-file.ts`
+    (`readReportFileWithLegacyFallback` — ลอง storage root ใหม่ก่อน fallback ไป `public/` ถ้าไม่เจอ) ใช้ร่วมกัน
+    3 จุด: `[id]/download` (แก้ของเดิม), `[id]/thumbnail` (ใหม่ — การ์ด report ชี้มาที่นี่แทน raw path แล้ว),
+    `shares/[token]/download` (ใหม่ — หน้า share page ชี้มาที่นี่แทน raw `f.file_path` แล้ว, ปิดช่องโหว่แบบ
+    เดียวกับที่ 5e เคยปิดให้ฝั่ง `report_files`-backed ไปแล้วแต่ตกหล่นฝั่ง legacy fallback)
+- [x] **16c** — ไม่มี CSRF defense-in-depth เลยนอกจาก `SameSite=Lax` เพิ่ม Origin-header check ใน
+  `lib/auth.ts`'s `requireAuth()` (ไม่ต้องแก้ client เลยสักไฟล์ — server-side ล้วน) verified สดแล้ว: cross-site
+  Origin + cookie → 403 `{error:"Forbidden"}`, same-origin/ไม่มี Origin header → ผ่านไปที่ business logic ปกติ
+- [x] **16d** — rate limit เดิมครอบแค่ login/2FA/dashboard 2 route เพิ่ม bucket ใหม่ที่หลวมกว่า
+  (`checkGeneralRateLimit`, 60 ครั้ง/นาที) ใน `lib/rate-limit.ts` ผูกเข้า 6 endpoint ที่เป็น write สูง (report
+  create, favorites, tickets, sub-reports, permissions, shares) verified fail-open สดแล้ว (Redis ปิดอยู่จริง
+  ระหว่างทดสอบ — request ยังผ่านไปถึง business logic ปกติ ไม่โดนบล็อก)
+
+**Verification โดยรวม**: `npx tsc --noEmit` = 0 error, `npm test` = 37/37 ผ่าน (1 skip เท่าเดิม) ทั้งก่อน/หลังแก้
+ส่วนที่เจอเพิ่มระหว่างทำ (item 7 ใน 16b) — ไม่ได้รัน `npm run build` เพราะ dev server รันอยู่คู่ขนาน (ตาม
+คำเตือนใน CLAUDE.md เรื่อง `.next` corruption บน Windows) ใช้ `tsc --noEmit` + live curl กับ dev server ที่รันอยู่
+แทน — ไม่ได้ live-test `GET /api/shares/[token]/download` เพราะ dev DB นี้ไม่มี `report_shares` row ให้ทดสอบ
+(verified ผ่าน type-check + โครงสร้างเหมือน `.../files/[fileId]/download` ที่ proven แล้วแทน)
+
+**สิ่งที่ scope out จาก Phase 16 โดยตั้งใจ** (P1-P4 ใน `system-audit-2026-08-30.md`, ไม่ใช่ของค้างที่ลืม):
+transactions ที่ยังไม่ครบทุก multi-step write, validation coverage ที่เหลืออีก ~54% ของ route, response-envelope
+ที่ยังไม่สม่ำเสมอทั้งระบบ, service/repository layer, CD, DB backup, health check endpoint, universal rate
+limiting ทั้ง 61 route (ต้องแก้ `proxy.ts` matcher ให้ครอบ `/api/*` — เป็น architectural change แยก ไม่ใช่ของ
+phase นี้)
 
 ---
 
