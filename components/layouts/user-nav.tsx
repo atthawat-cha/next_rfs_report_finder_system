@@ -103,7 +103,7 @@ return (
         </Link>
         </DropdownMenuItem>
         <DropdownMenuItem className="hover:cursor-pointer" asChild>
-        <Link href="/account" className="flex items-center">
+        <Link href="/profile" className="flex items-center">
             <User className="w-4 h-4 mr-3 text-muted-foreground" />
             {t("account")}
         </Link>
