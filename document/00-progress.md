@@ -1,6 +1,6 @@
 # ความคืบหน้าโครงการ — RFS Report Finder System
 
-> **อัปเดตล่าสุด:** 2026-08-29 · **Branch:** `development` · **HEAD:** `5df990d` (fix: consolidate favorites card preview) + ของค้าง #16 (`/profile` 500) fix, รอ commit
+> **อัปเดตล่าสุด:** 2026-08-29 · **Branch:** `development` · **HEAD:** `7c378b6` (fix: /profile 500 for every account - ของค้าง #16)
 >
 > ไฟล์นี้ตอบคำถามเดียว: **"ตอนนี้ถึงไหนแล้ว และเหลืออะไร"** สถานะทุกแถวอ้างอิง commit จริงใน git log เป็นหลักฐาน ไม่ใช่การอ่านโค้ดเดา
 >
