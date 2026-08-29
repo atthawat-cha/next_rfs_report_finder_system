@@ -28,6 +28,8 @@
     }
   },
   "queryTab": {
+    "listTitle": "Queries",
+    "addButton": "Add",
     "namePlaceholder": "Query name",
     "sqlPlaceholder": "SQL text",
     "changeLogPlaceholder": "Change note (optional, saved with this version)",
@@ -35,26 +37,31 @@
     "mainReport": "Main report",
     "subReportOption": "Sub-report: {name}",
     "containerDescription": "Reference only - these queries are never actually executed by the system",
-    "mainQuerySectionTitle": "Main Query",
-    "subQueriesSectionTitle": "Sub Queries",
     "mainBadge": "Main",
-    "noMainQuery": "No main query in this scope yet",
-    "noSubQueries": "No sub queries yet",
-    "setAsMain": "Set as main",
-    "addQueryTitle": "Add Query",
-    "addQueryDescription": "Choose a scope (main report or a sub-report), then check \"Main Query\" if this should be the scope's main query",
-    "addQueryButton": "Add Query",
+    "emptyStateDescription": "No queries in this report yet",
+    "replaceMainWarning": "Setting this as main will replace the current main query for this container",
+    "versionNew": "new",
+    "addParameter": "Add parameter",
+    "parametersPopoverTitle": "Report variables",
+    "noParameters": "No variables defined for this report yet",
+    "formatQuery": "Format query",
+    "themeLight": "Light",
+    "themeDark": "Dark",
+    "analysisTitle": "Query analysis",
+    "tablesLabel": "Tables",
+    "fieldsLabel": "Fields",
+    "conditionsLabel": "Conditions",
+    "versionHistoryTitle": "Version history",
+    "noVersionHistory": "No version history yet",
     "errors": {
       "missingFields": "Enter a name and SQL text",
       "addFailed": "Failed to add query",
       "saveFailed": "Failed to save query",
-      "setMainFailed": "Failed to set as main query",
       "deleteFailed": "Failed to delete query"
     },
     "success": {
       "add": "Query added successfully",
       "save": "Query saved successfully",
-      "setMain": "\"{name}\" set as the main query",
       "delete": "Query deleted successfully"
     }
   },
@@ -153,14 +160,5 @@
     "success": {
       "rollback": "Rolled back to version v{version}"
     }
-  },
-  "querySummary": {
-    "none": "— None",
-    "tables": "Tables",
-    "fields": "Fields",
-    "conditions": "Conditions",
-    "cannotAnalyze": "Unable to analyze this SQL. Showing full SQL instead.",
-    "hideFull": "Hide full SQL",
-    "showFull": "View full SQL"
   }
 }

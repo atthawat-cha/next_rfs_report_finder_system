@@ -28,6 +28,8 @@
     }
   },
   "queryTab": {
+    "listTitle": "คิวรี่",
+    "addButton": "เพิ่ม",
     "namePlaceholder": "ชื่อคิวรี่",
     "sqlPlaceholder": "ข้อความ SQL",
     "changeLogPlaceholder": "บันทึกการเปลี่ยนแปลง (ไม่บังคับ บันทึกไว้กับเวอร์ชันนี้)",
@@ -35,26 +37,31 @@
     "mainReport": "รายงานหลัก",
     "subReportOption": "รายงานย่อย: {name}",
     "containerDescription": "ใช้เป็นข้อมูลอ้างอิงเท่านั้น — ระบบไม่รันคิวรี่เหล่านี้จริง",
-    "mainQuerySectionTitle": "คิวรี่หลัก",
-    "subQueriesSectionTitle": "คิวรี่ย่อย",
     "mainBadge": "หลัก",
-    "noMainQuery": "ยังไม่มี main query ในขอบเขตนี้",
-    "noSubQueries": "ยังไม่มี sub query",
-    "setAsMain": "ตั้งเป็นหลัก",
-    "addQueryTitle": "เพิ่มคิวรี่",
-    "addQueryDescription": "เลือกขอบเขต (รายงานหลัก หรือรายงานย่อย) แล้วติ๊ก \"คิวรี่หลัก\" ถ้าต้องการให้เป็นคิวรี่หลักของขอบเขตนั้น",
-    "addQueryButton": "เพิ่มคิวรี่",
+    "emptyStateDescription": "ยังไม่มีคิวรี่ในรายงานนี้",
+    "replaceMainWarning": "การตั้งเป็นคิวรี่หลักจะแทนที่คิวรี่หลักเดิมของขอบเขตนี้",
+    "versionNew": "ใหม่",
+    "addParameter": "เพิ่มพารามิเตอร์",
+    "parametersPopoverTitle": "ตัวแปรของรายงาน",
+    "noParameters": "ยังไม่มีตัวแปรที่กำหนดไว้ในรายงานนี้",
+    "formatQuery": "จัดรูปแบบคิวรี่",
+    "themeLight": "สว่าง",
+    "themeDark": "มืด",
+    "analysisTitle": "การวิเคราะห์คิวรี่",
+    "tablesLabel": "ตาราง",
+    "fieldsLabel": "ฟิลด์",
+    "conditionsLabel": "เงื่อนไข",
+    "versionHistoryTitle": "ประวัติเวอร์ชัน",
+    "noVersionHistory": "ยังไม่มีประวัติเวอร์ชัน",
     "errors": {
       "missingFields": "กรุณากรอกชื่อและข้อความ SQL",
       "addFailed": "เพิ่มคิวรี่ไม่สำเร็จ",
       "saveFailed": "บันทึกคิวรี่ไม่สำเร็จ",
-      "setMainFailed": "ตั้งเป็นคิวรี่หลักไม่สำเร็จ",
       "deleteFailed": "ลบคิวรี่ไม่สำเร็จ"
     },
     "success": {
       "add": "เพิ่มคิวรี่สำเร็จ",
       "save": "บันทึกคิวรี่สำเร็จ",
-      "setMain": "ตั้ง \"{name}\" เป็นคิวรี่หลักแล้ว",
       "delete": "ลบคิวรี่สำเร็จ"
     }
   },
@@ -153,14 +160,5 @@
     "success": {
       "rollback": "ย้อนกลับไปยังเวอร์ชัน v{version} แล้ว"
     }
-  },
-  "querySummary": {
-    "none": "— ไม่มี",
-    "tables": "ตาราง",
-    "fields": "ฟิลด์",
-    "conditions": "เงื่อนไข",
-    "cannotAnalyze": "ไม่สามารถวิเคราะห์ SQL นี้ได้ ดู SQL เต็มแทน",
-    "hideFull": "ซ่อน SQL เต็ม",
-    "showFull": "ดู SQL เต็ม"
   }
 }

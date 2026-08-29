@@ -100,3 +100,16 @@ export function tokenizeSql(sql: string): SqlToken[] {
 
   return tokens;
 }
+
+/** Splits a flat token stream back into per-line token arrays, for line-numbered rendering. */
+export function splitTokensIntoLines(tokens: SqlToken[]): SqlToken[][] {
+  const lines: SqlToken[][] = [[]];
+  for (const token of tokens) {
+    const parts = token.text.split("\n");
+    parts.forEach((part, idx) => {
+      if (idx > 0) lines.push([]);
+      if (part.length > 0) lines[lines.length - 1].push({ text: part, kind: token.kind });
+    });
+  }
+  return lines;
+}

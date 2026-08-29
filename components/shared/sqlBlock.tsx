@@ -5,7 +5,7 @@ import { useTranslations } from "next-intl";
 import { Button } from "@/components/ui/button";
 import { Copy, Check } from "lucide-react";
 import { cn } from "@/lib/utils";
-import { tokenizeSql, type SqlToken, type SqlTokenKind } from "@/lib/sql-highlight";
+import { tokenizeSql, splitTokensIntoLines, type SqlTokenKind } from "@/lib/sql-highlight";
 
 const KIND_CLASS: Record<SqlTokenKind, string> = {
   keyword: "text-chart-1 font-semibold",
@@ -15,18 +15,6 @@ const KIND_CLASS: Record<SqlTokenKind, string> = {
   punct: "text-foreground/70",
   plain: "text-foreground",
 };
-
-function splitIntoLines(tokens: SqlToken[]): SqlToken[][] {
-  const lines: SqlToken[][] = [[]];
-  for (const token of tokens) {
-    const parts = token.text.split("\n");
-    parts.forEach((part, idx) => {
-      if (idx > 0) lines.push([]);
-      if (part.length > 0) lines[lines.length - 1].push({ text: part, kind: token.kind });
-    });
-  }
-  return lines;
-}
 
 /**
  * Read-only, highlighted SQL display. Hand-written tokenizer (lib/sql-highlight.ts)
@@ -45,7 +33,7 @@ export function SqlBlock({
 }) {
   const tc = useTranslations("common");
   const [copied, setCopied] = React.useState(false);
-  const lines = React.useMemo(() => splitIntoLines(tokenizeSql(sql)), [sql]);
+  const lines = React.useMemo(() => splitTokensIntoLines(tokenizeSql(sql)), [sql]);
 
   const handleCopy = async () => {
     try {
