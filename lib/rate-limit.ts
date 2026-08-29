@@ -17,21 +17,38 @@ import logger from './logger';
 const MAX_ATTEMPTS = 5;
 const WINDOW_MS = 15 * 60 * 1000; // 15 minutes
 
-export async function checkRateLimit(identifier: string): Promise<{ allowed: boolean; retryAfter?: number }> {
+const GENERAL_MAX_ATTEMPTS = 60;
+const GENERAL_WINDOW_MS = 60 * 1000; // 1 minute
+
+async function checkBucket(
+  bucket: string,
+  identifier: string,
+  max: number,
+  windowMs: number,
+): Promise<{ allowed: boolean; retryAfter?: number }> {
   if (!identifier) return { allowed: false };
-  const key = `ratelimit:login:${identifier}`;
+  const key = `ratelimit:${bucket}:${identifier}`;
   try {
     const count = await redis.incr(key);
-    if (count === 1) await redis.pexpire(key, WINDOW_MS);
-    if (count > MAX_ATTEMPTS) {
+    if (count === 1) await redis.pexpire(key, windowMs);
+    if (count > max) {
       const ttl = await redis.pttl(key);
       return { allowed: false, retryAfter: Math.max(0, Math.ceil(ttl / 1000)) };
     }
     return { allowed: true };
   } catch (err) {
-    logger.error({ err }, '[rateLimit] redis error, failing open');
+    logger.error({ err }, `[rateLimit] redis error on bucket "${bucket}", failing open`);
     return { allowed: true }; // fail-open: rate limiting is defense-in-depth, not the primary auth boundary
   }
+}
+
+export async function checkRateLimit(identifier: string): Promise<{ allowed: boolean; retryAfter?: number }> {
+  return checkBucket('login', identifier, MAX_ATTEMPTS, WINDOW_MS);
+}
+
+/** Looser, per-user bucket for general write endpoints (report create/update, favorites, tickets, uploads). */
+export async function checkGeneralRateLimit(identifier: string): Promise<{ allowed: boolean; retryAfter?: number }> {
+  return checkBucket('write', identifier, GENERAL_MAX_ATTEMPTS, GENERAL_WINDOW_MS);
 }
 
 export async function resetRateLimit(identifier: string): Promise<void> {

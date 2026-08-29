@@ -122,18 +122,47 @@ export function getTokenFromCookie(req: NextRequest): string | undefined {
   return req.cookies.get(COOKIE_NAME)?.value;
 }
 
+const SAFE_METHODS = new Set(['GET', 'HEAD', 'OPTIONS']);
+
+/**
+ * True unless the request carries an Origin header that doesn't match this
+ * request's own Host - i.e. only blocks a mismatch, never blocks on absence
+ * (not every legitimate caller sends Origin).
+ */
+function isTrustedOrigin(req: NextRequest): boolean {
+  const origin = req.headers.get('origin');
+  if (!origin) return true;
+  try {
+    return new URL(origin).host === req.headers.get('host');
+  } catch {
+    return false;
+  }
+}
+
 /**
  * Validate token from cookie or Authorization header.
  * Use inside Next.js Route Handlers or proxy.ts.
  *
- * @returns decoded payload or a 401 NextResponse
+ * @returns decoded payload or a 401/403 NextResponse
  */
 export async function requireAuth(req: NextRequest): Promise<JWTPayload | NextResponse> {
   // 1. Try cookie first, then Bearer header
-  const token = getTokenFromCookie(req) ?? req.headers.get("authorization")?.replace(/^Bearer\s+/i, "");
+  const cookieToken = getTokenFromCookie(req);
+  const bearerToken = req.headers.get("authorization")?.replace(/^Bearer\s+/i, "");
+  const token = cookieToken ?? bearerToken;
 
   if (!token) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  }
+
+  // CSRF defense-in-depth: a cookie-authenticated request that changes state
+  // must originate from this app's own origin. SameSite=Lax (setAuthCookie)
+  // already blocks cross-site simple form POSTs in modern browsers; this
+  // closes the gap for fetch/XHR-based cross-site requests and any browser
+  // where SameSite is ineffective. Bearer-token callers are exempt - forging
+  // one requires stealing the token itself, not just riding an ambient cookie.
+  if (cookieToken && !bearerToken && !SAFE_METHODS.has(req.method) && !isTrustedOrigin(req)) {
+    return NextResponse.json({ error: "Forbidden" }, { status: 403 });
   }
 
   const payload = await verifyToken(token);

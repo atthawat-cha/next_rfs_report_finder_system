@@ -260,21 +260,68 @@ Add an entry for the new root so any locally-migrated or newly-uploaded files ne
 /storage/uploads/
 ```
 
-### Verification (16b)
-- Before running the migration script: confirm the 3 untracked files from `git status` are still under
-  `public/assest/report-files/` and `public/assest/report-subreports/`.
-- Run `npx tsx scripts/migrate-report-storage-root.ts` — confirm log output shows both dirs moved, and
-  `public/assest/report-files/` / `public/assest/report-subreports/` no longer exist (or are empty).
-- Confirm the files now exist under `storage/uploads/assest/report-files/` and `.../report-subreports/`.
-- Restart `npm run dev`.
-- As a logged-in user with export permission on a report that has a BLANK_FORM file, `GET
-  /api/reports/[id]/download` still returns the file (200, correct bytes) — proves `storage.read()` still
-  resolves correctly against the new root.
-- **The actual fix, proven**: `curl -i http://localhost:3501/assest/report-files/<any-filename-that-used-to-work>`
-  (with or without a session cookie) now returns `404` from Next's static handler — before this phase it
-  would have returned the file's bytes to anyone logged in, regardless of that report's ACL.
-- Report card thumbnails (`reports.file_path`, unrelated `assest/reports`/`assest/images` folders) still
-  render — confirms the intentionally-public image pipeline was untouched.
+### 7. Discovered during implementation: `reports.file_path` also reads/writes raw `public/` paths
+
+Live-testing the migration (running it against this dev DB's real data, not just reasoning about the
+code) surfaced something the audit missed: `reports.file_path` — a legacy, pre-`report_files` single-file
+field still populated by `report/manage`'s create flow, used both as the report-card thumbnail `<Image src>`
+(`reportCards.tsx:39`, `favReportCard.tsx:37`) **and** read directly from `PUBLIC_DIR` by
+`app/api/reports/[id]/download/route.ts` — for many existing reports points into the exact
+`assest/report-files/` directory this sub-phase migrates. Moving those files broke both: the thumbnail
+(a raw static `<Image src="/assest/report-files/...">`) and the legacy download route (hardcoded
+`fs.readFile(path.join(PUBLIC_DIR, report.file_path))`, no `storage.read()`). The same field also has rows
+that never moved (`/uploads/rpt1.pdf`, `/assest/uploads/*.webp` — genuinely still public, untouched by this
+migration) and one row (`/uploads/rpt2.pdf`) whose target never existed on disk at all — a pre-existing,
+unrelated data gap, not a regression.
+
+Additionally, `app/shares/[token]/page.tsx` linked the same legacy `reports.file_path` fallback (`f.id ===
+null` case) as a **raw, unauthenticated static href** on the public share page — its own comment explained
+this "always lives under public/" (true when written, false as of this migration).
+
+Fixed all three, added `lib/legacy-report-file.ts` exporting `readReportFileWithLegacyFallback(relPath)` —
+tries `storage.read()` first (covers migrated content and correctly defers to whatever backend is
+configured), falls back to a direct `public/` read (covers the never-migrated rows) — used by all three call
+sites so the two copies can't drift:
+
+- `app/api/reports/[id]/download/route.ts` — replaced its hardcoded `PUBLIC_DIR`/`fs.readFile` with the
+  shared helper (already ACL-checked via `resolveReportAcl`, `can_export`; this was the correctness fix, not
+  a new security boundary).
+- New `app/api/reports/[id]/thumbnail/route.ts` — ACL-checked (`can_view`, lower bar than `can_export` since
+  showing a card thumbnail isn't an export), no download-count/activity-log side effects (a view, not a
+  download, matching `.../files/[fileId]/preview`'s stance). `reportCards.tsx` and `favReportCard.tsx` now
+  point their `<Image src>` at `/api/reports/${report.id}/thumbnail` instead of the raw path.
+- New `app/api/shares/[token]/download/route.ts` — mirrors `.../files/[fileId]/download`'s token/expiry/
+  `can_download` checks, for the `reports.file_path` fallback case specifically. `app/shares/[token]/page.tsx`'s
+  href now points here instead of the raw `f.file_path`.
+
+### Verification (16b) — actually run, 2026-08-30
+
+- Before running the migration script: confirmed via `ls` that `public/assest/report-files/` (6 files) and
+  `public/assest/report-subreports/` (1 file) held real content — the same files `git status` showed
+  untracked at audit time.
+- Ran `npx tsx scripts/migrate-report-storage-root.ts` — logged both dirs moved; confirmed via `ls`
+  afterward that `public/assest/report-files/` and `public/assest/report-subreports/` no longer exist, and
+  the same 7 files now sit under `storage/uploads/assest/report-files/` and `.../report-subreports/`.
+- **The actual fix, proven**: `curl http://localhost:3501/assest/report-files/rf_1788024356583_1.png` now
+  gets Next's static 404 (filesystem-level: the bytes are no longer anywhere under `public/`, so this holds
+  regardless of session state) — before this phase it would have returned the file's bytes to anyone with a
+  valid session, regardless of that report's ACL.
+- Logged in as the seeded `e2e-admin` and confirmed with real bytes, live against the running dev server
+  (no restart needed — Next recompiles route handlers per request, and `lib/system-settings.ts`'s 30s cache
+  had already turned over by the time of these calls):
+  - `GET /api/reports/{FIN-0025 report id}/download` → `200`, 6.1MB, correct PDF bytes (file physically
+    migrated, resolves via `storage.read()`).
+  - `GET /api/reports/{"test" report id}/thumbnail` → `200`, `image/png` (thumbnail path also migrated,
+    resolves via the new endpoint + shared fallback helper).
+  - `GET /api/reports/{Anes-001 report id}/thumbnail` → `200`, `image/webp` (this report's `file_path` was
+    **never** migrated, still physically under `public/assest/uploads/` — proves the fallback half of
+    `readReportFileWithLegacyFallback` works, not just the migrated-path half).
+- `npx tsc --noEmit` = 0 errors, `npm test` = 37/37 passed (1 skipped, same as baseline) both before and
+  after the item-7 fixes.
+- Not live-exercised: `GET /api/shares/[token]/download` — no `report_shares` rows exist in this dev DB to
+  test against. Verified instead by type-checking cleanly and mirroring the already-proven
+  `.../files/[fileId]/download` route's token/expiry/`can_download` checks structurally, plus reusing the
+  same `readReportFileWithLegacyFallback` helper already live-verified above.
 - In `/settings/storage`, attempt to set `UPLOAD_BASE_PATH` to `public` or `public/foo` → rejected with the
   new Thai error message; setting it to another real, writable directory outside `public/` still succeeds.
 - `npx tsc --noEmit` = 0 errors, `npm test` unaffected, `npm run test:e2e` still passes (seed-ci.ts change).

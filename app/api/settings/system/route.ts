@@ -4,7 +4,7 @@ import { getCurrentUser, requireRole, routeAcceptted } from '@/lib/auth';
 import { logActivity } from '@/lib/activity-log';
 import { createNotification } from '@/lib/notifications';
 import { invalidateSettingsCache } from '@/lib/system-settings';
-import { validateUploadBasePath } from '@/lib/storage-path';
+import { validateUploadBasePath, DEFAULT_UPLOAD_BASE_PATH } from '@/lib/storage-path';
 import { currentStorageBackend } from '@/lib/storage';
 import { faker } from '@faker-js/faker';
 import { z } from 'zod';
@@ -22,7 +22,6 @@ const DEFAULT_PAGE_SIZE_KEY = 'DEFAULT_PAGE_SIZE';
 const DEFAULT_SHARE_EXPIRY_DAYS_KEY = 'DEFAULT_SHARE_EXPIRY_DAYS';
 
 const DEFAULT_STORAGE_LIMIT_BYTES = 10 * 1024 * 1024 * 1024; // 10 GB
-const DEFAULT_UPLOAD_BASE_PATH = 'public';
 const DEFAULT_MAX_UPLOAD_SIZE_BLANK_FORM = 10 * 1024 * 1024; // 10 MB
 const DEFAULT_MAX_UPLOAD_SIZE_SAMPLE_FILLED_FORM = 10 * 1024 * 1024; // 10 MB
 const DEFAULT_MAX_UPLOAD_SIZE_SAMPLE_DATA = 20 * 1024 * 1024; // 20 MB

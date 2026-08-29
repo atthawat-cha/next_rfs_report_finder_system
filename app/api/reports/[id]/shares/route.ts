@@ -1,6 +1,7 @@
 import prisma from '@/lib/prisma';
 import { NextRequest, NextResponse } from 'next/server';
 import { getCurrentUser, requireRole, routeAcceptted } from '@/lib/auth';
+import { checkGeneralRateLimit } from '@/lib/rate-limit';
 import { logActivity } from '@/lib/activity-log';
 import { createNotification } from '@/lib/notifications';
 import { getSettingNumber } from '@/lib/system-settings';
@@ -79,6 +80,9 @@ export async function POST(req: NextRequest, props: { params: Promise<{ id: stri
     try {
         const authResult = await requireRole(req, routeAcceptted('admin'));
         if (authResult instanceof NextResponse) return authResult;
+
+        const rate = await checkGeneralRateLimit(authResult.user.id);
+        if (!rate.allowed) return NextResponse.json({ error: "Too many requests" }, { status: 429 });
 
         const report = await prisma.reports.findUnique({ where: { id: params.id }, select: { id: true, name_th: true } });
         if (!report) {
@@ -187,6 +191,9 @@ export async function DELETE(req: NextRequest, props: { params: Promise<{ id: st
     try {
         const authResult = await requireRole(req, routeAcceptted('admin'));
         if (authResult instanceof NextResponse) return authResult;
+
+        const rate = await checkGeneralRateLimit(authResult.user.id);
+        if (!rate.allowed) return NextResponse.json({ error: "Too many requests" }, { status: 429 });
 
         const shareId = req.nextUrl.searchParams.get('id');
         if (!shareId) {

@@ -134,7 +134,7 @@ export default function StorageSettingsPage() {
                   value={uploadBasePath}
                   onChange={(e) => setUploadBasePath(e.target.value)}
                   className="max-w-md"
-                  placeholder="public"
+                  placeholder="storage/uploads"
                 />
                 <p className="text-sm text-muted-foreground">
                   {t.rich('uploadBasePathDescription', { code: (chunks) => <code>{chunks}</code> })}

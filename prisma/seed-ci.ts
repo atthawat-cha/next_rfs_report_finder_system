@@ -5,6 +5,7 @@ import bcrypt from "bcryptjs";
 import { AccessLevel, FileKind, PrismaClient, ReportOutputType, ReportStatus } from "../app/generated/prisma/client";
 import { PrismaPg } from "@prisma/adapter-pg";
 import { faker } from "@faker-js/faker";
+import { getUploadRoot } from "../lib/storage-path";
 import {
   E2E_ADMIN_USERNAME,
   E2E_ADMIN_PASSWORD,
@@ -124,11 +125,12 @@ async function main() {
 
   const existingE2eReport = await prisma.reports.findFirst({ where: { code: E2E_REPORT_CODE } });
   if (!existingE2eReport) {
-    // Write real bytes to disk (default upload root: <cwd>/public, same
-    // fallback lib/storage-path.ts's getUploadRoot() uses when
-    // UPLOAD_BASE_PATH isn't configured) so the download route's
-    // storage.read() call finds a real file, not just DB metadata.
-    const absoluteFilePath = path.join(process.cwd(), "public", E2E_FILE_RELATIVE_PATH);
+    // Write real bytes to disk under whatever root lib/storage-path.ts's
+    // getUploadRoot() resolves to (the UPLOAD_BASE_PATH setting, or its
+    // default) so the download route's storage.read() call finds a real
+    // file, not just DB metadata. Resolving through the same function keeps
+    // this in sync regardless of what the default is.
+    const absoluteFilePath = path.join(await getUploadRoot(), E2E_FILE_RELATIVE_PATH);
     await fs.mkdir(path.dirname(absoluteFilePath), { recursive: true });
     await fs.writeFile(absoluteFilePath, E2E_FILE_CONTENT);
 

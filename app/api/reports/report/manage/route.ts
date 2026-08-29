@@ -1,6 +1,7 @@
 import prisma from '@/lib/prisma';
 import { NextRequest, NextResponse } from 'next/server';
 import { getAuthFromRequest, getCurrentUser, requireRole, routeAcceptted } from '@/lib/auth';
+import { checkGeneralRateLimit } from '@/lib/rate-limit';
 import z from 'zod';
 import { uploadReportFile } from '@/lib/reportFileUploadServices';
 import { faker } from '@faker-js/faker';
@@ -112,6 +113,11 @@ export async function POST(req: NextRequest) {
 
         if (authResult instanceof NextResponse) {
             return authResult; // ส่งต่อการตอบกลับ 401 หรือ 403 จาก requireRole
+        }
+
+        const rate = await checkGeneralRateLimit(authResult.user.id);
+        if (!rate.allowed) {
+            return NextResponse.json({ error: "Too many requests" }, { status: 429 });
         }
 
         const data = await req.formData();

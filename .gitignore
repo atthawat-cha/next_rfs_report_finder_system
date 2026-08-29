@@ -18,6 +18,10 @@
 # not tracked (mirrors the rest of public/'s uploaded-file directories).
 /public/e2e/
 
+# report/sub-report uploads live outside public/ as of Phase 16
+# (system-audit-2026-08-30.md item 2) - never commit real uploaded content.
+/storage/uploads/
+
 # next.js
 /.next/
 /out/

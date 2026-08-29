@@ -1,6 +1,7 @@
 import prisma from '@/lib/prisma';
 import { NextRequest, NextResponse } from 'next/server';
 import { getAuthFromRequest, requireRole, routeAcceptted } from '@/lib/auth';
+import { checkGeneralRateLimit } from '@/lib/rate-limit';
 import { faker } from '@faker-js/faker';
 import { z } from 'zod';
 import { logActivity } from '@/lib/activity-log';
@@ -105,6 +106,11 @@ export async function POST(req: NextRequest) {
         const authResult = await requireRole(req, routeAcceptted('user'));
         if (authResult instanceof NextResponse) {
             return authResult;
+        }
+
+        const rate = await checkGeneralRateLimit(authResult.user.id);
+        if (!rate.allowed) {
+            return NextResponse.json({ error: "Too many requests" }, { status: 429 });
         }
 
         const body = await req.json();

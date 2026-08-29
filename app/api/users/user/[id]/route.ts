@@ -1,11 +1,15 @@
 import { NextRequest, NextResponse } from "next/server";
 import prisma from '@/lib/prisma';
 import logger from '@/lib/logger';
+import { requireRole, routeAcceptted } from '@/lib/auth';
 
 export async function GET(req: NextRequest, props: { params: Promise<{ id: string }> }) {
   const params = await props.params;
   try {
-    
+    const authResult = await requireRole(req, routeAcceptted('admin'));
+    if (authResult instanceof NextResponse) {
+      return authResult;
+    }
 
     const user = await prisma.users.findUnique({
       where: { id: params.id },

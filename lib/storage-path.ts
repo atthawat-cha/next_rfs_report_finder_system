@@ -18,8 +18,10 @@ const MAX_SIZE_KEY_BY_KIND: Record<string, string> = {
   SAMPLE_DATA: "MAX_UPLOAD_SIZE_SAMPLE_DATA",
 };
 
+export const DEFAULT_UPLOAD_BASE_PATH = "storage/uploads";
+
 export async function getUploadRoot(): Promise<string> {
-  const configured = await getSettingString("UPLOAD_BASE_PATH", "public");
+  const configured = await getSettingString("UPLOAD_BASE_PATH", DEFAULT_UPLOAD_BASE_PATH);
   return path.isAbsolute(configured) ? path.normalize(configured) : path.join(process.cwd(), configured);
 }
 
@@ -78,6 +80,15 @@ export async function validateUploadBasePath(value: string): Promise<UploadBaseP
   }
   if (!stat.isDirectory()) {
     return { ok: false, error: `"${resolved}" ไม่ใช่ไดเรกทอรี` };
+  }
+
+  const publicDir = path.join(process.cwd(), "public");
+  const publicDirWithSep = publicDir.endsWith(path.sep) ? publicDir : publicDir + path.sep;
+  if (resolved === publicDir || resolved.startsWith(publicDirWithSep)) {
+    return {
+      ok: false,
+      error: `ห้ามตั้งค่าเป็นไดเรกทอรีภายใต้ "public/" — ไฟล์จะถูกเข้าถึงได้โดยตรงโดยไม่ผ่านการตรวจสิทธิ์ (ACL bypass)`,
+    };
   }
 
   const probeFile = path.join(resolved, `.rfs-write-probe-${faker.string.alphanumeric(8)}`);

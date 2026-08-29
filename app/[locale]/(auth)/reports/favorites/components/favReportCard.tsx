@@ -34,7 +34,7 @@ function ReportThumbnail({ report, onPreview }: { report: ReportGetDataType; onP
             <div className="relative aspect-[4/3] w-full overflow-hidden rounded-t-xl bg-muted">
                 <CardAccentBar accent={accent} />
                 <Image
-                    src={`${report.file_path}`}
+                    src={`/api/reports/${report.id}/thumbnail`}
                     alt={report.file_name || ""}
                     fill
                     sizes="(max-width: 640px) 50vw, (max-width: 1024px) 33vw, 25vw"

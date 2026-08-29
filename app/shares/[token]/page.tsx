@@ -82,11 +82,11 @@ export default function SharedReportPage() {
                       <a
                         key={f.id ?? f.file_path}
                         // report_files-backed entries (id set) go through the
-                        // token-gated download endpoint so they still resolve
-                        // correctly regardless of UPLOAD_BASE_PATH; the legacy
-                        // reports.file_path fallback (id null) always lives
-                        // under public/ so a raw static link still works.
-                        href={f.id ? `/api/shares/${params.token}/files/${f.id}/download` : f.file_path}
+                        // per-file token-gated download endpoint; the legacy
+                        // reports.file_path fallback (id null) goes through
+                        // the report-level one - both resolve correctly
+                        // regardless of UPLOAD_BASE_PATH (Phase 16b).
+                        href={f.id ? `/api/shares/${params.token}/files/${f.id}/download` : `/api/shares/${params.token}/download`}
                         target="_blank"
                         rel="noopener noreferrer"
                         className="flex items-center justify-between text-sm bg-muted/40 rounded px-3 py-2 hover:bg-muted"

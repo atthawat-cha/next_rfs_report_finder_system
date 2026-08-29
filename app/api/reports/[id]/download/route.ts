@@ -1,4 +1,3 @@
-import fs from 'fs/promises';
 import path from 'path';
 import prisma from '@/lib/prisma';
 import { NextRequest, NextResponse } from 'next/server';
@@ -6,10 +5,9 @@ import { getAuthFromRequest, requireRole, routeAcceptted } from '@/lib/auth';
 import { logActivity } from '@/lib/activity-log';
 import { getClientIp } from '@/lib/request-info';
 import { resolveReportAcl } from '@/lib/report-acl';
+import { readReportFileWithLegacyFallback } from '@/lib/legacy-report-file';
 import { faker } from '@faker-js/faker';
 import { logDevError } from '@/lib/log-dev-error';
-
-const PUBLIC_DIR = path.join(process.cwd(), 'public');
 
 const MIME_TYPES: Record<string, string> = {
     pdf: 'application/pdf',
@@ -76,10 +74,9 @@ export async function GET(req: NextRequest, props: { params: Promise<{ id: strin
             return NextResponse.json({ success: false, error: "This report is not downloadable" }, { status: 403 });
         }
 
-        const absolutePath = path.join(PUBLIC_DIR, report.file_path);
         let fileBuffer: Buffer;
         try {
-            fileBuffer = await fs.readFile(absolutePath);
+            fileBuffer = await readReportFileWithLegacyFallback(report.file_path);
         } catch {
             return NextResponse.json({ success: false, error: "File not found on server" }, { status: 404 });
         }

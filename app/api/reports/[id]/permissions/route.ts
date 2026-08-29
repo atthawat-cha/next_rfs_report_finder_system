@@ -1,6 +1,7 @@
 import prisma from '@/lib/prisma';
 import { NextRequest, NextResponse } from 'next/server';
 import { getCurrentUser, requireRole, routeAcceptted } from '@/lib/auth';
+import { checkGeneralRateLimit } from '@/lib/rate-limit';
 import { logActivity } from '@/lib/activity-log';
 import { faker } from '@faker-js/faker';
 import { z } from 'zod';
@@ -77,6 +78,9 @@ export async function POST(req: NextRequest, props: { params: Promise<{ id: stri
         const authResult = await requireRole(req, routeAcceptted('admin'));
         if (authResult instanceof NextResponse) return authResult;
 
+        const rate = await checkGeneralRateLimit(authResult.user.id);
+        if (!rate.allowed) return NextResponse.json({ error: "Too many requests" }, { status: 429 });
+
         const report = await prisma.reports.findUnique({ where: { id: params.id }, select: { id: true } });
         if (!report) {
             return NextResponse.json({ success: false, error: "Report not found" }, { status: 404 });
@@ -146,6 +150,9 @@ export async function PUT(req: NextRequest, props: { params: Promise<{ id: strin
         const authResult = await requireRole(req, routeAcceptted('admin'));
         if (authResult instanceof NextResponse) return authResult;
 
+        const rate = await checkGeneralRateLimit(authResult.user.id);
+        if (!rate.allowed) return NextResponse.json({ error: "Too many requests" }, { status: 429 });
+
         const body = await req.json();
         const validate = updateZod.safeParse(body);
         if (!validate.success) {
@@ -187,6 +194,9 @@ export async function DELETE(req: NextRequest, props: { params: Promise<{ id: st
     try {
         const authResult = await requireRole(req, routeAcceptted('admin'));
         if (authResult instanceof NextResponse) return authResult;
+
+        const rate = await checkGeneralRateLimit(authResult.user.id);
+        if (!rate.allowed) return NextResponse.json({ error: "Too many requests" }, { status: 429 });
 
         const grantId = req.nextUrl.searchParams.get('id');
         if (!grantId) {
