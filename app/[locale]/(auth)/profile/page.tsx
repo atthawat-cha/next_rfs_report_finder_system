@@ -6,26 +6,20 @@ import { Avatar, AvatarFallback } from '@/components/ui/avatar';
 import { ContentLayout } from '@/components/layouts/content-layout';
 import { TwoFactorSettings } from '@/components/shared/twoFactorSettings';
 
-interface UserSessionType {
-  id: string;
-  username: string;
-  name: string;
-  role: string;
-  department: string;
-  permissions: string[];
-}
-
 export default async function ProfilePage() {
-  const user = await getCurrentUser() as UserSessionType;
+  const user = await getCurrentUser();
   const locale = await getLocale();
 
   if (!user) {
     redirect({ href: '/login', locale });
+    return null;
   }
 
   const t = await getTranslations('auth.profile');
+  const displayName = user.first_name ?? user.username ?? '';
 
   const getInitials = (name: string) => {
+    if (!name) return '';
     return name
       .split(' ')
       .map((n) => n[0])
@@ -55,12 +49,12 @@ export default async function ProfilePage() {
             <div className="flex items-center gap-4">
               <Avatar className="h-20 w-20">
                 <AvatarFallback className="text-2xl">
-                  {getInitials(user.name)}
+                  {getInitials(displayName)}
                 </AvatarFallback>
               </Avatar>
               <div>
-                <h3 className="text-xl font-semibold">{user?.name}</h3>
-                <p className="text-sm text-muted-foreground">{user?.username}</p>
+                <h3 className="text-xl font-semibold">{displayName}</h3>
+                <p className="text-sm text-muted-foreground">{user.username}</p>
               </div>
             </div>
 
@@ -75,7 +69,7 @@ export default async function ProfilePage() {
               <div className="grid gap-2">
                 <label className="text-sm font-medium">{t('nameLabel')}</label>
                 <div className="px-3 py-2 bg-muted rounded-md text-sm">
-                  {user.name}
+                  {displayName}
                 </div>
               </div>
 
