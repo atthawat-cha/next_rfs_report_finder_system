@@ -1,0 +1,857 @@
+<title>Report Library</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+
+<style>
+  /* ============ Design tokens — mirrors the real app's shadcn "new-york/neutral"
+     theme (app/globals.css) exactly for base tokens, plus a small semantic layer
+     for status/access/file-type affordances that the current plain table doesn't need. */
+  :root {
+    --background: 0 0% 100%;
+    --foreground: 0 0% 3.9%;
+    --card: 0 0% 100%;
+    --card-foreground: 0 0% 3.9%;
+    --popover: 0 0% 100%;
+    --muted: 0 0% 96.1%;
+    --muted-foreground: 0 0% 45.1%;
+    --accent: 0 0% 96.1%;
+    --primary: 0 0% 9%;
+    --primary-foreground: 0 0% 98%;
+    --border: 0 0% 89.8%;
+    --input: 0 0% 89.8%;
+    --ring: 0 0% 3.9%;
+    --radius: 0.5rem;
+
+    --success: 142 71% 29%;
+    --success-bg: 142 71% 94%;
+    --warning: 32 95% 34%;
+    --warning-bg: 40 92% 92%;
+    --danger: 0 72% 45%;
+    --danger-bg: 0 72% 95%;
+    --archived-bg: 0 0% 93%;
+
+    --pdf: 0 68% 46%;
+    --pdf-bg: 0 68% 95%;
+    --xlsx: 152 55% 32%;
+    --xlsx-bg: 152 55% 94%;
+    --doc: 217 71% 45%;
+    --doc-bg: 217 71% 95%;
+
+    --shadow-card: 0 1px 2px rgba(0,0,0,.05), 0 1px 1px rgba(0,0,0,.03);
+    --shadow-pop: 0 12px 32px rgba(0,0,0,.12), 0 2px 8px rgba(0,0,0,.06);
+    --shadow-doc: 0 6px 14px rgba(0,0,0,.08);
+    --shadow-doc-modal: 0 8px 24px rgba(0,0,0,.12);
+  }
+
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      --background: 0 0% 6.5%;
+      --foreground: 0 0% 96%;
+      --card: 0 0% 9%;
+      --card-foreground: 0 0% 96%;
+      --popover: 0 0% 9%;
+      --muted: 0 0% 14.5%;
+      --muted-foreground: 0 0% 64%;
+      --accent: 0 0% 15.5%;
+      --primary: 0 0% 96%;
+      --primary-foreground: 0 0% 9%;
+      --border: 0 0% 18%;
+      --input: 0 0% 18%;
+      --ring: 0 0% 80%;
+
+      --success: 142 60% 62%;
+      --success-bg: 142 40% 15%;
+      --warning: 40 90% 65%;
+      --warning-bg: 38 55% 15%;
+      --danger: 0 78% 68%;
+      --danger-bg: 0 45% 16%;
+      --archived-bg: 0 0% 17%;
+
+      --pdf: 0 78% 68%;
+      --pdf-bg: 0 45% 16%;
+      --xlsx: 152 48% 55%;
+      --xlsx-bg: 152 40% 14%;
+      --doc: 213 80% 68%;
+      --doc-bg: 217 45% 16%;
+
+      --shadow-card: 0 1px 2px rgba(0,0,0,.4);
+      --shadow-pop: 0 16px 40px rgba(0,0,0,.5);
+      --shadow-doc: 0 6px 16px rgba(0,0,0,.55);
+      --shadow-doc-modal: 0 10px 28px rgba(0,0,0,.6);
+    }
+  }
+  :root[data-theme="dark"] {
+    --background: 0 0% 6.5%;
+    --foreground: 0 0% 96%;
+    --card: 0 0% 9%;
+    --card-foreground: 0 0% 96%;
+    --popover: 0 0% 9%;
+    --muted: 0 0% 14.5%;
+    --muted-foreground: 0 0% 64%;
+    --accent: 0 0% 15.5%;
+    --primary: 0 0% 96%;
+    --primary-foreground: 0 0% 9%;
+    --border: 0 0% 18%;
+    --input: 0 0% 18%;
+    --ring: 0 0% 80%;
+
+    --success: 142 60% 62%;
+    --success-bg: 142 40% 15%;
+    --warning: 40 90% 65%;
+    --warning-bg: 38 55% 15%;
+    --danger: 0 78% 68%;
+    --danger-bg: 0 45% 16%;
+    --archived-bg: 0 0% 17%;
+
+    --pdf: 0 78% 68%;
+    --pdf-bg: 0 45% 16%;
+    --xlsx: 152 48% 55%;
+    --xlsx-bg: 152 40% 14%;
+    --doc: 213 80% 68%;
+    --doc-bg: 217 45% 16%;
+
+    --shadow-card: 0 1px 2px rgba(0,0,0,.4);
+    --shadow-pop: 0 16px 40px rgba(0,0,0,.5);
+    --shadow-doc: 0 6px 16px rgba(0,0,0,.55);
+    --shadow-doc-modal: 0 10px 28px rgba(0,0,0,.6);
+  }
+
+  * { box-sizing: border-box; }
+  html, body { height: 100%; }
+  body {
+    margin: 0;
+    background: hsl(var(--background));
+    color: hsl(var(--foreground));
+    font-family: "Inter", ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif;
+    font-feature-settings: "cv11", "ss01";
+    -webkit-font-smoothing: antialiased;
+  }
+  button, input, select { font-family: inherit; }
+  a { color: inherit; text-decoration: none; }
+  h1, h2, h3 { text-wrap: balance; margin: 0; }
+  ::selection { background: hsl(var(--foreground) / .12); }
+
+  .icon { width: 1em; height: 1em; stroke: currentColor; fill: none; stroke-width: 1.75; stroke-linecap: round; stroke-linejoin: round; display: block; flex: none; }
+
+  /* ---------- App shell ---------- */
+  .shell { display: flex; min-height: 100vh; }
+
+  .sidebar {
+    width: 264px; flex: none;
+    border-right: 1px solid hsl(var(--border));
+    padding: 18px 14px 18px;
+    display: flex; flex-direction: column; gap: 22px;
+    position: sticky; top: 0; height: 100vh; overflow-y: auto;
+  }
+  .brand { display: flex; align-items: center; gap: 9px; padding: 4px 8px 2px; }
+  .brand .icon { width: 22px; height: 22px; color: hsl(var(--foreground)); }
+  .brand span { font-weight: 800; font-size: 17px; letter-spacing: -0.01em; }
+
+  .nav-group { display: flex; flex-direction: column; gap: 2px; }
+  .nav-group-label { font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: .06em; color: hsl(var(--muted-foreground)); padding: 10px 10px 4px; }
+  .nav-item {
+    display: flex; align-items: center; gap: 10px;
+    padding: 8px 10px; border-radius: calc(var(--radius) - 2px);
+    font-size: 13.5px; font-weight: 500; color: hsl(var(--foreground) / .8);
+  }
+  .nav-item .icon { width: 17px; height: 17px; color: hsl(var(--muted-foreground)); }
+  .nav-item:hover { background: hsl(var(--accent)); }
+  .nav-item.active { background: hsl(var(--foreground)); color: hsl(var(--background)); }
+  .nav-item.active .icon { color: hsl(var(--background)); }
+  .nav-sub { display: flex; flex-direction: column; gap: 1px; margin: 2px 0 6px 27px; border-left: 1px solid hsl(var(--border)); padding-left: 11px; }
+  .nav-sub a { padding: 6px 8px; border-radius: 6px; font-size: 13px; color: hsl(var(--muted-foreground)); }
+  .nav-sub a:hover { background: hsl(var(--accent)); color: hsl(var(--foreground)); }
+  .nav-sub a.active { color: hsl(var(--foreground)); font-weight: 600; background: hsl(var(--accent)); }
+
+  /* ---------- Main column ---------- */
+  .main { flex: 1; min-width: 0; display: flex; flex-direction: column; }
+
+  .topbar {
+    position: sticky; top: 0; z-index: 30;
+    height: 56px; flex: none;
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 0 22px;
+    border-bottom: 1px solid hsl(var(--border));
+    background: hsl(var(--background) / .85); backdrop-filter: blur(8px);
+  }
+  .topbar-title { font-weight: 700; font-size: 14.5px; }
+  .topbar-right { display: flex; align-items: center; gap: 6px; }
+  .icon-btn {
+    width: 32px; height: 32px; border-radius: calc(var(--radius) - 2px);
+    display: inline-flex; align-items: center; justify-content: center;
+    border: 1px solid transparent; background: transparent; color: hsl(var(--foreground));
+    cursor: pointer; position: relative;
+  }
+  .icon-btn .icon { width: 16.5px; height: 16.5px; }
+  .icon-btn:hover { background: hsl(var(--accent)); }
+  .icon-btn:focus-visible, .btn:focus-visible, .card-fav:focus-visible, .seg-btn:focus-visible, input:focus-visible, select:focus-visible, .thumb-eye:focus-visible {
+    outline: 2px solid hsl(var(--ring)); outline-offset: 2px;
+  }
+  .dot { position: absolute; top: 6px; right: 6px; width: 6px; height: 6px; border-radius: 50%; background: hsl(var(--danger)); border: 1.5px solid hsl(var(--background)); }
+  .locale-pill { display: inline-flex; border: 1px solid hsl(var(--border)); border-radius: 999px; padding: 2px; gap: 1px; }
+  .locale-pill button { border: none; background: transparent; font-size: 11px; font-weight: 600; padding: 3px 9px; border-radius: 999px; color: hsl(var(--muted-foreground)); cursor: pointer; }
+  .locale-pill button.active { background: hsl(var(--foreground)); color: hsl(var(--background)); }
+  .user-chip { display: flex; align-items: center; gap: 8px; padding: 4px 8px 4px 4px; border-radius: 999px; cursor: pointer; }
+  .user-chip:hover { background: hsl(var(--accent)); }
+  .avatar { width: 26px; height: 26px; border-radius: 50%; background: hsl(var(--foreground)); color: hsl(var(--background)); display: flex; align-items: center; justify-content: center; font-size: 10.5px; font-weight: 700; }
+  .user-chip .who { display: flex; flex-direction: column; line-height: 1.15; }
+  .user-chip .who b { font-size: 12px; font-weight: 600; }
+  .user-chip .who small { font-size: 10.5px; color: hsl(var(--muted-foreground)); }
+
+  .content { padding: 26px 26px 60px; max-width: 1280px; width: 100%; margin: 0 auto; }
+
+  .crumb { display: flex; align-items: center; gap: 6px; font-size: 12.5px; color: hsl(var(--muted-foreground)); margin-bottom: 14px; }
+  .crumb .icon { width: 13px; height: 13px; }
+  .crumb b { color: hsl(var(--foreground)); font-weight: 600; }
+
+  .draft-note {
+    display: flex; gap: 10px; align-items: flex-start;
+    border: 1px dashed hsl(var(--border)); background: hsl(var(--accent) / .5);
+    border-radius: var(--radius); padding: 10px 14px; margin-bottom: 22px;
+    font-size: 12.5px; color: hsl(var(--muted-foreground));
+  }
+  .draft-note .icon { width: 15px; height: 15px; margin-top: 1px; color: hsl(var(--foreground) / .6); }
+  .draft-note b { color: hsl(var(--foreground)); }
+
+  .page-head { display: flex; align-items: flex-end; justify-content: space-between; gap: 16px; margin-bottom: 22px; flex-wrap: wrap; }
+  .page-head h1 { font-size: 24px; font-weight: 800; letter-spacing: -0.015em; }
+  .page-head p { margin: 5px 0 0; font-size: 13.5px; color: hsl(var(--muted-foreground)); }
+
+  /* ---------- Quick actions ---------- */
+  .quick-row { display: grid; grid-template-columns: 1.35fr 1fr 1fr 1fr; gap: 12px; margin-bottom: 30px; }
+  .quick-tile {
+    display: flex; align-items: center; gap: 12px;
+    border: 1px solid hsl(var(--border)); border-radius: 12px;
+    background: hsl(var(--card)); padding: 14px 16px;
+    box-shadow: var(--shadow-card); cursor: pointer;
+    transition: transform .12s ease, box-shadow .12s ease;
+  }
+  .quick-tile:hover { transform: translateY(-1px); box-shadow: var(--shadow-pop); }
+  .quick-tile .qi { width: 36px; height: 36px; border-radius: 9px; display: flex; align-items: center; justify-content: center; flex: none; }
+  .quick-tile .qi .icon { width: 18px; height: 18px; }
+  .quick-tile .qt { display: flex; flex-direction: column; gap: 1px; min-width: 0; }
+  .quick-tile .qt b { font-size: 13.5px; font-weight: 700; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .quick-tile .qt span { font-size: 11.5px; color: hsl(var(--muted-foreground)); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .quick-tile.primary { background: hsl(var(--foreground)); border-color: hsl(var(--foreground)); }
+  .quick-tile.primary .qi { background: hsl(var(--background) / .12); color: hsl(var(--background)); }
+  .quick-tile.primary .qt b { color: hsl(var(--background)); }
+  .quick-tile.primary .qt span { color: hsl(var(--background) / .65); }
+  .quick-tile:not(.primary) .qi { background: hsl(var(--accent)); color: hsl(var(--foreground) / .75); }
+
+  /* ---------- Section headers ---------- */
+  .section-head { display: flex; align-items: baseline; justify-content: space-between; margin-bottom: 13px; gap: 12px; }
+  .section-head h2 { font-size: 15px; font-weight: 700; }
+  .section-head .muted { font-size: 12px; color: hsl(var(--muted-foreground)); font-weight: 500; }
+  .link-more { font-size: 12.5px; font-weight: 600; color: hsl(var(--muted-foreground)); display: inline-flex; align-items: center; gap: 3px; cursor: pointer; }
+  .link-more:hover { color: hsl(var(--foreground)); }
+  .link-more .icon { width: 13px; height: 13px; }
+
+  /* ---------- Category folders ---------- */
+  .folder-row { display: grid; grid-template-columns: repeat(6, 1fr); gap: 12px; margin-bottom: 32px; }
+  .folder-card {
+    border: 1px solid hsl(var(--border)); border-radius: 12px; background: hsl(var(--card));
+    padding: 14px; display: flex; flex-direction: column; gap: 10px; cursor: pointer;
+    box-shadow: var(--shadow-card); transition: border-color .12s ease, transform .12s ease;
+    text-align: left;
+  }
+  .folder-card:hover { transform: translateY(-1px); border-color: hsl(var(--foreground) / .3); }
+  .folder-card.is-active { border-color: hsl(var(--foreground)); background: hsl(var(--accent)); }
+  .folder-card .fi { width: 34px; height: 34px; border-radius: 9px; display: flex; align-items: center; justify-content: center; }
+  .folder-card .fi .icon { width: 17px; height: 17px; }
+  .folder-card b { font-size: 12.5px; font-weight: 700; line-height: 1.25; }
+  .folder-card .count { font-size: 11px; color: hsl(var(--muted-foreground)); font-variant-numeric: tabular-nums; }
+
+  /* ---------- Toolbar ---------- */
+  .toolbar { display: flex; align-items: center; gap: 10px; margin-bottom: 16px; flex-wrap: wrap; }
+  .search-wrap { position: relative; flex: 1; min-width: 220px; }
+  .search-wrap .icon { position: absolute; left: 12px; top: 50%; transform: translateY(-50%); width: 15px; height: 15px; color: hsl(var(--muted-foreground)); }
+  .search-wrap input {
+    width: 100%; height: 38px; border-radius: calc(var(--radius) + 2px); border: 1px solid hsl(var(--border));
+    background: hsl(var(--card)); color: hsl(var(--foreground)); padding: 0 34px; font-size: 13.5px;
+  }
+  .search-wrap input:focus { outline: none; border-color: hsl(var(--ring)); box-shadow: 0 0 0 3px hsl(var(--ring) / .12); }
+  .search-clear { position: absolute; right: 8px; top: 50%; transform: translateY(-50%); width: 20px; height: 20px; border-radius: 50%; border: none; background: hsl(var(--accent)); color: hsl(var(--muted-foreground)); display: none; align-items: center; justify-content: center; cursor: pointer; }
+  .search-clear .icon { width: 11px; height: 11px; }
+  .search-clear.show { display: inline-flex; }
+
+  .filt-select {
+    height: 38px; border-radius: calc(var(--radius) + 2px); border: 1px solid hsl(var(--border));
+    background: hsl(var(--card)); color: hsl(var(--foreground)); font-size: 13px; padding: 0 10px; cursor: pointer;
+  }
+  .filt-select:focus { outline: none; border-color: hsl(var(--ring)); }
+
+  .seg { display: inline-flex; border: 1px solid hsl(var(--border)); border-radius: calc(var(--radius) + 2px); padding: 2px; flex: none; }
+  .seg-btn { display: inline-flex; align-items: center; gap: 6px; border: none; background: transparent; color: hsl(var(--muted-foreground)); font-size: 12.5px; font-weight: 600; padding: 7px 11px; border-radius: calc(var(--radius) - 1px); cursor: pointer; }
+  .seg-btn .icon { width: 14px; height: 14px; }
+  .seg-btn.active { background: hsl(var(--foreground)); color: hsl(var(--background)); }
+
+  .active-filter { display: none; align-items: center; gap: 6px; font-size: 12px; font-weight: 600; background: hsl(var(--accent)); border: 1px solid hsl(var(--border)); border-radius: 999px; padding: 5px 6px 5px 11px; margin-bottom: 14px; width: fit-content; }
+  .active-filter.show { display: inline-flex; }
+  .active-filter button { border: none; background: hsl(var(--background)); width: 18px; height: 18px; border-radius: 50%; display: inline-flex; align-items: center; justify-content: center; cursor: pointer; color: hsl(var(--muted-foreground)); }
+  .active-filter .icon { width: 10px; height: 10px; }
+
+  /* ---------- Report cards ---------- */
+  .grid-view { display: grid; grid-template-columns: repeat(4, 1fr); gap: 16px; }
+  .rcard { border: 1px solid hsl(var(--border)); border-radius: 14px; background: hsl(var(--card)); box-shadow: var(--shadow-card); overflow: hidden; display: flex; flex-direction: column; transition: box-shadow .12s ease, border-color .12s ease; }
+  .rcard:hover { box-shadow: var(--shadow-pop); border-color: hsl(var(--foreground) / .18); }
+
+  .thumb { position: relative; aspect-ratio: 4 / 3; padding: 14px 16px 0; background: hsl(var(--muted) / .55); display: flex; flex-direction: column; }
+  .thumb::before { content: ""; position: absolute; top: 0; left: 0; right: 0; height: 4px; background: var(--acc, transparent); }
+  .thumb-doc { flex: 1; margin: 0 auto 14px; width: 72%; background: hsl(var(--card)); border: 1px solid hsl(var(--border)); border-radius: 6px 6px 2px 2px; box-shadow: var(--shadow-doc); padding: 10px 9px; display: flex; flex-direction: column; gap: 5px; position: relative; }
+  .thumb-doc i { display: block; height: 3.5px; border-radius: 2px; background: hsl(var(--muted-foreground) / .28); }
+  .thumb-doc i:nth-child(1) { width: 60%; height: 5px; background: hsl(var(--muted-foreground) / .4); margin-bottom: 2px; }
+  .badge-ext { position: absolute; top: 10px; left: 10px; display: inline-flex; align-items: center; gap: 4px; font-size: 10px; font-weight: 800; letter-spacing: .02em; padding: 3px 6px 3px 5px; border-radius: 6px; }
+  .badge-ext .icon { width: 11px; height: 11px; }
+  .thumb-eye { position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; gap: 8px; background: hsl(var(--background) / .78); opacity: 0; transition: opacity .12s ease; border: none; cursor: pointer; color: hsl(var(--foreground)); font-size: 12px; font-weight: 700; }
+  .thumb-eye .icon { width: 15px; height: 15px; }
+  .rcard:hover .thumb-eye.enabled { opacity: 1; }
+  .thumb-eye:not(.enabled) { cursor: default; }
+
+  .rbody { padding: 12px 14px 14px; display: flex; flex-direction: column; gap: 8px; flex: 1; }
+  .rtitle-row { display: flex; align-items: flex-start; justify-content: space-between; gap: 6px; }
+  .rtitle { font-size: 13.5px; font-weight: 700; line-height: 1.35; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
+  .card-fav { border: none; background: transparent; color: hsl(var(--muted-foreground)); cursor: pointer; flex: none; padding: 1px; }
+  .card-fav .icon { width: 16px; height: 16px; }
+  .card-fav.on { color: #d4a017; }
+  .card-fav.on .icon { fill: currentColor; }
+  .rmeta { display: flex; align-items: center; gap: 6px; font-size: 11.5px; color: hsl(var(--muted-foreground)); }
+  .code-chip { font-family: ui-monospace, "SFMono-Regular", Menlo, monospace; background: hsl(var(--accent)); border-radius: 5px; padding: 1px 5px; font-size: 10.5px; font-weight: 600; color: hsl(var(--foreground) / .75); }
+  .lock-ic { width: 12px; height: 12px; }
+  .tag-row { display: flex; flex-wrap: wrap; gap: 5px; }
+  .tag-chip { font-size: 10.5px; font-weight: 600; padding: 2px 7px; border-radius: 999px; background: hsl(var(--accent)); color: hsl(var(--foreground) / .7); }
+  .status-pill { font-size: 10.5px; font-weight: 700; padding: 2px 7px; border-radius: 999px; display: inline-flex; align-items: center; gap: 4px; }
+  .status-pill .dotp { width: 5px; height: 5px; border-radius: 50%; background: currentColor; }
+  .rfooter { margin-top: auto; display: flex; align-items: center; justify-content: space-between; padding-top: 8px; border-top: 1px solid hsl(var(--border)); font-size: 11px; color: hsl(var(--muted-foreground)); }
+  .rfooter .actions { display: flex; gap: 2px; }
+  .rfooter .icon-btn { width: 26px; height: 26px; }
+  .rfooter .icon-btn .icon { width: 14px; height: 14px; }
+
+  /* ---------- Table view ---------- */
+  .table-wrap { border: 1px solid hsl(var(--border)); border-radius: 12px; overflow: hidden; box-shadow: var(--shadow-card); }
+  table.rtable { width: 100%; border-collapse: collapse; font-size: 13px; }
+  table.rtable thead th { text-align: left; font-size: 11px; text-transform: uppercase; letter-spacing: .05em; font-weight: 700; color: hsl(var(--muted-foreground)); background: hsl(var(--accent) / .6); padding: 10px 14px; border-bottom: 1px solid hsl(var(--border)); white-space: nowrap; }
+  table.rtable td { padding: 11px 14px; border-bottom: 1px solid hsl(var(--border)); vertical-align: middle; }
+  table.rtable tbody tr:last-child td { border-bottom: none; }
+  table.rtable tbody tr:hover { background: hsl(var(--accent) / .45); }
+  .t-name { display: flex; align-items: center; gap: 9px; font-weight: 600; }
+  .t-name .ficon { width: 26px; height: 26px; border-radius: 6px; display: flex; align-items: center; justify-content: center; flex: none; }
+  .t-name .ficon .icon { width: 13px; height: 13px; }
+  .t-actions { display: flex; gap: 2px; justify-content: flex-end; }
+
+  .empty { display: none; flex-direction: column; align-items: center; justify-content: center; gap: 8px; padding: 60px 20px; color: hsl(var(--muted-foreground)); border: 1px dashed hsl(var(--border)); border-radius: 14px; }
+  .empty.show { display: flex; }
+  .empty .icon { width: 28px; height: 28px; opacity: .5; }
+  .empty b { color: hsl(var(--foreground)); font-size: 13.5px; }
+  .empty span { font-size: 12px; }
+
+  .pager { display: flex; align-items: center; justify-content: space-between; margin-top: 18px; font-size: 12.5px; color: hsl(var(--muted-foreground)); }
+  .pager .btn { height: 30px; padding: 0 12px; }
+
+  .btn {
+    display: inline-flex; align-items: center; gap: 6px; font-size: 12.5px; font-weight: 600;
+    border-radius: calc(var(--radius) - 1px); border: 1px solid hsl(var(--border)); background: hsl(var(--card));
+    color: hsl(var(--foreground)); cursor: pointer; height: 34px; padding: 0 13px;
+  }
+  .btn:hover { background: hsl(var(--accent)); }
+  .btn:disabled { opacity: .45; cursor: not-allowed; }
+  .btn:disabled:hover { background: hsl(var(--card)); }
+
+  /* ---------- Preview modal ---------- */
+  .modal-mask { position: fixed; inset: 0; background: rgba(0,0,0,.5); display: none; align-items: center; justify-content: center; z-index: 100; padding: 24px; }
+  .modal-mask.show { display: flex; }
+  .modal { width: 100%; max-width: 560px; max-height: 82vh; background: hsl(var(--card)); border-radius: 14px; border: 1px solid hsl(var(--border)); box-shadow: var(--shadow-pop); display: flex; flex-direction: column; overflow: hidden; }
+  .modal-head { display: flex; align-items: flex-start; justify-content: space-between; gap: 10px; padding: 16px 18px 12px; border-bottom: 1px solid hsl(var(--border)); }
+  .modal-head h3 { font-size: 14.5px; font-weight: 700; }
+  .modal-head p { font-size: 12px; color: hsl(var(--muted-foreground)); margin: 3px 0 0; }
+  .modal-body { padding: 22px; overflow: auto; display: flex; align-items: center; justify-content: center; background: hsl(var(--muted) / .4); }
+  .modal-doc { width: 100%; max-width: 320px; aspect-ratio: 3/4; background: hsl(var(--card)); border: 1px solid hsl(var(--border)); border-radius: 4px; box-shadow: var(--shadow-doc-modal); padding: 22px 20px; display: flex; flex-direction: column; gap: 9px; }
+  .modal-doc i { display: block; height: 5px; border-radius: 2px; background: hsl(var(--muted-foreground) / .22); }
+  .modal-doc i:nth-child(1) { width: 55%; height: 8px; background: hsl(var(--muted-foreground) / .4); margin-bottom: 6px; }
+  .modal-doc i:nth-child(6) { width: 40%; }
+  .modal-foot { display: flex; justify-content: flex-end; gap: 8px; padding: 12px 18px; border-top: 1px solid hsl(var(--border)); }
+
+  @media (max-width: 1180px) {
+    .grid-view { grid-template-columns: repeat(3, 1fr); }
+    .folder-row { grid-template-columns: repeat(3, 1fr); }
+  }
+  @media (max-width: 900px) {
+    .sidebar { display: none; }
+    .quick-row { grid-template-columns: repeat(2, 1fr); }
+  }
+  @media (max-width: 700px) {
+    .grid-view { grid-template-columns: repeat(2, 1fr); }
+    .folder-row { grid-template-columns: repeat(2, 1fr); }
+  }
+  @media (max-width: 480px) {
+    .grid-view { grid-template-columns: 1fr; }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    * { transition: none !important; }
+  }
+</style>
+
+<div class="shell">
+  <!-- ============ Sidebar (mirrors lib/menu-list.ts groups/icons) ============ -->
+  <aside class="sidebar">
+    <div class="brand">
+      <svg class="icon" viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="16" rx="2"></rect><line x1="3" y1="9" x2="21" y2="9"></line><line x1="9" y1="9" x2="9" y2="20"></line></svg>
+      <span>RFS</span>
+    </div>
+
+    <nav class="nav-group">
+      <div class="nav-group-label">แดชบอร์ด</div>
+      <a class="nav-item" href="#"><svg class="icon" viewBox="0 0 24 24"><rect x="3" y="3" width="7" height="9" rx="1.5"></rect><rect x="14" y="3" width="7" height="5" rx="1.5"></rect><rect x="14" y="12" width="7" height="9" rx="1.5"></rect><rect x="3" y="16" width="7" height="5" rx="1.5"></rect></svg> ภาพรวม</a>
+    </nav>
+
+    <nav class="nav-group">
+      <div class="nav-group-label">รายงาน</div>
+      <a class="nav-item active" href="#"><svg class="icon" viewBox="0 0 24 24"><path d="M6 3h9l5 5v11a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2z"></path><path d="M14 3v5h5"></path></svg> ค้นหารายงาน</a>
+      <div class="nav-sub">
+        <a class="active" href="#">รายการรายงาน</a>
+        <a href="#">รายการโปรด</a>
+      </div>
+      <a class="nav-item" href="#"><svg class="icon" viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"></path></svg> สร้างรายงาน</a>
+      <a class="nav-item" href="#"><svg class="icon" viewBox="0 0 24 24"><path d="M20.6 12.9 12.9 20.6a2 2 0 0 1-2.8 0L3 13.5V4h9.5l7.1 7.1a2 2 0 0 1 0 2.8Z"></path><circle cx="7.5" cy="8.5" r="1"></circle></svg> หมวดหมู่</a>
+      <a class="nav-item" href="#"><svg class="icon" viewBox="0 0 24 24"><path d="M20.6 12.9 12.9 20.6a2 2 0 0 1-2.8 0L3 13.5V4h9.5l7.1 7.1a2 2 0 0 1 0 2.8Z"></path><circle cx="7.5" cy="8.5" r="1"></circle></svg> แท็ก</a>
+    </nav>
+
+    <nav class="nav-group">
+      <div class="nav-group-label">ผู้ใช้งาน</div>
+      <a class="nav-item" href="#"><svg class="icon" viewBox="0 0 24 24"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path><circle cx="9" cy="7" r="4"></circle><path d="M23 21v-2a4 4 0 0 0-3-3.87"></path><path d="M16 3.13a4 4 0 0 1 0 7.75"></path></svg> จัดการผู้ใช้</a>
+      <a class="nav-item" href="#"><svg class="icon" viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"></circle><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.6a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1Z"></path></svg> บทบาท</a>
+    </nav>
+
+    <nav class="nav-group">
+      <div class="nav-group-label">ตั้งค่า</div>
+      <a class="nav-item" href="#"><svg class="icon" viewBox="0 0 24 24"><ellipse cx="12" cy="5" rx="9" ry="3"></ellipse><path d="M3 5v6c0 1.66 4 3 9 3s9-1.34 9-3V5"></path><path d="M3 11v6c0 1.66 4 3 9 3s9-1.34 9-3v-6"></path></svg> พื้นที่จัดเก็บ</a>
+      <a class="nav-item" href="#"><svg class="icon" viewBox="0 0 24 24"><path d="M4 22V4a2 2 0 0 1 2-2h9l5 5v15"></path><path d="M9 8h6M9 12h6M9 16h4"></path></svg> เมนูระบบ</a>
+    </nav>
+
+    <nav class="nav-group">
+      <div class="nav-group-label">ช่วยเหลือ</div>
+      <a class="nav-item" href="#"><svg class="icon" viewBox="0 0 24 24"><path d="M4 4h13l3 3v13H4z"></path><path d="M9 9h7M9 13h5"></path></svg> คำร้องของฉัน</a>
+    </nav>
+  </aside>
+
+  <!-- ============ Main column ============ -->
+  <div class="main">
+    <header class="topbar">
+      <div class="topbar-title">รายการรายงาน</div>
+      <div class="topbar-right">
+        <button class="icon-btn" title="การแจ้งเตือน" aria-label="การแจ้งเตือน">
+          <svg class="icon" viewBox="0 0 24 24"><path d="M18 8a6 6 0 0 0-12 0c0 7-3 9-3 9h18s-3-2-3-9"></path><path d="M13.73 21a2 2 0 0 1-3.46 0"></path></svg>
+          <span class="dot"></span>
+        </button>
+        <div class="locale-pill">
+          <button type="button" class="active" id="localeTh">TH</button>
+          <button type="button" id="localeEn">EN</button>
+        </div>
+        <button class="icon-btn" id="themeToggle" title="สลับธีม" aria-label="สลับธีมสว่าง/มืด">
+          <svg class="icon" id="iconSun" viewBox="0 0 24 24"><circle cx="12" cy="12" r="4"></circle><path d="M12 2v2M12 20v2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M2 12h2M20 12h2M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4"></path></svg>
+          <svg class="icon" id="iconMoon" viewBox="0 0 24 24" style="display:none"><path d="M21 12.8A9 9 0 1 1 11.2 3 7 7 0 0 0 21 12.8Z"></path></svg>
+        </button>
+        <div class="user-chip">
+          <div class="avatar">อร</div>
+          <div class="who"><b>อรรถวัฒน์</b><small>ผู้ดูแลระบบ</small></div>
+        </div>
+      </div>
+    </header>
+
+    <main class="content">
+      <div class="crumb">
+        <svg class="icon" viewBox="0 0 24 24"><rect x="3" y="3" width="7" height="9" rx="1.5"></rect><rect x="14" y="3" width="7" height="5" rx="1.5"></rect><rect x="14" y="12" width="7" height="9" rx="1.5"></rect><rect x="3" y="16" width="7" height="5" rx="1.5"></rect></svg>
+        แดชบอร์ด / <b>รายการรายงาน</b>
+      </div>
+
+      <div class="draft-note">
+        <svg class="icon" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"></circle><path d="M12 8v5"></path><path d="M12 16h.01"></path></svg>
+        <div><b>แบบร่างดีไซน์สำหรับรีวิว</b> — หน้านี้ใช้ข้อมูลตัวอย่างทั้งหมดเพื่อทดลองรูปแบบการนำเสนอใหม่ ยังไม่ต่อกับ <code>/api/reports/browse</code> จริง ปุ่ม "ดูตัวอย่าง"/สลับธีม/ค้นหา/กรองหมวดหมู่ใช้งานได้จริงบนข้อมูลจำลองเพื่อให้เห็นภาพการโต้ตอบ</div>
+      </div>
+
+      <div class="page-head">
+        <div>
+          <h1>รายการรายงาน</h1>
+          <p>ค้นหา เรียกดู และดาวน์โหลดรายงานที่คุณมีสิทธิ์เข้าถึง — จัดกลุ่มตามหมวดหมู่เหมือนโฟลเดอร์ไฟล์</p>
+        </div>
+      </div>
+
+      <!-- Quick actions -->
+      <div class="quick-row">
+        <button class="quick-tile primary" type="button">
+          <span class="qi"><svg class="icon" viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"></path></svg></span>
+          <span class="qt"><b>สร้างรายงานใหม่</b><span>เพิ่ม metadata และไฟล์แนบ</span></span>
+        </button>
+        <button class="quick-tile" type="button">
+          <span class="qi"><svg class="icon" viewBox="0 0 24 24"><path d="m12 17.3-6.16 3.6 1.64-7L2 9.24l7.12-.61L12 2l2.88 6.63 7.12.61-5.48 4.66 1.64 7z"></path></svg></span>
+          <span class="qt"><b>รายการโปรด</b><span>รายงานที่บันทึกไว้</span></span>
+        </button>
+        <button class="quick-tile" type="button">
+          <span class="qi"><svg class="icon" viewBox="0 0 24 24"><path d="M20.6 12.9 12.9 20.6a2 2 0 0 1-2.8 0L3 13.5V4h9.5l7.1 7.1a2 2 0 0 1 0 2.8Z"></path><circle cx="7.5" cy="8.5" r="1"></circle></svg></span>
+          <span class="qt"><b>หมวดหมู่</b><span>จัดการโฟลเดอร์รายงาน</span></span>
+        </button>
+        <button class="quick-tile" type="button">
+          <span class="qi"><svg class="icon" viewBox="0 0 24 24"><path d="M20.6 12.9 12.9 20.6a2 2 0 0 1-2.8 0L3 13.5V4h9.5l7.1 7.1a2 2 0 0 1 0 2.8Z"></path><circle cx="7.5" cy="8.5" r="1"></circle></svg></span>
+          <span class="qt"><b>แท็ก</b><span>จัดการแท็กค้นหา</span></span>
+        </button>
+      </div>
+
+      <!-- Suggested folders (categories) -->
+      <div class="section-head">
+        <h2>หมวดหมู่ยอดนิยม</h2>
+        <span class="link-more" id="clearCatLink" style="display:none">ล้างการกรองหมวดหมู่ <svg class="icon" viewBox="0 0 24 24"><path d="M18 6 6 18M6 6l12 12"></path></svg></span>
+      </div>
+      <div class="folder-row" id="folderRow"></div>
+
+      <!-- Toolbar -->
+      <div class="toolbar">
+        <div class="search-wrap">
+          <svg class="icon" viewBox="0 0 24 24"><circle cx="11" cy="11" r="7"></circle><path d="m21 21-4.3-4.3"></path></svg>
+          <input id="searchInput" type="text" placeholder="ค้นหาด้วยชื่อ รหัส หรือคำอธิบาย…" />
+          <button class="search-clear" id="searchClear" aria-label="ล้างคำค้นหา"><svg class="icon" viewBox="0 0 24 24"><path d="M18 6 6 18M6 6l12 12"></path></svg></button>
+        </div>
+        <select class="filt-select" id="deptFilter">
+          <option value="">ทุกหน่วยงาน</option>
+        </select>
+        <select class="filt-select" id="statusFilter">
+          <option value="">ทุกสถานะ</option>
+          <option value="PUBLISHED">เผยแพร่แล้ว</option>
+          <option value="DRAFT">ฉบับร่าง</option>
+          <option value="ARCHIVED">เก็บถาวร</option>
+        </select>
+        <div class="seg">
+          <button class="seg-btn active" id="viewCardBtn" type="button"><svg class="icon" viewBox="0 0 24 24"><rect x="3" y="3" width="8" height="8" rx="1.5"></rect><rect x="13" y="3" width="8" height="8" rx="1.5"></rect><rect x="3" y="13" width="8" height="8" rx="1.5"></rect><rect x="13" y="13" width="8" height="8" rx="1.5"></rect></svg> การ์ด</button>
+          <button class="seg-btn" id="viewTableBtn" type="button"><svg class="icon" viewBox="0 0 24 24"><line x1="4" y1="6" x2="20" y2="6"></line><line x1="4" y1="12" x2="20" y2="12"></line><line x1="4" y1="18" x2="20" y2="18"></line></svg> ตาราง</button>
+        </div>
+      </div>
+
+      <div class="active-filter" id="activeFilterChip">
+        กำลังกรองหมวดหมู่: <b id="activeFilterLabel"></b>
+        <button type="button" id="activeFilterClear" aria-label="ล้างตัวกรอง"><svg class="icon" viewBox="0 0 24 24"><path d="M18 6 6 18M6 6l12 12"></path></svg></button>
+      </div>
+
+      <div class="section-head">
+        <h2 id="resultsHeading">รายงานทั้งหมด</h2>
+        <span class="muted" id="resultsCount"></span>
+      </div>
+
+      <div class="grid-view" id="gridView"></div>
+      <div class="table-wrap" id="tableView" style="display:none">
+        <table class="rtable">
+          <thead>
+            <tr><th>ชื่อรายงาน</th><th>รหัส</th><th>หน่วยงาน</th><th>สถานะ</th><th>อัปเดตล่าสุด</th><th style="text-align:right">การทำงาน</th></tr>
+          </thead>
+          <tbody id="tableBody"></tbody>
+        </table>
+      </div>
+
+      <div class="empty" id="emptyState">
+        <svg class="icon" viewBox="0 0 24 24"><circle cx="11" cy="11" r="7"></circle><path d="m21 21-4.3-4.3"></path></svg>
+        <b>ไม่พบรายงานที่ตรงกับเงื่อนไข</b>
+        <span>ลองล้างตัวกรองหรือค้นหาด้วยคำอื่น</span>
+      </div>
+
+      <div class="pager">
+        <span id="pagerLabel">แสดง 1–12 จาก 12 รายการ</span>
+        <div style="display:flex;gap:8px">
+          <button class="btn" disabled>← ก่อนหน้า</button>
+          <button class="btn" disabled>ถัดไป →</button>
+        </div>
+      </div>
+    </main>
+  </div>
+</div>
+
+<!-- Preview modal -->
+<div class="modal-mask" id="previewMask">
+  <div class="modal">
+    <div class="modal-head">
+      <div>
+        <h3 id="previewTitle">—</h3>
+        <p id="previewMeta">—</p>
+      </div>
+      <button class="icon-btn" id="previewClose" aria-label="ปิด"><svg class="icon" viewBox="0 0 24 24"><path d="M18 6 6 18M6 6l12 12"></path></svg></button>
+    </div>
+    <div class="modal-body">
+      <div class="modal-doc"><i></i><i></i><i></i><i></i><i></i><i></i></div>
+    </div>
+    <div class="modal-foot">
+      <button class="btn">พิมพ์</button>
+      <button class="btn" style="background:hsl(var(--foreground));color:hsl(var(--background));border-color:hsl(var(--foreground))">ดาวน์โหลด</button>
+    </div>
+  </div>
+</div>
+
+<script>
+(function () {
+  "use strict";
+
+  // ---------- Theme toggle (explicit choice overrides prefers-color-scheme) ----------
+  var root = document.documentElement;
+  var sun = document.getElementById("iconSun");
+  var moon = document.getElementById("iconMoon");
+  function systemPrefersDark() {
+    return window.matchMedia && window.matchMedia("(prefers-color-scheme: dark)").matches;
+  }
+  function currentTheme() {
+    var stamped = root.getAttribute("data-theme");
+    if (stamped === "dark" || stamped === "light") return stamped;
+    return systemPrefersDark() ? "dark" : "light";
+  }
+  function applyThemeIcon() {
+    var dark = currentTheme() === "dark";
+    sun.style.display = dark ? "none" : "block";
+    moon.style.display = dark ? "block" : "none";
+  }
+  document.getElementById("themeToggle").addEventListener("click", function () {
+    var next = currentTheme() === "dark" ? "light" : "dark";
+    root.setAttribute("data-theme", next);
+    applyThemeIcon();
+    try { localStorage.setItem("rfs-demo-theme", next); } catch (e) {}
+  });
+  try {
+    var saved = localStorage.getItem("rfs-demo-theme");
+    if (saved === "dark" || saved === "light") root.setAttribute("data-theme", saved);
+  } catch (e) {}
+  applyThemeIcon();
+
+  document.getElementById("localeTh").addEventListener("click", function () {
+    this.classList.add("active");
+    document.getElementById("localeEn").classList.remove("active");
+  });
+  document.getElementById("localeEn").addEventListener("click", function () {
+    this.classList.add("active");
+    document.getElementById("localeTh").classList.remove("active");
+  });
+
+  // ---------- Data ----------
+  var CATEGORIES = [
+    { key: "finance", label: "การเงินและบัญชี", hue: "213 60% 45%", icon: 'M3 10h18M6 6h12a2 2 0 0 1 2 2v9a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2Z' },
+    { key: "hr", label: "ทรัพยากรบุคคล", hue: "268 55% 50%", icon: 'M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2M9 11a4 4 0 1 0 0-8 4 4 0 0 0 0 8ZM23 21v-2a4 4 0 0 0-3-3.87M16 3.13a4 4 0 0 1 0 7.75' },
+    { key: "budget", label: "งบประมาณ", hue: "27 80% 45%", icon: 'M12 2v20M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6' },
+    { key: "procurement", label: "จัดซื้อจัดจ้าง", hue: "199 70% 42%", icon: 'M6 6h15l-1.5 9h-12L6 6ZM6 6 5 3H2m6 20a1 1 0 1 0 0-2 1 1 0 0 0 0 2Zm10 0a1 1 0 1 0 0-2 1 1 0 0 0 0 2Z' },
+    { key: "academic", label: "วิชาการ", hue: "152 45% 34%", icon: 'M22 10 12 5 2 10l10 5 10-5ZM6 12v5c0 1.5 3 3 6 3s6-1.5 6-3v-5' },
+    { key: "it", label: "ปฏิบัติการ/ไอที", hue: "0 0% 35%", icon: 'M4 4h16v10H4zM2 18h20M9 21h6' }
+  ];
+
+  var REPORTS = [
+    { code: "RPT-001", th: "รายงานงบการเงินประจำเดือน", en: "Monthly Financial Report", cat: "finance", dept: "ฝ่ายการเงิน", status: "PUBLISHED", access: "PUBLIC", type: "pdf", tags: ["รายเดือน", "งบการเงิน"], updated: "2 วันที่แล้ว", fav: true },
+    { code: "RPT-002", th: "รายงานสรุปรายรับ-รายจ่ายรายไตรมาส", en: "Quarterly Income-Expense Summary", cat: "finance", dept: "ฝ่ายการเงิน", status: "PUBLISHED", access: "PUBLIC", type: "xlsx", tags: ["ไตรมาส", "งบประมาณ"], updated: "5 วันที่แล้ว", fav: false },
+    { code: "RPT-014", th: "ใบเบิกค่าใช้จ่ายเดินทาง", en: "Travel Expense Claim Form", cat: "finance", dept: "ฝ่ายการเงิน", status: "PUBLISHED", access: "RESTRICTED", type: "pdf", tags: ["แบบฟอร์ม"], updated: "1 สัปดาห์ที่แล้ว", fav: false },
+    { code: "RPT-021", th: "รายงานอัตรากำลังบุคลากรประจำปี", en: "Annual Headcount Report", cat: "hr", dept: "ฝ่ายบุคคล", status: "PUBLISHED", access: "PUBLIC", type: "xlsx", tags: ["บุคลากร", "ประจำปี"], updated: "3 วันที่แล้ว", fav: true },
+    { code: "RPT-022", th: "แบบประเมินผลการปฏิบัติงาน", en: "Performance Evaluation Form", cat: "hr", dept: "ฝ่ายบุคคล", status: "DRAFT", access: "PRIVATE", type: "pdf", tags: ["แบบฟอร์ม", "ประเมินผล"], updated: "วันนี้", fav: false },
+    { code: "RPT-030", th: "รายงานงบประมาณคงเหลือรายหน่วยงาน", en: "Remaining Budget by Unit", cat: "budget", dept: "สำนักงบประมาณ", status: "PUBLISHED", access: "PUBLIC", type: "xlsx", tags: ["งบประมาณ"], updated: "1 วันที่แล้ว", fav: false },
+    { code: "RPT-031", th: "สรุปการใช้จ่ายงบลงทุน", en: "Capital Spending Summary", cat: "budget", dept: "สำนักงบประมาณ", status: "ARCHIVED", access: "PUBLIC", type: "pdf", tags: ["งบลงทุน"], updated: "2 เดือนที่แล้ว", fav: false },
+    { code: "RPT-040", th: "รายงานสถานะจัดซื้อจัดจ้าง", en: "Procurement Status Report", cat: "procurement", dept: "ฝ่ายพัสดุ", status: "PUBLISHED", access: "PUBLIC", type: "xlsx", tags: ["จัดซื้อ", "พัสดุ"], updated: "4 วันที่แล้ว", fav: false },
+    { code: "RPT-041", th: "ใบขออนุมัติจัดซื้อ", en: "Purchase Approval Request", cat: "procurement", dept: "ฝ่ายพัสดุ", status: "PUBLISHED", access: "RESTRICTED", type: "pdf", tags: ["แบบฟอร์ม"], updated: "6 วันที่แล้ว", fav: false },
+    { code: "RPT-050", th: "รายงานผลการลงทะเบียนนักศึกษา", en: "Student Registration Report", cat: "academic", dept: "สำนักทะเบียน", status: "PUBLISHED", access: "PUBLIC", type: "xlsx", tags: ["นักศึกษา", "ทะเบียน"], updated: "1 วันที่แล้ว", fav: true },
+    { code: "RPT-051", th: "สรุปจำนวนผู้สำเร็จการศึกษา", en: "Graduate Count Summary", cat: "academic", dept: "สำนักทะเบียน", status: "PUBLISHED", access: "PUBLIC", type: "pdf", tags: ["ประจำปี"], updated: "3 สัปดาห์ที่แล้ว", fav: false },
+    { code: "RPT-060", th: "รายงานการใช้งานระบบสารสนเทศ", en: "IT System Usage Report", cat: "it", dept: "ฝ่ายไอที", status: "PUBLISHED", access: "PUBLIC", type: "pdf", tags: ["ไอที", "ระบบ"], updated: "12 ชั่วโมงที่แล้ว", fav: false }
+  ];
+
+  var FILE_META = {
+    pdf: { ext: "PDF", varc: "--pdf", varbg: "--pdf-bg", path: 'M6 3h9l5 5v11a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2ZM14 3v5h5' },
+    xlsx: { ext: "XLSX", varc: "--xlsx", varbg: "--xlsx-bg", path: 'M6 3h9l5 5v11a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2ZM14 3v5h5M9 13l6 6M15 13l-6 6' },
+    docx: { ext: "DOC", varc: "--doc", varbg: "--doc-bg", path: 'M6 3h9l5 5v11a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2ZM14 3v5h5M8 13h8M8 17h5' }
+  };
+  var STATUS_META = {
+    PUBLISHED: { label: "เผยแพร่แล้ว", c: "--success", bg: "--success-bg" },
+    DRAFT: { label: "ฉบับร่าง", c: "--warning", bg: "--warning-bg" },
+    ARCHIVED: { label: "เก็บถาวร", c: "--muted-foreground", bg: "--archived-bg" }
+  };
+  var LOCK_PATH = 'M6 11V7a6 6 0 0 1 12 0v4M5 11h14v10H5z';
+
+  function catByKey(k) { for (var i = 0; i < CATEGORIES.length; i++) if (CATEGORIES[i].key === k) return CATEGORIES[i]; return null; }
+  function esc(s) { var d = document.createElement("div"); d.textContent = s; return d.innerHTML; }
+
+  var state = { q: "", cat: "", dept: "", status: "", view: "card" };
+
+  // ---------- Departments filter (derived) ----------
+  var deptSel = document.getElementById("deptFilter");
+  var depts = Array.from(new Set(REPORTS.map(function (r) { return r.dept; })));
+  depts.forEach(function (d) {
+    var o = document.createElement("option"); o.value = d; o.textContent = d; deptSel.appendChild(o);
+  });
+
+  // ---------- Folder row ----------
+  var folderRow = document.getElementById("folderRow");
+  function renderFolders() {
+    folderRow.innerHTML = "";
+    CATEGORIES.forEach(function (c) {
+      var count = REPORTS.filter(function (r) { return r.cat === c.key; }).length;
+      var el = document.createElement("button");
+      el.type = "button";
+      el.className = "folder-card" + (state.cat === c.key ? " is-active" : "");
+      el.innerHTML =
+        '<span class="fi" style="background:hsl(' + c.hue + ' / .14);color:hsl(' + c.hue + ')">' +
+        '<svg class="icon" viewBox="0 0 24 24"><path d="' + c.icon + '"></path></svg></span>' +
+        '<b>' + esc(c.label) + '</b><span class="count">' + count + ' รายงาน</span>';
+      el.addEventListener("click", function () {
+        state.cat = state.cat === c.key ? "" : c.key;
+        renderAll();
+      });
+      folderRow.appendChild(el);
+    });
+  }
+
+  // ---------- Filter chip ----------
+  var chip = document.getElementById("activeFilterChip");
+  var chipLabel = document.getElementById("activeFilterLabel");
+  document.getElementById("activeFilterClear").addEventListener("click", function () { state.cat = ""; renderAll(); });
+
+  // ---------- Search ----------
+  var searchInput = document.getElementById("searchInput");
+  var searchClear = document.getElementById("searchClear");
+  searchInput.addEventListener("input", function () {
+    state.q = this.value.trim();
+    searchClear.classList.toggle("show", state.q.length > 0);
+    renderAll();
+  });
+  searchClear.addEventListener("click", function () {
+    searchInput.value = ""; state.q = ""; searchClear.classList.remove("show"); renderAll();
+  });
+  deptSel.addEventListener("change", function () { state.dept = this.value; renderAll(); });
+  document.getElementById("statusFilter").addEventListener("change", function () { state.status = this.value; renderAll(); });
+
+  // ---------- View toggle ----------
+  var gridView = document.getElementById("gridView");
+  var tableView = document.getElementById("tableView");
+  var btnCard = document.getElementById("viewCardBtn");
+  var btnTable = document.getElementById("viewTableBtn");
+  btnCard.addEventListener("click", function () { state.view = "card"; renderAll(); });
+  btnTable.addEventListener("click", function () { state.view = "table"; renderAll(); });
+
+  // ---------- Favorites (in-memory) ----------
+  function toggleFav(code) {
+    var r = REPORTS.find(function (x) { return x.code === code; });
+    if (r) r.fav = !r.fav;
+  }
+
+  // ---------- Preview modal ----------
+  var mask = document.getElementById("previewMask");
+  function openPreview(r) {
+    document.getElementById("previewTitle").textContent = r.th;
+    document.getElementById("previewMeta").textContent = r.code + " · " + r.dept + " · " + FILE_META[r.type].ext;
+    mask.classList.add("show");
+  }
+  document.getElementById("previewClose").addEventListener("click", function () { mask.classList.remove("show"); });
+  mask.addEventListener("click", function (e) { if (e.target === mask) mask.classList.remove("show"); });
+  document.addEventListener("keydown", function (e) { if (e.key === "Escape") mask.classList.remove("show"); });
+
+  // ---------- Card render ----------
+  function reportCard(r) {
+    var fm = FILE_META[r.type];
+    var cat = catByKey(r.cat);
+    var st = STATUS_META[r.status];
+    var canPreview = r.type === "pdf" && r.access !== "PRIVATE";
+
+    var lockSvg = r.access === "PUBLIC" ? "" :
+      '<svg class="icon lock-ic" viewBox="0 0 24 24" style="color:hsl(' + (r.access === "PRIVATE" ? "var(--danger)" : "var(--warning)") + ')"><path d="' + LOCK_PATH + '"></path></svg>';
+
+    var tagsHtml = r.tags.slice(0, 2).map(function (t) { return '<span class="tag-chip">' + esc(t) + '</span>'; }).join("");
+    if (r.tags.length > 2) tagsHtml += '<span class="tag-chip">+' + (r.tags.length - 2) + '</span>';
+
+    var el = document.createElement("div");
+    el.className = "rcard";
+    el.innerHTML =
+      '<div class="thumb" style="--acc:hsl(' + cat.hue + ')">' +
+        '<div class="thumb-doc">' +
+          '<span class="badge-ext" style="background:hsl(var(' + fm.varbg + '));color:hsl(var(' + fm.varc + '))">' +
+            '<svg class="icon" viewBox="0 0 24 24"><path d="' + fm.path + '"></path></svg>' + fm.ext +
+          '</span>' +
+          '<i></i><i></i><i></i><i></i><i></i>' +
+        '</div>' +
+        '<button class="thumb-eye' + (canPreview ? " enabled" : "") + '" type="button" aria-label="ดูตัวอย่าง">' +
+          '<svg class="icon" viewBox="0 0 24 24"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8Z"></path><circle cx="12" cy="12" r="3"></circle></svg>' +
+          (canPreview ? " ดูตัวอย่าง" : "") +
+        '</button>' +
+      '</div>' +
+      '<div class="rbody">' +
+        '<div class="rtitle-row"><span class="rtitle">' + esc(r.th) + '</span>' +
+          '<button class="card-fav' + (r.fav ? " on" : "") + '" type="button" aria-label="บันทึกรายการโปรด" title="รายการโปรด">' +
+            '<svg class="icon" viewBox="0 0 24 24"><path d="m12 17.3-6.16 3.6 1.64-7L2 9.24l7.12-.61L12 2l2.88 6.63 7.12.61-5.48 4.66 1.64 7z"></path></svg>' +
+          '</button>' +
+        '</div>' +
+        '<div class="rmeta"><span class="code-chip">' + esc(r.code) + '</span><span>' + esc(r.dept) + '</span>' + lockSvg + '</div>' +
+        '<div style="display:flex;align-items:center;gap:6px">' +
+          '<span class="status-pill" style="background:hsl(var(' + st.bg + '));color:hsl(var(' + st.c + '))"><span class="dotp"></span>' + st.label + '</span>' +
+        '</div>' +
+        '<div class="tag-row">' + tagsHtml + '</div>' +
+        '<div class="rfooter"><span>' + esc(r.updated) + '</span>' +
+          '<span class="actions">' +
+            '<button class="icon-btn" title="ดาวน์โหลด" aria-label="ดาวน์โหลด"><svg class="icon" viewBox="0 0 24 24"><path d="M12 3v12M7 10l5 5 5-5"></path><path d="M5 21h14"></path></svg></button>' +
+          '</span>' +
+        '</div>' +
+      '</div>';
+
+    el.querySelector(".card-fav").addEventListener("click", function () { toggleFav(r.code); this.classList.toggle("on"); });
+    if (canPreview) el.querySelector(".thumb-eye").addEventListener("click", function () { openPreview(r); });
+    el.querySelector(".rtitle").addEventListener("click", function () { openPreview(r); });
+    return el;
+  }
+
+  function tableRow(r) {
+    var fm = FILE_META[r.type];
+    var st = STATUS_META[r.status];
+    var tr = document.createElement("tr");
+    tr.innerHTML =
+      '<td><div class="t-name"><span class="ficon" style="background:hsl(var(' + fm.varbg + '));color:hsl(var(' + fm.varc + '))"><svg class="icon" viewBox="0 0 24 24"><path d="' + fm.path + '"></path></svg></span>' + esc(r.th) + '</div></td>' +
+      '<td><span class="code-chip">' + esc(r.code) + '</span></td>' +
+      '<td>' + esc(r.dept) + '</td>' +
+      '<td><span class="status-pill" style="background:hsl(var(' + st.bg + '));color:hsl(var(' + st.c + '))"><span class="dotp"></span>' + st.label + '</span></td>' +
+      '<td>' + esc(r.updated) + '</td>' +
+      '<td><div class="t-actions">' +
+        '<button class="icon-btn" title="ดูตัวอย่าง" aria-label="ดูตัวอย่าง"><svg class="icon" viewBox="0 0 24 24"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8Z"></path><circle cx="12" cy="12" r="3"></circle></svg></button>' +
+        '<button class="icon-btn" title="ดาวน์โหลด" aria-label="ดาวน์โหลด"><svg class="icon" viewBox="0 0 24 24"><path d="M12 3v12M7 10l5 5 5-5"></path><path d="M5 21h14"></path></svg></button>' +
+      '</div></td>';
+    tr.querySelector('[title="ดูตัวอย่าง"]').addEventListener("click", function () { openPreview(r); });
+    return tr;
+  }
+
+  function filtered() {
+    var q = state.q.toLowerCase();
+    return REPORTS.filter(function (r) {
+      if (state.cat && r.cat !== state.cat) return false;
+      if (state.dept && r.dept !== state.dept) return false;
+      if (state.status && r.status !== state.status) return false;
+      if (q && r.th.toLowerCase().indexOf(q) === -1 && r.en.toLowerCase().indexOf(q) === -1 && r.code.toLowerCase().indexOf(q) === -1) return false;
+      return true;
+    });
+  }
+
+  function renderAll() {
+    renderFolders();
+
+    var hasCat = !!state.cat;
+    chip.classList.toggle("show", hasCat);
+    if (hasCat) chipLabel.textContent = catByKey(state.cat).label;
+    document.getElementById("clearCatLink").style.display = hasCat ? "inline-flex" : "none";
+
+    var list = filtered();
+    document.getElementById("resultsCount").textContent = "พบ " + list.length + " รายการ";
+    document.getElementById("resultsHeading").textContent = hasCat ? catByKey(state.cat).label : "รายงานทั้งหมด";
+    document.getElementById("pagerLabel").textContent = list.length ? ("แสดง 1–" + list.length + " จาก " + list.length + " รายการ") : "ไม่มีรายการ";
+
+    var empty = list.length === 0;
+    document.getElementById("emptyState").classList.toggle("show", empty);
+
+    btnCard.classList.toggle("active", state.view === "card");
+    btnTable.classList.toggle("active", state.view === "table");
+    gridView.style.display = (!empty && state.view === "card") ? "grid" : "none";
+    tableView.style.display = (!empty && state.view === "table") ? "block" : "none";
+
+    gridView.innerHTML = "";
+    var tbody = document.getElementById("tableBody");
+    tbody.innerHTML = "";
+    list.forEach(function (r) {
+      gridView.appendChild(reportCard(r));
+      tbody.appendChild(tableRow(r));
+    });
+  }
+
+  document.getElementById("clearCatLink").addEventListener("click", function () { state.cat = ""; renderAll(); });
+
+  renderAll();
+})();
+</script>
