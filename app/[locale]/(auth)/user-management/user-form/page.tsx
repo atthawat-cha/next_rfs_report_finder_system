@@ -100,24 +100,21 @@ const getConfigData = async () => {
         body: JSON.stringify(userParams),
       })
 
-      if (!res.ok) {
-        console.error(await res.text());
+      const data = await res.json();
+      if (!res.ok || !data?.success) {
+        console.error(data);
+        toast.error(t("createError"));
         return;
       }
 
-      const data = await res.json();
-      if (!data?.success) {
-        return;
-      }
       toast.success(t("createSuccess"));
-      setLoading(false);
       router.push(redirect);
       router.refresh();
     } catch {
       toast.error(t("createError"));
+    } finally {
       setLoading(false);
     }
-    
   };
 
   React.useEffect(() => {
