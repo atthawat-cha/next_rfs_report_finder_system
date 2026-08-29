@@ -1,6 +1,7 @@
 {
   "list": {
     "pageTitle": "รายการรายงาน",
+    "pageSubtitle": "ค้นหา เรียกดู และดาวน์โหลดรายงานที่คุณมีสิทธิ์เข้าถึง — จัดกลุ่มตามหมวดหมู่เหมือนโฟลเดอร์ไฟล์",
     "viewList": "รายการ",
     "viewCard": "การ์ด",
     "createButton": "สร้างรายงาน",
@@ -51,11 +52,7 @@
       "title": "ไม่พบรายงานที่ตรงกับเงื่อนไข",
       "description": "ลองล้างตัวกรองหรือค้นหาด้วยคำอื่น"
     },
-    "resultsSectionTitle": "รายงานทั้งหมด",
-    "toolbar": {
-      "selectMultipleComingSoon": "เลือกหลายรายการ (เร็วๆ นี้)",
-      "detailsPanelComingSoon": "แผงรายละเอียด (เร็วๆ นี้)"
-    }
+    "resultsSectionTitle": "รายงานทั้งหมด"
   },
   "favorites": {
     "pageTitle": "รายงานโปรด",

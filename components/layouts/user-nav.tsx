@@ -1,17 +1,11 @@
 
 "use client";
 
+import * as React from "react";
 import { Link, useRouter } from "@/i18n/navigation";
 import { useTranslations } from "next-intl";
 import { LayoutGrid, LogOut, User } from "lucide-react";
-import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import {
-Tooltip,
-TooltipContent,
-TooltipTrigger,
-TooltipProvider
-} from "@/components/ui/tooltip";
 import {
 DropdownMenu,
 DropdownMenuContent,
@@ -23,14 +17,39 @@ DropdownMenuTrigger
 } from "@/components/ui/dropdown-menu";
 import { getInitials } from "@/lib/utils";
 
-interface UserNavProps {
-    first_name: string;
-    username: string;
+interface SessionUser {
+    id: string;
+    first_name: string | null;
+    username: string | null;
+    role: string | null;
 }
 
-export function UserNav({user}: {user: UserNavProps | null}) {
+/**
+ * Self-fetches GET /api/auth/session on mount (same "own client-side fetch,
+ * no prop threading" pattern NotificationBell already uses) - Navbar/
+ * ContentLayout never resolve or pass down the logged-in user (see
+ * document/phase14-plan.md's "Real bug found during research"), so this is
+ * the only source of real user data the trigger chip has.
+ */
+export function UserNav() {
     const router = useRouter();
     const t = useTranslations("nav.userMenu");
+    const [user, setUser] = React.useState<SessionUser | null>(null);
+
+    React.useEffect(() => {
+        let cancelled = false;
+        fetch("/api/auth/session", { credentials: "include" })
+            .then((res) => (res.ok ? res.json() : null))
+            .then((json) => {
+                if (!cancelled && json?.success) setUser(json.data);
+            })
+            .catch(() => {
+                // silent - a failed self-fetch just leaves the chip blank, not fatal
+            });
+        return () => {
+            cancelled = true;
+        };
+    }, []);
 
     const handleLogout = async () => {
 try {
@@ -49,25 +68,22 @@ try {
 
 return (
 <DropdownMenu>
-    <TooltipProvider disableHoverableContent>
-    <Tooltip delayDuration={100}>
-        <TooltipTrigger asChild>
-        <DropdownMenuTrigger asChild>
-            <Button
-            variant="outline"
-            className="relative h-8 w-8 rounded-full"
+    <DropdownMenuTrigger asChild>
+        <button
+            type="button"
             data-testid="user-nav-trigger"
-            >
+            className="flex items-center gap-2 rounded-full py-1 pl-1 pr-3 hover:bg-accent"
+        >
             <Avatar className="h-8 w-8">
                 <AvatarImage src="#" alt="Avatar" />
                 <AvatarFallback className="bg-transparent">{getInitials(user?.first_name || '')}</AvatarFallback>
             </Avatar>
-            </Button>
-        </DropdownMenuTrigger>
-        </TooltipTrigger>
-        <TooltipContent side="bottom">{t("profileTooltip")}</TooltipContent>
-    </Tooltip>
-    </TooltipProvider>
+            <span className="hidden flex-col items-start leading-tight sm:flex">
+                <span className="text-xs font-semibold">{user?.first_name ?? t("profileTooltip")}</span>
+                {user?.role && <span className="text-[10px] text-muted-foreground">{user.role}</span>}
+            </span>
+        </button>
+    </DropdownMenuTrigger>
 
     <DropdownMenuContent className="w-56" align="end" forceMount>
     <DropdownMenuLabel className="font-normal">

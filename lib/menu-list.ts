@@ -1,5 +1,7 @@
 import {
-Tag,
+Plus,
+FolderTree,
+Tags,
 Users,
 Settings,
 Bookmark,
@@ -85,19 +87,19 @@ menus: [
   {
     href: "/reports/report-create",
     label: t("reports.create"),
-    icon: Tag,
+    icon: Plus,
     submenus: []
   },
   {
     href: "/reports/categories",
     label: t("reports.categories"),
-    icon: Tag,
+    icon: FolderTree,
     submenus: []
   },
   {
     href: "/reports/tags",
     label: t("reports.tags"),
-    icon: Tag,
+    icon: Tags,
     submenus: []
   },
   // {

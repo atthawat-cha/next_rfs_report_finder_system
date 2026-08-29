@@ -22,8 +22,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Empty, EmptyHeader, EmptyMedia, EmptyTitle, EmptyDescription } from "@/components/ui/empty";
-import { SearchX, X, List, Grid2x2, CheckSquare, Info } from "lucide-react";
-import { Tooltip, TooltipContent, TooltipTrigger, TooltipProvider } from "@/components/ui/tooltip";
+import { SearchX, X, List, Grid2x2 } from "lucide-react";
 
 const PAGE_SIZE = 20;
 
@@ -41,7 +40,7 @@ export default function ReportListView({ isAdmin }: { isAdmin: boolean }) {
   const searchParams = useSearchParams();
   const q = searchParams.get("q") ?? "";
 
-  const [reportView, setReportView] = React.useState("table");
+  const [reportView, setReportView] = React.useState("card");
   const [reports, setReports] = React.useState<ReportGetDataType[]>([]);
   const [total, setTotal] = React.useState(0);
   const [page, setPage] = React.useState(1);
@@ -174,6 +173,11 @@ export default function ReportListView({ isAdmin }: { isAdmin: boolean }) {
       </div>
 
       <div className="container mx-auto py-10 gap-6">
+        <div className="mb-6">
+          <h1 className="text-2xl font-extrabold tracking-tight">{t("pageTitle")}</h1>
+          <p className="mt-1 text-sm text-muted-foreground">{t("pageSubtitle")}</p>
+        </div>
+
         {isAdmin && <QuickActions />}
 
         <CategoryFolders
@@ -203,7 +207,7 @@ export default function ReportListView({ isAdmin }: { isAdmin: boolean }) {
             <ToggleGroup
               variant="outline"
               type="single"
-              defaultValue="table"
+              defaultValue="card"
               onValueChange={hanelerViewChange}
               className="rounded-full border p-1 gap-1"
             >
@@ -226,39 +230,6 @@ export default function ReportListView({ isAdmin }: { isAdmin: boolean }) {
                 <Grid2x2 className="h-4 w-4" />
               </ToggleGroupItem>
             </ToggleGroup>
-
-            {/* Matches the reference toolbar's icon count, but bulk-select and
-                a details panel don't exist anywhere in this app yet - rather
-                than fake working buttons, these are disabled with a tooltip
-                naming what they'll do once that's real. */}
-            <TooltipProvider disableHoverableContent>
-              <div className="flex items-center gap-1 rounded-full border p-1">
-                <Tooltip delayDuration={200}>
-                  <TooltipTrigger asChild>
-                    <span
-                      role="button"
-                      aria-disabled="true"
-                      className="flex h-8 w-8 cursor-not-allowed items-center justify-center rounded-full text-muted-foreground/50"
-                    >
-                      <CheckSquare className="h-4 w-4" />
-                    </span>
-                  </TooltipTrigger>
-                  <TooltipContent>{t("toolbar.selectMultipleComingSoon")}</TooltipContent>
-                </Tooltip>
-                <Tooltip delayDuration={200}>
-                  <TooltipTrigger asChild>
-                    <span
-                      role="button"
-                      aria-disabled="true"
-                      className="flex h-8 w-8 cursor-not-allowed items-center justify-center rounded-full text-muted-foreground/50"
-                    >
-                      <Info className="h-4 w-4" />
-                    </span>
-                  </TooltipTrigger>
-                  <TooltipContent>{t("toolbar.detailsPanelComingSoon")}</TooltipContent>
-                </Tooltip>
-              </div>
-            </TooltipProvider>
           </div>
         </div>
 

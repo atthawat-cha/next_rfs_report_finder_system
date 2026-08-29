@@ -3,14 +3,12 @@ import { LocaleToggle } from "@/components/ui/locale-toggle";
 import { UserNav } from "@/components/layouts/user-nav";
 import { SheetMenu } from "@/components/layouts/sheet-menu";
 import { NotificationBell } from "@/components/layouts/notification-bell";
-// import { getCurrentUser } from "@/lib/auth";
 
 interface NavbarProps {
 title: string;
 }
 
 export  function Navbar({ title }: NavbarProps) {
-    // const user = await getCurrentUser();
 
 return (
 <header className="sticky top-0 z-10 w-full bg-background/95 shadow backdrop-blur supports-[backdrop-filter]:bg-background/60 dark:shadow-secondary">
@@ -23,7 +21,7 @@ return (
         <NotificationBell />
         <LocaleToggle />
         <ModeToggle />
-        <UserNav user={null} />
+        <UserNav />
     </div>
     </div>
 </header>

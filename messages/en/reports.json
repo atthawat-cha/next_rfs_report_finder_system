@@ -1,6 +1,7 @@
 {
   "list": {
     "pageTitle": "Report List",
+    "pageSubtitle": "Search, browse, and download the reports you have access to — grouped by category like folders.",
     "viewList": "List",
     "viewCard": "Card",
     "createButton": "Create Report",
@@ -51,11 +52,7 @@
       "title": "No reports found",
       "description": "Try clearing filters or searching with different keywords."
     },
-    "resultsSectionTitle": "All Reports",
-    "toolbar": {
-      "selectMultipleComingSoon": "Select multiple (coming soon)",
-      "detailsPanelComingSoon": "Details panel (coming soon)"
-    }
+    "resultsSectionTitle": "All Reports"
   },
   "favorites": {
     "pageTitle": "Favorite Reports",
