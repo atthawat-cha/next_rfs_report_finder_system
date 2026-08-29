@@ -1,6 +1,6 @@
 # ความคืบหน้าโครงการ — RFS Report Finder System
 
-> **อัปเดตล่าสุด:** 2026-08-29 · **Branch:** `development` · **HEAD:** `7c378b6` (fix: /profile 500 for every account) + user-nav "Account" link → `/profile` fix, รอ commit
+> **อัปเดตล่าสุด:** 2026-08-29 · **Branch:** `development` · **HEAD:** `bf6d439` (fix: user-nav "Account" menu item links to nonexistent /account)
 >
 > ไฟล์นี้ตอบคำถามเดียว: **"ตอนนี้ถึงไหนแล้ว และเหลืออะไร"** สถานะทุกแถวอ้างอิง commit จริงใน git log เป็นหลักฐาน ไม่ใช่การอ่านโค้ดเดา
 >
