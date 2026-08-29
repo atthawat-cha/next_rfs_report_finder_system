@@ -11,9 +11,9 @@ import { isPdfFile, isSpreadsheetFile } from "@/components/shared/reportFilePrev
  */
 
 export const REPORT_STATUS_STYLES: Record<string, string> = {
-  PUBLISHED: "bg-emerald-100 text-emerald-700 dark:bg-emerald-950/40 dark:text-emerald-400",
-  DRAFT: "bg-amber-100 text-amber-700 dark:bg-amber-950/40 dark:text-amber-400",
-  ARCHIVED: "bg-muted text-muted-foreground",
+  PUBLISHED: "bg-success-bg text-success",
+  DRAFT: "bg-warning-bg text-warning",
+  ARCHIVED: "bg-archived-bg text-muted-foreground",
 };
 
 export function ReportStatusPill({ status, label, className }: { status: string; label: string; className?: string }) {
@@ -40,10 +40,10 @@ export interface FileKindMeta {
 export function fileKindMeta(file: { file_name?: string | null }): FileKindMeta {
   const ref = { file_name: file.file_name ?? "" };
   if (isPdfFile(ref)) {
-    return { ext: "PDF", Icon: FileText, badgeClassName: "bg-red-100 text-red-700 dark:bg-red-950/40 dark:text-red-400" };
+    return { ext: "PDF", Icon: FileText, badgeClassName: "bg-pdf-bg text-pdf" };
   }
   if (isSpreadsheetFile(ref)) {
-    return { ext: "XLSX", Icon: FileSpreadsheet, badgeClassName: "bg-emerald-100 text-emerald-700 dark:bg-emerald-950/40 dark:text-emerald-400" };
+    return { ext: "XLSX", Icon: FileSpreadsheet, badgeClassName: "bg-xlsx-bg text-xlsx" };
   }
   const ext = file.file_name?.split(".").pop()?.toUpperCase() ?? "";
   return { ext: ext || "FILE", Icon: FileIcon, badgeClassName: "bg-muted text-muted-foreground" };
@@ -53,7 +53,7 @@ export function AccessLockIcon({ access, className, titleAccess }: { access: str
   if (access === "PUBLIC") return null;
   return (
     <Lock
-      className={cn("h-3 w-3 shrink-0", access === "PRIVATE" ? "text-destructive" : "text-amber-600 dark:text-amber-400", className)}
+      className={cn("h-3 w-3 shrink-0", access === "PRIVATE" ? "text-danger" : "text-warning", className)}
       aria-label={titleAccess}
     >
       <title>{titleAccess}</title>
@@ -64,18 +64,39 @@ export function AccessLockIcon({ access, className, titleAccess }: { access: str
 /** Deterministic tint per category id - categories.icon/color exist in the
  * schema but are never populated through the admin UI (categoryFormDialog.tsx
  * doesn't expose them), so cycling a fixed palette by id hash gives folder
- * cards visual variety without depending on unset data. */
+ * cards visual variety without depending on unset data. Palette lives as
+ * cat-1..cat-6 tokens (app/globals.css) - see document/design-system.md §2. */
 const CATEGORY_PALETTE = [
-  "text-blue-600 bg-blue-100 dark:text-blue-400 dark:bg-blue-950/40",
-  "text-violet-600 bg-violet-100 dark:text-violet-400 dark:bg-violet-950/40",
-  "text-amber-600 bg-amber-100 dark:text-amber-400 dark:bg-amber-950/40",
-  "text-cyan-600 bg-cyan-100 dark:text-cyan-400 dark:bg-cyan-950/40",
-  "text-emerald-600 bg-emerald-100 dark:text-emerald-400 dark:bg-emerald-950/40",
-  "text-rose-600 bg-rose-100 dark:text-rose-400 dark:bg-rose-950/40",
+  "text-cat-1 bg-cat-1-bg",
+  "text-cat-2 bg-cat-2-bg",
+  "text-cat-3 bg-cat-3-bg",
+  "text-cat-4 bg-cat-4-bg",
+  "text-cat-5 bg-cat-5-bg",
+  "text-cat-6 bg-cat-6-bg",
 ];
 
-export function categoryTint(categoryId: string): string {
+const CATEGORY_ACCENT_VARS = [
+  "var(--cat-1)",
+  "var(--cat-2)",
+  "var(--cat-3)",
+  "var(--cat-4)",
+  "var(--cat-5)",
+  "var(--cat-6)",
+];
+
+function categoryHash(categoryId: string): number {
   let hash = 0;
   for (let i = 0; i < categoryId.length; i++) hash = (hash * 31 + categoryId.charCodeAt(i)) >>> 0;
-  return CATEGORY_PALETTE[hash % CATEGORY_PALETTE.length];
+  return hash % CATEGORY_PALETTE.length;
+}
+
+export function categoryTint(categoryId: string): string {
+  return CATEGORY_PALETTE[categoryHash(categoryId)];
+}
+
+/** Raw `hsl(var(--cat-N))` for a report card's top accent bar (`--acc` custom
+ * property) - same hash as categoryTint, so a card's accent always matches its
+ * folder badge's tint. */
+export function categoryAccent(categoryId: string): string {
+  return `hsl(${CATEGORY_ACCENT_VARS[categoryHash(categoryId)]})`;
 }

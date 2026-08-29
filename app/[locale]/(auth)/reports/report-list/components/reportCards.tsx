@@ -6,7 +6,7 @@ import toast from "react-hot-toast";
 import { ReportGetDataType } from "@/lib/types";
 import Image from "next/image";
 import { Eye, Download, Star } from "lucide-react";
-import { fileKindMeta, ReportStatusPill, AccessLockIcon } from "@/components/shared/reportDisplayMeta";
+import { fileKindMeta, ReportStatusPill, AccessLockIcon, categoryAccent } from "@/components/shared/reportDisplayMeta";
 import { cn, formatDateTime } from "@/lib/utils";
 import { Link } from "@/i18n/navigation";
 import { ReportPreviewDialog } from "@/components/shared/reportPreviewDialog";
@@ -22,12 +22,19 @@ interface ReportCardViewProps {
     onToggleFavorite: (reportId: string, next: boolean) => void;
 }
 
+function CardAccentBar({ accent }: { accent: string | undefined }) {
+    if (!accent) return null;
+    return <span className="absolute inset-x-0 top-0 z-10 h-[3px]" style={{ background: accent }} />;
+}
+
 function ReportThumbnail({ report, onPreview }: { report: ReportGetDataType; onPreview: () => void }) {
     const t = useTranslations("reports.list.columns");
+    const accent = report.categories?.id ? categoryAccent(report.categories.id) : undefined;
 
     if (isImageFile(report)) {
         return (
             <div className="relative aspect-[4/3] w-full overflow-hidden rounded-t-xl bg-muted">
+                <CardAccentBar accent={accent} />
                 <Image
                     src={`${report.file_path}`}
                     alt={report.file_name || ""}
@@ -48,6 +55,7 @@ function ReportThumbnail({ report, onPreview }: { report: ReportGetDataType; onP
 
     return (
         <div className="relative aspect-[4/3] w-full overflow-hidden rounded-t-xl bg-muted/50 p-4">
+            <CardAccentBar accent={accent} />
             {/* Mock document face - there is no server-side PDF/XLSX-to-image
                 rendering in this system (see CLAUDE.md §Download/Export/Print),
                 so this is a stylized stand-in, not a real page render. */}

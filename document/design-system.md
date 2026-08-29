@@ -36,7 +36,7 @@ low contrast) — the same pairing shape shadcn already uses for
 | `archived-bg` | Report status: Archived (text stays `muted-foreground`, no dedicated `archived` text token — archived is deliberately desaturated, not a "warning color") | `ReportStatusPill` |
 | `pdf` / `pdf-bg` | File-type badge: PDF | `fileKindMeta` |
 | `xlsx` / `xlsx-bg` | File-type badge: XLSX/spreadsheet | `fileKindMeta` |
-| `doc` / `doc-bg` | File-type badge: other/generic document | `fileKindMeta` |
+| `doc` / `doc-bg` | File-type badge: Word/docx (reserved — `fileKindMeta` has no `isDocxFile` detection yet, so the "anything else" fallback still uses plain `bg-muted text-muted-foreground`, not this token; wire it up if/when docx-specific detection is added) | — (reserved) |
 | `cat-1` … `cat-6` / `cat-N-bg` | Category folder accent (hash-picked per `categories.id`, not a name→color mapping — see note below) | `categoryTint`/`categoryAccent` (`reportDisplayMeta.tsx`), `CategoryFolders`, report card thumbnail top accent bar |
 
 **Why `danger` is a separate token from the existing `destructive`:** `destructive`
