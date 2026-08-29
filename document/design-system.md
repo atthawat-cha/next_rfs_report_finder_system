@@ -117,11 +117,11 @@ Carried over from `phase14-plan.md` (not reopened):
   non-admin users per `feature-list.md` FR-5).
 - No per-category icon (`Folder` stays generic for every category).
 
-New scope boundary (Phase 15): `app/[locale]/(auth)/reports/favorites/components/
-favReportCard.tsx` still has its own inline `Dialog`/`<embed>` preview (PDF-only,
-no file-kind switcher) instead of the shared `ReportPreviewDialog` that
-`reports/report-list/components/reportCards.tsx` was migrated to in Phase 14
-(phase14-plan.md resolved-decision #2 only covered report-list, not favorites).
-Phase 15 does not consolidate this — it's a component-reuse/behavior fix, not a
-design-token change — but it's recorded here so it isn't rediscovered from
-scratch next time someone touches favorites.
+~~New scope boundary (Phase 15): `favorites/components/favReportCard.tsx` still has
+its own inline `Dialog`/`<embed>` preview...~~ — **closed**, same day, as a direct
+follow-up once flagged: `favReportCard.tsx` now uses the shared
+`ReportPreviewDialog` (tracks `previewReportId: string | null` instead of the
+whole report object, same pattern as `reportCards.tsx`) — the inline
+`Dialog`/`<embed>` block and its now-unused imports (`Printer`, `Button`,
+`Dialog*`) were removed. Verified live: opening a favorite's card preview now
+shows the file-kind switcher chip row the old inline dialog never had.

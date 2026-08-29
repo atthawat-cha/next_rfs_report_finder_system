@@ -4,19 +4,11 @@ import * as React from "react";
 import { useTranslations } from "next-intl";
 import { ReportGetDataType } from "@/lib/types";
 import Image from "next/image";
-import { Eye, Printer, Download, Star } from "lucide-react";
+import { Eye, Download, Star } from "lucide-react";
 import { fileKindMeta, ReportStatusPill, AccessLockIcon, categoryAccent } from "@/components/shared/reportDisplayMeta";
 import { cn, formatDateTime } from "@/lib/utils";
-import { Button } from "@/components/ui/button";
 import { Link } from "@/i18n/navigation";
-import {
-    Dialog,
-    DialogContent,
-    DialogHeader,
-    DialogTitle,
-    DialogDescription,
-    DialogFooter,
-} from "@/components/ui/dialog";
+import { ReportPreviewDialog } from "@/components/shared/reportPreviewDialog";
 
 function isImageFile(file: { file_name?: string }): boolean {
     const name = file.file_name?.toLowerCase() ?? "";
@@ -89,10 +81,9 @@ function ReportThumbnail({ report, onPreview }: { report: ReportGetDataType; onP
 }
 
 export default function FavReportCardView({ reports, onUnfavorite }: FavReportCardViewProps) {
-    const t = useTranslations("reports.previewDialog");
     const tl = useTranslations("reports.list");
     const tf = useTranslations("reports.favorites");
-    const [previewReport, setPreviewReport] = React.useState<ReportGetDataType | null>(null);
+    const [previewReportId, setPreviewReportId] = React.useState<string | null>(null);
 
     return (
         <div className="flex w-full flex-col gap-5">
@@ -104,7 +95,7 @@ export default function FavReportCardView({ reports, onUnfavorite }: FavReportCa
                             key={report.id}
                             className="group flex flex-col overflow-hidden rounded-xl border bg-card shadow-sm transition-shadow hover:shadow-md"
                         >
-                            <ReportThumbnail report={report} onPreview={() => setPreviewReport(report)} />
+                            <ReportThumbnail report={report} onPreview={() => setPreviewReportId(report.id ?? null)} />
 
                             <div className="flex flex-1 flex-col gap-2 p-3.5">
                                 <div className="flex items-start justify-between gap-2">
@@ -172,33 +163,11 @@ export default function FavReportCardView({ reports, onUnfavorite }: FavReportCa
                 })}
             </div>
 
-            <Dialog open={previewReport !== null} onOpenChange={(open) => !open && setPreviewReport(null)}>
-                <DialogContent className="max-w-4xl max-h-[85vh] flex flex-col">
-                    <DialogHeader>
-                        <DialogTitle>{previewReport?.name_th}</DialogTitle>
-                        <DialogDescription>{previewReport?.description}</DialogDescription>
-                    </DialogHeader>
-
-                    {previewReport && (
-                        <embed
-                            src={`/api/reports/${previewReport.id}/download?disposition=inline`}
-                            type="application/pdf"
-                            className="w-full h-[60vh] flex-1"
-                        />
-                    )}
-
-                    <DialogFooter>
-                        <Button variant="outline" onClick={() => window.print()}>
-                            <Printer className="h-4 w-4 mr-2" /> {t("print")}
-                        </Button>
-                        <Button asChild>
-                            <a href={`/api/reports/${previewReport?.id}/download`} target="_blank" rel="noreferrer">
-                                <Download className="h-4 w-4 mr-2" /> {t("download")}
-                            </a>
-                        </Button>
-                    </DialogFooter>
-                </DialogContent>
-            </Dialog>
+            <ReportPreviewDialog
+                reportId={previewReportId}
+                open={previewReportId !== null}
+                onOpenChange={(open) => !open && setPreviewReportId(null)}
+            />
         </div>
     );
 }
