@@ -35,6 +35,7 @@
     "reportCount": "{count} reports",
     "filters": {
       "allDepartments": "All Departments",
+      "allStatuses": "All Statuses",
       "filteringBy": "Filtering by: {name}",
       "clear": "Clear filter"
     },
@@ -47,6 +48,12 @@
       "PUBLIC": "Public",
       "RESTRICTED": "Restricted access",
       "PRIVATE": "Private"
+    },
+    "delete": {
+      "title": "Delete Report",
+      "description": "Delete \"{name}\" ({code}) — this permanently removes all its files, queries, variables, permissions, and version history. This cannot be undone.",
+      "deleteFailed": "Delete failed",
+      "deleteSuccess": "Report deleted successfully"
     },
     "emptyState": {
       "title": "No reports found",

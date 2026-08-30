@@ -1,4 +1,5 @@
 import prisma from '@/lib/prisma';
+import { Prisma } from '@/app/generated/prisma/client';
 import { NextRequest, NextResponse } from 'next/server';
 import { getAuthFromRequest, requireRole, routeAcceptted } from '@/lib/auth';
 import { parsePagination } from '@/lib/pagination';
@@ -6,12 +7,18 @@ import { visibleReportIdsFor } from '@/lib/report-acl';
 import { logDevError } from '@/lib/log-dev-error';
 
 const SIMILARITY_THRESHOLD = 0.3;
+const VALID_STATUSES = ['DRAFT', 'PUBLISHED', 'ARCHIVED'] as const;
 
 /**
  * GET /api/reports/browse
- * Non-admin report list — filtered via lib/report-acl.ts's visibleReportIdsFor
- * (individual grant > role grant > access_level fallback).
- * Query params: q, category, department, tag, page, pageSize
+ * Non-admin callers are filtered via lib/report-acl.ts's visibleReportIdsFor
+ * (individual grant > role grant > access_level fallback) and always end up
+ * seeing PUBLISHED+PUBLIC (or explicitly-granted) reports only - the `status`
+ * param is ignored for them. Admin callers bypass the ACL entirely (same
+ * isAdmin re-check pattern as GET /api/reports/[id]/files/[fileId]/download)
+ * and see every report regardless of status/access_level, optionally narrowed
+ * with `?status=DRAFT|PUBLISHED|ARCHIVED`.
+ * Query params: q, category, department, tag, status (admin-only), page, pageSize
  */
 export async function GET(req: NextRequest) {
     try {
@@ -26,23 +33,33 @@ export async function GET(req: NextRequest) {
             return authResult;
         }
 
+        const isAdmin = routeAcceptted('admin').includes(authResult.user.roles?.name?.toLowerCase() ?? '');
+
         const searchParams = req.nextUrl.searchParams;
         const { page, pageSize, skip, take } = await parsePagination(searchParams);
         const q = searchParams.get('q')?.trim();
         const category = searchParams.get('category');
         const department = searchParams.get('department');
         const tag = searchParams.get('tag');
+        const statusParam = searchParams.get('status');
+        const status = isAdmin && statusParam && (VALID_STATUSES as readonly string[]).includes(statusParam)
+            ? (statusParam as typeof VALID_STATUSES[number])
+            : undefined;
 
-        const visibleIds = await visibleReportIdsFor(authResult.user);
-        if (visibleIds.length === 0) {
-            return NextResponse.json(
-                { success: true, data: [], meta: { page, pageSize, total: 0, totalPages: 0 } },
-                { status: 200 }
-            );
+        let visibleIds: string[] | null = null;
+        if (!isAdmin) {
+            visibleIds = await visibleReportIdsFor(authResult.user);
+            if (visibleIds.length === 0) {
+                return NextResponse.json(
+                    { success: true, data: [], meta: { page, pageSize, total: 0, totalPages: 0 } },
+                    { status: 200 }
+                );
+            }
         }
 
         const where: Record<string, unknown> = {
-            id: { in: visibleIds },
+            ...(visibleIds ? { id: { in: visibleIds } } : {}),
+            ...(status && { status }),
             ...(category && { category_id: category }),
             ...(department && { department_id: department }),
             ...(tag && { report_tags: { some: { tags: { slug: tag } } } }),
@@ -58,6 +75,8 @@ export async function GET(req: NextRequest) {
             // those cover - the trigram GIN indexes on name_th/name_en/code (schema.prisma)
             // already support it, no new migration needed (Phase 7d).
             const likeTerm = `%${q}%`;
+            const scopeSql = visibleIds ? Prisma.sql`id = ANY(${visibleIds})` : Prisma.sql`TRUE`;
+            const statusSql = status ? Prisma.sql`AND status = ${status}` : Prisma.empty;
             const rankedRows = await prisma.$queryRaw<{ id: string; rank: number }[]>`
                 SELECT id,
                     GREATEST(
@@ -67,7 +86,8 @@ export async function GET(req: NextRequest) {
                         CASE WHEN search_vector @@ to_tsquery('simple', ${toTsQueryInput(q)}) THEN 1 ELSE 0 END
                     ) AS rank
                 FROM reports
-                WHERE id = ANY(${visibleIds})
+                WHERE ${scopeSql}
+                  ${statusSql}
                   AND (
                     search_vector @@ to_tsquery('simple', ${toTsQueryInput(q)})
                     OR name_th ILIKE ${likeTerm}

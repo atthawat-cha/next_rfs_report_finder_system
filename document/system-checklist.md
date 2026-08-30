@@ -1,9 +1,12 @@
 RFS Next.js Engineering Standard
 
-> **Verified 2026-08-30** — every 🔍 item below was investigated against the actual codebase (not guessed). Several
-> previously-marked ✅ items were downgraded after investigation (Docker, Rate Limit, ACL); Validation and File
-> Security were upgraded from 🔴 to 🟠 (real but incomplete, not fully absent). Evidence lives in
-> `document/system-audit-2026-08-30.md` (full report + remediation plan) — this file stays the compact status view.
+> **Verified 2026-08-30, updated 2026-08-30 post-Phase 16** — every 🔍 item below was investigated against the actual
+> codebase (not guessed). Several previously-marked ✅ items were downgraded after investigation (Docker, Rate Limit,
+> ACL); Validation and File Security were upgraded from 🔴 to 🟠 (real but incomplete, not fully absent). Evidence for
+> the original pass lives in `document/system-audit-2026-08-30.md` (full report + remediation plan) — this file stays
+> the compact status view. **Phase 16 (`49af393`, same day) closed all 4 P0 findings this pass surfaced — RBAC, ACL,
+> CSRF, Rate Limit below are re-verified against the fix; see [`phase16-plan.md`](./phase16-plan.md) and
+> `00-progress.md`'s "### Phase 16" section for the fix write-up.**
 
 │
 ├── Architecture
@@ -29,22 +32,22 @@ RFS Next.js Engineering Standard
 │
 ├── API
 │   ├── Route Handlers                ✅
-│   ├── Validation                    🟠  zod used in 28/61 routes (~46%); concentrated on POST/PUT bodies — GET query-params and simple [id] routes mostly unvalidated
+│   ├── Validation                    🟠  zod used in 29/63 routes (~46%, unchanged); concentrated on POST/PUT bodies — GET query-params and simple [id] routes mostly unvalidated
 │   ├── Auth                          ✅
-│   ├── Authorization                 🟠  requireAuth/requireRole on 51/61 routes; 1 real gap found (see Security > RBAC)
+│   ├── Authorization                 ✅  FIXED: requireAuth/requireRole on 53/63 routes; the other 10 are intentionally public (login/logout/verify-2fa, settings/public, shares/[token]/* x3) or dead placeholder stubs (users/departments/[id], users/departments/update, users/permissions — each just returns a hardcoded "Hello World", no real data) — the one real gap (users/user/[id] GET) is fixed, see Security > RBAC
 │   ├── Error Standard                🟠  status codes consistent; error envelope shape varies ({error} / {success:false,error} / {error,details})
 │   └── Response Standard             🟠  {success,data} dominant but not universal (users/roles/route.ts mixes bare-array and enveloped responses in the same file)
 │
 ├── Security
 │   ├── JWT                           ✅
 │   ├── httpOnly Cookie               ✅
-│   ├── RBAC                          🔴  CRITICAL: app/api/users/user/[id]/route.ts GET has NO auth check — leaks any user's PII by ID (unauthenticated IDOR)
-│   ├── ACL                           🟠  enforced in 7 API endpoints via lib/report-acl.ts, but bypassable: uploaded files are served as static assets under public/, and proxy.ts only checks "is logged in," never per-report ACL, on static paths
-│   ├── Rate Limit                    🟠  Redis-backed limiter exists but wired to only 4 routes (login, verify-2fa, dashboard/summary, dashboard/trends) — no general write-endpoint protection
-│   ├── CSRF                          🔴  no token/double-submit anywhere; relies solely on cookie SameSite=Lax
+│   ├── RBAC                          ✅  FIXED (Phase 16a, `49af393`): app/api/users/user/[id]/route.ts GET now calls requireRole(routeAcceptted('admin')), matching its sibling list endpoint — verified live: unauthenticated → 401, non-admin → 403, admin → 200 with correct data
+│   ├── ACL                           ✅  FIXED (Phase 16b, `49af393`): default UPLOAD_BASE_PATH moved out of public/ to storage/uploads/ (outside Next's static-file root) + PUT /settings/storage now rejects any value that resolves back into public/, closing the static-serving bypass; this dev DB's 7 pre-existing files migrated for real (`scripts/migrate-report-storage-root.ts`, verified 404 on the old public/ path afterward) and the legacy `reports.file_path` fallback (`lib/legacy-report-file.ts`) covers the same 3 serving routes (download/thumbnail/shares-download) so old rows don't 404 either — still enforced via lib/report-acl.ts in the same endpoints as before, including the admin-bypass branch added to GET /api/reports/browse the same day (routeAcceptted('admin') re-check, same pattern as the file-download routes) for the report-list "see all statuses" fix
+│   ├── Rate Limit                    🟠  IMPROVED (Phase 16d, `49af393`): added `checkGeneralRateLimit` (60/min) wired to 6 more write-heavy endpoints (report create, favorites, tickets, sub-reports, permissions, shares) — 10 routes covered in total now, still not universal (a repo-wide gate needs proxy.ts's matcher to cover /api/*, an architectural change scoped out of Phase 16 on purpose — see 00-progress.md)
+│   ├── CSRF                          🟠  IMPROVED (Phase 16c, `49af393`): lib/auth.ts's requireAuth() now 403s any cookie-authenticated, non-safe-method request whose Origin header doesn't match the app's own origin — real defense-in-depth verified live (cross-site Origin + cookie → 403; same-origin/no-Origin-header → passes through), though still not a full double-submit-token CSRF pattern
 │   ├── Security Headers              ✅  CSP/X-Frame-Options/HSTS/nosniff/Referrer-Policy/Permissions-Policy all present (next.config.js); minor: script/style-src allow 'unsafe-inline'
 │   ├── Input Validation              🟠  same underlying gap as API > Validation above
-│   └── File Security                 🟠  extension/size allowlists + filename sanitization + WebP re-encode are solid; gaps: no AV scan, timestamp-based (guessable) filenames, and the static-serving ACL bypass above
+│   └── File Security                 🟠  extension/size allowlists + filename sanitization + WebP re-encode are solid; gaps: no AV scan, timestamp-based (guessable) filenames — the static-serving ACL bypass noted here previously is fixed, see ACL above (Phase 16b)
 │
 ├── UI
 │   ├── shadcn/ui                     ✅

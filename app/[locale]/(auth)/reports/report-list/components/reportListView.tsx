@@ -52,15 +52,17 @@ export default function ReportListView({ isAdmin }: { isAdmin: boolean }) {
   const [departments, setDepartments] = React.useState<DepartmentFacet[]>([]);
   const [categoryId, setCategoryId] = React.useState("");
   const [departmentId, setDepartmentId] = React.useState("");
+  const [status, setStatus] = React.useState("");
   const [favoriteIds, setFavoriteIds] = React.useState<Set<string>>(new Set());
 
-  const fetchReports = React.useCallback(async (query: string, pageNum: number, category: string, department: string) => {
+  const fetchReports = React.useCallback(async (query: string, pageNum: number, category: string, department: string, statusFilter: string) => {
     setLoading(true);
     try {
       const params = new URLSearchParams();
       if (query) params.set("q", query);
       if (category) params.set("category", category);
       if (department) params.set("department", department);
+      if (statusFilter) params.set("status", statusFilter);
       params.set("page", String(pageNum));
       params.set("pageSize", String(PAGE_SIZE));
 
@@ -124,8 +126,8 @@ export default function ReportListView({ isAdmin }: { isAdmin: boolean }) {
   }, []);
 
   React.useEffect(() => {
-    fetchReports(q, page, categoryId, departmentId);
-  }, [q, page, categoryId, departmentId, fetchReports]);
+    fetchReports(q, page, categoryId, departmentId, status);
+  }, [q, page, categoryId, departmentId, status, fetchReports]);
 
   React.useEffect(() => {
     fetchFacets();
@@ -140,6 +142,13 @@ export default function ReportListView({ isAdmin }: { isAdmin: boolean }) {
       return copy;
     });
   }, []);
+
+  const handleReportDeleted = React.useCallback(() => {
+    // Deleting the last row on a page past page 1 would otherwise strand
+    // the view on a now out-of-range page (same edge case as reports/categories's page.tsx).
+    if (reports.length === 1 && page > 1) setPage((p) => p - 1);
+    else fetchReports(q, page, categoryId, departmentId, status);
+  }, [reports.length, page, q, categoryId, departmentId, status, fetchReports]);
 
   const hanelerSearch = (value: string) => {
     clearTimeout(searchDebounceRef.current);
@@ -204,6 +213,20 @@ export default function ReportListView({ isAdmin }: { isAdmin: boolean }) {
               </SelectContent>
             </Select>
 
+            {isAdmin && (
+              <Select value={status || "__all__"} onValueChange={(v) => { setPage(1); setStatus(v === "__all__" ? "" : v); }}>
+                <SelectTrigger className="w-[160px]">
+                  <SelectValue placeholder={t("filters.allStatuses")} />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="__all__">{t("filters.allStatuses")}</SelectItem>
+                  <SelectItem value="DRAFT">{t("status.DRAFT")}</SelectItem>
+                  <SelectItem value="PUBLISHED">{t("status.PUBLISHED")}</SelectItem>
+                  <SelectItem value="ARCHIVED">{t("status.ARCHIVED")}</SelectItem>
+                </SelectContent>
+              </Select>
+            )}
+
             <ToggleGroup
               variant="outline"
               type="single"
@@ -261,9 +284,15 @@ export default function ReportListView({ isAdmin }: { isAdmin: boolean }) {
               </EmptyHeader>
             </Empty>
           ) : reportView === "table" ? (
-            <ReportTableView reports={reports} />
+            <ReportTableView reports={reports} isAdmin={isAdmin} onDeleted={handleReportDeleted} />
           ) : (
-            <ReportCardView reports={reports} favoriteIds={favoriteIds} onToggleFavorite={handleToggleFavorite} />
+            <ReportCardView
+              reports={reports}
+              favoriteIds={favoriteIds}
+              onToggleFavorite={handleToggleFavorite}
+              isAdmin={isAdmin}
+              onDeleted={handleReportDeleted}
+            />
           )}
         </div>
 

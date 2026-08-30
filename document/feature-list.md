@@ -44,7 +44,7 @@
 |---|---|---|---|
 | สร้างรายงานใหม่พร้อม metadata (ชื่อ TH/EN, code, category, department, description, access level) | Must | ✅ | — |
 | แก้ไขรายงานที่มีอยู่ | Must | ✅ (`report-edit/[id]/page.tsx`) | 2 |
-| ลบรายงาน | Must | ✅ (`DELETE .../manage/[id]`, cascade ผ่าน schema) | 2 |
+| ลบรายงาน | Must | ✅ (`DELETE .../manage/[id]`, cascade ผ่าน schema — เดิม backend-only ไม่มี UI เรียกใช้เลยจนกระทั่ง 2026-08-30 เพิ่มปุ่ม Delete ในเมนูจัดการที่ `reports/report-list` ทั้ง table/card view ให้แอดมิน ดู 00-progress.md) | 2 |
 | กำหนดประเภทผลลัพธ์รายงาน (`output_type`): ใบพิมพ์ (`PRINT_FORM`) หรือ รายงานข้อมูล (`DATA_REPORT`) — กำหนดชุดไฟล์แนบที่ต้องอัปโหลด | Must | ✅ (ฟอร์มมี field, backend persist ได้ถูกต้องแล้ว — เพิ่งแก้ regression เดียวกับ `access_level` ใน `abd3629`) | 2 |
 | อัปโหลดฟอร์มเปล่า (pdf) — สำหรับรายงานประเภทใบพิมพ์ | Must | ✅ (`report_files`, kind `BLANK_FORM`) | 2 |
 | อัปโหลดฟอร์มตัวอย่างที่กรอกข้อมูลแล้ว (pdf) — สำหรับรายงานประเภทใบพิมพ์ | Must | ✅ (`GET .../files/[fileId]/download` แยกตาม `file_kind` ชิปตั้งแต่ 4c, ต่อเข้าหน้า report-detail ใน 5a) | 2/4c/5a |
@@ -71,7 +71,7 @@
 | Feature | Priority | สถานะ | Phase |
 |---|---|---|---|
 | ค้นหาด้วยชื่อ/รหัส/คำอธิบาย/แท็ก (ไทย+อังกฤษ) | Must | ✅ (`tsvector` + trigram, ยืนยันแล้วว่า index จริงถูกสร้างครบหลังแก้ของค้าง #1) | 1 |
-| กรองผลลัพธ์ตาม category/department/tag/status | Must | ✅ (status สำหรับ user ทั่วไป fix เป็น `PUBLISHED` เสมอตามการออกแบบ Phase 1 ไม่ใช่ตัวเลือกอิสระ) | 1 |
+| กรองผลลัพธ์ตาม category/department/tag/status | Must | ✅ (status สำหรับ user ทั่วไป fix เป็น `PUBLISHED` เสมอตามการออกแบบ Phase 1 ไม่ใช่ตัวเลือกอิสระ; แอดมินเห็นทุกสถานะ + มี status filter dropdown จริง — แก้บั๊กที่แอดมินเคยถูก ACL จำกัดเหมือน user ทั่วไป ดู 00-progress.md 2026-08-30) | 1 |
 | Pagination บนผลการค้นหา | Must | ✅ | 1 |
 | Endpoint ค้นหาแบบ ACL-filtered สำหรับ non-admin | Must | ✅ (`GET /api/reports/browse`) | 1/2 |
 | Preview ฟอร์ม (PDF) inline ในระบบ ก่อนดาวน์โหลด — รายงานประเภทใบพิมพ์ | Should | ✅ (`<embed>` ผ่าน `ReportFilePreview`, ใช้ทั้ง dialog เดิม, หน้า report-detail, และตั้งแต่ 2026-08-27 การ์ด card-view ใน `reports/report-list` ก็ preview ได้เช่นกัน — **แก้บั๊กจริงที่พังทั้งระบบมาตลอด**: CSP `object-src 'none'` (ตั้งแต่ 4a) บล็อก `<embed>` ทุกจุดเงียบๆ, แล้วยัง X-Frame-Options: DENY/frame-ancestors 'none' บนตัว response ของไฟล์เองอีกชั้น (`740a43b`/`df964b1`/`81c355f`/`cace2fd` แก้ครบ, ยืนยันสดด้วย curl+Playwright) | 4c/5a |

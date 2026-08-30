@@ -5,11 +5,20 @@ import { useTranslations } from "next-intl";
 import toast from "react-hot-toast";
 import { ReportGetDataType } from "@/lib/types";
 import Image from "next/image";
-import { Eye, Download, Star } from "lucide-react";
+import { Eye, Download, Star, MoreVertical } from "lucide-react";
 import { fileKindMeta, ReportStatusPill, AccessLockIcon, categoryAccent } from "@/components/shared/reportDisplayMeta";
 import { cn, formatDateTime } from "@/lib/utils";
 import { Link } from "@/i18n/navigation";
 import { ReportPreviewDialog } from "@/components/shared/reportPreviewDialog";
+import { ReportPermissionsDrawer } from "@/components/shared/reportPermissionsDrawer";
+import { DeleteReportDialog } from "./deleteReportDialog";
+import { Button } from "@/components/ui/button";
+import {
+    DropdownMenu,
+    DropdownMenuContent,
+    DropdownMenuItem,
+    DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 
 function isImageFile(file: { file_name?: string }): boolean {
     const name = file.file_name?.toLowerCase() ?? "";
@@ -20,6 +29,8 @@ interface ReportCardViewProps {
     reports: ReportGetDataType[];
     favoriteIds: Set<string>;
     onToggleFavorite: (reportId: string, next: boolean) => void;
+    isAdmin: boolean;
+    onDeleted: () => void;
 }
 
 function CardAccentBar({ accent }: { accent: string | undefined }) {
@@ -85,10 +96,13 @@ function ReportThumbnail({ report, onPreview }: { report: ReportGetDataType; onP
     );
 }
 
-export default function ReportCardView({ reports, favoriteIds, onToggleFavorite }: ReportCardViewProps) {
+export default function ReportCardView({ reports, favoriteIds, onToggleFavorite, isAdmin, onDeleted }: ReportCardViewProps) {
     const tl = useTranslations("reports.list");
     const tf = useTranslations("reports.favorites");
+    const tc = useTranslations("common");
     const [previewReportId, setPreviewReportId] = React.useState<string | null>(null);
+    const [permissionsId, setPermissionsId] = React.useState<string | null>(null);
+    const [deletingReport, setDeletingReport] = React.useState<ReportGetDataType | null>(null);
 
     async function handleToggleFavorite(report: ReportGetDataType) {
         if (!report.id) return;
@@ -135,17 +149,40 @@ export default function ReportCardView({ reports, favoriteIds, onToggleFavorite 
                                     >
                                         {report.name_th}
                                     </Link>
-                                    <button
-                                        type="button"
-                                        onClick={() => handleToggleFavorite(report)}
-                                        aria-label={isFav ? tf("removeFromFavorites") : tl("columns.addToFavorites")}
-                                        className={cn(
-                                            "shrink-0 rounded-full p-0.5 text-muted-foreground transition-colors hover:text-amber-500",
-                                            isFav && "text-amber-500"
+                                    <div className="flex shrink-0 items-center gap-0.5">
+                                        <button
+                                            type="button"
+                                            onClick={() => handleToggleFavorite(report)}
+                                            aria-label={isFav ? tf("removeFromFavorites") : tl("columns.addToFavorites")}
+                                            className={cn(
+                                                "rounded-full p-0.5 text-muted-foreground transition-colors hover:text-amber-500",
+                                                isFav && "text-amber-500"
+                                            )}
+                                        >
+                                            <Star className={cn("h-4 w-4", isFav && "fill-current")} />
+                                        </button>
+                                        {isAdmin && report.id && (
+                                            <DropdownMenu>
+                                                <DropdownMenuTrigger asChild>
+                                                    <Button variant="ghost" size="icon" className="h-6 w-6 text-muted-foreground">
+                                                        <span className="sr-only">{tc("openMenu")}</span>
+                                                        <MoreVertical className="h-4 w-4" />
+                                                    </Button>
+                                                </DropdownMenuTrigger>
+                                                <DropdownMenuContent align="end">
+                                                    <DropdownMenuItem asChild>
+                                                        <Link href={`/reports/report-edit/${report.id}`}>{tc("edit")}</Link>
+                                                    </DropdownMenuItem>
+                                                    <DropdownMenuItem onClick={() => setPermissionsId(report.id ?? null)}>
+                                                        {tl("columns.permissions")}
+                                                    </DropdownMenuItem>
+                                                    <DropdownMenuItem onClick={() => setDeletingReport(report)} className="text-destructive">
+                                                        {tc("delete")}
+                                                    </DropdownMenuItem>
+                                                </DropdownMenuContent>
+                                            </DropdownMenu>
                                         )}
-                                    >
-                                        <Star className={cn("h-4 w-4", isFav && "fill-current")} />
-                                    </button>
+                                    </div>
                                 </div>
 
                                 <div className="flex flex-wrap items-center gap-1.5 text-[11px] text-muted-foreground">
@@ -196,6 +233,16 @@ export default function ReportCardView({ reports, favoriteIds, onToggleFavorite 
                 reportId={previewReportId}
                 open={previewReportId !== null}
                 onOpenChange={(open) => !open && setPreviewReportId(null)}
+            />
+            <ReportPermissionsDrawer
+                reportId={permissionsId}
+                open={permissionsId !== null}
+                onOpenChange={(open) => !open && setPermissionsId(null)}
+            />
+            <DeleteReportDialog
+                report={deletingReport}
+                onOpenChange={(open) => !open && setDeletingReport(null)}
+                onDeleted={onDeleted}
             />
         </div>
     );

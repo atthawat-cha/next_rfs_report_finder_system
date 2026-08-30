@@ -38,6 +38,8 @@ async function addToFavorites(reportId: string, t: (key: string) => string) {
 export function getReportColumn(
     onPreview: (reportId: string) => void,
     onManagePermissions: (reportId: string) => void,
+    onDelete: (report: ReportGetDataType) => void,
+    isAdmin: boolean,
     t: (key: string) => string,
     tc: (key: string) => string
 ): ColumnDef<ReportGetDataType>[] {
@@ -109,21 +111,28 @@ export function getReportColumn(
                         <DropdownMenuItem asChild>
                             <Link href={`/reports/report-detail/${id}`}>{t('columns.view')}</Link>
                         </DropdownMenuItem>
-                        <DropdownMenuItem asChild>
-                            <Link href={`/reports/report-edit/${id}`}>{tc('edit')}</Link>
-                        </DropdownMenuItem>
                         <DropdownMenuItem onClick={() => onPreview(id)}>
                             {t('columns.preview')}
                         </DropdownMenuItem>
                         <DropdownMenuItem asChild>
                             <a href={`/api/reports/${id}/download`}>{t('columns.download')}</a>
                         </DropdownMenuItem>
-                        <DropdownMenuItem onClick={() => onManagePermissions(id)}>
-                            {t('columns.permissions')}
-                        </DropdownMenuItem>
                         <DropdownMenuItem onClick={() => addToFavorites(id, t)}>
                             {t('columns.addToFavorites')}
                         </DropdownMenuItem>
+                        {isAdmin && (
+                            <>
+                                <DropdownMenuItem asChild>
+                                    <Link href={`/reports/report-edit/${id}`}>{tc('edit')}</Link>
+                                </DropdownMenuItem>
+                                <DropdownMenuItem onClick={() => onManagePermissions(id)}>
+                                    {t('columns.permissions')}
+                                </DropdownMenuItem>
+                                <DropdownMenuItem onClick={() => onDelete(row.original)} className="text-destructive">
+                                    {tc('delete')}
+                                </DropdownMenuItem>
+                            </>
+                        )}
                     </DropdownMenuContent>
                 </DropdownMenu>
             )

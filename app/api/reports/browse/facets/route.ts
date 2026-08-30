@@ -14,6 +14,10 @@ import { logDevError } from '@/lib/log-dev-error';
  * rows (icon/color/parent_id/is_active/...) - this endpoint is deliberately
  * separate and minimal (id/name/count only) rather than loosening either of
  * those for a browse-only need.
+ *
+ * Admin callers bypass the ACL entirely (same isAdmin re-check pattern as
+ * GET /api/reports/browse) so counts reflect every report regardless of
+ * status/access_level, matching what GET /api/reports/browse returns them.
  */
 export async function GET(req: NextRequest) {
     try {
@@ -28,20 +32,25 @@ export async function GET(req: NextRequest) {
             return authResult;
         }
 
-        const visibleIds = await visibleReportIdsFor(authResult.user);
-        if (visibleIds.length === 0) {
-            return NextResponse.json({ success: true, data: { categories: [], departments: [] } }, { status: 200 });
+        const isAdmin = routeAcceptted('admin').includes(authResult.user.roles?.name?.toLowerCase() ?? '');
+
+        let visibleIds: string[] | null = null;
+        if (!isAdmin) {
+            visibleIds = await visibleReportIdsFor(authResult.user);
+            if (visibleIds.length === 0) {
+                return NextResponse.json({ success: true, data: { categories: [], departments: [] } }, { status: 200 });
+            }
         }
 
         const [categoryGroups, departmentGroups] = await Promise.all([
             prisma.reports.groupBy({
                 by: ['category_id'],
-                where: { id: { in: visibleIds } },
+                where: { ...(visibleIds ? { id: { in: visibleIds } } : {}) },
                 _count: { _all: true },
             }),
             prisma.reports.groupBy({
                 by: ['department_id'],
-                where: { id: { in: visibleIds }, department_id: { not: null } },
+                where: { ...(visibleIds ? { id: { in: visibleIds } } : {}), department_id: { not: null } },
                 _count: { _all: true },
             }),
         ]);
