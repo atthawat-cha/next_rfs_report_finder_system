@@ -27,6 +27,7 @@ export async function GET(req: NextRequest, props: { params: Promise<{ id: strin
                 categories: { select: { id: true, name: true } },
                 departments: { select: { id: true, name: true } },
                 report_files: { where: { is_current: true }, orderBy: { file_kind: 'asc' } },
+                report_tags: { select: { tags: { select: { id: true, name: true, slug: true } } } },
             },
         });
         if (!report) {
@@ -54,11 +55,27 @@ export async function GET(req: NextRequest, props: { params: Promise<{ id: strin
             description: `Viewed report ${report.code}`,
         });
 
-        const { report_files, ...reportFields } = report;
+        const { report_files, report_tags, ...reportFields } = report;
         const files = report_files.map((f) => ({ ...f, file_size: Number(f.file_size) }));
+        const tags = report_tags.map((rt) => rt.tags);
+
+        const isFavorited = await prisma.favorites.findUnique({
+            where: { user_id_report_id: { user_id: authResult.user.id, report_id: report.id } },
+            select: { id: true },
+        });
 
         return NextResponse.json(
-            { success: true, data: { ...reportFields, file_size: Number(reportFields.file_size), files, acl } },
+            {
+                success: true,
+                data: {
+                    ...reportFields,
+                    file_size: Number(reportFields.file_size),
+                    files,
+                    tags,
+                    is_favorited: Boolean(isFavorited),
+                    acl,
+                },
+            },
             { status: 200 }
         );
     } catch (error) {

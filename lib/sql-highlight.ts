@@ -113,3 +113,135 @@ export function splitTokensIntoLines(tokens: SqlToken[]): SqlToken[][] {
   }
   return lines;
 }
+
+/**
+ * Lightweight structural extraction on top of the token stream - NOT a real
+ * SQL parser. Only looks at the outermost SELECT ... FROM ... WHERE of a
+ * single statement (paren depth 0), which is all a report-detail admin needs
+ * to see "what fields does this pull" / "what does it filter on" for
+ * reference SQL that is never executed by the app. Subqueries, CTEs, and
+ * non-SELECT statements are out of scope - callers get empty arrays back
+ * rather than a wrong guess.
+ */
+export interface SqlCondition {
+  /** "AND" / "OR" joining this condition to the previous one, null for the first. */
+  connector: string | null;
+  text: string;
+}
+
+export interface SqlStructure {
+  selectColumns: string[];
+  whereConditions: SqlCondition[];
+}
+
+const WHERE_END_KEYWORDS = ["group", "order", "having", "limit", "union", "except", "intersect", "window", "fetch"];
+
+function reconstruct(tokens: SqlToken[]): string {
+  return tokens.map((t) => t.text).join("");
+}
+
+/** First depth-0 keyword token (by lowercase text) at or after `start`, or -1. */
+function findTopLevelKeyword(tokens: SqlToken[], start: number, keywords: string[]): number {
+  let depth = 0;
+  for (let i = start; i < tokens.length; i++) {
+    const token = tokens[i];
+    if (token.kind === "punct") {
+      for (const ch of token.text) {
+        if (ch === "(") depth++;
+        else if (ch === ")") depth--;
+      }
+      continue;
+    }
+    if (depth === 0 && token.kind === "keyword" && keywords.includes(token.text.toLowerCase())) {
+      return i;
+    }
+  }
+  return -1;
+}
+
+/** Splits a token slice on depth-0 commas (a punct token can bundle several
+ * punctuation characters together, e.g. ",(", so this walks characters
+ * within punct tokens rather than comparing whole tokens). */
+function splitTopLevelList(tokens: SqlToken[]): string[] {
+  const items: SqlToken[][] = [[]];
+  let depth = 0;
+  for (const token of tokens) {
+    if (token.kind !== "punct") {
+      items[items.length - 1].push(token);
+      continue;
+    }
+    let buf = "";
+    for (const ch of token.text) {
+      if (ch === "(") {
+        depth++;
+        buf += ch;
+      } else if (ch === ")") {
+        depth--;
+        buf += ch;
+      } else if (ch === "," && depth === 0) {
+        if (buf) items[items.length - 1].push({ text: buf, kind: "punct" });
+        buf = "";
+        items.push([]);
+      } else {
+        buf += ch;
+      }
+    }
+    if (buf) items[items.length - 1].push({ text: buf, kind: "punct" });
+  }
+  return items.map((item) => reconstruct(item).trim()).filter(Boolean);
+}
+
+/** Splits a token slice on depth-0 AND/OR keywords, labeling each resulting
+ * condition with the connector that preceded it (null for the first). */
+function splitTopLevelConditions(tokens: SqlToken[]): SqlCondition[] {
+  const segments: { connector: string | null; tokens: SqlToken[] }[] = [{ connector: null, tokens: [] }];
+  let depth = 0;
+  for (const token of tokens) {
+    if (token.kind === "punct") {
+      for (const ch of token.text) {
+        if (ch === "(") depth++;
+        else if (ch === ")") depth--;
+      }
+      segments[segments.length - 1].tokens.push(token);
+      continue;
+    }
+    if (depth === 0 && token.kind === "keyword" && (token.text.toLowerCase() === "and" || token.text.toLowerCase() === "or")) {
+      segments.push({ connector: token.text.toUpperCase(), tokens: [] });
+      continue;
+    }
+    segments[segments.length - 1].tokens.push(token);
+  }
+  return segments
+    .map((s) => ({ connector: s.connector, text: reconstruct(s.tokens).trim() }))
+    .filter((s) => s.text.length > 0);
+}
+
+export function extractSqlStructure(sql: string): SqlStructure {
+  const tokens = tokenizeSql(sql).filter((t) => t.kind !== "comment");
+
+  const selectIdx = findTopLevelKeyword(tokens, 0, ["select"]);
+  if (selectIdx === -1) return { selectColumns: [], whereConditions: [] };
+
+  let afterSelect = selectIdx + 1;
+  while (afterSelect < tokens.length && /^\s+$/.test(tokens[afterSelect].text)) afterSelect++;
+  if (tokens[afterSelect]?.kind === "keyword" && tokens[afterSelect].text.toLowerCase() === "distinct") {
+    afterSelect++;
+  }
+
+  const fromIdx = findTopLevelKeyword(tokens, afterSelect, ["from"]);
+  if (fromIdx === -1) return { selectColumns: [], whereConditions: [] };
+
+  const selectColumns = splitTopLevelList(tokens.slice(afterSelect, fromIdx));
+
+  const whereIdx = findTopLevelKeyword(tokens, fromIdx + 1, ["where"]);
+  if (whereIdx === -1) return { selectColumns, whereConditions: [] };
+
+  const endIdx = findTopLevelKeyword(tokens, whereIdx + 1, WHERE_END_KEYWORDS);
+  const whereTokens = tokens.slice(whereIdx + 1, endIdx === -1 ? tokens.length : endIdx);
+  const whereConditions = splitTopLevelConditions(whereTokens).map((c) => ({
+    ...c,
+    text: c.text.replace(/;+\s*$/, "").trim(),
+  }));
+
+  return { selectColumns, whereConditions };
+}
